@@ -118,6 +118,8 @@ Para manter a consistência visual do ShipIt! em todas as plataformas, aqui est�
 
 🎨 Paleta de Cores (Brand Colors)
 
+### Cores para Modo Claro
+
 | Elemento         | Hexadecimal | Cor Visual       | Recomendação de Uso                                                            |
 | ---------------- | ----------- | ---------------- | ------------------------------------------------------------------------------ |
 | Azul Principal   | #1A427F   | Azul Navy        | Cabeçalhos, botões principais (CTA), barras de navegação e texto "Ship".       |
@@ -125,6 +127,22 @@ Para manter a consistência visual do ShipIt! em todas as plataformas, aqui est�
 | Azul Light       | #E8F0F9   | Azul Gelo        | Fundo de campos de texto ou hover em listas de atividades.                     |
 | Neutro Dark      | #333333   | Grafite          | Textos longos de descrições e logs de atividades.                              |
 | Neutro Light     | #F8F9FA   | Cinza Off-white  | Cor de fundo geral da aplicação (evita cansaço visual).                        |
+| Verde Esmeralda   | #168829   | Verde Sucesso    | Indicadores de atividades concluídas ou status de sucesso.                     |
+| Vermelho Alerta   | #a11e10   | Vermelho Alerta  | Indicadores de atividades canceladas ou status de erro.                     |
+
+### Cores para Modo Escuro (Dark Mode)
+
+| Elemento         | Hexadecimal | Cor Visual       | Recomendação de Uso                                                            |
+| Azul para Dark Mode     | #1A427F   | Azul Navy        | O Azul deve permanecer o mesmo para manter a identidade visual e contraste em fundos escuros.                     |
+| Laranja para Dark Mode   | #F27A21   | Laranja Vibrante | O Laranja deve permanecer o mesmo para manter o contraste em fundos escuros.                     |
+| Fundo Escuro      | #121212   | Preto Profundo   | Fundo para modo escuro (dark mode). O Laranja deve permanecer o mesmo para manter o contraste. |
+| Cards Escuros      | #1E1E1E   | Cinza Escuro     | Fundo de cards e modais no modo escuro. O Laranja deve permanecer o mesmo para manter o contraste. |
+| Textos Escuros      | #E0E0E0   | Cinza Claro      | Textos no modo escuro para garantir legibilidade. O Laranja deve permanecer o mesmo para manter o contraste. |
+| Foguete Cinza Claro | #CCCCCC   | Cinza Claro      | Ilustração do foguete para o estado vazio (empty state) quando não houver atividades registradas. |
+| Vermelho Pendente   | #ff3300   | Laranja Pendente  | Indicadores de atividades pendentes ou em andamento.                     |
+| Amarelo Alerta   | #FFD700   | Amarelo Alerta  | Indicadores de atividades com status de alerta ou atenção.                     |
+| Roxo Destaque   | #800080   | Roxo Vibrante    | Detalhes de destaque em gráficos ou indicadores de progresso.                     |
+
 
 🛠️ Recomendações de Uso na Interface (UI)
 
