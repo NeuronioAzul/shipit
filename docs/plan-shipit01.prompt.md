@@ -2,16 +2,21 @@
 
 ## 1. Visão Geral
 
-O ShipIt! é uma aplicação desktop multiplataforma (Windows, macOS e Linux) projetada para automatizar a criação do "Relatório Mensal de Atividades Desenvolvidas" seguindo o padrão institucional do MEC. O foco é facilitar a vida de desenvolvedores e arquitetos, permitindo registros diários com evidências que se consolidam em um PDF formatado ao final do mês. Tendo acesso fácil ficando no system tray, o ShipIt! é a solução ideal para quem busca praticidade e eficiência na documentação de suas atividades. Bastará clicar, registrar o print, colando, selecionando na máquina ou arrastando e soltando, escrever o texto e deixar o resto com o ShipIt!, sempre salva automaticamente impedindo perdas de dados.
+O ShipIt! é uma aplicação desktop multiplataforma (Windows, macOS e Linux) projetada para automatizar a criação do "Relatório Mensal de Atividades Desenvolvidas" seguindo o padrão institucional do MEC (Ministério da Educação). O foco é facilitar a vida dos profissionais  desenvolvedores, arquitetos, levantadores de requisitos e testadores, permitindo registros diários com evidências (prints e links) que se consolidarão em um PDF formatado ao final do mês. 
+
+Fácil de acessar ficando no system tray, o ShipIt! é a solução ideal para quem busca praticidade e eficiência na documentação de suas atividades desenvolvidas para o relatório mensal. 
+
+Bastará clicar no ícone no System Tray e se abrirá a janela para continuar ou registrar uma nova atividade e evidência, (inserindo o link) ou (colando, selecionando na máquina, arrastando e soltando o print), escrever o texto e deixar o resto com o ShipIt!, sempre salva automaticamente impedindo perdas de dados.
 
 ## 2. Stack Tecnológica
 
-Componente | Tecnologia | Justificativa
-Framework Desktop | Electron | Multiplataforma nativo e fácil acesso ao sistema de arquivos.
-Interface (UI) | React + Tailwind CSS | Rapidez no desenvolvimento e estilização precisa ("Pixel Perfect").
-Banco de Dados | SQLite (via TypeORM ou Knex) | Local, rápido e não exige servidor externo.
-Geração de PDF | Puppeteer | Renderiza o PDF a partir de HTML com fidelidade absoluta ao layout original.
-Armazenamento | File System Local | Os prints serão salvos por padrão em uma pasta com o nome do aplicativo no diretório de documentos do usuário ou home, perguntar na instalação onde o cliente deseja salvar os prints, e o cliente pode alterar a pasta de destino posteriormente nas configurações do aplicativo.
+| Componente | Tecnologia | Justificativa |
+|----------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Framework Desktop | Electron | Multiplataforma nativo e fácil acesso ao sistema de arquivos. |
+| Interface (UI) | React + Tailwind CSS | Rapidez no desenvolvimento e estilização precisa ("Pixel Perfect"). |
+| Banco de Dados | SQLite (via TypeORM ou Knex) | Local, rápido e não exige servidor externo. |
+| Geração de PDF | Puppeteer | Renderiza o PDF a partir de HTML com fidelidade absoluta ao layout original. |
+| Armazenamento | File System Local | Os prints serão salvos por padrão em uma pasta com o nome do aplicativo no diretório de documentos do usuário ou home, perguntar na instalação onde o cliente deseja salvar os prints, e o cliente pode alterar a pasta de destino posteriormente nas configurações do aplicativo. |
 
 ## 3. Arquitetura de Dados (Schema)
 
@@ -19,26 +24,26 @@ O banco de dados local será estruturado em três eixos:
 
 ### A. Perfil do Usuário (user_profile)
 
-full_name: Texto
-role: Texto (Ex: `Engenheiro de Software`) o cliente fica livre para escolher o que colocar aqui.
-seniority_level: Enum (Aprendiz, Júnior, Pleno, Sênior, Especialista, Líder, Master)
-contract_number: Texto (Ex: `Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda`)
-profile_type: Texto (Ex: `DEV-9`)
-correlating_activities: Texto (Ex: `Desenvolve ... artificial.`)
-attendance_type: Enum (Presencial, Remoto, Híbrido)
-squad_project_application: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o cliente pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
+- *full_name*: Texto (Ex: `Maria Silva de Souza e Silva`) Precisa ser o nome completo para preencher o campo "Nome Completo" do relatório.
+- *role*: Texto (Ex: `Engenheiro de Software`) o cliente fica livre para escolher o que colocar aqui.
+- *seniority_level*: Enum (Aprendiz, Júnior, Pleno, Sênior, Especialista, Líder, Master)
+- *contract_identifier*: Texto - Identificador do Contrato (Ex: `Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda`)
+- *profile_type*: Texto (Ex: `DEV-9`)
+- *correlating_activities*: Texto (Ex: `Desenvolve ... artificial.`) é um texto explicativo para correlacionar as atividades do mês com o perfil do usuário, será copiado do arquivo modelo que o profissional receber.
+- *attendance_type*: Enum (Presencial, Remoto, Híbrido)
+- *squad_project_application*: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o cliente pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
 
 ### B. Atividades (activities)
 
-id: UUID
-order: Inteiro (Ordem de exibição)
-description: Texto longo (Texto simples)
-date_start: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
-date_end: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
-link_ref: Texto (URL GitLab, etc.) (opcional)
-status: Enum (Em andamento, Concluído, Cancelado, Pendente) (opcional, mas o cliente pode deixar como "Pendente" e atualizar depois, por exemplo)
-month_reference: String (MM/YYYY)
-attendance_type: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando diferente, pois o cliente pode registrar atividades com diferentes tipos de atendimento)
+- *id*: UUID
+- *order*: Inteiro (Ordem de exibição)
+- *description*: Texto longo (Texto simples)
+- *date_start*: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
+- *date_end*: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
+- *link_ref*: Texto (URL GitLab, etc.) (opcional) Podem ser inseridos vários links por atividade
+- *status*: Enum (Em andamento, Concluído, Cancelado, Pendente) (opcional, mas o cliente pode deixar como "Pendente" e atualizar depois, por exemplo)
+- *month_reference*: String (MM/YYYY)
+- *attendance_type*: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando diferente, pois o cliente pode registrar atividades com diferentes tipos de atendimento)
 
 Para gerar o relatório mensal, todos os campos precisam estar preenchidos, exceto os opcionais.
 
@@ -53,10 +58,10 @@ Para gerar o relatório mensal, todos os campos precisam estar preenchidos, exce
 
 ### C. Evidências (evidences)
 
-id: UUID
-activity_id: Relacionamento
-file_path: Caminho local da imagem
-caption: Legenda da imagem
+- *id*: UUID
+- *activity_id*: Relacionamento
+- *file_path*: Caminho local da imagem
+- *caption*: Legenda da imagem
 
 ---
 
