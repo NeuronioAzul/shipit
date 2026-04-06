@@ -14,9 +14,9 @@ Bastará clicar no ícone no System Tray e se abrirá a janela para continuar ou
 |----------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Framework Desktop | Electron | Multiplataforma nativo e fácil acesso ao sistema de arquivos. |
 | Interface (UI) | React + Tailwind CSS | Rapidez no desenvolvimento e estilização precisa ("Pixel Perfect"). |
-| Banco de Dados | SQLite (via TypeORM ou Knex) | Local, rápido e não exige servidor externo. |
+| Banco de Dados | SQLite (via TypeORM) | Local, rápido e não exige servidor externo. |
 | Geração de PDF | Puppeteer | Renderiza o PDF a partir de HTML com fidelidade absoluta ao layout original. |
-| Armazenamento | File System Local | Os prints serão salvos por padrão em uma pasta com o nome do aplicativo no diretório de documentos do usuário ou home, perguntar na instalação onde o cliente deseja salvar os prints, e o cliente pode alterar a pasta de destino posteriormente nas configurações do aplicativo. |
+| Armazenamento | File System Local | Os prints serão salvos por padrão em uma pasta com o nome do aplicativo no diretório de documentos do usuário ou home, perguntar na instalação onde o usuário deseja salvar os prints, e o usuário pode alterar a pasta de destino posteriormente nas configurações do aplicativo. |
 
 ## 3. Arquitetura de Dados (Schema)
 
@@ -25,13 +25,13 @@ O banco de dados local será estruturado em três eixos:
 ### A. Perfil do Usuário (user_profile)
 
 - *full_name*: Texto (Ex: `Maria Silva de Souza e Silva`) Precisa ser o nome completo para preencher o campo "Nome Completo" do relatório.
-- *role*: Texto (Ex: `Engenheiro de Software`) o cliente fica livre para escolher o que colocar aqui.
+- *role*: Texto (Ex: `Engenheiro de Software`) o usuário fica livre para escolher o que colocar aqui.
 - *seniority_level*: Enum (Aprendiz, Júnior, Pleno, Sênior, Especialista, Líder, Master)
 - *contract_identifier*: Texto - Identificador do Contrato (Ex: `Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda`)
 - *profile_type*: Texto (Ex: `DEV-9`)
-- *correlating_activities*: Texto (Ex: `Desenvolve ... artificial.`) é um texto explicativo para correlacionar as atividades do mês com o perfil do usuário, será copiado do arquivo modelo que o profissional receber.
+- *correlating_activities*: Texto Longo (Ex: `Desenvolve ... artificial.`) é um texto explicativo para correlacionar as atividades do mês com o perfil do usuário, será copiado do arquivo modelo que o profissional receber.
 - *attendance_type*: Enum (Presencial, Remoto, Híbrido)
-- *squad_project_application*: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o cliente pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
+- *squad_project_application*: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o usuário pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
 
 ### B. Atividades (activities)
 
@@ -41,19 +41,19 @@ O banco de dados local será estruturado em três eixos:
 - *date_start*: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
 - *date_end*: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
 - *link_ref*: Texto (URL GitLab, etc.) (opcional) Podem ser inseridos vários links por atividade
-- *status*: Enum (Em andamento, Concluído, Cancelado, Pendente) (opcional, mas o cliente pode deixar como "Pendente" e atualizar depois, por exemplo)
+- *status*: Enum (Em andamento, Concluído, Cancelado, Pendente) (opcional, mas o usuário pode deixar como "Pendente" e atualizar depois, por exemplo)
 - *month_reference*: String (MM/YYYY)
-- *attendance_type*: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando diferente, pois o cliente pode registrar atividades com diferentes tipos de atendimento)
+- *attendance_type*: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando for selecionado um diferente, pois o usuário pode registrar atividades com diferentes tipos de atendimento)
 
 Para gerar o relatório mensal, todos os campos precisam estar preenchidos, exceto os opcionais.
 
-- O campo `order` é preenchido automaticamente com base na data de início da atividade, mas o cliente pode arrastar e soltar para editá-lo e reorganizar a ordem de exibição das atividades.
-- O campo `description` é um campo de texto simples, mas o cliente pode usar formatação básica como negrito, itálico e listas para organizar melhor as informações.
-- O campo `date_start` é opcional, para registrar o início da atividade, mas o cliente pode deixar o campo em branco e preenchê-lo posteriormente.
-- O campo `date_end` é opcional, para registrar a conclusão da atividade, mas o cliente pode deixar o campo em branco e preenchê-lo posteriormente.
-- O campo `link_ref` é opcional, para registrar um link de referência relacionado à atividade, mas o cliente pode deixar o campo em branco se não tiver um link específico para adicionar.
-- O campo `status` é opcional, mas será preenchido automaticamente com "Em andamento" quando a atividade for criada, e o cliente pode atualizá-lo para "Concluído", "Cancelado" ou "Pendente" conforme o progresso da atividade.
-- O campo `month_reference` é preenchido automaticamente com base na data de início da atividade, mas o cliente pode editá-lo caso queira registrar uma atividade retroativa ou futura.
+- O campo `order` é preenchido automaticamente com base na data de início da atividade, mas o usuário pode arrastar e soltar para editá-lo e reorganizar a ordem de exibição das atividades na listagem do mês.
+- O campo `description` é um campo de texto com formatação simples, o usuário pode usar formatação básica como negrito, itálico e listas para organizar melhor as informações.
+- O campo `date_start` é opcional, para registrar a atividade, o usuário pode deixar o campo em branco e preenchê-lo posteriormente. Obrigatório estar preenchido para gerar o relatório mensal.
+- O campo `date_end` é opcional, para registrar a atividade, o usuário pode deixar o campo em branco e preenchê-lo posteriormente. Obrigatório estar preenchido para gerar o relatório mensal.
+- O campo `link_ref` é opcional, serve para registrar um ou mais links de referência, o usuário pode deixar o campo em branco caso não tenha links específicos para adicionar.
+- O campo `status` é opcional, mas será preenchido automaticamente com "Em andamento" quando a atividade for criada, e o usuário pode atualizá-lo para "Concluído", "Cancelado" ou "Pendente" conforme o progresso da atividade.
+- O campo `month_reference` é preenchido automaticamente com base na data de início da atividade, mas o usuário pode editá-lo caso queira registrar uma atividade retroativa ou futura.
 - O campo `attendance_type` é preenchido automaticamente com base no tipo de atendimento do perfil do usuário, mas pode ser sobrescrito caso a atividade tenha um tipo de atendimento diferente.
 
 ### C. Evidências (evidences)
