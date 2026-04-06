@@ -271,6 +271,11 @@
         "recommendations": [
             "ms-vscode.powershell",
             "GitHub.copilot-chat",
+            "yzhang.markdown-all-in-one",
+            "shd101wyy.markdown-preview-enhanced",
+            "davidanson.vscode-markdownlint",
+            "bradlc.vscode-tailwindcss",
+            "eamodio.gitlens"            
         ]
     }
 }
