@@ -7,6 +7,7 @@
     "settings": {
         "chat.agent.maxRequests": 250,
         "workbench.colorTheme": "Visual Studio Dark",
+        "workbench.selectDefaultShell": "PowerShell",
         "workbench.colorCustomizations": {
             "focusBorder": "#F27A21",
             "foreground": "#E0E0E0",
@@ -265,5 +266,11 @@
                 }
             }
         }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.powershell",
+            "GitHub.copilot-chat",
+        ]
     }
 }
