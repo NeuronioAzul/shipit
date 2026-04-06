@@ -45,7 +45,7 @@ O banco de dados local será estruturado em três eixos:
 - *month_reference*: String (MM/YYYY)
 - *attendance_type*: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando for selecionado um diferente, pois o usuário pode registrar atividades com diferentes tipos de atendimento)
 
-Para gerar o relatório mensal, todos os campos precisam estar preenchidos, exceto os opcionais.
+Para gerar o relatório mensal, todos os campos obrigatórios para gerar o relatório precisam estar preenchidos, exceto os opcionais.
 
 - O campo `order` é preenchido automaticamente com base na data de início da atividade, mas o usuário pode arrastar e soltar para editá-lo e reorganizar a ordem de exibição das atividades na listagem do mês.
 - O campo `description` é um campo de texto com formatação simples, o usuário pode usar formatação básica como negrito, itálico e listas para organizar melhor as informações.
@@ -62,6 +62,27 @@ Para gerar o relatório mensal, todos os campos precisam estar preenchidos, exce
 - *activity_id*: Relacionamento
 - *file_path*: Caminho local da imagem
 - *caption*: Legenda da imagem
+
+---
+
+## 4. Definição de campos obrigatórios para gerar o relatório mensal
+
+Para gerar o relatório mensal, os seguintes campos precisam estar preenchidos:
+- *Perfil do Usuário*:
+  - full_name
+  - role
+  - seniority_level
+  - contract_identifier
+  - profile_type
+  - correlating_activities
+  - attendance_type
+  - squad_project_application
+- *Atividades*: ter pelo menos uma atividade registrada no mês selecionado com os seguintes campos preenchidos:
+  - description
+  - date_start
+  - date_end
+  - status (pode ser "Pendente" se a atividade ainda não tiver sido concluída, mas não pode estar em branco)
+  
 
 ---
 
