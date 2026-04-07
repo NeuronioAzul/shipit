@@ -164,6 +164,11 @@ Opção para editar os detalhes da atividade e adicionar/editar legendas das evi
 Implementação de validação para garantir que os campos obrigatórios estejam preenchidos antes de permitir a geração do PDF.
 Exibição de mensagens de erro ou alertas para atividades que não atendem aos requisitos.
 
+### Fase 2.3.1: System Tray icon
+
+Implementação do ícone do ShipIt! no System Tray para fácil acesso.
+Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
+
 ### Fase 2.4: Sistema de Rascunho e Salvamento Automático
 
 Implementação de salvamento automático para evitar perda de dados em caso de fechamento inesperado.

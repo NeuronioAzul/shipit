@@ -65,6 +65,18 @@
 - [ ] Ícone de alerta nas atividades incompletas
 - [ ] Mensagens de erro detalhadas
 
+### Fase 2.3.1: System Tray icon
+
+Implementação do ícone do ShipIt! no System Tray para fácil acesso.
+Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
+
+- [ ] Implementação do ícone do ShipIt! no System Tray para fácil acesso.
+- [ ] Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
+- [ ] Ícone deve refletir o status do app (ex: alerta para atividades incompletas)
+- [ ] Menu de contexto no ícone com opções rápidas (ex: "Nova Atividade", "Abrir Dashboard", "Sair")
+- [ ] Compatibilidade com Windows, macOS e Linux (ajustes de ícone e comportamento conforme plataforma)
+- [ ] Configuração para iniciar o app junto com o sistema operacional, pode alterar em configurações.
+
 ### Fase 2.4: Sistema de Rascunho e Salvamento Automático
 
 - [ ] Auto-save no formulário de atividade
