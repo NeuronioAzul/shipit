@@ -14,14 +14,16 @@ Bastará clicar no ícone no System Tray e se abrirá a janela para continuar ou
 | ---------- | ---------- | ------------- |
 | Framework Desktop | Electron | Multiplataforma nativo e fácil acesso ao sistema de arquivos. |
 | Backend | Node.js | Permite integração com Electron e fácil manipulação de arquivos e banco de dados. |
-| Interface (UI) | React + Tailwind CSS | Rapidez no desenvolvimento e estilização precisa ("Pixel Perfect"). |
+| Interface (UI) | React + Tailwind CSS + font-awesome | Rapidez no desenvolvimento e estilização precisa ("Pixel Perfect"). font-awesome para ícones e elementos visuais consistentes, instalada via npm. |
 | Banco de Dados | SQLite (via TypeORM) | Local, rápido e não exige servidor externo. |
 | Geração de PDF | Puppeteer | Renderiza o PDF a partir de HTML com fidelidade absoluta ao layout original. |
 | Armazenamento | File System Local | Os prints serão salvos por padrão em uma pasta com o nome do aplicativo no diretório de documentos do usuário ou home, perguntar na instalação onde o usuário deseja salvar os prints, e o usuário pode alterar a pasta de destino posteriormente nas configurações do aplicativo. |
 
+*Important*: As bibliotecas não devem usar links externos para acessar os arquivos, todas as dependências devem ser instaladas localmente via npm e incluídas no bundle final do aplicativo, para garantir que o ShipIt! funcione completamente offline, sem depender de conexões externas para acessar recursos essenciais como ícones, templates de PDF ou arquivos de estilo e fonts.
+
 ## 3. Arquitetura de Dados (Schema)
 
-O banco de dados local será estruturado em três eixos:
+O banco de dados local será estruturado em 4 eixos:
 
 ### A. Perfil do Usuário (user_profile)
 
@@ -63,7 +65,6 @@ Configurações dos meus alertas 5 dias antes duas vezes por dia, 3 dias antes t
 - *attendance_type*: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando for selecionado um diferente, pois o usuário pode registrar atividades com diferentes tipos de atendimento)
 - *last_updated*: Timestamp (Data e hora da última atualização da atividade) (preenchido automaticamente) apenas loga a última vez que o usuário atualizou a atividade, para fins de controle e para exibir essa informação na tela de detalhes da atividade.
 
-
 Para gerar o relatório mensal, todos os campos obrigatórios para gerar o relatório precisam estar preenchidos, exceto os opcionais.
 
 - O campo `order` é preenchido automaticamente com base na data de início da atividade, mas o usuário pode arrastar e soltar para editá-lo e reorganizar a ordem de exibição das atividades na listagem do mês.
@@ -82,6 +83,22 @@ Para gerar o relatório mensal, todos os campos obrigatórios para gerar o relat
 - *file_path*: Caminho local da imagem que foi copiada para o diretório interno do app (preenchido automaticamente) o usuário seleciona a imagem na máquina, arrasta e solta ou cola a imagem, e o app copia para o diretório interno e salva o caminho local no banco de dados.
 - *caption*: Legenda da imagem
 - *date_added*: Timestamp (Data e hora em que a evidência foi adicionada) (preenchido automaticamente) apenas loga a data e hora em que a evidência foi adicionada, para fins de controle e para exibir essa informação na tela de detalhes da atividade.
+
+### D. Relatórios gerados (reports)
+
+- *id*: UUID v7 (Identificador único do relatório e pode ser ordenado cronologicamente)
+- *month_reference*: String (MM/YYYY)
+- *file_path*: Caminho local do arquivo PDF gerado (preenchido automaticamente) o app deve salvar o PDF gerado em um diretório específico dentro da pasta do aplicativo, e salvar o caminho local no banco de dados para referência futura.
+- *date_generated*: Timestamp (Data e hora em que o relatório foi gerado) (preenchido automaticamente) apenas loga a data e hora em que o relatório foi gerado, para fins de controle e para exibir essa informação na tela de histórico de relatórios gerados.
+- *report_name*: String (Nome do arquivo PDF gerado) (preenchido automaticamente) o app deve salvar o nome do arquivo PDF gerado seguindo o padrão de nomenclatura exigido pelo MEC, e salvar essa informação no banco de dados para referência futura e para exibir na tela de histórico de relatórios gerados.
+- *status*: Enum (Gerado, Falha, Excluído) (preenchido automaticamente) o app deve atualizar o status do relatório para "Gerado" quando o PDF for gerado com sucesso, ou "Falha" caso ocorra algum erro durante a geração do PDF, para fins de controle e para exibir essa informação na tela de histórico de relatórios gerados. Caso seja gerado um novo relatório para o mesmo mês, o app deve atualizar o status do relatório anterior para "Excluído" e avisar que o relatório será substituído, para manter um histórico claro dos relatórios gerados e evitar confusões com múltiplos relatórios para o mesmo mês.
+
+### E. Atividades do Relatório (activities_report)
+
+- *id*: UUID v7 (Identificador único da atividade do relatório e pode ser ordenado cronologicamente)
+- *report_id*: Relacionamento (Identificador do relatório associado)
+- *activity_id*: Relacionamento (Identificador da atividade associada) o app deve criar um registro nessa tabela para cada atividade que for incluída no relatório mensal, associando a atividade ao relatório gerado, para fins de controle e para exibir essa informação na tela de detalhes do relatório gerado.
+- *date_added*: Timestamp (Data e hora em que a atividade foi associada ao relatório) (preenchido automaticamente) apenas log da data e hora em que a atividade foi associada ao relatório, para fins de controle e para exibir essa informação na tela de detalhes do relatório gerado.
 
 ---
 
@@ -204,6 +221,38 @@ Para refinar este plano, preciso de algumas definições suas:
 
 Para manter a consistência visual do ShipIt! em todas as plataformas, aqui está o guia de cores extraído da logo e as recomendações de aplicação na interface:
 
+### Logo do ShipIt!:
+
+Os logos e as imagens do app devem ficar em uma pasta `assets/images` dentro do repositório, para centralizar os arquivos de imagem e facilitar o acesso para a interface do aplicativo. Abaixo estão as imagens da logo do ShipIt! em diferentes variações de cor, todas em formato SVG com fundo transparente para garantir a melhor qualidade visual em diferentes contextos de uso na interface.
+
+| Imagem | Descrição |
+|-------|-----------|
+| images\icon-foguete-logo-branco.svg | Ícone do foguete do ShipIt! em branco fundo transparente |
+| images\icon-foguete-logo-colorido.svg | Ícone do foguete do ShipIt! colorido fundo transparente |
+| images\icon-foguete-logo-pb.svg | Ícone do foguete do ShipIt! em preto e branco fundo transparente |
+| images\icon-foguete-logo-preto.svg | Ícone do foguete do ShipIt! em preto fundo transparente |
+| images\icon-foguete-logo-tons-cinza.svg | Ícone do foguete do ShipIt! em tons de cinza fundo transparente |
+| images\logo-composto-colorido.svg | Logo principal composto do ShipIt! colorido em SVG fundo transparente |
+
+### Ícones do App:
+
+Na pasta `images/icons` tem o ícone para usar no app com vários tamanhos diferentes. Analise e renomeie como for preiso.
+
+### System Tray Icon:
+
+Os ícones do System Tray estão na pasta `images/tray` dentro do repositório.
+ícones específicos para o System Tray e facilitar o acesso para a configuração do ícone do aplicativo. 
+Abaixo estão as imagens dos ícones do System Tray em diferentes variações de cor, todas em formato SVG com fundo transparente para garantir a melhor qualidade visual no System Tray em diferentes sistemas operacionais.
+
+| Imagem | Descrição |
+|-------|-----------|
+| images\tray\tray-icon-foguete-dark-mode-default-2.svg | Ícone do foguete do ShipIt! em modo escuro padrão 2 |
+| images\tray\tray-icon-foguete-dark-mode-red-2.svg | Ícone do foguete do ShipIt! em modo escuro vermelho 2 |
+| images\tray\tray-icon-foguete-dark-mode-yellow-2.svg | Ícone do foguete do ShipIt! em modo escuro amarelo 2 |
+| images\tray\tray-icon-foguete-dark-mode-green-2.svg | Ícone do foguete do ShipIt! em modo escuro verde 2 |
+
+As variações de cor para alertas no System Tray (vermelho para alerta está atrasado, amarelo para atenção faltam 5 dias para o fim do mês, verde para sucesso tudo tranquilo nada atrasado) permitem que o usuário identifique rapidamente o status das atividades e os alertas relacionados ao preenchimento do relatório mensal, mesmo sem abrir a interface do aplicativo.
+
 🎨 Paleta de Cores (Brand Colors)
 
 ### Cores para Modo Claro
@@ -260,7 +309,14 @@ Interface em português do Brasil.
    Empty State: Quando não houver atividades no mês, use uma ilustração do foguete da logo em tons de cinza claro.
 
 
+## Sobre o a Organização do Código e Padrões de Desenvolvimento
 
+- **Estrutura de Pastas**: Organizar o código em pastas claras como `components`, `services`, `utils`, `assets`, etc., para facilitar a navegação e manutenção.
+- **Padrões de Código**: Adotar um padrão de código consistente, como o uso de ESLint e Prettier para garantir a qualidade e legibilidade do código.
+- **Versionamento**: Utilizar Git para controle de versão, com commits claros e descritivos, e branches para desenvolvimento de novas funcionalidades ou correção de bugs.
+- **Documentação**: Manter uma documentação clara e atualizada do código, incluindo comentários explicativos e um README detalhado para facilitar a compreensão e colaboração futura, Changelog, roadmap.
+- **Documentação do projeto**: Colocar os arquivos explicativos e de planejamento do projeto em uma pasta `docs` dentro do repositório, para centralizar as informações e facilitar o acesso para todos os colaboradores.
+- **Raiz do projeto**: A pasta raiz do projeto não deve conter arquivos de documentação e scripts desnecessários. Manter a raiz limpa e organizada, com apenas os arquivos necessários.
 
 
 
