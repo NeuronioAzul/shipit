@@ -67,6 +67,31 @@ function createTray() {
     },
     { type: 'separator' },
     {
+      label: 'Nova Atividade',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/activities/new')
+      },
+    },
+    {
+      label: 'Dashboard',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/')
+      },
+    },
+    {
+      label: 'Atividades',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/activities')
+      },
+    },
+    { type: 'separator' },
+    {
       label: 'Sair',
       click: () => {
         tray?.destroy()
@@ -208,4 +233,16 @@ ipcMain.handle('app:selectImages', async () => {
     ],
   })
   return result.canceled ? [] : result.filePaths
+})
+
+// ──── Tray Status IPC ────
+
+ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yellow' | 'red') => {
+  if (!tray) return
+  const iconFile = `tray-icon-foguete-dark-mode-${status === 'default' ? 'default' : status}-2.svg`
+  const iconPath = path.join(__dirname, '..', 'images', 'tray', iconFile)
+  const icon = nativeImage.createFromPath(iconPath)
+  if (!icon.isEmpty()) {
+    tray.setImage(icon)
+  }
 })

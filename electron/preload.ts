@@ -34,4 +34,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Dialogs
   selectImages: () => ipcRenderer.invoke('app:selectImages'),
+
+  // Tray
+  setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') =>
+    ipcRenderer.invoke('app:setTrayStatus', status),
+
+  // Navigation (main → renderer)
+  onNavigate: (callback: (path: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, path: string) => callback(path)
+    ipcRenderer.on('app:navigate', handler)
+    return () => { ipcRenderer.removeListener('app:navigate', handler) }
+  },
 })

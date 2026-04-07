@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback, type FormEvent } from 'react'
+import { useEffect, useState, useCallback, useRef, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
+import { validateActivity, type ValidationError } from '../utils/validation'
 
 const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
@@ -38,7 +39,11 @@ export function ActivityFormPage() {
   const [activityId, setActivityId] = useState<string | null>(id || null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
   const [profileAttendance, setProfileAttendance] = useState<string>('')
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initialLoadDone = useRef(false)
 
   // Load profile attendance for default
   useEffect(() => {
@@ -88,7 +93,10 @@ export function ActivityFormPage() {
   }, [id])
 
   useEffect(() => {
-    loadActivity()
+    loadActivity().then(() => {
+      // Delay setting initialLoadDone to avoid auto-save on first render
+      setTimeout(() => { initialLoadDone.current = true }, 100)
+    })
   }, [loadActivity])
 
   function handleChange(
@@ -96,10 +104,68 @@ export function ActivityFormPage() {
   ) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    setAutoSaveStatus('idle')
   }
+
+  // Auto-save: debounce 2s after any form change (only if activity already has an id)
+  useEffect(() => {
+    if (!initialLoadDone.current) return
+    if (saving || saved) return
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+
+    autoSaveTimer.current = setTimeout(async () => {
+      // Only auto-save if there's meaningful content
+      if (!form.description.trim()) return
+
+      setAutoSaveStatus('saving')
+      try {
+        const data: Partial<ActivityData> = {
+          description: form.description,
+          date_start: form.date_start || null,
+          date_end: form.date_end || null,
+          status: form.status as ActivityData['status'],
+          link_ref: form.link_ref || null,
+          attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
+          month_reference: form.month_reference,
+        }
+        if (activityId) data.id = activityId
+
+        let result: ActivityData
+        if (window.electronAPI) {
+          result = await window.electronAPI.saveActivity(data)
+        } else {
+          result = localDb.saveActivity(data)
+        }
+        if (!activityId) setActivityId(result.id)
+        setAutoSaveStatus('saved')
+      } catch {
+        setAutoSaveStatus('idle')
+      }
+    }, 2000)
+
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+
+    const validationErrors = validateActivity({
+      description: form.description,
+      date_start: form.date_start || null,
+      date_end: form.date_end || null,
+      status: form.status as ActivityData['status'],
+      month_reference: form.month_reference,
+    } as Partial<ActivityData>)
+
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+    setErrors([])
     setSaving(true)
 
     try {
@@ -159,22 +225,49 @@ export function ActivityFormPage() {
   const inputClass =
     'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
+  const inputErrorClass =
+    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
+  }
+
+  function fieldClass(field: string): string {
+    return fieldError(field) ? inputErrorClass : inputClass
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(`/activities?month=${form.month_reference}`)}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          title="Voltar"
-        >
-          <i className="fa-solid fa-arrow-left text-lg"></i>
-        </button>
-        <h1 className="text-2xl font-bold">
-          {isEditing ? 'Editar Atividade' : 'Nova Atividade'}
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(`/activities?month=${form.month_reference}`)}
+            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="Voltar"
+          >
+            <i className="fa-solid fa-arrow-left text-lg"></i>
+          </button>
+          <h1 className="text-2xl font-bold">
+            {isEditing ? 'Editar Atividade' : 'Nova Atividade'}
+          </h1>
+        </div>
+
+        {/* Auto-save indicator */}
+        {autoSaveStatus === 'saving' && (
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <i className="fa-solid fa-spinner fa-spin text-[10px]"></i>
+            Salvando...
+          </span>
+        )}
+        {autoSaveStatus === 'saved' && (
+          <span className="text-xs text-success flex items-center gap-1">
+            <i className="fa-solid fa-check text-[10px]"></i>
+            Salvo automaticamente
+          </span>
+        )}
       </div>
 
       {saved && (
@@ -184,11 +277,25 @@ export function ActivityFormPage() {
         </div>
       )}
 
+      {errors.length > 0 && (
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
+          <div className="flex items-center gap-2 font-medium mb-1">
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <span>Preencha os campos obrigatórios:</span>
+          </div>
+          <ul className="list-disc list-inside text-sm">
+            {errors.map((err) => (
+              <li key={err.field}>{err.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Descrição */}
         <div>
           <label htmlFor="description" className={labelClass}>
-            Descrição
+            Descrição <span className="text-destructive">*</span>
           </label>
           <textarea
             id="description"
@@ -197,15 +304,18 @@ export function ActivityFormPage() {
             onChange={handleChange}
             rows={5}
             placeholder="Descreva a atividade realizada..."
-            className={inputClass + ' resize-y'}
+            className={fieldClass('description') + ' resize-y'}
           />
+          {fieldError('description') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
+          )}
         </div>
 
         {/* Período */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="date_start" className={labelClass}>
-              Data de Início
+              Data de Início <span className="text-destructive">*</span>
             </label>
             <input
               id="date_start"
@@ -213,12 +323,15 @@ export function ActivityFormPage() {
               type="date"
               value={form.date_start}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass('date_start')}
             />
+            {fieldError('date_start') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('date_start')}</p>
+            )}
           </div>
           <div>
             <label htmlFor="date_end" className={labelClass}>
-              Data de Término
+              Data de Término <span className="text-destructive">*</span>
             </label>
             <input
               id="date_end"
@@ -226,8 +339,11 @@ export function ActivityFormPage() {
               type="date"
               value={form.date_end}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass('date_end')}
             />
+            {fieldError('date_end') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('date_end')}</p>
+            )}
           </div>
         </div>
 
@@ -272,7 +388,7 @@ export function ActivityFormPage() {
 
           <div>
             <label htmlFor="month_reference" className={labelClass}>
-              Mês de Referência
+              Mês de Referência <span className="text-destructive">*</span>
             </label>
             <input
               id="month_reference"
@@ -282,8 +398,11 @@ export function ActivityFormPage() {
               onChange={handleChange}
               placeholder="MM/YYYY"
               pattern="\d{2}/\d{4}"
-              className={inputClass}
+              className={fieldClass('month_reference')}
             />
+            {fieldError('month_reference') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('month_reference')}</p>
+            )}
           </div>
         </div>
 

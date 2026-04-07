@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AppLayout } from './components/AppLayout'
 import { HomePage } from './pages/HomePage'
@@ -7,10 +8,21 @@ import { ActivitiesPage } from './pages/ActivitiesPage'
 import { ActivityFormPage } from './pages/ActivityFormPage'
 import { ActivityDetailPage } from './pages/ActivityDetailPage'
 
+/** Listens for navigation commands from the Electron main process (System Tray) */
+function ElectronNavigator() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (!window.electronAPI?.onNavigate) return
+    return window.electronAPI.onNavigate((path) => navigate(path))
+  }, [navigate])
+  return null
+}
+
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark">
       <BrowserRouter>
+        <ElectronNavigator />
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<HomePage />} />

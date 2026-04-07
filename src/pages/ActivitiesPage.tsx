@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { ActivityData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
+import { isActivityComplete } from '../utils/validation'
 
 const STATUS_COLORS: Record<string, string> = {
   'Em andamento': 'bg-brand-blue/15 text-primary',
@@ -160,6 +161,15 @@ export function ActivitiesPage() {
                     <span className="text-sm font-medium text-muted-foreground">
                       Atividade {idx + 1}
                     </span>
+                    {!isActivityComplete(activity) && (
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-medium bg-warning/15 text-warning-foreground inline-flex items-center gap-1"
+                        title="Campos obrigatórios não preenchidos"
+                      >
+                        <i className="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                        Incompleta
+                      </span>
+                    )}
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${STATUS_COLORS[activity.status] || ''}`}
                     >

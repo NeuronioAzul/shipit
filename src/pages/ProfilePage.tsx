@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import type { UserProfileData } from '../vite-env'
+import { validateProfile, type ValidationError } from '../utils/validation'
 
 const ROLES = [
   'ADMINISTRADOR DE DADOS',
@@ -65,6 +66,7 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   useEffect(() => {
     async function loadProfile() {
@@ -107,6 +109,13 @@ export function ProfilePage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+
+    const validationErrors = validateProfile(form)
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+    setErrors([])
     setSaving(true)
 
     try {
@@ -127,8 +136,19 @@ export function ProfilePage() {
   const inputClass =
     'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
+  const inputErrorClass =
+    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
 
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
+  }
+
+  function fieldClass(field: string): string {
+    return fieldError(field) ? inputErrorClass : inputClass
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -152,6 +172,20 @@ export function ProfilePage() {
         </div>
       )}
 
+      {errors.length > 0 && (
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
+          <div className="flex items-center gap-2 font-medium mb-1">
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <span>Preencha os campos obrigatórios:</span>
+          </div>
+          <ul className="list-disc list-inside text-sm">
+            {errors.map((err) => (
+              <li key={err.field}>{err.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Nome Completo */}
         <div>
@@ -166,8 +200,11 @@ export function ProfilePage() {
             value={form.full_name}
             onChange={handleChange}
             placeholder="Ex: Maria Silva de Souza e Silva"
-            className={inputClass}
+            className={fieldClass('full_name')}
           />
+          {fieldError('full_name') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('full_name')}</p>
+          )}
         </div>
 
         {/* Cargo e Senioridade - row */}
@@ -182,13 +219,16 @@ export function ProfilePage() {
               required
               value={form.role}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass('role')}
             >
               <option value="">Selecione o cargo</option>
               {ROLES.map((r) => (
                 <option key={r} value={r}>{r}</option>
               ))}
             </select>
+            {fieldError('role') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('role')}</p>
+            )}
           </div>
 
           <div>
@@ -201,13 +241,16 @@ export function ProfilePage() {
               required
               value={form.seniority_level}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass('seniority_level')}
             >
               <option value="">Selecione a senioridade</option>
               {SENIORITY_LEVELS.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
+            {fieldError('seniority_level') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('seniority_level')}</p>
+            )}
           </div>
         </div>
 
@@ -224,8 +267,11 @@ export function ProfilePage() {
             value={form.contract_identifier}
             onChange={handleChange}
             placeholder="Ex: Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda"
-            className={inputClass}
+            className={fieldClass('contract_identifier')}
           />
+          {fieldError('contract_identifier') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('contract_identifier')}</p>
+          )}
         </div>
 
         {/* Perfil e Tipo de Atendimento - row */}
@@ -240,13 +286,16 @@ export function ProfilePage() {
               required
               value={form.profile_type}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass('profile_type')}
             >
               <option value="">Selecione o perfil</option>
               {PROFILE_TYPES.map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
+            {fieldError('profile_type') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('profile_type')}</p>
+            )}
           </div>
 
           <div>
@@ -259,13 +308,16 @@ export function ProfilePage() {
               required
               value={form.attendance_type}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass('attendance_type')}
             >
               <option value="">Selecione</option>
               {ATTENDANCE_TYPES.map((a) => (
                 <option key={a} value={a}>{a}</option>
               ))}
             </select>
+            {fieldError('attendance_type') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('attendance_type')}</p>
+            )}
           </div>
         </div>
 
@@ -282,8 +334,11 @@ export function ProfilePage() {
             value={form.squad_project_application}
             onChange={handleChange}
             placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={inputClass}
+            className={fieldClass('squad_project_application')}
           />
+          {fieldError('squad_project_application') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('squad_project_application')}</p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
             Separe com vírgula caso atue em mais de um. Ex: Squad 2 / Projeto SIMEC, Squad SESU / Projeto PNAES
           </p>
@@ -302,8 +357,11 @@ export function ProfilePage() {
             onChange={handleChange}
             rows={4}
             placeholder="Texto explicativo para correlacionar as atividades do mês com o perfil..."
-            className={inputClass + ' resize-y'}
+            className={fieldClass('correlating_activities') + ' resize-y'}
           />
+          {fieldError('correlating_activities') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('correlating_activities')}</p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
             Copie do arquivo modelo que você recebeu.
           </p>

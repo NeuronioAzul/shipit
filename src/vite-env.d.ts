@@ -22,6 +22,12 @@ export interface ElectronAPI {
 
   // Dialogs
   selectImages: () => Promise<string[]>
+
+  // Tray
+  setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') => Promise<void>
+
+  // Navigation (main → renderer)
+  onNavigate: (callback: (path: string) => void) => () => void
 }
 
 export interface UserProfileData {
