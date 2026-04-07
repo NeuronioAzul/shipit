@@ -1,9 +1,27 @@
 /// <reference types="vite/client" />
 
 export interface ElectronAPI {
+  // Profile
   getUserProfile: () => Promise<UserProfileData | null>
   saveUserProfile: (data: Partial<UserProfileData>) => Promise<UserProfileData>
   getVersion: () => Promise<string>
+
+  // Activities
+  getActivities: (monthReference: string) => Promise<ActivityData[]>
+  getActivity: (id: string) => Promise<ActivityData | null>
+  saveActivity: (data: Partial<ActivityData>) => Promise<ActivityData>
+  deleteActivity: (id: string) => Promise<boolean>
+  reorderActivities: (items: { id: string; order: number }[]) => Promise<void>
+
+  // Evidences
+  saveEvidence: (activityId: string, sourcePath: string, caption: string | null) => Promise<EvidenceData>
+  saveEvidenceFromBuffer: (activityId: string, buffer: ArrayBuffer, extension: string, caption: string | null) => Promise<EvidenceData>
+  updateEvidenceCaption: (id: string, caption: string) => Promise<EvidenceData | null>
+  deleteEvidence: (id: string) => Promise<boolean>
+  getEvidenceFilePath: (id: string) => Promise<string | null>
+
+  // Dialogs
+  selectImages: () => Promise<string[]>
 }
 
 export interface UserProfileData {
@@ -18,6 +36,31 @@ export interface UserProfileData {
   squad_project_application: string
   mode: 'dark' | 'light'
   last_updated?: string
+}
+
+export type ActivityStatus = 'Em andamento' | 'Concluído' | 'Cancelado' | 'Pendente'
+export type AttendanceType = 'Presencial' | 'Remoto' | 'Híbrido'
+
+export interface ActivityData {
+  id: string
+  order: number
+  description: string
+  date_start: string | null
+  date_end: string | null
+  link_ref: string | null
+  status: ActivityStatus
+  month_reference: string
+  attendance_type: AttendanceType | null
+  last_updated: string
+  evidences?: EvidenceData[]
+}
+
+export interface EvidenceData {
+  id: string
+  activity_id: string
+  file_path: string
+  caption: string | null
+  date_added: string
 }
 
 declare global {

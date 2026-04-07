@@ -1,0 +1,362 @@
+import { useEffect, useState, useCallback, type FormEvent } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import type { ActivityData, EvidenceData } from '../vite-env'
+import { localDb, getCurrentMonthRef } from '../services/localDb'
+import { EvidenceUpload } from '../components/EvidenceUpload'
+
+const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
+const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
+
+interface ActivityForm {
+  description: string
+  date_start: string
+  date_end: string
+  status: string
+  link_ref: string
+  attendance_type: string
+  month_reference: string
+}
+
+export function ActivityFormPage() {
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const [searchParams] = useSearchParams()
+  const isEditing = !!id
+
+  const defaultMonth = searchParams.get('month') || getCurrentMonthRef()
+
+  const [form, setForm] = useState<ActivityForm>({
+    description: '',
+    date_start: '',
+    date_end: '',
+    status: 'Pendente',
+    link_ref: '',
+    attendance_type: '',
+    month_reference: defaultMonth,
+  })
+  const [evidences, setEvidences] = useState<EvidenceData[]>([])
+  const [activityId, setActivityId] = useState<string | null>(id || null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [profileAttendance, setProfileAttendance] = useState<string>('')
+
+  // Load profile attendance for default
+  useEffect(() => {
+    async function loadProfile() {
+      let profile: { attendance_type?: string } | null = null
+      if (window.electronAPI) {
+        profile = await window.electronAPI.getUserProfile()
+      } else {
+        const stored = localStorage.getItem('shipit-profile')
+        if (stored) profile = JSON.parse(stored)
+      }
+      if (profile?.attendance_type) {
+        setProfileAttendance(profile.attendance_type)
+        if (!isEditing) {
+          setForm((prev) => ({
+            ...prev,
+            attendance_type: prev.attendance_type || profile!.attendance_type!,
+          }))
+        }
+      }
+    }
+    loadProfile()
+  }, [isEditing])
+
+  // Load existing activity for edit mode
+  const loadActivity = useCallback(async () => {
+    if (!id) return
+    let activity: ActivityData | null = null
+    if (window.electronAPI) {
+      activity = await window.electronAPI.getActivity(id)
+    } else {
+      activity = localDb.getActivity(id)
+    }
+    if (activity) {
+      setForm({
+        description: activity.description || '',
+        date_start: activity.date_start || '',
+        date_end: activity.date_end || '',
+        status: activity.status,
+        link_ref: activity.link_ref || '',
+        attendance_type: activity.attendance_type || '',
+        month_reference: activity.month_reference,
+      })
+      setEvidences(activity.evidences || [])
+      setActivityId(activity.id)
+    }
+  }, [id])
+
+  useEffect(() => {
+    loadActivity()
+  }, [loadActivity])
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+
+    try {
+      const data: Partial<ActivityData> = {
+        description: form.description,
+        date_start: form.date_start || null,
+        date_end: form.date_end || null,
+        status: form.status as ActivityData['status'],
+        link_ref: form.link_ref || null,
+        attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
+        month_reference: form.month_reference,
+      }
+
+      if (activityId) data.id = activityId
+
+      let saved: ActivityData
+      if (window.electronAPI) {
+        saved = await window.electronAPI.saveActivity(data)
+      } else {
+        saved = localDb.saveActivity(data)
+      }
+      setActivityId(saved.id)
+      setSaved(true)
+
+      setTimeout(() => {
+        navigate(`/activities?month=${form.month_reference}`)
+      }, 800)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function handleEvidenceAdded(evidence: EvidenceData) {
+    setEvidences((prev) => [...prev, evidence])
+  }
+
+  async function handleDeleteEvidence(evidenceId: string) {
+    if (window.electronAPI) {
+      await window.electronAPI.deleteEvidence(evidenceId)
+    } else {
+      localDb.deleteEvidence(evidenceId)
+    }
+    setEvidences((prev) => prev.filter((e) => e.id !== evidenceId))
+  }
+
+  async function handleUpdateCaption(evidenceId: string, caption: string) {
+    if (window.electronAPI) {
+      await window.electronAPI.updateEvidenceCaption(evidenceId, caption)
+    } else {
+      localDb.updateEvidenceCaption(evidenceId, caption)
+    }
+    setEvidences((prev) =>
+      prev.map((e) => (e.id === evidenceId ? { ...e, caption } : e))
+    )
+  }
+
+  const inputClass =
+    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
+    'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
+  const labelClass = 'block text-sm font-medium text-foreground mb-1'
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigate(`/activities?month=${form.month_reference}`)}
+          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          title="Voltar"
+        >
+          <i className="fa-solid fa-arrow-left text-lg"></i>
+        </button>
+        <h1 className="text-2xl font-bold">
+          {isEditing ? 'Editar Atividade' : 'Nova Atividade'}
+        </h1>
+      </div>
+
+      {saved && (
+        <div className="mb-4 p-3 bg-success/10 border border-success/30 rounded-lg text-success flex items-center gap-2">
+          <i className="fa-solid fa-check-circle"></i>
+          <span>Atividade salva com sucesso!</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Descrição */}
+        <div>
+          <label htmlFor="description" className={labelClass}>
+            Descrição
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            rows={5}
+            placeholder="Descreva a atividade realizada..."
+            className={inputClass + ' resize-y'}
+          />
+        </div>
+
+        {/* Período */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="date_start" className={labelClass}>
+              Data de Início
+            </label>
+            <input
+              id="date_start"
+              name="date_start"
+              type="date"
+              value={form.date_start}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="date_end" className={labelClass}>
+              Data de Término
+            </label>
+            <input
+              id="date_end"
+              name="date_end"
+              type="date"
+              value={form.date_end}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        {/* Status + Atendimento + Mês */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="status" className={labelClass}>
+              Status
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="attendance_type" className={labelClass}>
+              Tipo de Atendimento
+            </label>
+            <select
+              id="attendance_type"
+              name="attendance_type"
+              value={form.attendance_type}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="">
+                {profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione'}
+              </option>
+              {ATTENDANCE_TYPES.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="month_reference" className={labelClass}>
+              Mês de Referência
+            </label>
+            <input
+              id="month_reference"
+              name="month_reference"
+              type="text"
+              value={form.month_reference}
+              onChange={handleChange}
+              placeholder="MM/YYYY"
+              pattern="\d{2}/\d{4}"
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        {/* Links de Referência */}
+        <div>
+          <label htmlFor="link_ref" className={labelClass}>
+            Links de Referência
+          </label>
+          <textarea
+            id="link_ref"
+            name="link_ref"
+            value={form.link_ref}
+            onChange={handleChange}
+            rows={2}
+            placeholder="Cole os links aqui, um por linha (ex: https://gitlab.example.com/merge_request/123)"
+            className={inputClass + ' resize-y'}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Insira um link por linha. GitLab, Jira, etc.
+          </p>
+        </div>
+
+        {/* Evidências — só mostra se tiver activityId (precisa salvar a atividade primeiro) */}
+        {activityId ? (
+          <div>
+            <label className={labelClass}>Evidências (Prints)</label>
+            <EvidenceUpload
+              activityId={activityId}
+              evidences={evidences}
+              onEvidenceAdded={handleEvidenceAdded}
+              onEvidenceDeleted={handleDeleteEvidence}
+              onCaptionUpdated={handleUpdateCaption}
+            />
+          </div>
+        ) : (
+          <div className="p-4 border border-dashed border-border rounded-lg text-center text-muted-foreground bg-muted/30">
+            <i className="fa-solid fa-image mr-2"></i>
+            Salve a atividade primeiro para anexar evidências.
+          </div>
+        )}
+
+        {/* Submit */}
+        <div className="flex gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
+              hover:opacity-90 transition-all cursor-pointer shadow-md
+              disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {saving ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin"></i>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-floppy-disk"></i>
+                {isEditing ? 'Salvar Alterações' : 'Criar Atividade'}
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/activities?month=${form.month_reference}`)}
+            className="px-6 py-2.5 border border-border text-foreground rounded-lg
+              hover:bg-muted transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

@@ -1,5 +1,7 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron'
+import 'reflect-metadata'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net } from 'electron'
 import path from 'path'
+import fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -90,6 +92,26 @@ function createTray() {
 }
 
 app.whenReady().then(() => {
+  // Register custom protocol to serve evidence images securely
+  protocol.handle('shipit-evidence', (request) => {
+    const url = new URL(request.url)
+    const filePath = url.searchParams.get('path')
+    if (!filePath) {
+      return new Response('Missing path', { status: 400 })
+    }
+    // Security: only allow files inside the evidences directory
+    const evidencesDir = path.join(app.getPath('userData'), 'evidences')
+    const resolved = path.resolve(filePath)
+    if (!resolved.startsWith(evidencesDir)) {
+      return new Response('Forbidden', { status: 403 })
+    }
+    if (!fs.existsSync(resolved)) {
+      return new Response('Not found', { status: 404 })
+    }
+    const { pathToFileURL } = require('url') as typeof import('url')
+    return net.fetch(pathToFileURL(resolved).href)
+  })
+
   createWindow()
   createTray()
 })
@@ -119,4 +141,71 @@ ipcMain.handle('db:saveUserProfile', async (_event, profileData) => {
 
 ipcMain.handle('app:getVersion', () => {
   return app.getVersion()
+})
+
+// ──── Activity IPC ────
+
+ipcMain.handle('db:getActivities', async (_event, monthReference: string) => {
+  const { getActivities } = await import('./database')
+  return getActivities(monthReference)
+})
+
+ipcMain.handle('db:getActivity', async (_event, id: string) => {
+  const { getActivity } = await import('./database')
+  return getActivity(id)
+})
+
+ipcMain.handle('db:saveActivity', async (_event, data) => {
+  const { saveActivity } = await import('./database')
+  return saveActivity(data)
+})
+
+ipcMain.handle('db:deleteActivity', async (_event, id: string) => {
+  const { deleteActivity } = await import('./database')
+  return deleteActivity(id)
+})
+
+ipcMain.handle('db:reorderActivities', async (_event, items) => {
+  const { reorderActivities } = await import('./database')
+  return reorderActivities(items)
+})
+
+// ──── Evidence IPC ────
+
+ipcMain.handle('db:saveEvidence', async (_event, activityId: string, sourcePath: string, caption: string | null) => {
+  const { saveEvidence } = await import('./database')
+  return saveEvidence(activityId, sourcePath, caption)
+})
+
+ipcMain.handle('db:saveEvidenceFromBuffer', async (_event, activityId: string, bufferData: ArrayBuffer, extension: string, caption: string | null) => {
+  const { saveEvidenceFromBuffer } = await import('./database')
+  return saveEvidenceFromBuffer(activityId, Buffer.from(bufferData), extension, caption)
+})
+
+ipcMain.handle('db:updateEvidenceCaption', async (_event, id: string, caption: string) => {
+  const { updateEvidenceCaption } = await import('./database')
+  return updateEvidenceCaption(id, caption)
+})
+
+ipcMain.handle('db:deleteEvidence', async (_event, id: string) => {
+  const { deleteEvidence } = await import('./database')
+  return deleteEvidence(id)
+})
+
+ipcMain.handle('db:getEvidenceFilePath', async (_event, id: string) => {
+  const { getEvidenceFilePath } = await import('./database')
+  return getEvidenceFilePath(id)
+})
+
+// ──── Dialog IPC ────
+
+ipcMain.handle('app:selectImages', async () => {
+  if (!mainWindow) return []
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Imagens', extensions: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'] },
+    ],
+  })
+  return result.canceled ? [] : result.filePaths
 })

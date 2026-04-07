@@ -25,38 +25,38 @@
 
 ---
 
-## Fase 2: Fluxo de Registro ⬅️ _próxima_
+## Fase 2: Fluxo de Registro ✅
 
-- [ ] IPC handlers para CRUD de atividades (`db:getActivities`, `db:saveActivity`, `db:deleteActivity`)
-- [ ] Formulário de Nova Atividade
-  - [ ] Campo de descrição (texto longo)
-  - [ ] Seleção de período (data início → data fim)
-  - [ ] Seletor de status (Em andamento, Concluído, Cancelado, Pendente)
-  - [ ] Campo de links de referência (múltiplos URLs)
-  - [ ] Seletor de tipo de atendimento (herda do perfil, pode sobrescrever)
-  - [ ] Mês de referência (auto-preenchido, editável)
-- [ ] Área de upload de evidências (prints)
-  - [ ] Upload via seleção de arquivo
-  - [ ] Arrastar e soltar (drag & drop)
-  - [ ] Colar da área de transferência (clipboard paste)
-  - [ ] Cópia automática para diretório interno do app
-  - [ ] Campo de legenda (caption) por evidência
-- [ ] IPC handlers para evidências (`db:saveEvidence`, `db:deleteEvidence`)
+- [x] IPC handlers para CRUD de atividades (`db:getActivities`, `db:saveActivity`, `db:deleteActivity`)
+- [x] Formulário de Nova Atividade
+  - [x] Campo de descrição (texto longo)
+  - [x] Seleção de período (data início → data fim)
+  - [x] Seletor de status (Em andamento, Concluído, Cancelado, Pendente)
+  - [x] Campo de links de referência (múltiplos URLs)
+  - [x] Seletor de tipo de atendimento (herda do perfil, pode sobrescrever)
+  - [x] Mês de referência (auto-preenchido, editável)
+- [x] Área de upload de evidências (prints)
+  - [x] Upload via seleção de arquivo
+  - [x] Arrastar e soltar (drag & drop)
+  - [x] Colar da área de transferência (clipboard paste)
+  - [x] Cópia automática para diretório interno do app
+  - [x] Campo de legenda (caption) por evidência
+- [x] IPC handlers para evidências (`db:saveEvidence`, `db:deleteEvidence`)
 
-### Fase 2.1: Tela de Listagem de Atividades
+### Fase 2.1: Tela de Listagem de Atividades ✅
 
-- [ ] Listagem das atividades do mês selecionado
-- [ ] Seletor de mês de referência
-- [ ] Opção editar atividade
-- [ ] Opção excluir atividade (com confirmação)
+- [x] Listagem das atividades do mês selecionado
+- [x] Seletor de mês de referência
+- [x] Opção editar atividade
+- [x] Opção excluir atividade (com confirmação)
 - [ ] Reorganização por drag & drop (campo `order`)
 
-### Fase 2.2: Tela de Detalhes da Atividade
+### Fase 2.2: Tela de Detalhes da Atividade ✅
 
-- [ ] Exibição completa: descrição, período, status, links, evidências
-- [ ] Edição inline dos detalhes
-- [ ] Adicionar/editar legendas das evidências
-- [ ] Visualização das imagens de evidência
+- [x] Exibição completa: descrição, período, status, links, evidências
+- [x] Edição inline dos detalhes (via botão Editar → rota edit)
+- [x] Adicionar/editar legendas das evidências
+- [x] Visualização das imagens de evidência
 
 ### Fase 2.3: Validação de Campos Obrigatórios
 

@@ -34,22 +34,33 @@ export function HomePage() {
 
   // Phase 2.5: Dashboard will replace this
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4">
+    <div className="flex flex-col items-center justify-center h-full gap-6">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-foreground mb-2">
           Bem-vindo ao Ship<span className="text-accent">It!</span>
         </h1>
         <p className="text-muted-foreground">
-          Seu perfil está configurado. O dashboard será implementado na Fase 2.5.
+          Seu perfil está configurado. Gerencie suas atividades mensais abaixo.
         </p>
       </div>
-      <button
-        onClick={() => navigate('/profile')}
-        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-      >
-        <i className="fa-solid fa-gear mr-2"></i>
-        Editar Perfil
-      </button>
+      <div className="flex gap-3">
+        <button
+          onClick={() => navigate('/activities')}
+          className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
+            hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
+        >
+          <i className="fa-solid fa-clipboard-list mr-1"></i>
+          Atividades
+        </button>
+        <button
+          onClick={() => navigate('/profile')}
+          className="px-4 py-2.5 border border-border text-foreground rounded-lg
+            hover:bg-muted transition-colors cursor-pointer flex items-center gap-2"
+        >
+          <i className="fa-solid fa-gear"></i>
+          Editar Perfil
+        </button>
+      </div>
     </div>
   )
 }

@@ -64,7 +64,9 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 - **Pages** in `src/pages/`, **reusable components** in `src/components/`, **contexts** in `src/contexts/`
 - **Entity files**: one entity per file in `electron/entities/`, export related enums from entity file
 - **IPC handlers**: registered in `electron/main.ts` at app startup, prefixed (`db:`, `app:`)
+- **Services** in `src/services/` for browser-fallback helpers (`localDb.ts`)
 - **Form pattern**: typed interface for form state, `useEffect` to load, handler to save via IPC
+- **Browser fallback**: when `electronAPI` unavailable, uses `localStorage` via `localDb` service
 - **Tailwind classes**: use CSS variable tokens (`bg-background`, `text-foreground`, `bg-primary`) — not raw color values
 - **Draggable title bar**: Header uses `WebkitAppRegion: 'drag'`, interactive elements use `'no-drag'`
 - **Language**: UI strings and comments in Portuguese (pt-BR); code identifiers in English
@@ -78,9 +80,10 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 
 ## Existing Documentation
 
+- [docs/TODO.md](docs/TODO.md) — Full roadmap with task tracking
 - [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) — Full dependency audit with versions and system requirements
 - [docs/plan-docx-generator/](docs/plan-docx-generator/) — DOCX report generation feature plan (Phase 2.5+)
 
 ## Roadmap Context
 
-Phase 1 (Foundation) is complete. Phase 2.5 will add a dashboard replacing the current HomePage placeholder and DOCX report generation capability.
+Phases 1 (Foundation) and 2 (Fluxo de Registro) are complete. Next: Phase 2.3 (Validação), 2.4 (Auto-save), 2.5 (Dashboard), then Phase 3 (PDF/DOCX generation).
