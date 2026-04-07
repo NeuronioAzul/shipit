@@ -14,13 +14,10 @@ export function Header() {
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <img
-          src="/images/icon-foguete-logo-branco.svg"
+          src="/images/logo-composto-colorido.svg"
           alt="ShipIt! Logo"
-          className="h-8 w-8"
+          className="h-8"
         />
-        <span className="text-xl font-bold tracking-tight">
-          Ship<span className="text-accent">It!</span>
-        </span>
       </Link>
 
       <div
