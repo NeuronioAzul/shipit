@@ -58,40 +58,40 @@
 - [x] Adicionar/editar legendas das evidências
 - [x] Visualização das imagens de evidência
 
-### Fase 2.3: Validação de Campos Obrigatórios
+### Fase 2.3: Validação de Campos Obrigatórios ✅
 
-- [ ] Validação antes de gerar relatório (description, date_start, date_end, status)
-- [ ] Validação do perfil do usuário (todos os campos obrigatórios)
-- [ ] Ícone de alerta nas atividades incompletas
-- [ ] Mensagens de erro detalhadas
+- [x] Validação antes de gerar relatório (description, date_start, date_end, status)
+- [x] Validação do perfil do usuário (todos os campos obrigatórios)
+- [x] Ícone de alerta nas atividades incompletas
+- [x] Mensagens de erro detalhadas
 
-### Fase 2.3.1: System Tray icon
+### Fase 2.3.1: System Tray icon ✅
 
 Implementação do ícone do ShipIt! no System Tray para fácil acesso.
 Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
 
-- [ ] Implementação do ícone do ShipIt! no System Tray para fácil acesso.
-- [ ] Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
-- [ ] Ícone deve refletir o status do app (ex: alerta para atividades incompletas)
-- [ ] Menu de contexto no ícone com opções rápidas (ex: "Nova Atividade", "Abrir Dashboard", "Sair")
+- [x] Implementação do ícone do ShipIt! no System Tray para fácil acesso.
+- [x] Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
+- [x] Ícone deve refletir o status do app (ex: alerta para atividades incompletas)
+- [x] Menu de contexto no ícone com opções rápidas (ex: "Nova Atividade", "Abrir Dashboard", "Sair")
 - [ ] Compatibilidade com Windows, macOS e Linux (ajustes de ícone e comportamento conforme plataforma)
 - [ ] Configuração para iniciar o app junto com o sistema operacional, pode alterar em configurações.
 
-### Fase 2.4: Sistema de Rascunho e Salvamento Automático
+### Fase 2.4: Sistema de Rascunho e Salvamento Automático ✅
 
-- [ ] Auto-save no formulário de atividade
-- [ ] Recuperação de rascunhos após fechamento inesperado
-- [ ] Indicador visual de "salvando..." / "salvo"
+- [x] Auto-save no formulário de atividade
+- [x] Recuperação de rascunhos após fechamento inesperado
+- [x] Indicador visual de "salvando..." / "salvo"
 
-### Fase 2.5: Dashboard de Resumo Mensal
+### Fase 2.5: Dashboard de Resumo Mensal ✅
 
-- [ ] Dashboard como tela inicial (substituir Empty State pós-perfil)
-- [ ] Seletor de mês/ano na parte superior
-- [ ] Cards de resumo (total, concluídas, em andamento, canceladas)
-- [ ] Gráfico de Gantt com atividades × dias do mês
-- [ ] Listagem de atividades com: número, descrição resumida, período, status, atendimento, referência de páginas
-- [ ] Botão "Gerar PDF" do mês selecionado
-- [ ] Troca de mês atualiza todos os dados
+- [x] Dashboard como tela inicial (substituir Empty State pós-perfil)
+- [x] Seletor de mês/ano na parte superior
+- [x] Cards de resumo (total, concluídas, em andamento, canceladas)
+- [x] Gráfico de Gantt com atividades × dias do mês
+- [x] Listagem de atividades com: número, descrição resumida, período, status, atendimento, referência de páginas
+- [x] Botão "Gerar PDF" do mês selecionado
+- [x] Troca de mês atualiza todos os dados
 
 ---
 
