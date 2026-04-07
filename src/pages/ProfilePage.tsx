@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
+import type { UserProfileData } from '../vite-env'
 
 const ROLES = [
   'ADMINISTRADOR DE DADOS',

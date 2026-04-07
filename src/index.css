@@ -35,6 +35,9 @@
   --sidebar-bg: hsl(0 0% 100%);
   --sidebar-foreground: hsl(0 0% 20%);
   --sidebar-border: hsl(220 13% 91%);
+
+  --header: hsl(220 26% 14%);
+  --header-foreground: hsl(210 20% 94%);
 }
 
 /* Dark Mode */
@@ -69,6 +72,9 @@
   --sidebar-bg: hsl(220 26% 11%);
   --sidebar-foreground: hsl(0 0% 88%);
   --sidebar-border: hsl(0 0% 26%);
+
+  --header: hsl(220 30% 10%);
+  --header-foreground: hsl(210 20% 92%);
 }
 
 /* ===== Map CSS variables to Tailwind utilities ===== */
@@ -103,6 +109,9 @@
   --color-sidebar-bg: var(--sidebar-bg);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-border: var(--sidebar-border);
+
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
 
   /* Direct brand colors for one-off usage */
   --color-brand-blue: hsl(216 64% 30%);

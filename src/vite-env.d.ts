@@ -1,12 +1,12 @@
 /// <reference types="vite/client" />
 
-interface ElectronAPI {
+export interface ElectronAPI {
   getUserProfile: () => Promise<UserProfileData | null>
   saveUserProfile: (data: Partial<UserProfileData>) => Promise<UserProfileData>
   getVersion: () => Promise<string>
 }
 
-interface UserProfileData {
+export interface UserProfileData {
   id?: number
   full_name: string
   role: string
@@ -25,3 +25,5 @@ declare global {
     electronAPI?: ElectronAPI
   }
 }
+
+export {}
