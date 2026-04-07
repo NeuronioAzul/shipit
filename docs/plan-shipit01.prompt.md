@@ -11,8 +11,9 @@ Bastará clicar no ícone no System Tray e se abrirá a janela para continuar ou
 ## 2. Stack Tecnológica
 
 | Componente | Tecnologia | Justificativa |
-|----------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------- | ---------- | ------------- |
 | Framework Desktop | Electron | Multiplataforma nativo e fácil acesso ao sistema de arquivos. |
+| Backend | Node.js | Permite integração com Electron e fácil manipulação de arquivos e banco de dados. |
 | Interface (UI) | React + Tailwind CSS | Rapidez no desenvolvimento e estilização precisa ("Pixel Perfect"). |
 | Banco de Dados | SQLite (via TypeORM) | Local, rápido e não exige servidor externo. |
 | Geração de PDF | Puppeteer | Renderiza o PDF a partir de HTML com fidelidade absoluta ao layout original. |
@@ -25,17 +26,33 @@ O banco de dados local será estruturado em três eixos:
 ### A. Perfil do Usuário (user_profile)
 
 - *full_name*: Texto (Ex: `Maria Silva de Souza e Silva`) Precisa ser o nome completo para preencher o campo "Nome Completo" do relatório.
-- *role*: Texto (Ex: `Engenheiro de Software`) o usuário fica livre para escolher o que colocar aqui.
+- *role*: Texto (Ex: `Engenheiro de Software`) o usuário fica livre para escolher entre:
+  - 'ADMINISTRADOR DE DADOS', 'ANALISTA DE DADOS E BUSINESS INTELLIGENCE', 'ANALISTA DE QUALIDADE E TESTES DE SOFTWARE', 'ANALISTA DE REQUISITOS', 'ARQUITETO DE DADOS', 'ARQUITETO DE SOFTWARE', 'ARQUITETO DE SOFTWARE DEVOPS', 'ENGENHEIRO DE AUTOMAÇÃO', 'CIENTISTA DE DADOS', 'ENGENHEIRO DE SOFTWARE', 'ENGENHEIRO DE DADOS'
 - *seniority_level*: Enum (Aprendiz, Júnior, Pleno, Sênior, Especialista, Líder, Master)
 - *contract_identifier*: Texto - Identificador do Contrato (Ex: `Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda`)
-- *profile_type*: Texto (Ex: `DEV-9`)
+- *profile_type*: Texto (Ex: `DEV-9`) valores reais de (DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06, DEV-06, DEV-07, DEV-08, DEV-09, DEV-10)
 - *correlating_activities*: Texto Longo (Ex: `Desenvolve ... artificial.`) é um texto explicativo para correlacionar as atividades do mês com o perfil do usuário, será copiado do arquivo modelo que o profissional receber.
 - *attendance_type*: Enum (Presencial, Remoto, Híbrido)
 - *squad_project_application*: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o usuário pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
+- *last_updated*: Timestamp (Data e hora da última atualização do perfil) (preenchido automaticamente) apenas loga a última vez que o usuário atualizou o perfil, para fins de controle e para exibir essa informação na tela de configurações do perfil do usuário.
+- *mode*: Enum (Dark Mode *Default, Light Mode) (preenchido automaticamente) o usuário escolhe o modo na configuração inicial, e pode alterar posteriormente nas configurações do perfil do usuário, para personalizar a aparência do aplicativo de acordo com sua preferência visual.
+
+### A.1. Configurações de Alertas (alerts)
+
+Configurações dos meus alertas 5 dias antes duas vezes por dia, 3 dias antes três vezes por dia, 2 dias antes quatro vezes por dia, 1 dia antes cinco vezes por dia, e no último dia do mês seis vezes por dia, o app deve exibir um alerta para o usuário preencher os campos obrigatórios para gerar o relatório mensal, e o app deve impedir a geração do PDF se houver atividades com campos obrigatórios faltando.
+
+- *alert_days_before*: Array de Inteiros (Ex: [5, 3, 2, 1, 0]) (preenchido automaticamente) o usuário pode escolher quantos dias antes do final do mês deseja receber os alertas, e o app deve exibir os alertas de acordo com a configuração escolhida.
+- *alert_frequency*: Array de Inteiros (Ex: [2, 3, 4, 5, 6]) (preenchido automaticamente) o usuário pode escolher quantas vezes por dia deseja receber os alertas nos dias configurados, e o app deve exibir os alertas de acordo com a configuração escolhida.
+- *last_alert_sent*: Timestamp (Data e hora do último alerta enviado) (preenchido automaticamente) o app deve logar a data e hora do último alerta enviado para evitar enviar alertas repetidos no mesmo dia, e para exibir essa informação na tela de configurações do perfil do usuário.
+- *alert_enabled*: Boolean (true/false) (preenchido automaticamente) o usuário pode escolher habilitar ou desabilitar os alertas, e o app deve respeitar essa configuração para enviar ou não os alertas.
+- *alert_time*: String (HH:mm) (preenchido automaticamente) o usuário pode escolher o horário do dia para receber os alertas, e o app deve respeitar essa configuração para enviar os alertas no horário escolhido.
+- *alert_message*: String (Ex: "Lembrete: Preencha os campos obrigatórios para gerar o relatório mensal!") (preenchido automaticamente) o usuário pode personalizar a mensagem do alerta, e o app deve exibir a mensagem personalizada nos alertas enviados.
+- *alert_sound_enabled*: Boolean (true/false) (preenchido automaticamente) o usuário pode escolher habilitar ou desabilitar o som dos alertas, e o app deve respeitar essa configuração para tocar ou não um som quando exibir os alertas.
+- *alert_sound_file*: String (caminho do arquivo de som) (preenchido automaticamente) o usuário pode escolher um arquivo de som personalizado para os alertas, e o app deve tocar o som escolhido quando exibir os alertas, caso o som esteja habilitado ou ele pode escolher entre os 5 sons padrão do app.
 
 ### B. Atividades (activities)
 
-- *id*: UUID
+- *id*: UUID v7 (Identificador único da atividade e pode ser ordenado cronologicamente)
 - *order*: Inteiro (Ordem de exibição)
 - *description*: Texto longo (Texto simples)
 - *date_start*: Data (opcional quando em andamento, obrigatório quando concluído para gerar o relatório mensal)
@@ -44,6 +61,8 @@ O banco de dados local será estruturado em três eixos:
 - *status*: Enum (Em andamento, Concluído, Cancelado, Pendente) (opcional, mas o usuário pode deixar como "Pendente" e atualizar depois, por exemplo)
 - *month_reference*: String (MM/YYYY)
 - *attendance_type*: Enum (Presencial, Remoto, Híbrido) (sobrepõe o tipo de atendimento do perfil do usuário quando for selecionado um diferente, pois o usuário pode registrar atividades com diferentes tipos de atendimento)
+- *last_updated*: Timestamp (Data e hora da última atualização da atividade) (preenchido automaticamente) apenas loga a última vez que o usuário atualizou a atividade, para fins de controle e para exibir essa informação na tela de detalhes da atividade.
+
 
 Para gerar o relatório mensal, todos os campos obrigatórios para gerar o relatório precisam estar preenchidos, exceto os opcionais.
 
@@ -58,16 +77,18 @@ Para gerar o relatório mensal, todos os campos obrigatórios para gerar o relat
 
 ### C. Evidências (evidences)
 
-- *id*: UUID
-- *activity_id*: Relacionamento
-- *file_path*: Caminho local da imagem
+- *id*: UUID v7 (Identificador único da evidência e pode ser ordenado cronologicamente)
+- *activity_id*: Relacionamento (Identificador da atividade associada)
+- *file_path*: Caminho local da imagem que foi copiada para o diretório interno do app (preenchido automaticamente) o usuário seleciona a imagem na máquina, arrasta e solta ou cola a imagem, e o app copia para o diretório interno e salva o caminho local no banco de dados.
 - *caption*: Legenda da imagem
+- *date_added*: Timestamp (Data e hora em que a evidência foi adicionada) (preenchido automaticamente) apenas loga a data e hora em que a evidência foi adicionada, para fins de controle e para exibir essa informação na tela de detalhes da atividade.
 
 ---
 
 ## 4. Definição de campos obrigatórios para gerar o relatório mensal
 
 Para gerar o relatório mensal, os seguintes campos precisam estar preenchidos:
+
 - *Perfil do Usuário*:
   - full_name
   - role
@@ -82,28 +103,70 @@ Para gerar o relatório mensal, os seguintes campos precisam estar preenchidos:
   - date_start
   - date_end
   - status (pode ser "Pendente" se a atividade ainda não tiver sido concluída, mas não pode estar em branco)
-  
+  - *Evidências*: não é obrigatório ter evidências para a atividade  e para gerar o relatório mensal, mas se a atividade tiver evidências, cada evidência pode ter o campo "caption" preenchido para descrever a imagem, e o campo "file_path" precisa estar preenchido para que a imagem possa ser incluida e exibida no PDF.
 
 ---
 
-## 4. Roadmap de Desenvolvimento (Fases)
+## 5. Roadmap de Desenvolvimento (Fases)
 
 ### Fase 1: Fundação
 
 Setup do Electron + React (Vite).
+Backend: Node.js (Permite integração com Electron e fácil manipulação de arquivos e banco de dados).
 Integração com SQLite e criação das tabelas.
-Implementação da tela de Configurações Iniciais (Cadastro de Nome/Cargo).
+Tela inicial vazia (Empty State) com a logo do ShipIt! e um botão para "Criar Perfil" que leva à tela de Configurações Iniciais.
+Implementação da tela de Configurações Iniciais (Cadastro de Perfil do Usuário).
+
+#### Fase 1.1: Dark Mode e Light Mode
+
+Essa implementação afeta apenas a camada de apresentação (UI) do aplicativo.
+
+Na tela de Configuração botão para escolher entre modo escuro (Dark Mode) e claro (Light Mode), e o app deve salvar a preferência do usuário e aplicar o tema escolhido em toda a interface, garantindo uma experiência visual consistente. O usuário pode alterar essa configuração posteriormente nas configurações do perfil do usuário.
+
+Implementação de um toggle para alternar entre modo claro e modo escuro.
 
 ### Fase 2: Fluxo de Registro
 
-Criação do Dashboard Mensal (Timeline).
 Desenvolvimento do formulário de Nova Atividade:
 Seleção de período (X até Y).
-Upload/Arraste de imagens (prints).
+Área de {Upload / Arraste de imagens (prints) / colar da área de transferência}.
 Lógica para copiar imagens para o diretório interno do app.
+
+### Fase 2.1: Tela de Listagem de Atividades
+
+Exibição das atividades registradas no mês selecionado.
+Opção para editar ou excluir atividades.
+Reorganização por arrastar e soltar para editar a ordem de exibição.
+
+### Fase 2.2: Tela de Detalhes da Atividade
+Exibição detalhada da atividade, incluindo descrição, período, status, links de referência e evidências (prints) com suas legendas.
+Opção para editar os detalhes da atividade e adicionar/editar legendas das evidências.
+
+### Fase 2.3: Validação de Campos Obrigatórios
+
+Implementação de validação para garantir que os campos obrigatórios estejam preenchidos antes de permitir a geração do PDF.
+Exibição de mensagens de erro ou alertas para atividades que não atendem aos requisitos.
+
+### Fase 2.4: Sistema de Rascunho e Salvamento Automático
+
+Implementação de salvamento automático para evitar perda de dados em caso de fechamento inesperado.
+Permitir que o usuário salve rascunhos de atividades incompletas e retome-las posteriormente.
+
+### Fase 2.5: Dashboard de Resumo Mensal
+
+Desenvolvimento do dashboard que será a tela inicial.
+Exibe campo na parte superior para escolha do mês de referência número do mês e do ano para carregamento dos dados, ao iniciar trazendo o último mês e ano selecionado ou o mês e ano atual. botão para gerar o PDF do mês selecionado.
+Exibe um resumo visual do mês, como número total de atividades, número de atividades concluídas, número de atividades em andamento, número de atividades canceladas, etc.
+Exibir o gráfico de Gantt de atividades do mês, na coluna da esquerda nome das atividades como 'Atividade <número>', em cima os dias do mês.
+Exibir a listagem de atividades do mês selecionado, com as seguintes informações: Atividade <número>, Descrição resumida (primeira linha da descrição) opção ver mais para expandir, Período (Data de início e Data de término), Status, Tipo de atendimento, Referência (página onde estão as evidências da atividade listadas no formato "Páginas x, y e z"), e um ícone de alerta para atividades que não têm os campos obrigatórios preenchidos para gerar o relatório mensal.
+
+Poder trocar o mês de referência para visualizar os dados de meses anteriores e gerar o relatório mensal correspondente.
+Trocando o mês de referência, a listagem de atividades, o dashboard de resumo mensal e a opção de gerar PDF devem ser atualizados para refletir os dados do mês selecionado.
 
 ### Fase 3: O Motor de PDF
 
+Pergunta para confirmar se o Mês está correto antes de gerar o PDF, para evitar erros de geração com o mês errado.
+o PDF deve exibir um print por página, se tiver legenda insere abaixo da imagem, e as páginas onde as evidências estão inseridas devem ser listadas na coluna Referência da tabela no formato (Páginas x, y e z).
 Desenvolvimento do template HTML/CSS idêntico ao PDF do MEC.
 Implementação do serviço de geração via Puppeteer.
 Sistema de Preview: Visualizar o PDF antes de salvar.
@@ -118,25 +181,24 @@ Configuração do electron-builder para gerar:
 
 ## 5. Regras de Negócio Importantes
 
-Integridade do Print: Se o usuário deletar o print da área de trabalho, o app não deve perder a imagem (por isso o app deve criar uma cópia interna).
-Fechamento do Mês: O botão "Gerar PDF", aciona a validação das informações preenchidas nas atividades, e só gera o PDF se todas as atividades do mês tiverem os campos obrigatórios preenchidos (Data de início, Data de término, Descrição, Status).
-Evidências: O app deve permitir anexar múltiplos prints por atividade, o PDF deve exibir um print por página, e cada print deve ter uma legenda (campo "caption") para descrever a evidência, as páginas onde as evidências estão inseridas devem ser listadas na coluna Referência da tabela `Encarte A: Detalhamento das atividades executadas e entregas efetuadas`.
-Persistência: O app deve salvar rascunhos automaticamente para evitar perda de dados em caso de fechamento inesperado.
+- *Modelo PDF*: O PDF gerado deve seguir estritamente a risca o modelo oficial do MEC, não pode haver variações no layout, formatação ou estrutura do conteúdo, para garantir que o relatório seja aceito sem problemas. 
+- *Integridade do Print*: Se o usuário deletar o print da área de trabalho, o app não deve perder a imagem (por isso o app deve criar uma cópia interna) e guardar por 3 meses na lixeira.
+- *Alertas*: o app deve exibir os alertas seguindo a programação da tabela de `alerts` para o usuário fazer os lançamentos e gerar o relatório.
+- *Fechamento do Mês*: O usuário deve preencher os campos obrigatórios para gerar o relatório mensal, e o app deve impedir a geração do PDF se houver atividades com campos obrigatórios faltando.
+- *O botão "Gerar PDF"*: aciona a validação das informações preenchidas nas atividades, e só gera o PDF se todas as atividades do mês tiverem os campos obrigatórios preenchidos (Data de início, Data de término, Descrição, Status).
+- *Evidências*: O app deve permitir anexar múltiplos prints por atividade, o PDF deve exibir um print por página, e cada print deve ter uma legenda (campo "caption") para descrever a evidência, as páginas onde as evidências estão inseridas devem ser listadas na coluna Referência da tabela `Encarte A: Detalhamento das atividades executadas e entregas efetuadas`.
+- *Persistência*: O app deve salvar rascunhos automaticamente para evitar perda de dados em caso de fechamento inesperado, reabre quando o app é reiniciado.
+- *Nome do PDF*: Nome final para o arquivo PDF: `RELATÓRIO DE SERVIÇO - <CARGO DO USUÁRIO>_<NOME_COMPLETO_DO_USUÁRIO>_<NOME_DO_MÊS>.pdf` seguindo o padrão de nomenclatura exigido pelo MEC, onde:
+  - <CARGO DO USUÁRIO>: Tudo em maiúsculo, sem acentos, e sem caracteres especiais, para evitar problemas de formatação no nome do arquivo PDF final.
+  - <NOME_COMPLETO_DO_USUÁRIO>: O nome completo do usuário, conforme preenchido no campo "full_name" do perfil do usuário, Tudo em maiúsculo, sem acentos, e sem caracteres especiais, substituir os espaços por underline (_) para evitar problemas de formatação no nome do arquivo PDF final.
+  - <NOME_DO_MÊS>: O nome do mês referente ao relatório, em português, tudo em maiúsculo, sem acentos, e sem caracteres especiais, para evitar problemas de formatação no nome do arquivo PDF final. Exemplo: JANEIRO, FEVEREIRO, MARÇO, ABRIL, MAIO, JUNHO, JULHO, AGOSTO, SETEMBRO, OUTUBRO, NOVEMBRO, DEZEMBRO.
 
-## 6. Pontos Pendentes (Informações Necessárias)
+## 6. Informações Necessárias
 
 Para refinar este plano, preciso de algumas definições suas:
 
-Categorias de Atividade: Além de "Engenharia de Software", existem categorias fixas que você deseja que apareçam num campo de seleção (Ex: Reunião, Coding, Documentação)?
-
-Limite de Prints: Deve haver um limite de quantos prints podem ser anexados por atividade para não "explodir" o tamanho do PDF?
-Carga Horária: O relatório exige o preenchimento de horas exatas por tarefa ou apenas o período (Data X a Data Y)?
-Local de Armazenamento: Você prefere que o banco de dados seja um arquivo único que você possa levar num pendrive ou pode ficar fixo na instalação do app?
-
-1. As Categorias de Atividade: poderão ser incluídas depois, então o app precisa poder ser atualizado. minha ideia seria puxar do github
-2. Limite de Prints: não pode ter limite de prints, e o usuário deverá escolher onde salvar as imagens quando estiver instalando, também poderá trocar a ordem arrastando e soltando, O app deve permitir anexar múltiplos prints por atividade, o PDF deve exibir um print por página, e cada print deve ter uma legenda (campo "caption") para descrever a evidência, as páginas onde as evidências estão inseridas devem ser listadas na coluna Referência da tabela `Encarte A: Detalhamento das atividades executadas e entregas efetuadas`. todas as páginas de evidências da atividade ficam listadas no formato (Páginas x, y e z)
-3. Carga Horária: obrigatório somente a (Data DD/MM/YYYY a Data DD/MM/YYYY)
-4. Local de Armazenamento: banco de dados seja um arquivo único SQLite
+*Categorias de Atividade*: Além de "Engenharia de Software", existem categorias fixas que quero que apareçam no campo de seleção ('ADMINISTRADOR DE DADOS', 'ANALISTA DE DADOS E BUSINESS INTELLIGENCE', 'ANALISTA DE QUALIDADE E TESTES DE SOFTWARE', 'ANALISTA DE REQUISITOS', 'ARQUITETO DE DADOS', 'ARQUITETO DE SOFTWARE', 'ARQUITETO DE SOFTWARE DEVOPS', 'ENGENHEIRO DE AUTOMAÇÃO', 'CIENTISTA DE DADOS', 'ENGENHEIRO DE SOFTWARE', 'ENGENHEIRO DE DADOS') ou o usuário pode escrever livremente.
+*Limite de Prints*: Não deve haver um limite.
 
 ## 7. Guia de Cores e Aplicação Visual
 
@@ -154,24 +216,36 @@ Para manter a consistência visual do ShipIt! em todas as plataformas, aqui est�
 | Neutro Dark      | #333333   | Grafite          | Textos longos de descrições e logs de atividades.                              |
 | Neutro Light     | #F8F9FA   | Cinza Off-white  | Cor de fundo geral da aplicação (evita cansaço visual).                        |
 | Verde Esmeralda   | #168829   | Verde Sucesso    | Indicadores de atividades concluídas ou status de sucesso.                     |
-| Vermelho Alerta   | #a11e10   | Vermelho Alerta  | Indicadores de atividades canceladas ou status de erro.                     |
+| Amarelo Alerta   | #FFCC00   | Amarelo Alerta  | Indicadores de atividades com status de alerta ou atenção.                     |
+| Vermelho Alerta   | #a11e10   | Vermelho Alerta  | Indicadores de atividades canceladas ou status de erro.                        |
+| Cinza Claro      | #E5E7EB   | Cinza Padrão     | Borders, separadores e backgrounds secundários.                                |
+| Cinza Médio      | #9CA3AF   | Cinza Médio      | Placeholders, textos desabilitados e ícones inativos.                          |
+| Branco           | #FFFFFF   | Branco Puro      | Fundos de cards, modais e elementos principais em modo claro.                  |
+| Preto            | #000000   | Preto Puro       | Textos críticos e elementos de alto contraste.                                 |
+
+
 
 ### Cores para Modo Escuro (Dark Mode)
 
 | Elemento         | Hexadecimal | Cor Visual       | Recomendação de Uso                                                            |
 | ---------------- | ----------- | ---------------- | ------------------------------------------------------------------------------ |
-| Azul para Dark Mode     | #1A427F   | Azul Navy        | O Azul deve permanecer o mesmo para manter a identidade visual e contraste em fundos escuros. |
-| Laranja para Dark Mode   | #F27A21   | Laranja Vibrante | O Laranja deve permanecer o mesmo para manter o contraste em fundos escuros. |
-| Fundo Escuro      | #121212   | Preto Profundo   | Fundo para modo escuro (dark mode). O Laranja deve permanecer o mesmo para manter o contraste. |
-| Cards Escuros      | #1E1E1E   | Cinza Escuro     | Fundo de cards e modais no modo escuro. O Laranja deve permanecer o mesmo para manter o contraste. |
-| Textos Escuros      | #E0E0E0   | Cinza Claro      | Textos no modo escuro para garantir legibilidade. O Laranja deve permanecer o mesmo para manter o contraste. |
-| Foguete Cinza Claro | #CCCCCC   | Cinza Claro      | Ilustração do foguete para o estado vazio (empty state) quando não houver atividades registradas. |
-| Vermelho Pendente   | #ff3300   | Laranja Pendente  | Indicadores de atividades pendentes ou em andamento. |
-| Amarelo Alerta   | #FFD700   | Amarelo Alerta  | Indicadores de atividades com status de alerta ou atenção. |
-| Roxo Destaque   | #800080   | Roxo Vibrante    | Detalhes de destaque em gráficos ou indicadores de progresso. |
+| Azul Principal   | #5B8FD4   | Azul Claro       | Cabeçalhos, botões principais (CTA), barras de navegação e texto "Ship".       |
+| Laranja Destaque | #F27A21   | Laranja Vibrante | Botão "ShipIt!" (Gerar PDF), ícone de alerta, detalhes de hover e texto "It!". |
+| Azul Light       | #2C3E50   | Azul Escuro      | Fundo de campos de texto ou hover em listas de atividades.                     |
+| Neutro Dark      | #E0E0E0   | Cinza Claro      | Textos longos de descrições e logs de atividades.                              |
+| Neutro Light     | #1E1E1E   | Cinza Escuro     | Cor de fundo geral da aplicação (evita cansaço visual).                        |
+| Verde Esmeralda   | #4CAF50   | Verde Claro      | Indicadores de atividades concluídas ou status de sucesso.                     |
+| Amarelo Alerta   | #FFD54F   | Amarelo Claro    | Indicadores de atividades com status de alerta ou atenção.                     |
+| Vermelho Alerta   | #EF5350   | Vermelho Claro   | Indicadores de atividades canceladas ou status de erro.                        |
+| Cinza Claro      | #424242   | Cinza Médio      | Borders, separadores e backgrounds secundários.                                |
+| Cinza Médio      | #757575   | Cinza Médio      | Placeholders, textos desabilitados e ícones inativos.                          |
+| Branco           | #121212   | Preto Puro       | Fundos de cards, modais e elementos principais em modo escuro.                 |
+| Preto            | #FFFFFF   | Branco Puro      | Textos críticos e elementos de alto contraste.                                 |
 
 
 🛠️ Recomendações de Uso na Interface (UI)
+
+Interface em português do Brasil.
 
 1. Botões e Ações
    Ação Primária (Novo Registro): Use o Azul Principal com texto branco.
@@ -184,8 +258,9 @@ Para manter a consistência visual do ShipIt! em todas as plataformas, aqui est�
 3. Estados de Input
    Foco (Focus): Ao clicar em um campo de texto, use uma borda de 2px em Laranja Destaque para indicar que o usuário está "no comando".
    Empty State: Quando não houver atividades no mês, use uma ilustração do foguete da logo em tons de cinza claro.
-4. Dark Mode (Opcional)
-   Fundo: #121212
-   Cards: #1E1E1E
-   Textos: #E0E0E0
-   O Laranja deve permanecer o mesmo, pois tem excelente contraste em fundos escuros.
+
+
+
+
+
+
