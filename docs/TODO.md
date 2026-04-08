@@ -98,20 +98,34 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 ## Fase 3: O Motor de PDF
 
 - [ ] Confirmação do mês antes de gerar
-- [ ] Template HTML/CSS idêntico ao modelo MEC
-- [ ] Serviço de geração via Puppeteer (ou DOCX via template)
-- [ ] Um print por página no PDF, legenda abaixo da imagem
+- [ ] Serviço de geração via (DOCX via template)
+- [ ] Um print por página no DOCX, legenda abaixo da imagem
 - [ ] Referências de páginas na coluna "Referência" da tabela
-- [ ] Preview do PDF antes de salvar
-- [ ] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.pdf`
+- [ ] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.docx`
 - [ ] Histórico de relatórios gerados (entidade Report)
 - [ ] Status do relatório (Gerado, Falha, Excluído)
+- [ ] Ação com botão para abrir relatório gerado na pasta de destino, ou abrir pasta;
 
 ---
 
-## Fase 4: Polimento e Distribuição
+## Fase 4: Configurações e perfil
 
-- [ ] Validação de margens e quebras de tabela no PDF
+- [ ] Tela de perfil do usuário (acessível no Header)
+- [ ] Separar configurações de perfil e configurações do app
+- [ ] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
+- [ ] Configurações do app:
+  - [ ] tema (dark/light)
+  - [ ] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
+  - [ ] opções de notificação
+  - [ ] comportamento do app (ex: iniciar com o sistema)
+  - [ ] escolha do diretório de armazenamento dos dados (opcional)
+  - [ ] escolha do diretório de armazenamento dos relatórios gerados (opcional)
+
+---
+
+## Fase 5: Polimento e Distribuição
+
+- [ ] Validação de margens e quebras de tabela no DOCX
 - [ ] Sistema de alertas (notificações antes do fim do mês)
 - [ ] Lixeira de evidências (reter 3 meses)
 - [ ] Configuração do electron-builder
