@@ -7,6 +7,11 @@ let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 const isDev = !app.isPackaged
 
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'shipit-evidence', privileges: { supportFetchAPI: true, stream: true } },
+  { scheme: 'shipit-sfx', privileges: { supportFetchAPI: true, stream: true } },
+])
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
@@ -338,6 +343,17 @@ ipcMain.handle('app:getSoundPath', (_event, filename: string) => {
   const filePath = path.join(getSfxDir(), safe)
   if (!fs.existsSync(filePath)) return null
   return filePath
+})
+
+ipcMain.handle('app:playSound', (_event, filename: string) => {
+  const safe = path.basename(filename)
+  const filePath = path.join(getSfxDir(), safe)
+  if (!fs.existsSync(filePath)) return false
+  // Send file data to renderer for playback via data URL
+  const buffer = fs.readFileSync(filePath)
+  const base64 = buffer.toString('base64')
+  mainWindow?.webContents.send('app:playSoundData', `data:audio/mpeg;base64,${base64}`)
+  return true
 })
 
 // ──── Auto-launch IPC ────

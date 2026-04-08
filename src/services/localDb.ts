@@ -85,6 +85,7 @@ export const localDb = {
       activity_id: activityId,
       file_path: fileDataUrl,
       caption,
+      sort_index: activity.evidences?.length ?? 0,
       date_added: new Date().toISOString(),
     }
 
