@@ -31,8 +31,18 @@ export interface ElectronAPI {
   // Tray
   setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') => Promise<void>
 
+  // App Settings
+  getSettings: () => Promise<AppSettings>
+  saveSettings: (partial: Partial<AppSettings>) => Promise<AppSettings>
+  selectDirectory: () => Promise<string | null>
+  getDefaultReportsDir: () => Promise<string>
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => () => void
+}
+
+export interface AppSettings {
+  reportsDirectory?: string
 }
 
 export interface UserProfileData {

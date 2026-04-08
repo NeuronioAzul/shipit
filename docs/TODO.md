@@ -117,12 +117,12 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Separar configurações de perfil e configurações do app
 - [x] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
 - [ ] Configurações do app:
-  - [x] tema (dark/light) — persistido via localStorage, toggle no Header + tela de Configurações
+  - [x] tema (dark/light) — persistido via localStorage, na tela de Configurações
   - [ ] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
   - [ ] opções de notificação
   - [ ] comportamento do app (ex: iniciar com o sistema)
   - [ ] escolha do diretório de armazenamento dos dados (opcional)
-  - [ ] escolha do diretório de armazenamento dos relatórios gerados (opcional)
+  - [x] escolha do diretório de armazenamento dos relatórios gerados
 
 ---
 
