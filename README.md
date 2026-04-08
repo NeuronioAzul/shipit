@@ -166,43 +166,67 @@ shipit/
 
 ## Modelo de Dados
 
-```
-┌─────────────────┐       ┌──────────────────┐
-│  UserProfile    │1────1│     Alert          │
-│─────────────────│       │──────────────────│
-│ full_name       │       │ alert_days_before │
-│ role            │       │ alert_frequency   │
-│ seniority_level │       │ alert_enabled     │
-│ contract_id     │       │ alert_time        │
-│ profile_type    │       │ alert_message     │
-│ attendance_type │       │ alert_sound_file  │
-│ project_scope   │       └──────────────────┘
-│ correlating_act │
-└─────────────────┘
+```mermaid
+erDiagram
+    UserProfile ||--|| Alert : has
+    UserProfile {
+        int id PK
+        string full_name
+        string role
+        string seniority_level
+        string contract_id
+        string profile_type
+        string attendance_type
+        string project_scope
+        string correlating_act
+    }
+    Alert {
+        int id PK
+        int alert_days_before
+        string alert_frequency
+        boolean alert_enabled
+        string alert_time
+        string alert_message
+        string alert_sound_file
+    }
 
-┌─────────────────┐       ┌──────────────────┐
-│   Activity      │1────*│    Evidence       │
-│─────────────────│       │──────────────────│
-│ id (UUID v7)    │       │ id (UUID v7)     │
-│ order           │       │ file_path        │
-│ description     │       │ caption          │
-│ date_start      │       │ sort_index       │
-│ date_end        │       │ date_added       │
-│ link_ref        │       └──────────────────┘
-│ status          │
-│ month_reference │       ┌──────────────────┐
-│ attendance_type │       │    Report        │
-│ project_scope   │       │──────────────────│
-└─────────────────┘       │ id (UUID v7)     │
-                          │ month_reference  │
-┌─────────────────┐       │ file_path        │
-│ ActivityReport  │*────1│ report_name      │
-│─────────────────│       │ status           │
-│ id (UUID v7)    │       │ date_generated   │
-│ report_id (FK)  │       └──────────────────┘
-│ activity_id(FK) │
-│ date_added      │
-└─────────────────┘
+    Activity ||--o{ Evidence : has
+    Activity {
+        uuid id PK
+        int order
+        string description
+        date date_start
+        date date_end
+        string link_ref
+        string status
+        string month_reference
+        string attendance_type
+        string project_scope
+    }
+    Evidence {
+        uuid id PK
+        string file_path
+        string caption
+        int sort_index
+        datetime date_added
+    }
+
+    Report ||--o{ ActivityReport : contains
+    Report {
+        uuid id PK
+        string month_reference
+        string file_path
+        string report_name
+        string status
+        datetime date_generated
+    }
+    ActivityReport {
+        uuid id PK
+        uuid report_id FK
+        uuid activity_id FK
+        datetime date_added
+    }
+    Activity ||--o{ ActivityReport : referenced_in
 ```
 
 ---
