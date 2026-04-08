@@ -50,7 +50,7 @@ Configurações dos meus alertas 5 dias antes duas vezes por dia, 3 dias antes t
 - *alert_time*: String (HH:mm) (preenchido automaticamente) o usuário pode escolher o horário do dia para receber os alertas, e o app deve respeitar essa configuração para enviar os alertas no horário escolhido.
 - *alert_message*: String (Ex: "Lembrete: Preencha os campos obrigatórios para gerar o relatório mensal!") (preenchido automaticamente) o usuário pode personalizar a mensagem do alerta, e o app deve exibir a mensagem personalizada nos alertas enviados.
 - *alert_sound_enabled*: Boolean (true/false) (preenchido automaticamente) o usuário pode escolher habilitar ou desabilitar o som dos alertas, e o app deve respeitar essa configuração para tocar ou não um som quando exibir os alertas.
-- *alert_sound_file*: String (caminho do arquivo de som) (preenchido automaticamente) o usuário pode escolher um arquivo de som personalizado para os alertas, e o app deve tocar o som escolhido quando exibir os alertas, caso o som esteja habilitado ou ele pode escolher entre os 5 sons padrão do app.
+- *alert_sound_file*: String (caminho do arquivo de som) (preenchido automaticamente) o usuário pode escolher um arquivo de som personalizado para os alertas, e o app deve tocar o som escolhido quando exibir os alertas, caso o som esteja habilitado ou ele pode escolher entre os sons padrão do app.
 
 ### B. Atividades (activities)
 
@@ -222,7 +222,7 @@ Para refinar este plano, preciso de algumas definições suas:
 *Categorias de Atividade*: Além de "Engenharia de Software", existem categorias fixas que quero que apareçam no campo de seleção ('ADMINISTRADOR DE DADOS', 'ANALISTA DE DADOS E BUSINESS INTELLIGENCE', 'ANALISTA DE QUALIDADE E TESTES DE SOFTWARE', 'ANALISTA DE REQUISITOS', 'ARQUITETO DE DADOS', 'ARQUITETO DE SOFTWARE', 'ARQUITETO DE SOFTWARE DEVOPS', 'ENGENHEIRO DE AUTOMAÇÃO', 'CIENTISTA DE DADOS', 'ENGENHEIRO DE SOFTWARE', 'ENGENHEIRO DE DADOS') ou o usuário pode escrever livremente.
 *Limite de Prints*: Não deve haver um limite.
 
-## 7. Guia de Cores e Aplicação Visual
+## 7. Guia de Cores e Aplicação Visual e Sons
 
 Para manter a consistência visual do ShipIt! em todas as plataformas, aqui está o guia de cores extraído da logo e as recomendações de aplicação na interface:
 
@@ -257,6 +257,26 @@ Abaixo estão as imagens dos ícones do System Tray em diferentes variações de
 | images\tray\tray-icon-foguete-dark-mode-green-2.svg | Ícone do foguete do ShipIt! em modo escuro verde 2 |
 
 As variações de cor para alertas no System Tray (vermelho para alerta está atrasado, amarelo para atenção faltam 5 dias para o fim do mês, verde para sucesso tudo tranquilo nada atrasado) permitem que o usuário identifique rapidamente o status das atividades e os alertas relacionados ao preenchimento do relatório mensal, mesmo sem abrir a interface do aplicativo.
+
+### Sons de Alerta:
+Os arquivos de som para os alertas estão na pasta `assets/sounds` dentro do repositório, para centralizar os arquivos de som e facilitar o acesso para a configuração dos alertas sonoros do aplicativo. Abaixo estão os arquivos de som para os alertas em diferentes variações, todos em formato MP3 para garantir compatibilidade com a maioria dos sistemas operacionais.
+
+| Arquivo de Som | Descrição |
+|----------------|-----------|
+| sfx\alert-sound-01.mp3 | Alerta padrão 1 |
+| sfx\alert-sound-02.mp3 | Alerta padrão 2 |
+| sfx\alert-sound-03.mp3 | Alerta padrão 3 |
+| sfx\alert-sound-04.mp3 | Alerta padrão 4 |
+| sfx\alert-sound-05.mp3 | Alerta padrão 5 |
+| sfx\alert-sound-06.mp3 | Alerta padrão 6 |
+| sfx\alert-sound-07.mp3 | Alerta padrão 7 |
+| sfx\alert-sound-08.mp3 | Alerta padrão 8 |
+| sfx\alert-sound-09.mp3 | Alerta padrão 9 |
+| sfx\alert-sound-10.mp3 | Alerta padrão 10 |
+| sfx\alert-sound-11.mp3 | Alerta padrão 11 |
+| sfx\alert-sound-12.mp3 | Alerta padrão 12 |
+| sfx\alert-sound-13.mp3 | Alerta padrão 13 |
+| sfx\alert-sound-14.mp3 | Alerta padrão 14 |
 
 🎨 Paleta de Cores (Brand Colors)
 

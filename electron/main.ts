@@ -52,10 +52,11 @@ function createTray() {
     '..',
     'images',
     'tray',
-    'tray-icon-foguete-dark-mode-default-2.svg'
+    'tray-icon-foguete-dark-mode-default-2-escuro.png'
   )
   const icon = nativeImage.createFromPath(trayIconPath)
-  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
+  const trayIcon = icon.isEmpty() ? nativeImage.createEmpty() : icon.resize({ width: 16, height: 16 })
+  tray = new Tray(trayIcon)
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -239,10 +240,16 @@ ipcMain.handle('app:selectImages', async () => {
 
 ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yellow' | 'red') => {
   if (!tray) return
-  const iconFile = `tray-icon-foguete-dark-mode-${status === 'default' ? 'default' : status}-2.svg`
+  const statusMap: Record<string, string> = {
+    default: 'tray-icon-foguete-dark-mode-default-2-escuro.png',
+    green: 'tray-icon-foguete-dark-mode-verde-2-escuro.png',
+    yellow: 'tray-icon-foguete-dark-mode-yellow-2-escuro.png',
+    red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
+  }
+  const iconFile = statusMap[status] || statusMap['default']
   const iconPath = path.join(__dirname, '..', 'images', 'tray', iconFile)
   const icon = nativeImage.createFromPath(iconPath)
   if (!icon.isEmpty()) {
-    tray.setImage(icon)
+    tray.setImage(icon.resize({ width: 16, height: 16 }))
   }
 })
