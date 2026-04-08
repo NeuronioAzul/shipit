@@ -45,7 +45,6 @@ export interface UserProfileData {
   correlating_activities: string
   attendance_type: string
   project_scope: string
-  mode: 'dark' | 'light'
   last_updated?: string
 }
 
