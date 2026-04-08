@@ -39,6 +39,9 @@ export class Activity {
   @Column({ type: 'text', nullable: true })
   attendance_type!: AttendanceType | null
 
+  @Column({ type: 'text', nullable: true })
+  project_scope!: string | null
+
   @UpdateDateColumn()
   last_updated!: Date
 
