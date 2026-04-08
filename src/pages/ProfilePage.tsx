@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
 import type { UserProfileData } from '../vite-env'
 import { validateProfile, type ValidationError } from '../utils/validation'
 
@@ -44,7 +43,6 @@ interface ProfileForm {
   correlating_activities: string
   attendance_type: string
   project_scope: string
-  mode: 'dark' | 'light'
 }
 
 const initialForm: ProfileForm = {
@@ -56,13 +54,11 @@ const initialForm: ProfileForm = {
   correlating_activities: '',
   attendance_type: '',
   project_scope: '',
-  mode: 'dark',
 }
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { theme, setTheme } = useTheme()
-  const [form, setForm] = useState<ProfileForm>({ ...initialForm, mode: theme })
+  const [form, setForm] = useState<ProfileForm>({ ...initialForm })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -88,7 +84,6 @@ export function ProfilePage() {
           correlating_activities: profile.correlating_activities || '',
           attendance_type: profile.attendance_type || '',
           project_scope: profile.project_scope || '',
-          mode: profile.mode || 'dark',
         })
         setIsEditing(true)
       }
@@ -101,10 +96,6 @@ export function ProfilePage() {
   ) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
-
-    if (name === 'mode') {
-      setTheme(value as 'dark' | 'light')
-    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -365,37 +356,6 @@ export function ProfilePage() {
           <p className="text-xs text-muted-foreground mt-1">
             Copie do arquivo modelo que você recebeu.
           </p>
-        </div>
-
-        {/* Modo (Dark/Light) */}
-        <div>
-          <label className={labelClass}>Aparência</label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="mode"
-                value="dark"
-                checked={form.mode === 'dark'}
-                onChange={handleChange}
-                className="accent-accent"
-              />
-              <i className="fa-solid fa-moon text-muted-foreground"></i>
-              <span className="text-sm">Modo Escuro</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="mode"
-                value="light"
-                checked={form.mode === 'light'}
-                onChange={handleChange}
-                className="accent-accent"
-              />
-              <i className="fa-solid fa-sun text-muted-foreground"></i>
-              <span className="text-sm">Modo Claro</span>
-            </label>
-          </div>
         </div>
 
         {/* Submit */}

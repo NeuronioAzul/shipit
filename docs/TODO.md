@@ -113,11 +113,11 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 ## Fase 4: Configurações e perfil
 
-- [ ] Tela de perfil do usuário (acessível no Header)
-- [ ] Separar configurações de perfil e configurações do app
-- [ ] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
+- [x] Tela de perfil do usuário (acessível no Header via ícone de usuário)
+- [x] Separar configurações de perfil e configurações do app
+- [x] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
 - [ ] Configurações do app:
-  - [ ] tema (dark/light)
+  - [x] tema (dark/light) — persistido via localStorage, toggle no Header + tela de Configurações
   - [ ] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
   - [ ] opções de notificação
   - [ ] comportamento do app (ex: iniciar com o sistema)

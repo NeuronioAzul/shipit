@@ -27,6 +27,14 @@ export function Header() {
         <Link
           to="/profile"
           className="text-header-foreground/80 hover:text-header-foreground transition-colors"
+          title="Perfil"
+        >
+          <i className="fa-solid fa-user text-lg"></i>
+        </Link>
+
+        <Link
+          to="/settings"
+          className="text-header-foreground/80 hover:text-header-foreground transition-colors"
           title="Configurações"
         >
           <i className="fa-solid fa-gear text-lg"></i>
