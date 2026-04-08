@@ -48,6 +48,7 @@ export const localDb = {
       status: 'Pendente',
       month_reference: data.month_reference || getCurrentMonthRef(),
       attendance_type: null,
+      project_scope: null,
       last_updated: new Date().toISOString(),
       evidences: [],
       ...data,
