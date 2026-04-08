@@ -47,6 +47,10 @@ export interface ElectronAPI {
   getAutoLaunch: () => Promise<boolean>
   setAutoLaunch: (enabled: boolean) => Promise<boolean>
 
+  // Alerts
+  getAlert: () => Promise<AlertData | null>
+  saveAlert: (data: Partial<AlertData>) => Promise<AlertData>
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => () => void
 }
@@ -103,6 +107,18 @@ export interface ReportData {
   report_name: string
   date_generated: string
   status: 'Gerado' | 'Falha' | 'Excluído'
+}
+
+export interface AlertData {
+  id?: number
+  alert_days_before: string // JSON array, e.g. "[5,3,2,1,0]"
+  alert_frequency: string   // JSON array, e.g. "[2,3,4,5,6]"
+  alert_enabled: boolean
+  alert_time: string        // "HH:mm"
+  alert_message: string
+  alert_sound_enabled: boolean
+  alert_sound_file: string | null
+  last_alert_sent: string | null
 }
 
 declare global {

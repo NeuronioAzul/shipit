@@ -283,3 +283,53 @@ export async function getReports(monthReference: string): Promise<Report[]> {
     order: { date_generated: 'DESC' },
   })
 }
+
+// ──── Alerts ────
+
+export async function getAlert(): Promise<Alert | null> {
+  const db = await getDb()
+  return db.getRepository(Alert).findOne({ where: {} })
+}
+
+export async function saveAlert(data: Partial<Alert>): Promise<Alert> {
+  const db = await getDb()
+  const repo = db.getRepository(Alert)
+  let alert = await repo.findOne({ where: {} })
+
+  if (alert) {
+    Object.assign(alert, data)
+  } else {
+    // Need a profile to link to
+    const profile = await db.getRepository(UserProfile).findOne({ where: {} })
+    if (!profile) throw new Error('Perfil não encontrado para vincular alerta.')
+    alert = repo.create({ ...data, profile })
+  }
+  return repo.save(alert)
+}
+
+export async function updateLastAlertSent(): Promise<void> {
+  const db = await getDb()
+  const repo = db.getRepository(Alert)
+  const alert = await repo.findOne({ where: {} })
+  if (alert) {
+    alert.last_alert_sent = new Date()
+    await repo.save(alert)
+  }
+}
+
+/** Count incomplete activities for a given month */
+export async function countIncompleteActivities(monthReference: string): Promise<number> {
+  const db = await getDb()
+  const activities = await db.getRepository(Activity).find({
+    where: { month_reference: monthReference },
+  })
+  return activities.filter(a => a.status !== 'Concluído').length
+}
+
+/** Count total activities for a given month */
+export async function countActivities(monthReference: string): Promise<number> {
+  const db = await getDb()
+  return db.getRepository(Activity).count({
+    where: { month_reference: monthReference },
+  })
+}

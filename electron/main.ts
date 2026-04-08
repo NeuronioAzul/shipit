@@ -1,10 +1,12 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification } from 'electron'
 import path from 'path'
 import fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let alertIntervalId: ReturnType<typeof setInterval> | null = null
+let trayIntervalId: ReturnType<typeof setInterval> | null = null
 const isDev = !app.isPackaged
 
 protocol.registerSchemesAsPrivileged([
@@ -96,6 +98,22 @@ function createTray() {
         mainWindow?.webContents.send('app:navigate', '/activities')
       },
     },
+    {
+      label: 'Perfil',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/profile')
+      },
+    },
+    {
+      label: 'Configurações',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/settings')
+      },
+    },
     { type: 'separator' },
     {
       label: 'Sair',
@@ -166,10 +184,12 @@ app.whenReady().then(() => {
 
   createWindow()
   createTray()
+  startSchedulers()
 })
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    stopSchedulers()
     app.quit()
   }
 })
@@ -265,19 +285,8 @@ ipcMain.handle('app:selectImages', async () => {
 // ──── Tray Status IPC ────
 
 ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yellow' | 'red') => {
-  if (!tray) return
-  const statusMap: Record<string, string> = {
-    default: 'tray-icon-foguete-dark-mode-default-2-escuro.png',
-    green: 'tray-icon-foguete-dark-mode-verde-2-escuro.png',
-    yellow: 'tray-icon-foguete-dark-mode-yellow-2-escuro.png',
-    red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
-  }
-  const iconFile = statusMap[status] || statusMap['default']
-  const iconPath = path.join(__dirname, '..', 'images', 'tray', iconFile)
-  const icon = nativeImage.createFromPath(iconPath)
-  if (!icon.isEmpty()) {
-    tray.setImage(icon.resize({ width: 16, height: 16 }))
-  }
+  stopTrayBlink()
+  setTrayIcon(status)
 })
 
 // ──── App Settings (JSON file in userData) ────
@@ -416,3 +425,182 @@ ipcMain.handle('db:getReports', async (_event, monthReference: string) => {
   const { getReports } = await import('./database')
   return getReports(monthReference)
 })
+
+// ──── Alert IPC ────
+
+ipcMain.handle('db:getAlert', async () => {
+  const { getAlert } = await import('./database')
+  return getAlert()
+})
+
+ipcMain.handle('db:saveAlert', async (_event, data) => {
+  const { saveAlert } = await import('./database')
+  return saveAlert(data)
+})
+
+// ──── Alert Scheduler ────
+
+function getCurrentMonthRef(): string {
+  const now = new Date()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const yyyy = now.getFullYear()
+  return `${mm}/${yyyy}`
+}
+
+function getDaysUntilEndOfMonth(): number {
+  const now = new Date()
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return lastDay.getDate() - now.getDate()
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+}
+
+async function checkAndFireAlerts(): Promise<void> {
+  try {
+    const { getAlert, updateLastAlertSent, countIncompleteActivities } = await import('./database')
+    const alert = await getAlert()
+    if (!alert || !alert.alert_enabled) return
+
+    const now = new Date()
+    const daysLeft = getDaysUntilEndOfMonth()
+
+    // Parse config arrays
+    const daysBefore: number[] = JSON.parse(alert.alert_days_before || '[]')
+    const frequencies: number[] = JSON.parse(alert.alert_frequency || '[]')
+
+    // Check if today matches any alert day
+    const dayIndex = daysBefore.indexOf(daysLeft)
+    if (dayIndex === -1) return
+
+    // Check if current time >= alert_time
+    const [alertHour, alertMin] = (alert.alert_time || '09:00').split(':').map(Number)
+    if (now.getHours() < alertHour || (now.getHours() === alertHour && now.getMinutes() < alertMin)) return
+
+    // Check if we already alerted today
+    if (alert.last_alert_sent && isSameDay(new Date(alert.last_alert_sent), now)) return
+
+    // Check incomplete activities
+    const monthRef = getCurrentMonthRef()
+    const incomplete = await countIncompleteActivities(monthRef)
+    if (incomplete === 0) return
+
+    // Fire notification
+    const notification = new Notification({
+      title: 'ShipIt! — Lembrete',
+      body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
+      icon: path.join(__dirname, '..', 'images', 'icons', 'favicon-96x96.png'),
+    })
+    notification.on('click', () => {
+      mainWindow?.show()
+      mainWindow?.focus()
+    })
+    notification.show()
+
+    // Play sound if enabled
+    if (alert.alert_sound_enabled) {
+      const settings = loadSettings()
+      const soundFile = (settings.alertSound as string) || alert.alert_sound_file
+      if (soundFile) {
+        const safe = path.basename(soundFile)
+        const filePath = path.join(getSfxDir(), safe)
+        if (fs.existsSync(filePath)) {
+          const buffer = fs.readFileSync(filePath)
+          const base64 = buffer.toString('base64')
+          mainWindow?.webContents.send('app:playSoundData', `data:audio/mpeg;base64,${base64}`)
+        }
+      }
+    }
+
+    await updateLastAlertSent()
+  } catch (err) {
+    console.error('Alert scheduler error:', err)
+  }
+}
+
+// ──── Tray Auto-Status ────
+
+function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
+  if (!tray) return
+  const statusMap: Record<string, string> = {
+    default: 'tray-icon-foguete-dark-mode-default-2-escuro.png',
+    green: 'tray-icon-foguete-dark-mode-verde-2-escuro.png',
+    yellow: 'tray-icon-foguete-dark-mode-yellow-2-escuro.png',
+    red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
+  }
+  const iconFile = statusMap[status] || statusMap['default']
+  const iconPath = path.join(__dirname, '..', 'images', 'tray', iconFile)
+  const icon = nativeImage.createFromPath(iconPath)
+  if (!icon.isEmpty()) {
+    tray.setImage(icon.resize({ width: 16, height: 16 }))
+  }
+}
+
+let trayBlinkState = false
+let trayBlinkIntervalId: ReturnType<typeof setInterval> | null = null
+
+function startTrayBlink(status: 'yellow' | 'red'): void {
+  stopTrayBlink()
+  trayBlinkState = false
+  trayBlinkIntervalId = setInterval(() => {
+    trayBlinkState = !trayBlinkState
+    setTrayIcon(trayBlinkState ? status : 'default')
+  }, 1000)
+}
+
+function stopTrayBlink(): void {
+  if (trayBlinkIntervalId) {
+    clearInterval(trayBlinkIntervalId)
+    trayBlinkIntervalId = null
+  }
+}
+
+async function updateTrayStatus(): Promise<void> {
+  try {
+    const { countIncompleteActivities, countActivities } = await import('./database')
+    const monthRef = getCurrentMonthRef()
+    const incomplete = await countIncompleteActivities(monthRef)
+    const total = await countActivities(monthRef)
+    const daysLeft = getDaysUntilEndOfMonth()
+
+    if (total === 0) {
+      // No activities yet — default icon
+      stopTrayBlink()
+      setTrayIcon('default')
+    } else if (incomplete === 0) {
+      // All good
+      stopTrayBlink()
+      setTrayIcon('green')
+    } else if (daysLeft <= 3) {
+      // Urgent — blink red
+      startTrayBlink('red')
+    } else {
+      // Has incomplete — blink yellow
+      startTrayBlink('yellow')
+    }
+  } catch (err) {
+    console.error('Tray status update error:', err)
+  }
+}
+
+function startSchedulers(): void {
+  // Check alerts every minute
+  alertIntervalId = setInterval(checkAndFireAlerts, 60_000)
+  // Check tray status every 5 minutes
+  trayIntervalId = setInterval(updateTrayStatus, 300_000)
+
+  // Run immediately on startup (with a small delay to let DB init)
+  setTimeout(() => {
+    checkAndFireAlerts()
+    updateTrayStatus()
+  }, 3000)
+}
+
+function stopSchedulers(): void {
+  if (alertIntervalId) { clearInterval(alertIntervalId); alertIntervalId = null }
+  if (trayIntervalId) { clearInterval(trayIntervalId); trayIntervalId = null }
+  stopTrayBlink()
+}

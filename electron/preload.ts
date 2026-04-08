@@ -68,6 +68,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAutoLaunch: () => ipcRenderer.invoke('app:getAutoLaunch'),
   setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('app:setAutoLaunch', enabled),
 
+  // Alerts
+  getAlert: () => ipcRenderer.invoke('db:getAlert'),
+  saveAlert: (data: Record<string, unknown>) => ipcRenderer.invoke('db:saveAlert', data),
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, path: string) => callback(path)
