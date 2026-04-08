@@ -11,12 +11,6 @@ export function validateActivity(activity: Partial<ActivityData>): ValidationErr
   if (!activity.description?.trim()) {
     errors.push({ field: 'description', message: 'Descrição é obrigatória' })
   }
-  if (!activity.date_start) {
-    errors.push({ field: 'date_start', message: 'Data de início é obrigatória' })
-  }
-  if (!activity.date_end) {
-    errors.push({ field: 'date_end', message: 'Data de término é obrigatória' })
-  }
   if (activity.date_start && activity.date_end && activity.date_start > activity.date_end) {
     errors.push({ field: 'date_end', message: 'Data de término deve ser após a data de início' })
   }
