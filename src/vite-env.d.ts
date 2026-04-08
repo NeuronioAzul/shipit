@@ -20,6 +20,10 @@ export interface ElectronAPI {
   deleteEvidence: (id: string) => Promise<boolean>
   getEvidenceFilePath: (id: string) => Promise<string | null>
 
+  // Reports
+  generateReport: (monthReference: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
+  openFileInFolder: (filePath: string) => Promise<void>
+
   // Dialogs
   selectImages: () => Promise<string[]>
 
@@ -57,6 +61,7 @@ export interface ActivityData {
   status: ActivityStatus
   month_reference: string
   attendance_type: AttendanceType | null
+  project_scope: string | null
   last_updated: string
   evidences?: EvidenceData[]
 }
@@ -66,6 +71,7 @@ export interface EvidenceData {
   activity_id: string
   file_path: string
   caption: string | null
+  sort_index: number
   date_added: string
 }
 
