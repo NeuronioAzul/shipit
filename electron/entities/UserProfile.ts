@@ -59,7 +59,7 @@ export class UserProfile {
   attendance_type!: AttendanceType
 
   @Column({ type: 'text', nullable: true })
-  squad_project_application!: string
+  project_scope!: string
 
   @Column({ type: 'text', default: 'dark' })
   mode!: AppMode
