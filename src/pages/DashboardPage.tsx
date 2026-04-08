@@ -122,14 +122,6 @@ export function DashboardPage() {
             <i className="fa-solid fa-plus"></i>
             Nova Atividade
           </button>
-          <button
-            onClick={() => navigate('/profile')}
-            className="px-3 py-2 border border-border text-foreground rounded-lg
-              hover:bg-muted transition-colors cursor-pointer"
-            title="Configurações"
-          >
-            <i className="fa-solid fa-gear"></i>
-          </button>
         </div>
       </div>
 
