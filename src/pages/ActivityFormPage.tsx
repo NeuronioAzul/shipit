@@ -308,9 +308,25 @@ export function ActivityFormPage() {
             name="description"
             value={form.description}
             onChange={handleChange}
+            onPaste={(e) => {
+              const plain = e.clipboardData.getData('text/plain')
+              if (plain) {
+                e.preventDefault()
+                const target = e.currentTarget
+                const start = target.selectionStart
+                const end = target.selectionEnd
+                const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
+                setForm((prev) => ({ ...prev, description: newValue }))
+                setAutoSaveStatus('idle')
+                // Restore cursor position after React re-render
+                requestAnimationFrame(() => {
+                  target.selectionStart = target.selectionEnd = start + plain.length
+                })
+              }
+            }}
             rows={5}
             placeholder="Descreva a atividade realizada..."
-            className={fieldClass('description') + ' resize-y'}
+            className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
           />
           {fieldError('description') && (
             <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
