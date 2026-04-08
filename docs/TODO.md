@@ -1,6 +1,9 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 07/04/2026
+> Atualizado em: 08/04/2026
+>
+> Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
+> Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
 
 ---
 
@@ -132,10 +135,11 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [ ] Arrastar e soltar para reorganizar atividades na listagem (campo `order` no banco)
 - [ ] A parte sobre que está em configurações do app não está completa e precisa ficar no menubar, não na tela de perfil nem na tela de configurações.
 - [ ] Ajustar os menus para refletir as novas telas e funcionalidades (ex: Dashboard, Perfil, Configurações)
+- [ ]  criar o arquivo de configuração do tailwind para definir as cores da marca e os tokens de tema (background, foreground, primary, accent, etc.) — ou usar `@theme inline` no CSS
 
 ---
 
-## Depois apenas que tudo estiver pronto, podemos pensar em:
+## Depois que tudo estiver pronto, podemos pensar em:
 
 ### Fase 6: Polimento e Distribuição
 
