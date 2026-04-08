@@ -35,6 +35,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Dialogs
   selectImages: () => ipcRenderer.invoke('app:selectImages'),
 
+  // Reports
+  generateReport: (monthReference: string) =>
+    ipcRenderer.invoke('app:generateReport', monthReference),
+  openFileInFolder: (filePath: string) =>
+    ipcRenderer.invoke('app:openFileInFolder', filePath),
+
   // Tray
   setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') =>
     ipcRenderer.invoke('app:setTrayStatus', status),

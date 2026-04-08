@@ -253,3 +253,47 @@ ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yell
     tray.setImage(icon.resize({ width: 16, height: 16 }))
   }
 })
+
+// ──── Report Generation IPC ────
+
+ipcMain.handle('app:generateReport', async (_event, monthReference: string) => {
+  try {
+    const { getReportPayload, saveReport } = await import('./database')
+    const { generateDocxReport, openInFolder } = await import('./report-generator')
+    const { v7: uuidv7 } = await import('uuid')
+
+    const { profile, activities } = await getReportPayload(monthReference)
+    if (!profile) {
+      return { success: false, error: 'Perfil do usuário não encontrado.' }
+    }
+    if (activities.length === 0) {
+      return { success: false, error: 'Nenhuma atividade encontrada para este mês.' }
+    }
+
+    const result = await generateDocxReport({
+      profile,
+      activities,
+      monthReference,
+    })
+
+    // Save report record in DB
+    await saveReport({
+      id: uuidv7(),
+      month_reference: monthReference,
+      file_path: result.filePath,
+      report_name: result.reportName,
+      status: 'Gerado',
+      activityIds: activities.map(a => a.id),
+    })
+
+    return { success: true, filePath: result.filePath }
+  } catch (err: any) {
+    console.error('Report generation error:', err)
+    return { success: false, error: err.message || 'Erro desconhecido ao gerar relatório.' }
+  }
+})
+
+ipcMain.handle('app:openFileInFolder', async (_event, filePath: string) => {
+  const { openInFolder } = await import('./report-generator')
+  openInFolder(filePath)
+})
