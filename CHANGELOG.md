@@ -7,6 +7,67 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+## [1.1.0] — 2026-04-08
+
+### Implementações do Plano de Continuidade v2
+
+#### Correção DOCX (3.0)
+
+- Data da capa do relatório agora usa o último dia útil do mês de referência (não a data de geração)
+- Função `getLastBusinessDay()` calcula automaticamente, pulando sábados e domingos
+
+#### Sistema de Alertas e Notificações (Fase 5) 🔔
+
+- Scheduler de alertas no main process (verifica a cada 60 segundos)
+- Disparo de `Notification` nativa do Electron com mensagem personalizável
+- Som de alerta opcional via `app:playSound`
+- Atualização automática do ícone do tray conforme status das atividades:
+  - Verde: tudo em dia
+  - Amarelo (piscando): atividades incompletas no mês
+  - Vermelho (piscando): últimos 3 dias do mês com pendências
+- Seção "Notificações" na `SettingsPage`:
+  - Toggle habilitar/desabilitar alertas
+  - Seleção de dias de antecedência (chips: 0, 1, 2, 3, 5, 7, 10, 14)
+  - Horário de início dos alertas
+  - Mensagem personalizada
+  - Toggle de som habilitado
+
+#### Drag & Drop (Fase 6) 🖱️
+
+- Reordenação de atividades na listagem via `@dnd-kit/sortable` com drag handles
+- Reordenação de evidências na tela de detalhes via `@dnd-kit/sortable`
+- Zona de drop na `ActivityDetailPage` para adicionar novas evidências arrastando arquivos
+- IPC handler `db:reorderEvidences` para persistir ordem
+
+#### Menus e Navegação (Fase 7) 🧭
+
+- Modal "Sobre o ShipIt!" com versão, stack tecnológico e licença, acessível via ícone no Header
+- Header com ícones de navegação direta: Dashboard, Atividades, Perfil, Configurações, Sobre
+- Menu do tray atualizado com entradas para Perfil e Configurações
+
+#### Polimento (Fase 8) 🔧
+
+- `ensureCantSplit()` em linhas de tabela do DOCX para evitar quebras de página no meio
+- Suporte a formatos gif, bmp e webp no gerador DOCX
+- Lixeira de evidências com soft delete:
+  - Campo `deleted_at` na entidade Evidence
+  - Ao excluir, move para `userData/trash/` e marca `deleted_at`
+  - Restauração via `db:restoreEvidence` (move de volta para `evidences/`)
+  - Exclusão permanente via `db:permanentlyDeleteEvidence`
+  - Limpeza automática de itens com mais de 3 meses no startup
+  - Evidências deletadas são filtradas de queries e do gerador de relatórios
+- Setup do Vitest com 15 testes unitários para `validation.ts`
+- Scripts `test` e `test:watch` no `package.json`
+
+### Dependências adicionadas
+
+- `@dnd-kit/core` — drag & drop core
+- `@dnd-kit/sortable` — sortable preset
+- `@dnd-kit/utilities` — CSS utilities
+- `vitest` (devDependency) — test runner
+
+---
+
 ## [1.0.0] — 2026-04-08
 
 ### Primeira versão funcional do ShipIt
@@ -134,11 +195,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Pendente
 
-- Opções de notificação e configuração de alertas
-- Diretório de armazenamento de dados (opcional)
-- Arrastar e soltar para reorganizar atividades e evidências
-- Validação de margens e quebras de tabela no DOCX
-- Sistema de alertas com notificações antes do fim do mês
-- Lixeira de evidências (reter 3 meses)
+- UI de gerenciamento da lixeira (visualizar/restaurar evidências deletadas)
+- Testes do report-generator (geração DOCX com dados mock)
+- Testes de integração para IPC handlers
+- Testes E2E básicos (Playwright)
+- Revisão geral de UI (responsividade, feedback visual, acessibilidade)
+- Diretório de armazenamento de dados customizável (opcional)
 - Builds para macOS (.dmg) e Linux (.AppImage)
-- Testes finais e empacotamento
+- Ajustes de tray para macOS (template images) e Linux (AppIndicator)
+- Testes finais e empacotamento multiplataforma
