@@ -95,16 +95,19 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 ---
 
-## Fase 3: O Motor de PDF
+## Fase 3: O Motor de Relatório DOCX ✅
 
-- [ ] Confirmação do mês antes de gerar
-- [ ] Serviço de geração via (DOCX via template)
-- [ ] Um print por página no DOCX, legenda abaixo da imagem
-- [ ] Referências de páginas na coluna "Referência" da tabela
-- [ ] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.docx`
-- [ ] Histórico de relatórios gerados (entidade Report)
-- [ ] Status do relatório (Gerado, Falha, Excluído)
-- [ ] Ação com botão para abrir relatório gerado na pasta de destino, ou abrir pasta;
+- [x] Confirmação do mês antes de gerar
+- [x] Serviço de geração via DOCX (template OpenXML com jszip + xmldom)
+- [x] Um print por página no DOCX, legenda abaixo da imagem
+- [x] Referências de páginas (PAGEREF) na coluna "Referência" da tabela
+- [x] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.docx`
+- [x] Histórico de relatórios gerados (entidade Report)
+- [x] Status do relatório (Gerado, Falha, Excluído)
+- [x] Ação com botão para abrir relatório gerado na pasta de destino
+- [x] Encarte A: agrupamento por escopo de projeto com atividades
+- [x] Encarte B: páginas de evidência com imagens e bookmarks
+- [x] Checkboxes de atendimento em linhas separadas
 
 ---
 
