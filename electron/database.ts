@@ -275,3 +275,11 @@ export async function getReportPayload(monthReference: string) {
   })
   return { profile, activities }
 }
+
+export async function getReports(monthReference: string): Promise<Report[]> {
+  const db = await getDb()
+  return db.getRepository(Report).find({
+    where: { month_reference: monthReference },
+    order: { date_generated: 'DESC' },
+  })
+}

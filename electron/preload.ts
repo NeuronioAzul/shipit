@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('app:generateReport', monthReference),
   openFileInFolder: (filePath: string) =>
     ipcRenderer.invoke('app:openFileInFolder', filePath),
+  getReports: (monthReference: string) =>
+    ipcRenderer.invoke('db:getReports', monthReference),
 
   // Tray
   setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') =>

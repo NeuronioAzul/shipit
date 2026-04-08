@@ -297,3 +297,8 @@ ipcMain.handle('app:openFileInFolder', async (_event, filePath: string) => {
   const { openInFolder } = await import('./report-generator')
   openInFolder(filePath)
 })
+
+ipcMain.handle('db:getReports', async (_event, monthReference: string) => {
+  const { getReports } = await import('./database')
+  return getReports(monthReference)
+})

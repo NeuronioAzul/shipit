@@ -150,12 +150,18 @@ function fitToPage(width: number, height: number): { cx: number; cy: number } {
 
 // ─── XML manipulation helpers ───
 
-function replaceTextInNode(node: Node, search: string, replacement: string): void {
-  const textNodes = sel('.//w:t', node) as Node[]
-  for (const t of textNodes) {
-    if (t.textContent && t.textContent.includes(search)) {
-      t.textContent = t.textContent.replace(search, replacement)
+/** Walk DOM tree directly to replace text — avoids xpath namespace issues on cloned nodes */
+function replaceTextInNode(node: any, search: string, replacement: string): void {
+  if (node.localName === 't' && node.namespaceURI === W_NS) {
+    if (node.textContent && node.textContent.includes(search)) {
+      node.textContent = node.textContent.replace(search, replacement)
     }
+    return
+  }
+  let child = node.firstChild
+  while (child) {
+    replaceTextInNode(child, search, replacement)
+    child = child.nextSibling
   }
 }
 
