@@ -265,7 +265,16 @@
                 }
             }
         },
-        "workbench.browser.enableChatTools": true
+        "workbench.browser.enableChatTools": true,
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
+        "terminal.integrated.profiles.windows": {
+            "PowerShell": {
+                "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+                "icon": "terminal-powershell",
+                "args": ["-NoLogo"]
+            }
+        },
+        "terminal.integrated.tabs.defaultIcon": "terminal-powershell"
     },
     "extensions": {
         "recommendations": [
