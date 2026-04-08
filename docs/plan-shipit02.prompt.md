@@ -1,303 +1,377 @@
 # 🚀 ShipIt! — Plano de Continuidade (v2)
 
 > Criado em: 08/04/2026
-> Baseado em: `docs/plan-shipit01.prompt.md`
-> Referência: `docs/TODO.md` (atualizado em 07/04/2026)
+>
+> Este documento é a continuação do [plan-shipit01.prompt.md](plan-shipit01.prompt.md).
+> Consolida o que já foi implementado e detalha o que falta para concluir o projeto.
 
 ---
 
 ## 1. Resumo do Estado Atual
 
-O ShipIt! já possui toda a fundação e o fluxo principal de registro operacionais. As Fases 1 e 2 (incluindo sub-fases) estão substancialmente completas. O app roda com Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3, com dark/light mode, system tray, auto-save e dashboard funcional.
+O ShipIt! já é um aplicativo funcional. As fases 1, 2 e 3 do plano original foram concluídas com sucesso. O app possui:
+
+- Perfil de usuário completo com todos os campos do MEC
+- CRUD de atividades com auto-save (debounce 2s)
+- Upload de evidências (drag & drop, clipboard, seleção de arquivos)
+- Geração de relatório DOCX com Encartes A e B (template OpenXML via JSZip + xmldom)
+- Dashboard com cards de resumo, gráfico de Gantt, listagem de atividades e histórico de relatórios
+- System Tray com menu de contexto e ícones de status (verde/amarelo/vermelho)
+- Tema claro/escuro com persistência
+- Configurações: diretório de relatórios, som de notificação, auto-launch
+- Validação de campos obrigatórios para geração do relatório
+- Protocolo seguro `shipit-evidence://` para servir imagens
 
 ---
 
-## Organização dos arquivos do projeto
+## 2. Inventário: O Que Já Foi Implementado
 
-Quero que coloque nas pastas de assets somente tudo o que o app precisa para rodar, como ícones, sons, template DOCX, etc. O diretório `assets/` deve conter:
-- `icons/` — ícones para app e system tray
-- `sfx/` — sons de alerta
-- `templates/` — template DOCX base para geração de relatórios
-- `fonts/` — fontes customizadas (se necessário)
-- `images/` — imagens estáticas usadas no app (logo, empty state, etc.)
+### Fase 1: Fundação ✅
 
-## 2. O que já foi implementado
+| Item | Status |
+|------|--------|
+| Electron + React + Vite + TypeScript | ✅ |
+| SQLite (TypeORM + better-sqlite3) | ✅ |
+| Entidades: UserProfile, Alert, Activity, Evidence, Report, ActivityReport | ✅ |
+| Empty State + Criar Perfil | ✅ |
+| Tela de Configurações Iniciais (Perfil) | ✅ |
+| IPC handlers (`db:`, `app:`) com preload bridge | ✅ |
+| Tailwind v4 com brand colors (light + dark) | ✅ |
+| Font Awesome 7 self-hosted | ✅ |
+| Dark/Light mode com ThemeContext e persistência | ✅ |
 
-### Fase 1: Fundação ✅ COMPLETA
+### Fase 2: Fluxo de Registro ✅
 
-- [x] Setup Electron + React (Vite) + TypeScript
-- [x] Integração com SQLite (TypeORM + better-sqlite3) — BD em `userData/shipit.db`
-- [x] Criação de todas as 6 entidades: UserProfile, Alert, Activity, Evidence, Report, ActivityReport
-- [x] Tela Empty State com logo e botão "Criar Perfil"
-- [x] Tela de Configurações / Cadastro de Perfil do Usuário (todos os 8 campos obrigatórios)
-- [x] Electron main process com IPC handlers (`db:`, `app:`)
-- [x] Preload bridge com contextBridge (`contextIsolation: true`, `nodeIntegration: false`)
-- [x] Tailwind v4 com `@theme inline` — brand colors light + dark
-- [x] Font Awesome 7 via npm (self-hosted)
-- [x] Protocolo customizado `shipit-evidence://` para servir imagens de forma segura
+| Item | Status |
+|------|--------|
+| Formulário de Nova Atividade (todos os campos) | ✅ |
+| Upload de evidências (arquivo, drag & drop, clipboard) | ✅ |
+| Cópia automática para diretório interno | ✅ |
+| Legendas por evidência | ✅ |
+| Listagem de atividades por mês | ✅ |
+| Editar/excluir atividades | ✅ |
+| Tela de detalhes da atividade | ✅ |
+| Validação de campos obrigatórios | ✅ |
+| Ícone de alerta em atividades incompletas | ✅ |
+| System Tray com ícone e menu de contexto | ✅ |
+| Ícones de status no tray (verde, amarelo, vermelho) | ✅ |
+| Auto-save com indicador visual | ✅ |
+| Dashboard com resumo mensal, Gantt e listagem | ✅ |
+| Botão Gerar DOCX no Dashboard | ✅ |
+| Seletor de mês/ano com navegação | ✅ |
 
-### Fase 1.1: Dark / Light Mode ✅ COMPLETA
+### Fase 3: Motor de Relatório DOCX ✅
 
-- [x] ThemeContext com toggle dark/light
-- [x] Persistência em `localStorage.shipit-theme`
-- [x] Radio buttons na tela de Perfil
-- [x] Toggle no Header para alternar rapidamente
-- [x] Classe `.dark` / `.light` no `<html>`
+| Item | Status |
+|------|--------|
+| Template OpenXML com JSZip + xmldom | ✅ |
+| Encarte A: tabela de atividades agrupadas por escopo | ✅ |
+| Encarte B: uma evidência por página com legenda | ✅ |
+| Referências de páginas (PAGEREF/bookmarks) | ✅ |
+| Nomenclatura padrão MEC | ✅ |
+| Histórico de relatórios gerados | ✅ |
+| Status do relatório (Gerado, Falha, Excluído) | ✅ |
+| Abrir relatório na pasta | ✅ |
 
-### Fase 2: Fluxo de Registro ✅ COMPLETA
+### Fase 4: Configurações (Parcial)
 
-- [x] CRUD completo de atividades via IPC (`db:getActivities`, `db:getActivity`, `db:saveActivity`, `db:deleteActivity`)
-- [x] Formulário de Nova Atividade: descrição, período, status, links, atendimento, mês de referência
-- [x] Upload de evidências: seleção de arquivo, drag & drop, clipboard paste
-- [x] Cópia automática para diretório interno (`userData/evidences/`)
-- [x] Legenda (caption) por evidência com edição inline
-- [x] IPC: `db:saveEvidence`, `db:saveEvidenceFromBuffer`, `db:updateEvidenceCaption`, `db:deleteEvidence`, `db:getEvidenceFilePath`
+| Item | Status |
+|------|--------|
+| Tela de perfil do usuário | ✅ |
+| Separação perfil vs. configurações do app | ✅ |
+| Tema (dark/light) na tela de Configurações | ✅ |
+| Som de notificação (seletor + preview) | ✅ |
+| Auto-launch (iniciar com o sistema) | ✅ |
+| Diretório de relatórios (escolha + default) | ✅ |
+| Seção "Sobre" com versão e stack | ✅ |
 
-### Fase 2.1: Listagem de Atividades ✅ PARCIAL
+### Infraestrutura
 
-- [x] Listagem por mês com seletor de mês (prev/next)
-- [x] Contagem de atividades, badge de status, indicador de completude, contagem de evidências
-- [x] Botões editar / excluir com confirmação
-- [x] Empty state com botão de criação rápida
-- [x] Query param `?month=MM/YYYY`
-- [ ] ~~Drag & drop para reordenação~~ — **NÃO IMPLEMENTADO** (IPC `db:reorderActivities` existe, campo `order` existe, falta UI)
-
-### Fase 2.2: Detalhes da Atividade ✅ COMPLETA
-
-- [x] Visualização completa: descrição, período, status, links, evidências com legendas
-- [x] Edição via botão Editar → rota `/activities/:id/edit`
-- [x] Edição inline de legendas das evidências
-- [x] Visualização de imagens via protocolo customizado
-
-### Fase 2.3: Validação de Campos Obrigatórios ✅ COMPLETA
-
-- [x] `validateActivity()` — verifica descrição, datas, status, mês
-- [x] `validateProfile()` — verifica todos os 8 campos obrigatórios
-- [x] `isActivityComplete()` — usado para badge de alerta
-- [x] Mensagens de erro detalhadas em lista colapsável
-
-### Fase 2.3.1: System Tray ✅ PARCIAL
-
-- [x] Ícone no System Tray com minimizar para tray ao fechar
-- [x] Clique para exibir janela
-- [x] Menu de contexto: Abrir, Nova Atividade, Dashboard, Atividades, Sair
-- [x] 4 estados de ícone: default, green, yellow, red
-- [x] Navegação via IPC `app:navigate`
-
-### Fase 2.4: Auto-save e Rascunhos ✅ COMPLETA
-
-- [x] Auto-save com debounce de 2s no formulário de atividade
-- [x] Indicador visual "Salvando..." → "Salvo automaticamente"
-- [x] Recuperação de rascunhos após fechamento
-
-### Fase 2.5: Dashboard ✅ COMPLETA
-
-- [x] Dashboard como tela inicial (pós-perfil)
-- [x] Seletor de mês/ano
-- [x] Cards de resumo: total, concluídas, em andamento, pendentes, canceladas
-- [x] Gráfico de Gantt (atividades × dias do mês)
-- [x] Tabela de atividades: nº, descrição, período, status, atendimento, contagem de imagens
-- [x] Botão "Gerar PDF" no dashboard
-- [x] Alerta visual para atividades incompletas
-
-### Infraestrutura Implementada
-
-| Recurso | Status |
-|---------|--------|
-| Browser fallback (localStorage) | ✅ `src/services/localDb.ts` |
-| Tipagem IPC (`ElectronAPI`, `ActivityData`, etc.) | ✅ `src/vite-env.d.ts` |
-| Rotas React Router 7 | ✅ 6 rotas definidas |
-| Entidades Report e ActivityReport | ✅ Definidas mas **não utilizadas** |
-| Entidade Alert | ✅ Definida, relacionada a UserProfile, mas **sem lógica de notificação** |
+| Item | Status |
+|------|--------|
+| electron-builder (.exe Windows) | ✅ |
+| Ícones configurados (favicon, tray, instalador) | ✅ |
+| Protocolo `shipit-evidence://` | ✅ |
+| Protocolo `shipit-sfx://` | ✅ |
+| Browser fallback (localStorage via localDb) | ✅ Parcial |
 
 ---
 
-## 3. O que falta implementar
+## 3. O Que Falta Implementar
 
-### 3.1 Pendências das Fases 1–2 (débito técnico)
+### 3.0 Ajustes no DOCX
 
-| # | Item | Fase | Prioridade | Complexidade | Notas |
-|---|------|------|------------|--------------|-------|
-| P1 | Drag & drop para reordenar atividades | 2.1 | Média | Média | Backend pronto (`db:reorderActivities`), falta UI com lib de DnD |
-| P2 | Compatibilidade tray macOS/Linux | 2.3.1 | Baixa | Baixa | Ícones e comportamento específico por plataforma |
-| P3 | Autostart com o SO | 2.3.1 | Baixa | Baixa | `app.setLoginItemSettings()` no Electron |
+**Prioridade:** Altíssima
+**Complexidade:** Média
 
----
+A data que aparece na capa do relatório é a data de geração, mas deveria ser o ultimo dia útil do mês (ex.: 31/03/2026) do mês/ano do relatório. Ajustar o template para refletir isso.
 
-### 3.2 Fase 2.5+ — Ajustes no modelo de dados para geração de relatório
+### 3.1 Pendências de UX e Interação
 
-Antes de implementar a geração DOCX, o modelo de dados precisa de ajustes conforme documentado em `docs/plan-docx-generator/`:
+#### 3.1.1 Drag & Drop para Reordenar Atividades
 
-| # | Item | Descrição |
-|---|------|-----------|
-| D1 | Campo `project_scope` na entidade Activity | Agrupamento por projeto/squad para o Encarte A do relatório. Texto livre (opção pragmática). |
-| D2 | Campo `sort_index` na entidade Evidence | Ordenação explícita para reorganização de evidências por drag & drop. |
-| D3 | Template DOCX base | Arquivo `RELATÓRIO DE SERVIÇO - TEMPLATE.docx` acessível no app. |
+**Prioridade:** Média
+**Complexidade:** Média
 
----
+A infraestrutura já existe (campo `order` na entidade, IPC `db:reorderActivities`, função no banco). Falta a implementação da UI.
 
-### 3.3 Fase 3: O Motor de Relatório (DOCX)
+**Escopo:**
+- Implementar sortable list na `ActivitiesPage` com drag handles
+- Chamar `db:reorderActivities` ao soltar o item
+- Atualizar o estado local para refletir a nova ordem
+- Manter a ordem persistida ao trocar de mês e voltar
 
-> **Decisão técnica**: Gerar DOCX (não PDF direto) a partir de template OpenXML, conforme planejamento em `docs/plan-docx-generator/`. Evita dependência do Puppeteer e preserva o layout institucional MEC.
+**Sugestão:** Usar uma lib leve como `@dnd-kit/core` + `@dnd-kit/sortable` ou implementar com HTML5 Drag API nativa.
 
-Incluir o template DOCX base no diretório `assets/` do projeto, acessível via `app.getAppPath()`. O template deve conter placeholders para substituição e estrutura pré-definida para os encartes.
+#### 3.1.2 Drag & Drop de Evidências na Tela de Detalhes
 
-**Stack da geração DOCX:**
-- `jszip` — abrir/reempacotar o `.docx`
-- `@xmldom/xmldom` — parse e manipulação XML
-- `xpath` — localizar tabelas, linhas e parágrafos
+**Prioridade:** Baixa
+**Complexidade:** Média
 
-#### Sub-fase 3.1: Infraestrutura do gerador
+Atualmente, evidências só podem ser adicionadas via `EvidenceUpload` no formulário de edição. Permitir drag & drop diretamente na tela de detalhes (`ActivityDetailPage`) tornaria o fluxo mais ágil.
 
-- [ ] Instalar dependências: `jszip`, `@xmldom/xmldom`, `xpath`
-- [ ] Criar módulo `electron/report-export/` com a arquitetura proposta
-- [ ] `docx-template-loader.ts` — carrega template base sem sobrescrever
-- [ ] `build-report-export-payload.ts` — monta DTO com perfil, atividades agrupadas por projeto, evidências ordenadas
-- [ ] `validate-report-export.ts` — valida campos obrigatórios e existência física de evidências
-
-#### Sub-fase 3.2: Campos simples e capa
-
-- [ ] Substituir placeholders simples da capa: `{{full_name}}`, `{{role}}`, `{{seniority_level}}`, `{{contract_number}}`, `{{month_reference}}`, checkboxes de atendimento, etc.
-- [ ] Preencher dados do profissional e informações básicas
-
-#### Sub-fase 3.3: Encarte A — Tabela de atividades
-
-- [ ] Clonar tabela do Encarte A por projeto (`{{project_scope}}`)
-- [ ] Clonar linha-modelo de atividade por item dentro de cada tabela
-- [ ] Preencher: `{{activity_order}}`, `{{activity_description}}`, `{{activity_date_start}}`, `{{activity_date_end}}`, `{{activity_status}}`, `{{activity_reference}}`
-- [ ] Ordenar atividades pelo campo `order`
-
-#### Sub-fase 3.4: Encarte B — Evidências
-
-- [ ] Inserir páginas de evidência a partir da âncora `{{evidence_pages}}`
-- [ ] Uma evidência por página com quebra de página
-- [ ] Inserir imagem com proporção adequada
-- [ ] Inserir legenda abaixo da imagem
-- [ ] Criar bookmark único por página de evidência (`evidence_activityX_N`)
-
-#### Sub-fase 3.5: Referências cruzadas
-
-- [ ] Criar campos `PAGEREF` apontando para bookmarks das evidências
-- [ ] Preencher coluna Referência no formato "Páginas x, y e z"
-- [ ] Template configurado com `updateFields=true`
-
-#### Sub-fase 3.6: Fluxo de exportação
-
-- [ ] Modal de confirmação do mês antes de gerar
-- [ ] Diálogo nativo para escolher local de salvamento
-- [ ] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.pdf`
-  - Tudo maiúsculo, sem acentos, espaços substituídos por `_`
-- [ ] Opção de abrir pasta ou abrir arquivo após geração
-- [ ] IPC handler `db:generateReport` ou `app:generateDocx`
-- [ ] Registrar relatório na entidade Report (status: Gerado/Falha)
-- [ ] Registrar atividades incluídas na entidade ActivityReport
-
-#### Sub-fase 3.7: Histórico de relatórios
-
-- [ ] Tela de histórico de relatórios gerados
-- [ ] Exibir: nome, mês, data de geração, status
-- [ ] Abrir arquivo / abrir pasta
-- [ ] Lógica de substituição: novo relatório do mesmo mês marca anterior como "Excluído"
-
-#### Sub-fase 3.8: Preview (pós-MVP)
-
-- [ ] Preview do relatório antes de salvar (pode ser adiado)
-- [ ] Alternativa: abrir diretamente no Word/LibreOffice para revisão
+**Escopo:**
+- Zona de drop na `ActivityDetailPage` para adicionar novas evidências
+- Reordenar evidências existentes via drag & drop (campo `sort_index` já existe)
+- Salvar nova ordem via IPC
 
 ---
 
-### 3.4 Fase 4: Sistema de Alertas
+### 3.2 Sistema de Alertas e Notificações
 
-> Entidade `Alert` já existe no banco, associada 1:1 com `UserProfile`. Falta toda a lógica de notificação.
+**Prioridade:** Alta
+**Complexidade:** Alta
 
-- [ ] Serviço de agendamento de alertas no main process (timer/scheduler)
-- [ ] Lógica de frequência: 5 dias antes (2x/dia), 3 dias (3x), 2 dias (4x), 1 dia (5x), último dia (6x)
-- [ ] Notificação nativa do SO (`Notification` API do Electron)
-- [ ] Atualização do ícone do tray conforme status (verde/amarelo/vermelho)
-- [ ] Som de alerta configurável (14 sons em `sfx/`)
-- [ ] Tela de configuração de alertas no perfil
-- [ ] Toggle habilitar/desabilitar alertas
-- [ ] Registro de `last_alert_sent` para evitar duplicatas
-- [ ] Impedir geração de relatório se houver atividades incompletas (já parcialmente implementado via validação)
+A entidade `Alert` já existe no banco com todos os campos (dias antes, frequência, horário, mensagem, som). O que falta é toda a lógica de disparo e a UI de configuração.
+
+#### 3.2.1 Motor de Alertas no Main Process
+
+**Escopo:**
+- Criar scheduler no `electron/main.ts` que roda a cada minuto (ou a cada 5 min) verificando:
+  - Quantos dias faltam para o fim do mês corrente
+  - Se o dia atual está na lista `alert_days_before`
+  - Se o número de alertas enviados hoje é menor que a `alert_frequency` correspondente
+  - Se o horário atual é compatível com `alert_time`
+- Disparar `Notification` nativa do Electron com a `alert_message`
+- Tocar som via `app:playSound` se `alert_sound_enabled === true`
+- Atualizar `last_alert_sent` após cada disparo
+- Atualizar ícone do tray (amarelo/vermelho) conforme proximidade do prazo (ficar piscando entre o default e o vermelho ou amarelo para chamar atenção)
+
+#### 3.2.2 UI de Configuração de Alertas
+
+**Escopo:**
+- Adicionar seção "Notificações" na `SettingsPage`:
+  - Toggle habilitar/desabilitar alertas
+  - Configurar dias de antecedência (multi-select ou input customizado)
+  - Configurar frequência por faixa de dias
+  - Campo de horário de início dos alertas
+  - Campo de mensagem personalizada
+  - Toggle som habilitado + seletor de som (já existe seletor, reaproveitar)
+- Carregar/salvar configurações via relação `UserProfile → Alert`
+
+#### 3.2.3 Verificação Inteligente do Tray
+
+**Escopo:**
+- Ao iniciar o app e periodicamente, verificar:
+  - Se há atividades incompletas no mês atual → tray amarelo
+  - Se estamos nos últimos 3 dias do mês e há atividades incompletas → tray vermelho
+  - Se tudo está ok → tray verde (ou default)
+- O handler `app:setTrayStatus` já existe, precisa ser chamado automaticamente
 
 ---
 
-## 3. Ordem de execução recomendada
+### 3.3 Melhorias na Navegação e Menus
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  PRÓXIMOS PASSOS (ordem sugerida)                               │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  1. Ajustes no modelo de dados (D1, D2)          ← rápido       │
-│     • project_scope em Activity                                 │
-│     • sort_index em Evidence                                    │
-│                                                                 │
-│  2. Débito técnico prioritário (P1)              ← médio        │
-│     • Drag & drop reorder na listagem                           │
-│                                                                 │
-│  3. Fase 3: Motor DOCX                          ← complexo      │
-│     • 3.1 Infraestrutura do gerador                             │
-│     • 3.2 Campos simples e capa                                 │
-│     • 3.3 Encarte A (tabela de atividades)                      │
-│     • 3.4 Encarte B (evidências)                                │
-│     • 3.5 Referências cruzadas (PAGEREF)                        │
-│     • 3.6 Fluxo de exportação (modal, IPC, save)                │
-│     • 3.7 Histórico de relatórios                               │
-│                                                                 │
-│  4. Fase 4: Sistema de alertas                   ← médio        │
-│     • Scheduler + notificações + tray status                    │
-│                                                                 │
-│  5. Fase 5: Polimento e distribuição             ← variável     │
-│     • Lixeira, migrations, electron-builder                     │
-│     • Testes, empacotamento, release                            │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+**Prioridade:** Média
+**Complexidade:** Baixa
+
+#### 3.3.1 Seção "Sobre" no Menu da Aplicação
+
+A seção "Sobre" atualmente está na `SettingsPage`. Conforme o TODO, deve ficar acessível via menu da barra de título (menubar do Electron), não na tela de configurações.
+
+**Escopo:**
+- Criar menu nativo do Electron (ou menu customizado no header) com item "Sobre o ShipIt!"
+- Abrir modal ou janela com informações do app (nome, versão, stack, licença, créditos)
+- Remover a seção "Sobre" da `SettingsPage` (ou manter como duplicata, mas a entrada principal deve ser pelo menu)
+
+#### 3.3.2 Ajustar Menus para Novas Funcionalidades
+
+**Escopo:**
+- Revisar navegação do Header para incluir links diretos: Dashboard, Atividades, Perfil, Configurações
+- Avaliar se o Header precisa de breadcrumbs ou indicador de página atual
+- Sincronizar menu do tray com rotas disponíveis
+
+---
+
+### 3.4 Configurações Pendentes
+
+**Prioridade:** Baixa
+**Complexidade:** Baixa-Média
+
+#### 3.4.1 Diretório de Armazenamento de Dados
+
+O app usa `userData/` como base. Permitir que o usuário escolha outro diretório é complexo (migração de banco + evidências).
+
+**Escopo (se implementar):**
+- Seletor de diretório na `SettingsPage`
+- Lógica de migração: copiar `shipit.db` e pasta `evidences/` para novo local
+- Atualizar paths no main process
+- Restart do app após migração
+
+**Recomendação:** Avaliar se vale a complexidade. A maioria dos usuários não precisa disso. Pode ficar como "futuro".
+
+#### 3.4.2 Opções de Notificação Detalhadas
+
+Além do sistema de alertas (3.2), permitir configurações granulares:
+- Notificação nativa do SO vs. notificação in-app
+- Som ligado/desligado por tipo de notificação
+
+---
+
+### 3.5 Compatibilidade Multiplataforma
+
+**Prioridade:** Baixa (se somente Windows é usado)
+**Complexidade:** Média
+
+#### 3.5.1 System Tray: macOS e Linux
+
+**Escopo:**
+- **macOS:** Ícone de tray precisa ser template image (`Template` suffix) com 22x22 pontos
+- **Linux:** Testar com AppIndicator; algumas distros não suportam tray nativo
+- Ajustar comportamento de clique (macOS: clique duplo para abrir, Linux: clique único)
+
+#### 3.5.2 Builds para Outras Plataformas
+
+**Escopo:**
+- Configurar electron-builder para `.dmg` (macOS) e `.AppImage` (Linux)
+- Testar auto-launch em cada plataforma
+- Validar paths de evidências e relatórios em cada SO
+
+---
+
+### 3.6 Polimento e Qualidade
+
+**Prioridade:** Média-Alta
+**Complexidade:** Variada
+
+#### 3.6.1 Validação de Margens e Quebras no DOCX
+
+O DOCX gerado pode ter problemas com tabelas que quebram entre páginas ou imagens que excedem margens.
+
+**Escopo:**
+- Testar com relatórios de 20+ atividades e 50+ evidências
+- Ajustar XML do template para forçar `keepNext` em linhas de tabela
+- Validar dimensões de imagem em formatos variados (landscape, portrait, quadrado)
+- Testar abertura em Word, LibreOffice e Google Docs
+
+#### 3.6.2 Lixeira de Evidências
+
+**Escopo:**
+- Ao excluir evidência, mover arquivo para pasta `userData/trash/` em vez de deletar
+- Campo `deleted_at` na entidade Evidence (soft delete)
+- Limpeza automática: remover arquivos com mais de 3 meses na trash
+- UI: seção na `SettingsPage` ou página dedicada para visualizar e restaurar itens da lixeira
+
+#### 3.6.3 Testes
+
+**Escopo:**
+- Testes unitários para `validation.ts`
+- Testes para `report-generator.ts` (geração DOCX com dados mock)
+- Testes de integração para IPC handlers
+- Testes E2E básicos com Playwright ou Spectron
+
+---
+
+## 4. Plano de Fases de Continuidade
+
+### Fase 5: Alertas e Notificações 🔔
+
+**Objetivo:** Implementar o sistema de alertas que avisa o usuário sobre prazos do relatório mensal.
+
+| # | Tarefa | Complexidade |
+|---|--------|-------------|
+| 5.1 | Criar scheduler de alertas no main process | Alta |
+| 5.2 | Integrar com Notification API nativa do Electron | Média |
+| 5.3 | Atualizar ícone do tray automaticamente (verde/amarelo/vermelho) | Baixa |
+| 5.4 | Seção de configuração de alertas na SettingsPage | Média |
+| 5.5 | Testes do scheduler com diferentes cenários de data | Média |
+
+### Fase 6: Reordenação e Drag & Drop 🖱️
+
+**Objetivo:** Completar todas as interações de drag & drop pendentes.
+
+| # | Tarefa | Complexidade |
+|---|--------|-------------|
+| 6.1 | Implementar drag & drop para reordenar atividades na listagem | Média |
+| 6.2 | Implementar reordenação de evidências (sort_index) | Média |
+| 6.3 | Adicionar zona de drop na tela de detalhes da atividade | Baixa |
+
+### Fase 7: Menus e Navegação 🧭
+
+**Objetivo:** Ajustar a estrutura de menus e navegação do app.
+
+| # | Tarefa | Complexidade |
+|---|--------|-------------|
+| 7.1 | Mover "Sobre" para menu da aplicação (menubar ou modal no header) | Baixa |
+| 7.2 | Revisar Header com links de navegação diretos | Baixa |
+| 7.3 | Sincronizar navegação do tray com rotas do app | Baixa |
+
+### Fase 8: Polimento 🔧
+
+**Objetivo:** Qualidade, resiliência e acabamento.
+
+| # | Tarefa | Complexidade |
+|---|--------|-------------|
+| 8.1 | Validar DOCX com tabelas longas e muitas evidências | Média |
+| 8.2 | Implementar lixeira de evidências (soft delete + 3 meses) | Média |
+| 8.3 | Escrever testes unitários (validation, report-generator) | Média |
+| 8.4 | Testes de integração para IPC handlers | Alta |
+| 8.5 | Revisão geral de UI (responsividade, feedback visual, acessibilidade) | Média |
+
+### Fase 9: Distribuição Multiplataforma 📦
+
+**Objetivo:** Gerar builds para macOS e Linux.
+
+| # | Tarefa | Complexidade |
+|---|--------|-------------|
+| 9.1 | Ajustar ícones de tray para macOS (template images) | Baixa |
+| 9.2 | Configurar electron-builder para .dmg (macOS) | Média |
+| 9.3 | Configurar electron-builder para .AppImage (Linux) | Média |
+| 9.4 | Testar auto-launch e paths em cada plataforma | Média |
+| 9.5 | Testes finais e empacotamento de release | Alta |
+
+---
+
+## 5. Priorização Sugerida
+
+Ordem recomendada de execução, considerando valor para o usuário:
+
 ```
----
-
-## 4. Depois de tudo desenvolvido: 
-
-### Fase 5: Polimento e Distribuição
-
-#### 1 — Robustez
-
-- [ ] Lixeira de evidências (reter 3 meses antes de excluir permanentemente)
-- [ ] Validação de margens e quebras de tabela no DOCX
-- [ ] Tratamento de erros robusto no gerador DOCX
-- [ ] Migração de banco (substituir `synchronize: true` por migrations para produção)
-
-#### 2 — Configurações adicionais
-
-- [ ] Configuração do diretório de armazenamento de evidências (perguntar na instalação)
-- [ ] Autostart com o SO (`app.setLoginItemSettings()`)
-- [ ] Compatibilidade multiplataforma do tray (macOS/Linux)
-
-#### 3 — Empacotamento
-
-- [ ] Configuração do `electron-builder`
-  - [ ] `.exe` (Windows 10/11) — NSIS installer
-  - [ ] `.dmg` (macOS)
-  - [ ] `.AppImage` (Linux)
-- [ ] Ícones configurados para cada plataforma (app, instalador, tray)
-- [ ] Assinatura de código (opcional, recomendado para distribuição)
-
-#### 4 — Qualidade
-
-- [ ] Testes unitários para validação e gerador DOCX
-- [ ] Testes E2E com Playwright/Spectron
-- [ ] Changelog e release notes
-- [ ] README atualizado com instruções de uso
+1. Fase 5  — Alertas (funcionalidade core que faltou)
+2. Fase 7  — Menus (ajustes rápidos, baixo risco)
+3. Fase 6  — Drag & Drop (melhoria de UX)
+4. Fase 8  — Polimento (qualidade antes de distribuir)
+5. Fase 9  — Distribuição (só após tudo estar polido)
+```
 
 ---
 
-## 5. Referências
+## 6. Decisões em Aberto
 
-| Documento | Caminho |
-|-----------|---------|
-| Plano original | `docs/plan-shipit01.prompt.md` |
-| Roadmap de tarefas | `docs/TODO.md` |
-| Planejamento DOCX | `docs/plan-docx-generator/planejamento-funcionalidade-docx.md` |
-| Mapa do template DOCX | `docs/plan-docx-generator/docx-template-map.md` |
-| Dependências | `docs/DEPENDENCIES.md` |
-| Instruções do projeto | `.github/copilot-instructions.md` |
+| Questão | Opções | Recomendação |
+|---------|--------|-------------|
+| Diretório customizado de dados | Implementar agora vs. futuro | Deixar para futuro — complexidade alta, valor baixo |
+| Lib de drag & drop | `@dnd-kit` vs. HTML5 nativo vs. `react-beautiful-dnd` | `@dnd-kit` — mais moderno, mantido, bom com React 19 |
+| "Sobre" — onde colocar | Menubar Electron nativo vs. modal no Header | Modal no Header — mais consistente com o design atual |
+| Testes — framework | Vitest vs. Jest vs. Node test runner | Vitest — já integrado com Vite, zero config extra |
+| Formato do relatório | Manter só DOCX vs. adicionar PDF (Puppeteer) | Manter DOCX — atende o requisito, PDF pode vir depois |
+
+---
+
+## 7. Referências
+
+- [plan-shipit01.prompt.md](plan-shipit01.prompt.md) — Plano original completo
+- [TODO.md](TODO.md) — Roadmap com checklist de tarefas
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Arquitetura do projeto
+- [DEPENDENCIES.md](DEPENDENCIES.md) — Auditoria de dependências
+- [plan-docx-generator/](plan-docx-generator/) — Plano de geração DOCX (concluído)
