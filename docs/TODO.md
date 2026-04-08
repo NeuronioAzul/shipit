@@ -137,3 +137,9 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
   - [ ] .AppImage (Linux)
 - [x] Ícones do app configurados (favicon, tray, instalador)
 - [ ] Testes finais e empacotamento
+
+## Alterações e correções
+
+- Sons não estão tocando
+- A parte sobre que está em configurações do app não está completa e precisa ficar no menubar, não na tela de perfil nem na tela de configurações.
+- Ajustar os menus para refletir as novas telas e funcionalidades (ex: Dashboard, Perfil, Configurações)

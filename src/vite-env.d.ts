@@ -40,6 +40,8 @@ export interface ElectronAPI {
   // Sounds
   listSounds: () => Promise<string[]>
   getSoundPath: (filename: string) => Promise<string | null>
+  playSound: (filename: string) => Promise<boolean>
+  onPlaySoundData: (callback: (dataUrl: string) => void) => () => void
 
   // Auto-launch
   getAutoLaunch: () => Promise<boolean>

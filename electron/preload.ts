@@ -57,6 +57,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Sounds
   listSounds: () => ipcRenderer.invoke('app:listSounds'),
   getSoundPath: (filename: string) => ipcRenderer.invoke('app:getSoundPath', filename),
+  playSound: (filename: string) => ipcRenderer.invoke('app:playSound', filename),
+  onPlaySoundData: (callback: (dataUrl: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, dataUrl: string) => callback(dataUrl)
+    ipcRenderer.on('app:playSoundData', handler)
+    return () => { ipcRenderer.removeListener('app:playSoundData', handler) }
+  },
 
   // Auto-launch
   getAutoLaunch: () => ipcRenderer.invoke('app:getAutoLaunch'),

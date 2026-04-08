@@ -35,7 +35,21 @@ export function SettingsPage() {
     }
     load()
 
+    // Listen for sound data from main process
+    let cleanupSound: (() => void) | undefined
+    if (window.electronAPI) {
+      cleanupSound = window.electronAPI.onPlaySoundData((dataUrl) => {
+        if (audioRef.current) {
+          audioRef.current.pause()
+        }
+        const audio = new Audio(dataUrl)
+        audioRef.current = audio
+        audio.play().catch(() => {})
+      })
+    }
+
     return () => {
+      cleanupSound?.()
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current = null
@@ -63,14 +77,8 @@ export function SettingsPage() {
   }
 
   function handlePlaySound(filename: string) {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
-    const url = `shipit-sfx://host?file=${encodeURIComponent(filename)}`
-    const audio = new Audio(url)
-    audioRef.current = audio
-    audio.play().catch(() => {})
+    if (!window.electronAPI) return
+    window.electronAPI.playSound(filename)
   }
 
   async function handleSelectSound(filename: string) {
