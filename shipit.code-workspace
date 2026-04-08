@@ -5,6 +5,10 @@
         }
     ],
     "settings": {
+        // markdown default formater
+        "[markdown]": {
+            "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+        },
         "chat.agent.maxRequests": 250,
         "workbench.colorTheme": "Visual Studio Dark",
         "workbench.colorCustomizations": {
@@ -274,7 +278,7 @@
             "shd101wyy.markdown-preview-enhanced",
             "davidanson.vscode-markdownlint",
             "bradlc.vscode-tailwindcss",
-            "eamodio.gitlens"            
+            "eamodio.gitlens"
         ]
     }
 }
