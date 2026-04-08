@@ -27,7 +27,16 @@ export function DashboardPage() {
   const [reportResult, setReportResult] = useState<{ success: boolean; filePath?: string; error?: string } | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  const monthRef = searchParams.get('month') || getCurrentMonthRef()
+  const storedMonth = sessionStorage.getItem('shipit-dashboard-month')
+  const monthRef = searchParams.get('month') || storedMonth || getCurrentMonthRef()
+
+  // Persist selected month so it survives navigation
+  useEffect(() => {
+    sessionStorage.setItem('shipit-dashboard-month', monthRef)
+  }, [monthRef])
+
+  const currentMonthRef = getCurrentMonthRef()
+  const isCurrentMonth = monthRef === currentMonthRef
 
   const loadActivities = useCallback(async () => {
     setLoading(true)
@@ -125,22 +134,36 @@ export function DashboardPage() {
       </div>
 
       {/* Month selector */}
-      <div className="flex items-center justify-center gap-4 mb-6 select-none">
-        <button
-          onClick={() => changeMonth(-1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
-        >
-          <i className="fa-solid fa-chevron-left"></i>
-        </button>
-        <span className="text-lg font-medium capitalize min-w-48 text-center">
-          {monthName}
-        </span>
-        <button
-          onClick={() => changeMonth(1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
-        >
-          <i className="fa-solid fa-chevron-right"></i>
-        </button>
+
+      <div className="relative flex items-center justify-center mb-6 select-none">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => changeMonth(-1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          >
+            <i className="fa-solid fa-chevron-left"></i>
+          </button>
+          <span className="text-lg font-medium capitalize min-w-48 text-center">
+            {monthName}
+          </span>
+          <button
+            onClick={() => changeMonth(1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          >
+            <i className="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+        {!isCurrentMonth && (
+          <button
+            onClick={() => setSearchParams({ month: currentMonthRef })}
+            className="absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
+              hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Ir para o mês atual"
+          >
+            <i className="fa-solid fa-calendar-day"></i>
+            Mês Atual
+          </button>
+        )}
       </div>
 
       {/* Loading */}
@@ -332,11 +355,10 @@ export function DashboardPage() {
               {/* Report result feedback */}
               {reportResult && (
                 <div
-                  className={`w-full max-w-lg p-3 rounded-lg text-sm flex items-center gap-2 ${
-                    reportResult.success
+                  className={`w-full max-w-lg p-3 rounded-lg text-sm flex items-center gap-2 ${reportResult.success
                       ? 'bg-success/10 border border-success/30 text-success'
                       : 'bg-destructive/10 border border-destructive/30 text-destructive'
-                  }`}
+                    }`}
                 >
                   <i className={`fa-solid ${reportResult.success ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
                   <span className="flex-1">
