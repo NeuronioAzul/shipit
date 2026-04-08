@@ -185,7 +185,7 @@ function ensureCantSplit(row: Element): void {
   if (!trPr) {
     const trPrXml = `<w:trPr xmlns:w="${W_NS}"><w:cantSplit/></w:trPr>`
     const fragDoc = new DOMParser().parseFromString(trPrXml, 'application/xml')
-    const imported = row.ownerDocument!.importNode(fragDoc.documentElement!, true)
+    const imported = row.ownerDocument!.importNode(fragDoc.documentElement! as unknown as Node, true)
     row.insertBefore(imported as any, row.firstChild)
     return
   }

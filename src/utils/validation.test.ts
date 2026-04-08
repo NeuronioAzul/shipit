@@ -107,7 +107,6 @@ describe('isActivityComplete', () => {
     project_scope: null,
     last_updated: '2026-03-15T00:00:00',
     evidences: [],
-    deleted_at: null,
   }
 
   it('returns true for a complete activity', () => {

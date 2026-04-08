@@ -87,6 +87,7 @@ export const localDb = {
       caption,
       sort_index: activity.evidences?.length ?? 0,
       date_added: new Date().toISOString(),
+      deleted_at: null,
     }
 
     if (!activity.evidences) activity.evidences = []

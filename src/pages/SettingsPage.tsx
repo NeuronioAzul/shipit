@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
-import type { AlertData, AppSettings } from '../vite-env'
+import type { AppSettings } from '../vite-env'
 
 export function SettingsPage() {
   const navigate = useNavigate()
