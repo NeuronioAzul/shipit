@@ -23,6 +23,9 @@ export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [activities, setActivities] = useState<ActivityData[]>([])
   const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [reportResult, setReportResult] = useState<{ success: boolean; filePath?: string; error?: string } | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const monthRef = searchParams.get('month') || getCurrentMonthRef()
 
@@ -325,21 +328,110 @@ export function DashboardPage() {
 
           {/* Generate report button */}
           {activities.length > 0 && (
-            <div className="flex justify-center">
-              <button
-                disabled={incompletas > 0}
-                className="px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
-                  hover:opacity-90 transition-all cursor-pointer shadow-lg flex items-center gap-2
-                  disabled:opacity-40 disabled:cursor-not-allowed"
-                title={incompletas > 0 ? 'Preencha todas as atividades antes de gerar o relatório' : 'Gerar relatório mensal'}
-                onClick={() => {
-                  // Phase 3: PDF/DOCX generation
-                  alert('Funcionalidade de geração de relatório será implementada na Fase 3.')
-                }}
-              >
-                <i className="fa-solid fa-file-pdf text-lg"></i>
-                Gerar Relatório — {monthName}
-              </button>
+            <div className="flex flex-col items-center gap-3">
+              {/* Report result feedback */}
+              {reportResult && (
+                <div
+                  className={`w-full max-w-lg p-3 rounded-lg text-sm flex items-center gap-2 ${
+                    reportResult.success
+                      ? 'bg-success/10 border border-success/30 text-success'
+                      : 'bg-destructive/10 border border-destructive/30 text-destructive'
+                  }`}
+                >
+                  <i className={`fa-solid ${reportResult.success ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
+                  <span className="flex-1">
+                    {reportResult.success
+                      ? 'Relatório gerado com sucesso!'
+                      : `Erro: ${reportResult.error}`}
+                  </span>
+                  {reportResult.success && reportResult.filePath && window.electronAPI && (
+                    <button
+                      onClick={() => window.electronAPI!.openFileInFolder(reportResult.filePath!)}
+                      className="px-3 py-1 bg-success/20 rounded text-xs font-medium hover:bg-success/30 transition-colors cursor-pointer"
+                    >
+                      <i className="fa-solid fa-folder-open mr-1"></i>
+                      Abrir pasta
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setReportResult(null)}
+                    className="text-current opacity-60 hover:opacity-100 cursor-pointer"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              )}
+
+              {/* Confirmation dialog */}
+              {showConfirm && (
+                <div className="w-full max-w-lg p-4 bg-card border border-border rounded-lg shadow-lg">
+                  <div className="flex items-center gap-2 mb-3 font-medium">
+                    <i className="fa-solid fa-file-word text-primary"></i>
+                    <span>Confirmar geração do relatório</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Gerar relatório DOCX para <strong className="text-foreground capitalize">{monthName}</strong>?
+                    {' '}O arquivo será salvo na pasta de relatórios do app.
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setShowConfirm(false)}
+                      className="px-4 py-2 border border-border text-foreground rounded-lg
+                        hover:bg-muted transition-colors cursor-pointer text-sm"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setShowConfirm(false)
+                        setGenerating(true)
+                        setReportResult(null)
+                        try {
+                          if (window.electronAPI) {
+                            const result = await window.electronAPI.generateReport(monthRef)
+                            setReportResult(result)
+                          } else {
+                            setReportResult({ success: false, error: 'Disponível apenas no app desktop.' })
+                          }
+                        } catch (err: any) {
+                          setReportResult({ success: false, error: err.message || 'Erro inesperado.' })
+                        } finally {
+                          setGenerating(false)
+                        }
+                      }}
+                      className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
+                        hover:opacity-90 transition-all cursor-pointer text-sm flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-file-word"></i>
+                      Gerar DOCX
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Main button */}
+              {!showConfirm && (
+                <button
+                  disabled={incompletas > 0 || generating}
+                  className="px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
+                    hover:opacity-90 transition-all cursor-pointer shadow-lg flex items-center gap-2
+                    disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={incompletas > 0 ? 'Preencha todas as atividades antes de gerar o relatório' : 'Gerar relatório mensal'}
+                  onClick={() => setShowConfirm(true)}
+                >
+                  {generating ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin text-lg"></i>
+                      Gerando relatório...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-file-word text-lg"></i>
+                      Gerar Relatório — {monthName}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           )}
         </>

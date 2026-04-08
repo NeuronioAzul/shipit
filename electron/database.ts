@@ -219,3 +219,59 @@ export async function getEvidenceFilePath(id: string): Promise<string | null> {
   const evidence = await repo.findOne({ where: { id } })
   return evidence?.file_path ?? null
 }
+
+// ──── Reports ────
+
+export async function saveReport(data: {
+  id: string
+  month_reference: string
+  file_path: string
+  report_name: string
+  status: string
+  activityIds: string[]
+}): Promise<Report> {
+  const db = await getDb()
+
+  // Mark previous reports for same month as Excluído
+  const reportRepo = db.getRepository(Report)
+  const existing = await reportRepo.find({ where: { month_reference: data.month_reference, status: 'Gerado' as any } })
+  for (const old of existing) {
+    old.status = 'Excluído'
+    await reportRepo.save(old)
+  }
+
+  const report = reportRepo.create({
+    id: data.id,
+    month_reference: data.month_reference,
+    file_path: data.file_path,
+    report_name: data.report_name,
+    status: data.status as any,
+    date_generated: new Date(),
+  })
+  await reportRepo.save(report)
+
+  // Create ActivityReport entries
+  const arRepo = db.getRepository(ActivityReport)
+  for (const actId of data.activityIds) {
+    const ar = arRepo.create({
+      id: uuidv7(),
+      report_id: report.id,
+      activity_id: actId,
+      date_added: new Date(),
+    })
+    await arRepo.save(ar)
+  }
+
+  return report
+}
+
+export async function getReportPayload(monthReference: string) {
+  const db = await getDb()
+  const profile = await db.getRepository(UserProfile).findOne({ where: {} })
+  const activities = await db.getRepository(Activity).find({
+    where: { month_reference: monthReference },
+    relations: ['evidences'],
+    order: { order: 'ASC', last_updated: 'DESC' },
+  })
+  return { profile, activities }
+}
