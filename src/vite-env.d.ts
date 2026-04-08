@@ -18,7 +18,11 @@ export interface ElectronAPI {
   saveEvidenceFromBuffer: (activityId: string, buffer: ArrayBuffer, extension: string, caption: string | null) => Promise<EvidenceData>
   updateEvidenceCaption: (id: string, caption: string) => Promise<EvidenceData | null>
   deleteEvidence: (id: string) => Promise<boolean>
+  getDeletedEvidences: () => Promise<EvidenceData[]>
+  restoreEvidence: (id: string) => Promise<boolean>
+  permanentlyDeleteEvidence: (id: string) => Promise<boolean>
   getEvidenceFilePath: (id: string) => Promise<string | null>
+  reorderEvidences: (items: { id: string; sort_index: number }[]) => Promise<void>
 
   // Reports
   generateReport: (monthReference: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
@@ -98,6 +102,7 @@ export interface EvidenceData {
   caption: string | null
   sort_index: number
   date_added: string
+  deleted_at: string | null
 }
 
 export interface ReportData {

@@ -29,8 +29,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateEvidenceCaption: (id: string, caption: string) =>
     ipcRenderer.invoke('db:updateEvidenceCaption', id, caption),
   deleteEvidence: (id: string) => ipcRenderer.invoke('db:deleteEvidence', id),
+  getDeletedEvidences: () => ipcRenderer.invoke('db:getDeletedEvidences'),
+  restoreEvidence: (id: string) => ipcRenderer.invoke('db:restoreEvidence', id),
+  permanentlyDeleteEvidence: (id: string) => ipcRenderer.invoke('db:permanentlyDeleteEvidence', id),
   getEvidenceFilePath: (id: string) =>
     ipcRenderer.invoke('db:getEvidenceFilePath', id),
+  reorderEvidences: (items: { id: string; sort_index: number }[]) =>
+    ipcRenderer.invoke('db:reorderEvidences', items),
 
   // Dialogs
   selectImages: () => ipcRenderer.invoke('app:selectImages'),

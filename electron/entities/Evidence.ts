@@ -28,6 +28,9 @@ export class Evidence {
   @CreateDateColumn()
   date_added!: Date
 
+  @Column({ type: 'datetime', nullable: true })
+  deleted_at!: Date | null
+
   @ManyToOne(() => Activity, (activity) => activity.evidences)
   @JoinColumn({ name: 'activity_id' })
   activity!: Activity

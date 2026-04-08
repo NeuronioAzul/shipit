@@ -269,6 +269,26 @@ ipcMain.handle('db:getEvidenceFilePath', async (_event, id: string) => {
   return getEvidenceFilePath(id)
 })
 
+ipcMain.handle('db:reorderEvidences', async (_event, items) => {
+  const { reorderEvidences } = await import('./database')
+  return reorderEvidences(items)
+})
+
+ipcMain.handle('db:getDeletedEvidences', async () => {
+  const { getDeletedEvidences } = await import('./database')
+  return getDeletedEvidences()
+})
+
+ipcMain.handle('db:restoreEvidence', async (_event, id: string) => {
+  const { restoreEvidence } = await import('./database')
+  return restoreEvidence(id)
+})
+
+ipcMain.handle('db:permanentlyDeleteEvidence', async (_event, id: string) => {
+  const { permanentlyDeleteEvidence } = await import('./database')
+  return permanentlyDeleteEvidence(id)
+})
+
 // ──── Dialog IPC ────
 
 ipcMain.handle('app:selectImages', async () => {
@@ -593,9 +613,17 @@ function startSchedulers(): void {
   trayIntervalId = setInterval(updateTrayStatus, 300_000)
 
   // Run immediately on startup (with a small delay to let DB init)
-  setTimeout(() => {
+  setTimeout(async () => {
     checkAndFireAlerts()
     updateTrayStatus()
+    // Cleanup old trash items
+    try {
+      const { cleanupTrash } = await import('./database')
+      const cleaned = await cleanupTrash()
+      if (cleaned > 0) console.log(`Trash cleanup: removed ${cleaned} item(s)`)
+    } catch (err) {
+      console.error('Trash cleanup error:', err)
+    }
   }, 3000)
 }
 

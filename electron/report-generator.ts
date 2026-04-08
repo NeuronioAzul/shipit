@@ -179,6 +179,23 @@ function cloneNode(node: Node): Node {
   return node.cloneNode(true)
 }
 
+/** Ensure a table row has w:cantSplit to prevent it from breaking across pages */
+function ensureCantSplit(row: Element): void {
+  let trPr = (sel('./w:trPr', row as any) as any[])[0] as Element | undefined
+  if (!trPr) {
+    const trPrXml = `<w:trPr xmlns:w="${W_NS}"><w:cantSplit/></w:trPr>`
+    const fragDoc = new DOMParser().parseFromString(trPrXml, 'application/xml')
+    const imported = row.ownerDocument!.importNode(fragDoc.documentElement!, true)
+    row.insertBefore(imported as any, row.firstChild)
+    return
+  }
+  const existing = (sel('./w:cantSplit', trPr as any) as any[])
+  if (existing.length === 0) {
+    const el = row.ownerDocument!.createElementNS(W_NS, 'w:cantSplit')
+    trPr.appendChild(el)
+  }
+}
+
 // ─── Evidence page XML builder ───
 
 function buildEvidencePageXml(
@@ -349,6 +366,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
     // Clone and populate project row
     const projRow = cloneNode(projectRowTemplate) as Element
     replaceTextInNode(projRow, '{{project_scope}}', group.scope)
+    ensureCantSplit(projRow)
     encarteTable.appendChild(projRow)
 
     for (const act of group.activities) {
@@ -357,11 +375,12 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
 
       replaceTextInNode(actRow, '{{activity_order}}', String(actOrderGlobal))
       replaceTextInNode(actRow, '{{activity_description}}', act.description || '')
-      replaceTextInNode(actRow, '{{activity_reference}}', '') // Will be filled with PAGEREF later or left as page numbers
+      replaceTextInNode(actRow, '{{activity_reference}}', '')
       replaceTextInNode(actRow, '{{activity_date_start}}', formatDateBR(act.date_start))
       replaceTextInNode(actRow, '{{activity_date_end}}', formatDateBR(act.date_end))
       replaceTextInNode(actRow, '{{activity_status}}', act.status || '')
 
+      ensureCantSplit(actRow)
       encarteTable.appendChild(actRow)
 
       // Track evidence bookmarks for this activity
@@ -509,6 +528,15 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   }
   if (!ctXml.includes('Extension="jpeg"')) {
     ctXml = ctXml.replace('</Types>', '<Default Extension="jpeg" ContentType="image/jpeg"/></Types>')
+  }
+  if (!ctXml.includes('Extension="gif"')) {
+    ctXml = ctXml.replace('</Types>', '<Default Extension="gif" ContentType="image/gif"/></Types>')
+  }
+  if (!ctXml.includes('Extension="bmp"')) {
+    ctXml = ctXml.replace('</Types>', '<Default Extension="bmp" ContentType="image/bmp"/></Types>')
+  }
+  if (!ctXml.includes('Extension="webp"')) {
+    ctXml = ctXml.replace('</Types>', '<Default Extension="webp" ContentType="image/webp"/></Types>')
   }
   zip.file('[Content_Types].xml', ctXml)
 
