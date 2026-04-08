@@ -2,6 +2,8 @@
 
 ## 1. Visão Geral
 
+O que significa "ShipIt!"? O nome é uma brincadeira com a expressão "Ship It!" usada no mundo do desenvolvimento de software para indicar que algo está pronto para ser lançado ou entregue. O nome reflete a missão do aplicativo de ajudar os profissionais a "enviar" seus relatórios mensais de atividades de forma rápida e eficiente, sem complicações.
+
 O ShipIt! é uma aplicação desktop multiplataforma (Windows, macOS e Linux) projetada para automatizar a criação do "Relatório Mensal de Atividades Desenvolvidas" seguindo o padrão institucional do MEC (Ministério da Educação). O foco é facilitar a vida dos profissionais  desenvolvedores, arquitetos, levantadores de requisitos e testadores, permitindo registros diários com evidências (prints e links) que se consolidarão em um PDF formatado ao final do mês. 
 
 Fácil de acessar ficando no system tray, o ShipIt! é a solução ideal para quem busca praticidade e eficiência na documentação de suas atividades desenvolvidas para o relatório mensal. 
