@@ -264,7 +264,8 @@
                     "enumMember": "#FFB37D"
                 }
             }
-        }
+        },
+        "workbench.browser.enableChatTools": true
     },
     "extensions": {
         "recommendations": [
