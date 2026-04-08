@@ -118,9 +118,9 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
 - [ ] Configurações do app:
   - [x] tema (dark/light) — persistido via localStorage, na tela de Configurações
-  - [ ] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
+  - [x] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
   - [ ] opções de notificação
-  - [ ] comportamento do app (ex: iniciar com o sistema)
+  - [x] comportamento do app (ex: iniciar com o sistema)
   - [ ] escolha do diretório de armazenamento dos dados (opcional)
   - [x] escolha do diretório de armazenamento dos relatórios gerados
 
@@ -131,9 +131,9 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [ ] Validação de margens e quebras de tabela no DOCX
 - [ ] Sistema de alertas (notificações antes do fim do mês)
 - [ ] Lixeira de evidências (reter 3 meses)
-- [ ] Configuração do electron-builder
-  - [ ] .exe (Windows 10/11)
+- [x] Configuração do electron-builder
+  - [x] .exe (Windows 10/11)
   - [ ] .dmg (macOS)
   - [ ] .AppImage (Linux)
-- [ ] Ícones do app configurados (favicon, tray, instalador)
+- [x] Ícones do app configurados (favicon, tray, instalador)
 - [ ] Testes finais e empacotamento

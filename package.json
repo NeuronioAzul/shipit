@@ -8,7 +8,7 @@
     "build": "tsc && vite build && tsc -p tsconfig.electron.json",
     "preview": "vite preview",
     "dist": "npm run build && electron-builder",
-    "postinstall": "electron-rebuild"
+    "postinstall": "electron-builder install-app-deps"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,6 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@xmldom/xmldom": "^0.9.9",
     "better-sqlite3": "^12.8.0",
-    "electron": "^41.1.1",
     "jszip": "^3.10.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -46,7 +45,6 @@
     "xpath": "^0.0.34"
   },
   "devDependencies": {
-    "@electron/rebuild": "^4.0.3",
     "@tailwindcss/vite": "^4.2.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.2.14",
@@ -54,10 +52,60 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
+    "electron": "^41.1.1",
     "electron-builder": "^26.8.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
     "vite": "^8.0.5",
     "wait-on": "^9.0.4"
+  },
+  "build": {
+    "appId": "com.neuronioazul.shipit",
+    "productName": "ShipIt!",
+    "copyright": "Copyright © 2026 NeuronioAzul",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "images/**/*",
+      "sfx/**/*",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "docs/Relatórios 2026/RELATÓRIO DE SERVIÇO - TEMPLATE.docx",
+        "to": "RELATÓRIO DE SERVIÇO - TEMPLATE.docx"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "images/icons/ms-icon-310x310.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "images/icons/apple-icon.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "images/icons",
+      "category": "Office"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**"
+    ]
   }
 }

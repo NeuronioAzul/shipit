@@ -54,6 +54,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectDirectory: () => ipcRenderer.invoke('app:selectDirectory'),
   getDefaultReportsDir: () => ipcRenderer.invoke('app:getDefaultReportsDir'),
 
+  // Sounds
+  listSounds: () => ipcRenderer.invoke('app:listSounds'),
+  getSoundPath: (filename: string) => ipcRenderer.invoke('app:getSoundPath', filename),
+
+  // Auto-launch
+  getAutoLaunch: () => ipcRenderer.invoke('app:getAutoLaunch'),
+  setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('app:setAutoLaunch', enabled),
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, path: string) => callback(path)

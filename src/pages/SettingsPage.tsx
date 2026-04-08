@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import type { AppSettings } from '../vite-env'
@@ -10,20 +10,37 @@ export function SettingsPage() {
   const [defaultDir, setDefaultDir] = useState('')
   const [version, setVersion] = useState('')
   const [dirSaved, setDirSaved] = useState(false)
+  const [sounds, setSounds] = useState<string[]>([])
+  const [selectedSound, setSelectedSound] = useState('')
+  const [soundSaved, setSoundSaved] = useState(false)
+  const [autoLaunch, setAutoLaunch] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     async function load() {
       if (!window.electronAPI) return
-      const [settings, defDir, ver] = await Promise.all([
+      const [settings, defDir, ver, soundList, isAutoLaunch] = await Promise.all([
         window.electronAPI.getSettings(),
         window.electronAPI.getDefaultReportsDir(),
         window.electronAPI.getVersion(),
+        window.electronAPI.listSounds(),
+        window.electronAPI.getAutoLaunch(),
       ])
       setDefaultDir(defDir)
       setReportsDir((settings as AppSettings).reportsDirectory || defDir)
       setVersion(ver)
+      setSounds(soundList)
+      setSelectedSound((settings as AppSettings).alertSound || '')
+      setAutoLaunch(isAutoLaunch)
     }
     load()
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
   }, [])
 
   async function handleSelectDir() {
@@ -43,6 +60,32 @@ export function SettingsPage() {
     await window.electronAPI.saveSettings({ reportsDirectory: undefined })
     setDirSaved(true)
     setTimeout(() => setDirSaved(false), 2000)
+  }
+
+  function handlePlaySound(filename: string) {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    const url = `shipit-sfx://host?file=${encodeURIComponent(filename)}`
+    const audio = new Audio(url)
+    audioRef.current = audio
+    audio.play().catch(() => {})
+  }
+
+  async function handleSelectSound(filename: string) {
+    if (!window.electronAPI) return
+    setSelectedSound(filename)
+    await window.electronAPI.saveSettings({ alertSound: filename || undefined })
+    setSoundSaved(true)
+    setTimeout(() => setSoundSaved(false), 2000)
+  }
+
+  async function handleToggleAutoLaunch() {
+    if (!window.electronAPI) return
+    const newVal = !autoLaunch
+    const result = await window.electronAPI.setAutoLaunch(newVal)
+    setAutoLaunch(result)
   }
 
   return (
@@ -133,6 +176,67 @@ export function SettingsPage() {
               </span>
             )}
           </div>
+        </section>
+
+        {/* Link para Perfil */}
+        <section className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+            <i className="fa-solid fa-volume-high text-primary"></i>
+            Som de Notificação
+          </h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            Escolha um som para os alertas de lembrete do relatório.
+          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <select
+              value={selectedSound}
+              onChange={(e) => handleSelectSound(e.target.value)}
+              className="flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg"
+            >
+              <option value="">Sem som</option>
+              {sounds.map((s) => (
+                <option key={s} value={s}>
+                  {s.replace('.mp3', '').replace(/-/g, ' ')}
+                </option>
+              ))}
+            </select>
+            {selectedSound && (
+              <button
+                onClick={() => handlePlaySound(selectedSound)}
+                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+                title="Ouvir som"
+              >
+                <i className="fa-solid fa-play"></i>
+              </button>
+            )}
+          </div>
+          {soundSaved && (
+            <span className="text-xs text-success flex items-center gap-1">
+              <i className="fa-solid fa-check"></i> Salvo
+            </span>
+          )}
+        </section>
+
+        {/* Comportamento */}
+        <section className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <i className="fa-solid fa-sliders text-primary"></i>
+            Comportamento
+          </h2>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoLaunch}
+              onChange={handleToggleAutoLaunch}
+              className="accent-accent w-4 h-4"
+            />
+            <div>
+              <span className="text-sm">Iniciar com o sistema</span>
+              <p className="text-xs text-muted-foreground">
+                O ShipIt! será iniciado automaticamente ao ligar o computador.
+              </p>
+            </div>
+          </label>
         </section>
 
         {/* Link para Perfil */}
