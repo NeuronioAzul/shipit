@@ -1,9 +1,6 @@
 import { Link } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
 
 export function Header() {
-  const { theme, toggleTheme } = useTheme()
-
   return (
     <header className="bg-header text-header-foreground px-6 py-3 flex items-center justify-between shadow-md select-none"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
@@ -39,14 +36,6 @@ export function Header() {
         >
           <i className="fa-solid fa-gear text-lg"></i>
         </Link>
-
-        <button
-          onClick={toggleTheme}
-          className="text-header-foreground/80 hover:text-header-foreground transition-colors cursor-pointer"
-          title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
-        >
-          <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
-        </button>
       </div>
     </header>
   )
