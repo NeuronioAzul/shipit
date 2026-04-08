@@ -138,6 +138,27 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(resolved).href)
   })
 
+  // Register custom protocol to serve sound files
+  protocol.handle('shipit-sfx', (request) => {
+    const url = new URL(request.url)
+    const filename = url.searchParams.get('file')
+    if (!filename) {
+      return new Response('Missing file', { status: 400 })
+    }
+    const safe = path.basename(filename)
+    const sfxDir = getSfxDir()
+    const filePath = path.join(sfxDir, safe)
+    const resolved = path.resolve(filePath)
+    if (!resolved.startsWith(path.resolve(sfxDir))) {
+      return new Response('Forbidden', { status: 403 })
+    }
+    if (!fs.existsSync(resolved)) {
+      return new Response('Not found', { status: 404 })
+    }
+    const { pathToFileURL } = require('url') as typeof import('url')
+    return net.fetch(pathToFileURL(resolved).href)
+  })
+
   createWindow()
   createTray()
 })
@@ -294,6 +315,40 @@ ipcMain.handle('app:selectDirectory', async () => {
 
 ipcMain.handle('app:getDefaultReportsDir', () => {
   return path.join(app.getPath('userData'), 'reports')
+})
+
+// ──── Sound Playback IPC ────
+
+function getSfxDir(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar', 'sfx')
+  }
+  return path.join(app.getAppPath(), 'sfx')
+}
+
+ipcMain.handle('app:listSounds', () => {
+  const dir = getSfxDir()
+  if (!fs.existsSync(dir)) return []
+  return fs.readdirSync(dir).filter(f => f.endsWith('.mp3')).sort()
+})
+
+ipcMain.handle('app:getSoundPath', (_event, filename: string) => {
+  // Sanitize filename to prevent path traversal
+  const safe = path.basename(filename)
+  const filePath = path.join(getSfxDir(), safe)
+  if (!fs.existsSync(filePath)) return null
+  return filePath
+})
+
+// ──── Auto-launch IPC ────
+
+ipcMain.handle('app:getAutoLaunch', () => {
+  return app.getLoginItemSettings().openAtLogin
+})
+
+ipcMain.handle('app:setAutoLaunch', (_event, enabled: boolean) => {
+  app.setLoginItemSettings({ openAtLogin: enabled })
+  return app.getLoginItemSettings().openAtLogin
 })
 
 // ──── Report Generation IPC ────

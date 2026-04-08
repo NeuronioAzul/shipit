@@ -37,12 +37,21 @@ export interface ElectronAPI {
   selectDirectory: () => Promise<string | null>
   getDefaultReportsDir: () => Promise<string>
 
+  // Sounds
+  listSounds: () => Promise<string[]>
+  getSoundPath: (filename: string) => Promise<string | null>
+
+  // Auto-launch
+  getAutoLaunch: () => Promise<boolean>
+  setAutoLaunch: (enabled: boolean) => Promise<boolean>
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => () => void
 }
 
 export interface AppSettings {
   reportsDirectory?: string
+  alertSound?: string
 }
 
 export interface UserProfileData {
