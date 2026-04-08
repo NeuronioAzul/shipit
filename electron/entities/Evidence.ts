@@ -22,6 +22,9 @@ export class Evidence {
   @Column({ type: 'text', nullable: true })
   caption!: string | null
 
+  @Column({ type: 'integer', default: 0 })
+  sort_index!: number
+
   @CreateDateColumn()
   date_added!: Date
 
