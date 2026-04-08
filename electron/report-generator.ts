@@ -253,10 +253,6 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
     '{{profile_type}}': profile.profile_type || '',
     '{{correlating_activities}}': profile.correlating_activities || '',
     '{{minimum_effort_hours}}': '168',
-    // Attendance checkboxes
-    '{{attendance_presencial_checkbox}}': profile.attendance_type === 'Presencial' ? '☒' : '☐',
-    '{{attendance_remoto_checkbox}}': profile.attendance_type === 'Remoto' ? '☒' : '☐',
-    '{{attendance_hibrido_checkbox}}': profile.attendance_type === 'Híbrido' ? '☒' : '☐',
   }
 
   // Apply simple replacements to all text nodes
@@ -270,6 +266,49 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
       }
     }
     tNode.textContent = text
+  }
+
+  // ─── Post-process: split attendance cell into 3 paragraphs (one per line) ───
+  const allTextNodesPost = sel('//w:t', doc as any) as any[]
+  for (const tNode of allTextNodesPost) {
+    const text = tNode.textContent || ''
+    if (text.includes('Presencial') && text.includes('Remoto') && text.includes('Híbrido')) {
+      // Walk up to the w:tc (cell)
+      let cell = tNode.parentNode
+      while (cell && cell.localName !== 'tc') cell = cell.parentNode
+      if (!cell) continue
+
+      // Get the first paragraph to copy its properties
+      const existingParas = sel('./w:p', cell) as any[]
+      const firstPara = existingParas[0]
+      const pPr = (sel('./w:pPr', firstPara) as any[])[0]
+      const rPr = (sel('.//w:rPr', firstPara) as any[])[0]
+
+      // Remove all existing paragraphs from cell
+      for (const p of existingParas) cell.removeChild(p)
+
+      // Determine checkbox values
+      const presencial = profile.attendance_type === 'Presencial' ? '☒' : '☐'
+      const remoto = profile.attendance_type === 'Remoto' ? '☒' : '☐'
+      const hibrido = profile.attendance_type === 'Híbrido' ? '☒' : '☐'
+
+      const lines = [
+        `${presencial} Presencial`,
+        `${remoto} Remoto`,
+        `${hibrido} Híbrido`,
+      ]
+
+      // Build paragraph XML for each line, preserving formatting
+      const pPrXml = pPr ? new XMLSerializer().serializeToString(pPr) : ''
+      const rPrXml = rPr ? new XMLSerializer().serializeToString(rPr) : ''
+      for (const line of lines) {
+        const pXml = `<w:p xmlns:w="${W_NS}">${pPrXml}<w:r>${rPrXml}<w:t xml:space="preserve">${escapeXml(line)}</w:t></w:r></w:p>`
+        const fragDoc = new DOMParser().parseFromString(pXml, 'application/xml')
+        const imported = doc.importNode(fragDoc.documentElement!, true)
+        cell.appendChild(imported as any)
+      }
+      break
+    }
   }
 
   // ─── 2. Encarte A: Clone project/activity rows in Table 3 ───
