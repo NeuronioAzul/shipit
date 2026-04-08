@@ -23,6 +23,7 @@ export interface ElectronAPI {
   // Reports
   generateReport: (monthReference: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
   openFileInFolder: (filePath: string) => Promise<void>
+  getReports: (monthReference: string) => Promise<ReportData[]>
 
   // Dialogs
   selectImages: () => Promise<string[]>
@@ -73,6 +74,15 @@ export interface EvidenceData {
   caption: string | null
   sort_index: number
   date_added: string
+}
+
+export interface ReportData {
+  id: string
+  month_reference: string
+  file_path: string
+  report_name: string
+  date_generated: string
+  status: 'Gerado' | 'Falha' | 'Excluído'
 }
 
 declare global {

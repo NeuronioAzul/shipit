@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import type { ActivityData } from '../vite-env'
+import type { ActivityData, ReportData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 
@@ -26,6 +26,7 @@ export function DashboardPage() {
   const [generating, setGenerating] = useState(false)
   const [reportResult, setReportResult] = useState<{ success: boolean; filePath?: string; error?: string } | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [reports, setReports] = useState<ReportData[]>([])
 
   const storedMonth = sessionStorage.getItem('shipit-dashboard-month')
   const monthRef = searchParams.get('month') || storedMonth || getCurrentMonthRef()
@@ -48,6 +49,12 @@ export function DashboardPage() {
         data = localDb.getActivities(monthRef)
       }
       setActivities(data)
+
+      // Load reports for this month
+      if (window.electronAPI) {
+        const reps = await window.electronAPI.getReports(monthRef)
+        setReports(reps)
+      }
     } finally {
       setLoading(false)
     }
@@ -404,6 +411,10 @@ export function DashboardPage() {
                           if (window.electronAPI) {
                             const result = await window.electronAPI.generateReport(monthRef)
                             setReportResult(result)
+                            if (result.success) {
+                              const reps = await window.electronAPI.getReports(monthRef)
+                              setReports(reps)
+                            }
                           } else {
                             setReportResult({ success: false, error: 'Disponível apenas no app desktop.' })
                           }
@@ -446,6 +457,56 @@ export function DashboardPage() {
                   )}
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Reports history */}
+          {reports.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-4 mt-6">
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <i className="fa-solid fa-clock-rotate-left"></i>
+                Histórico de Relatórios
+              </h2>
+              <div className="space-y-2">
+                {reports.map((report) => {
+                  const statusConfig: Record<string, { icon: string; color: string; label: string }> = {
+                    'Gerado': { icon: 'fa-check-circle', color: 'text-success', label: 'Gerado' },
+                    'Falha': { icon: 'fa-triangle-exclamation', color: 'text-destructive', label: 'Falha' },
+                    'Excluído': { icon: 'fa-trash', color: 'text-muted-foreground', label: 'Excluído' },
+                  }
+                  const st = statusConfig[report.status] || statusConfig['Gerado']
+                  const dateStr = new Date(report.date_generated).toLocaleString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })
+
+                  return (
+                    <div
+                      key={report.id}
+                      className={`flex items-center gap-3 p-2.5 rounded-lg ${
+                        report.status === 'Excluído' ? 'opacity-50' : 'hover:bg-muted/50'
+                      } transition-colors`}
+                    >
+                      <i className={`fa-solid ${st.icon} ${st.color}`}></i>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{report.report_name}</p>
+                        <p className="text-xs text-muted-foreground">{dateStr} — {st.label}</p>
+                      </div>
+                      {report.status === 'Gerado' && window.electronAPI && (
+                        <button
+                          onClick={() => window.electronAPI!.openFileInFolder(report.file_path)}
+                          className="px-2.5 py-1 text-xs border border-border rounded-lg
+                            hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                          title="Abrir pasta do relatório"
+                        >
+                          <i className="fa-solid fa-folder-open"></i>
+                          Abrir
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </>
