@@ -28,6 +28,7 @@ interface ReportPayload {
   profile: UserProfile
   activities: Activity[]
   monthReference: string
+  reportsDir?: string
 }
 
 interface ProjectGroup {
@@ -523,7 +524,11 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
 
   // Generate the output file
   const reportName = buildReportFileName(profile, monthReference)
-  const outputPath = path.join(getReportsDir(), reportName)
+  const outDir = payload.reportsDir || getReportsDir()
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true })
+  }
+  const outputPath = path.join(outDir, reportName)
 
   const outputBuf = await zip.generateAsync({
     type: 'nodebuffer',

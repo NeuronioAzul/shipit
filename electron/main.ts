@@ -254,6 +254,48 @@ ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yell
   }
 })
 
+// ──── App Settings (JSON file in userData) ────
+
+function getSettingsPath(): string {
+  return path.join(app.getPath('userData'), 'settings.json')
+}
+
+function loadSettings(): Record<string, unknown> {
+  const p = getSettingsPath()
+  if (fs.existsSync(p)) {
+    try { return JSON.parse(fs.readFileSync(p, 'utf-8')) } catch { /* ignore */ }
+  }
+  return {}
+}
+
+function saveSettingsFile(data: Record<string, unknown>): void {
+  fs.writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2), 'utf-8')
+}
+
+ipcMain.handle('app:getSettings', () => {
+  return loadSettings()
+})
+
+ipcMain.handle('app:saveSettings', (_event, partial: Record<string, unknown>) => {
+  const current = loadSettings()
+  const merged = { ...current, ...partial }
+  saveSettingsFile(merged)
+  return merged
+})
+
+ipcMain.handle('app:selectDirectory', async () => {
+  if (!mainWindow) return null
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+    title: 'Selecionar pasta para relatórios',
+  })
+  return result.canceled ? null : result.filePaths[0]
+})
+
+ipcMain.handle('app:getDefaultReportsDir', () => {
+  return path.join(app.getPath('userData'), 'reports')
+})
+
 // ──── Report Generation IPC ────
 
 ipcMain.handle('app:generateReport', async (_event, monthReference: string) => {
@@ -274,6 +316,7 @@ ipcMain.handle('app:generateReport', async (_event, monthReference: string) => {
       profile,
       activities,
       monthReference,
+      reportsDir: loadSettings().reportsDirectory as string | undefined,
     })
 
     // Save report record in DB

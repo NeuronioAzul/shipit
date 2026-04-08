@@ -47,6 +47,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') =>
     ipcRenderer.invoke('app:setTrayStatus', status),
 
+  // App Settings
+  getSettings: () => ipcRenderer.invoke('app:getSettings'),
+  saveSettings: (partial: Record<string, unknown>) =>
+    ipcRenderer.invoke('app:saveSettings', partial),
+  selectDirectory: () => ipcRenderer.invoke('app:selectDirectory'),
+  getDefaultReportsDir: () => ipcRenderer.invoke('app:getDefaultReportsDir'),
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, path: string) => callback(path)
