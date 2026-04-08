@@ -50,6 +50,15 @@ function stripAccents(str: string): string {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
+/** Get the last business day (Mon–Fri) of the given month/year */
+function getLastBusinessDay(month: number, year: number): Date {
+  const lastDay = new Date(year, month, 0) // last calendar day of the month
+  while (lastDay.getDay() === 0 || lastDay.getDay() === 6) {
+    lastDay.setDate(lastDay.getDate() - 1)
+  }
+  return lastDay
+}
+
 function formatDateBR(dateStr: string | null): string {
   if (!dateStr) return ''
   const d = new Date(dateStr + 'T00:00:00')
@@ -243,8 +252,8 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   const monthName = MONTH_NAMES[mm] || mm
   const monthNameCapitalized = monthName.charAt(0) + monthName.slice(1).toLowerCase()
   const monthLong = `${monthNameCapitalized} de ${yyyy}`
-  const now = new Date()
-  const dateLong = now.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const lastBusinessDay = getLastBusinessDay(parseInt(mm), parseInt(yyyy))
+  const dateLong = lastBusinessDay.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const replacements: Record<string, string> = {
     '{{contract_number}}': profile.contract_identifier || '',
