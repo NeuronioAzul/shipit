@@ -126,7 +126,18 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 ---
 
-## Fase 5: Polimento e Distribuição
+## Alterações e correções
+
+- [ ] Arrastar e soltar evidências na tela de detalhes da atividade
+- [ ] Arrastar e soltar para reorganizar atividades na listagem (campo `order` no banco)
+- [ ] A parte sobre que está em configurações do app não está completa e precisa ficar no menubar, não na tela de perfil nem na tela de configurações.
+- [ ] Ajustar os menus para refletir as novas telas e funcionalidades (ex: Dashboard, Perfil, Configurações)
+
+---
+
+## Depois apenas que tudo estiver pronto, podemos pensar em:
+
+### Fase 6: Polimento e Distribuição
 
 - [ ] Validação de margens e quebras de tabela no DOCX
 - [ ] Sistema de alertas (notificações antes do fim do mês)
@@ -138,8 +149,3 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Ícones do app configurados (favicon, tray, instalador)
 - [ ] Testes finais e empacotamento
 
-## Alterações e correções
-
-- Sons não estão tocando
-- A parte sobre que está em configurações do app não está completa e precisa ficar no menubar, não na tela de perfil nem na tela de configurações.
-- Ajustar os menus para refletir as novas telas e funcionalidades (ex: Dashboard, Perfil, Configurações)
