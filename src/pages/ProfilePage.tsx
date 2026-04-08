@@ -43,7 +43,7 @@ interface ProfileForm {
   profile_type: string
   correlating_activities: string
   attendance_type: string
-  squad_project_application: string
+  project_scope: string
   mode: 'dark' | 'light'
 }
 
@@ -55,7 +55,7 @@ const initialForm: ProfileForm = {
   profile_type: '',
   correlating_activities: '',
   attendance_type: '',
-  squad_project_application: '',
+  project_scope: '',
   mode: 'dark',
 }
 
@@ -87,7 +87,7 @@ export function ProfilePage() {
           profile_type: profile.profile_type || '',
           correlating_activities: profile.correlating_activities || '',
           attendance_type: profile.attendance_type || '',
-          squad_project_application: profile.squad_project_application || '',
+          project_scope: profile.project_scope || '',
           mode: profile.mode || 'dark',
         })
         setIsEditing(true)
@@ -323,21 +323,21 @@ export function ProfilePage() {
 
         {/* Squad/Projeto/Aplicação */}
         <div>
-          <label htmlFor="squad_project_application" className={labelClass}>
+          <label htmlFor="project_scope" className={labelClass}>
             Squad / Projeto / Aplicação <span className="text-destructive">*</span>
           </label>
           <input
-            id="squad_project_application"
-            name="squad_project_application"
+            id="project_scope"
+            name="project_scope"
             type="text"
             required
-            value={form.squad_project_application}
+            value={form.project_scope}
             onChange={handleChange}
             placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={fieldClass('squad_project_application')}
+            className={fieldClass('project_scope')}
           />
-          {fieldError('squad_project_application') && (
-            <p className="text-xs text-destructive mt-1">{fieldError('squad_project_application')}</p>
+          {fieldError('project_scope') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('project_scope')}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
             Separe com vírgula caso atue em mais de um. Ex: Squad 2 / Projeto SIMEC, Squad SESU / Projeto PNAES

@@ -45,8 +45,8 @@ export function validateProfile(profile: Partial<UserProfileData>): ValidationEr
   if (!profile.attendance_type) {
     errors.push({ field: 'attendance_type', message: 'Tipo de atendimento é obrigatório' })
   }
-  if (!profile.squad_project_application?.trim()) {
-    errors.push({ field: 'squad_project_application', message: 'Squad / Projeto é obrigatório' })
+  if (!profile.project_scope?.trim()) {
+    errors.push({ field: 'project_scope', message: 'Squad / Projeto é obrigatório' })
   }
   if (!profile.correlating_activities?.trim()) {
     errors.push({ field: 'correlating_activities', message: 'Atividades correlatas é obrigatório' })

@@ -43,7 +43,7 @@ export interface UserProfileData {
   profile_type: string
   correlating_activities: string
   attendance_type: string
-  squad_project_application: string
+  project_scope: string
   mode: 'dark' | 'light'
   last_updated?: string
 }

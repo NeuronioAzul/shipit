@@ -50,7 +50,7 @@ export function ActivityFormPage() {
   // Load profile attendance and project_scope for defaults
   useEffect(() => {
     async function loadProfile() {
-      let profile: { attendance_type?: string; squad_project_application?: string } | null = null
+      let profile: { attendance_type?: string; project_scope?: string } | null = null
       if (window.electronAPI) {
         profile = await window.electronAPI.getUserProfile()
       } else {
@@ -63,7 +63,7 @@ export function ActivityFormPage() {
           setForm((prev) => ({
             ...prev,
             attendance_type: prev.attendance_type || profile!.attendance_type!,
-            project_scope: prev.project_scope || profile!.squad_project_application || '',
+            project_scope: prev.project_scope || profile!.project_scope || '',
           }))
         }
       }
