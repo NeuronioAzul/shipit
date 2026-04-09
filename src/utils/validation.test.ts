@@ -64,7 +64,7 @@ describe('validateActivity', () => {
 
 describe('validateProfile', () => {
   const validProfile: Partial<UserProfileData> = {
-    full_name: 'João Silva',
+    full_name: 'JOÃO SILVA',
     role: 'ENGENHEIRO DE SOFTWARE',
     seniority_level: 'Pleno',
     contract_identifier: 'CT-001',

@@ -76,7 +76,7 @@ export function ProfilePage() {
 
       if (profile?.full_name) {
         setForm({
-          full_name: profile.full_name || '',
+          full_name: (profile.full_name || '').toUpperCase(),
           role: profile.role || '',
           seniority_level: profile.seniority_level || '',
           contract_identifier: profile.contract_identifier || '',
@@ -95,7 +95,9 @@ export function ProfilePage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    // Nome completo sempre em maiúsculas
+    const finalValue = name === 'full_name' ? value.toUpperCase() : value
+    setForm((prev) => ({ ...prev, [name]: finalValue }))
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -190,8 +192,8 @@ export function ProfilePage() {
             required
             value={form.full_name}
             onChange={handleChange}
-            placeholder="Ex: Maria Silva de Souza e Silva"
-            className={fieldClass('full_name')}
+            placeholder="Ex: MARIA SILVA DE SOUZA E SILVA"
+            className={`${fieldClass('full_name')} uppercase`}
           />
           {fieldError('full_name') && (
             <p className="text-xs text-destructive mt-1">{fieldError('full_name')}</p>
