@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 
 function AboutModal({ onClose }: { onClose: () => void }) {
@@ -46,6 +46,21 @@ function AboutModal({ onClose }: { onClose: () => void }) {
 
 export function Header() {
   const [showAbout, setShowAbout] = useState(false)
+  const [trashCount, setTrashCount] = useState(0)
+
+  const loadTrashCount = useCallback(async () => {
+    if (window.electronAPI) {
+      const evidences = await window.electronAPI.getDeletedEvidences()
+      setTrashCount(evidences.length)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTrashCount()
+    // Refresh count periodically (every 30 seconds)
+    const interval = setInterval(loadTrashCount, 30000)
+    return () => clearInterval(interval)
+  }, [loadTrashCount])
 
   return (
     <>
@@ -98,6 +113,19 @@ export function Header() {
             title="Configurações"
           >
             <i className="fa-solid fa-gear text-lg"></i>
+          </Link>
+
+          <Link
+            to="/trash"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors relative"
+            title="Lixeira"
+          >
+            <i className="fa-solid fa-trash-can text-lg"></i>
+            {trashCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-[16px] h-4 flex items-center justify-center rounded-full px-1">
+                {trashCount > 99 ? '99+' : trashCount}
+              </span>
+            )}
           </Link>
 
           <button

@@ -8,6 +8,7 @@ import { ActivitiesPage } from './pages/ActivitiesPage'
 import { ActivityFormPage } from './pages/ActivityFormPage'
 import { ActivityDetailPage } from './pages/ActivityDetailPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { TrashPage } from './pages/TrashPage'
 
 /** Listens for navigation commands from the Electron main process (System Tray) */
 function ElectronNavigator() {
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/trash" element={<TrashPage />} />
             <Route path="/activities" element={<ActivitiesPage />} />
             <Route path="/activities/new" element={<ActivityFormPage />} />
             <Route path="/activities/:id" element={<ActivityDetailPage />} />
