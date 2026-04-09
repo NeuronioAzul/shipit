@@ -1,4 +1,19 @@
 import { useState, useRef, useCallback, type DragEvent } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
 
@@ -8,6 +23,121 @@ interface EvidenceUploadProps {
   onEvidenceAdded: (evidence: EvidenceData) => void
   onEvidenceDeleted: (id: string) => void
   onCaptionUpdated: (id: string, caption: string) => void
+  onReorder?: (evidences: EvidenceData[]) => void
+}
+
+function SortableEvidenceCard({
+  evidence,
+  onDelete,
+  onEditCaption,
+  editingCaption,
+  captionValue,
+  setCaptionValue,
+  saveCaption,
+  setEditingCaption,
+}: {
+  evidence: EvidenceData
+  onDelete: (id: string) => void
+  onEditCaption: (evidence: EvidenceData) => void
+  editingCaption: string | null
+  captionValue: string
+  setCaptionValue: (val: string) => void
+  saveCaption: (id: string) => void
+  setEditingCaption: (id: string | null) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: evidence.id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-card border border-border rounded-lg overflow-hidden group"
+    >
+      {/* Image preview */}
+      <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden relative">
+        <img
+          src={
+            evidence.file_path.startsWith('data:')
+              ? evidence.file_path
+              : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path)}`
+          }
+          alt={evidence.caption || 'Evidência'}
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            ;(e.target as HTMLImageElement).src = ''
+            ;(e.target as HTMLImageElement).style.display = 'none'
+          }}
+        />
+        {/* Drag handle */}
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 left-2 p-1.5 bg-black/50 text-white/80 rounded
+            opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+          title="Arrastar para reordenar"
+        >
+          <i className="fa-solid fa-grip-vertical text-xs"></i>
+        </button>
+        {/* Delete button */}
+        <button
+          type="button"
+          onClick={() => onDelete(evidence.id)}
+          className="absolute top-2 right-2 p-1.5 bg-destructive/80 text-destructive-foreground rounded
+            opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-destructive"
+          title="Remover evidência"
+        >
+          <i className="fa-solid fa-trash text-xs"></i>
+        </button>
+      </div>
+
+      {/* Caption */}
+      <div className="p-3">
+        {editingCaption === evidence.id ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={captionValue}
+              onChange={(e) => setCaptionValue(e.target.value)}
+              placeholder="Legenda da imagem..."
+              className="flex-1 px-2 py-1 bg-background text-foreground border border-border rounded text-sm
+                focus:outline-none focus:ring-1 focus:ring-ring"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveCaption(evidence.id)
+                if (e.key === 'Escape') setEditingCaption(null)
+              }}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => saveCaption(evidence.id)}
+              className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm cursor-pointer hover:opacity-90"
+            >
+              <i className="fa-solid fa-check"></i>
+            </button>
+          </div>
+        ) : (
+          <p
+            className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+            onClick={() => onEditCaption(evidence)}
+            title="Clique para editar a legenda"
+          >
+            {evidence.caption || (
+              <span className="italic">Clique para adicionar legenda...</span>
+            )}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function EvidenceUpload({
@@ -16,6 +146,7 @@ export function EvidenceUpload({
   onEvidenceAdded,
   onEvidenceDeleted,
   onCaptionUpdated,
+  onReorder,
 }: EvidenceUploadProps) {
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -23,6 +154,22 @@ export function EvidenceUpload({
   const [captionValue, setCaptionValue] = useState('')
   const dropRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id || !onReorder) return
+
+    const oldIdx = evidences.findIndex(e => e.id === active.id)
+    const newIdx = evidences.findIndex(e => e.id === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
+
+    const reordered = arrayMove(evidences, oldIdx, newIdx)
+    onReorder(reordered)
+  }
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
@@ -209,79 +356,25 @@ export function EvidenceUpload({
 
       {/* Evidence list */}
       {evidences.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {evidences.map((evidence) => (
-            <div
-              key={evidence.id}
-              className="bg-card border border-border rounded-lg overflow-hidden group"
-            >
-              {/* Image preview */}
-              <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden relative">
-                <img
-                  src={
-                    evidence.file_path.startsWith('data:')
-                      ? evidence.file_path
-                      : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path)}`
-                  }
-                  alt={evidence.caption || 'Evidência'}
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    ;(e.target as HTMLImageElement).src = ''
-                    ;(e.target as HTMLImageElement).style.display = 'none'
-                  }}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={evidences.map(e => e.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {evidences.map((evidence) => (
+                <SortableEvidenceCard
+                  key={evidence.id}
+                  evidence={evidence}
+                  onDelete={onEvidenceDeleted}
+                  onEditCaption={startEditCaption}
+                  editingCaption={editingCaption}
+                  captionValue={captionValue}
+                  setCaptionValue={setCaptionValue}
+                  saveCaption={saveCaption}
+                  setEditingCaption={setEditingCaption}
                 />
-                {/* Delete button */}
-                <button
-                  type="button"
-                  onClick={() => onEvidenceDeleted(evidence.id)}
-                  className="absolute top-2 right-2 p-1.5 bg-destructive/80 text-destructive-foreground rounded-full
-                    opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-destructive"
-                  title="Remover evidência"
-                >
-                  <i className="fa-solid fa-xmark text-sm"></i>
-                </button>
-              </div>
-
-              {/* Caption */}
-              <div className="p-3">
-                {editingCaption === evidence.id ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={captionValue}
-                      onChange={(e) => setCaptionValue(e.target.value)}
-                      placeholder="Legenda da imagem..."
-                      className="flex-1 px-2 py-1 bg-background text-foreground border border-border rounded text-sm
-                        focus:outline-none focus:ring-1 focus:ring-ring"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveCaption(evidence.id)
-                        if (e.key === 'Escape') setEditingCaption(null)
-                      }}
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={() => saveCaption(evidence.id)}
-                      className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm cursor-pointer hover:opacity-90"
-                    >
-                      <i className="fa-solid fa-check"></i>
-                    </button>
-                  </div>
-                ) : (
-                  <p
-                    className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-                    onClick={() => startEditCaption(evidence)}
-                    title="Clique para editar a legenda"
-                  >
-                    {evidence.caption || (
-                      <span className="italic">Clique para adicionar legenda...</span>
-                    )}
-                  </p>
-                )}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   )

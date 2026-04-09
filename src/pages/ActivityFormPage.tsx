@@ -230,6 +230,14 @@ export function ActivityFormPage() {
     )
   }
 
+  async function handleReorderEvidences(reordered: EvidenceData[]) {
+    setEvidences(reordered)
+    if (window.electronAPI) {
+      const items = reordered.map((e, i) => ({ id: e.id, sort_index: i }))
+      await window.electronAPI.reorderEvidences(items)
+    }
+  }
+
   const inputClass =
     'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
@@ -478,6 +486,7 @@ export function ActivityFormPage() {
               onEvidenceAdded={handleEvidenceAdded}
               onEvidenceDeleted={handleDeleteEvidence}
               onCaptionUpdated={handleUpdateCaption}
+              onReorder={handleReorderEvidences}
             />
           </div>
         ) : (
