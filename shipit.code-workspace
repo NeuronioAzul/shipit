@@ -288,7 +288,9 @@
             "shd101wyy.markdown-preview-enhanced",
             "davidanson.vscode-markdownlint",
             "bradlc.vscode-tailwindcss",
-            "eamodio.gitlens"
+            "eamodio.gitlens",
+            "mermaidchart.vscode-mermaid-chart",
+            "neuronioazul.image-details"
         ]
     }
 }
