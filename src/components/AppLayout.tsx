@@ -1,13 +1,23 @@
 import { Outlet } from 'react-router-dom'
-import { Header } from './Header'
+import { TitleBar } from './TitleBar'
+import { ActivityBar } from './ActivityBar'
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Header />
-      <main className="flex-1 p-6">
-        <Outlet />
-      </main>
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      {/* Title bar - fixed at top */}
+      <TitleBar />
+      
+      {/* Main content area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Activity bar - fixed on left */}
+        <ActivityBar />
+        
+        {/* Scrollable content */}
+        <main className="flex-1 overflow-auto p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

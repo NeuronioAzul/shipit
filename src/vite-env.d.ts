@@ -57,6 +57,13 @@ export interface ElectronAPI {
 
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => () => void
+
+  // Window Controls
+  windowMinimize: () => Promise<void>
+  windowMaximize: () => Promise<void>
+  windowClose: () => Promise<void>
+  windowIsMaximized: () => Promise<boolean>
+  onWindowMaximized: (callback: (isMaximized: boolean) => void) => () => void
 }
 
 export interface AppSettings {

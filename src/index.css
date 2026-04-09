@@ -17,7 +17,7 @@
   --accent-foreground: hsl(0 0% 100%);
 
   --muted: hsl(220 13% 91%);
-  --muted-foreground: hsl(215 14% 60%);
+  --muted-foreground: hsl(215 14% 45%);
 
   --success: hsl(140 62% 31%);
   --success-foreground: hsl(0 0% 100%);
@@ -28,7 +28,7 @@
   --destructive: hsl(4 83% 35%);
   --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsl(220 13% 91%);
+  --border: hsl(220 13% 85%);
   --input: hsl(220 13% 91%);
   --ring: hsl(24 89% 54%);
 
@@ -38,14 +38,22 @@
 
   --header: hsl(220 26% 14%);
   --header-foreground: hsl(210 20% 94%);
+
+  /* New: VSCode-inspired UI elements */
+  --titlebar: hsl(220 13% 88%);
+  --titlebar-foreground: hsl(0 0% 20%);
+  
+  --activitybar: hsl(220 13% 93%);
+  --activitybar-foreground: hsl(0 0% 50%);
+  --activitybar-foreground-active: hsl(216 64% 30%);
 }
 
 /* Dark Mode */
 .dark {
-  --background: hsl(0 0% 12%);
-  --foreground: hsl(0 0% 88%);
-  --card: hsl(210 11% 15%);
-  --card-foreground: hsl(0 0% 88%);
+  --background: hsl(220 13% 12%);
+  --foreground: hsl(0 0% 90%);
+  --card: hsl(220 13% 15%);
+  --card-foreground: hsl(0 0% 90%);
 
   --primary: hsl(216 52% 59%);
   --primary-foreground: hsl(0 0% 100%);
@@ -53,8 +61,8 @@
   --accent: hsl(24 89% 54%);
   --accent-foreground: hsl(0 0% 100%);
 
-  --muted: hsl(0 0% 26%);
-  --muted-foreground: hsl(0 0% 46%);
+  --muted: hsl(220 13% 22%);
+  --muted-foreground: hsl(0 0% 55%);
 
   --success: hsl(122 39% 49%);
   --success-foreground: hsl(0 0% 100%);
@@ -65,16 +73,24 @@
   --destructive: hsl(4 73% 63%);
   --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsl(0 0% 26%);
-  --input: hsl(0 0% 26%);
+  --border: hsl(220 13% 25%);
+  --input: hsl(220 13% 22%);
   --ring: hsl(24 89% 54%);
 
-  --sidebar-bg: hsl(220 26% 11%);
-  --sidebar-foreground: hsl(0 0% 88%);
-  --sidebar-border: hsl(0 0% 26%);
+  --sidebar-bg: hsl(220 18% 10%);
+  --sidebar-foreground: hsl(0 0% 90%);
+  --sidebar-border: hsl(220 13% 25%);
 
   --header: hsl(220 30% 10%);
   --header-foreground: hsl(210 20% 92%);
+
+  /* New: VSCode-inspired UI elements */
+  --titlebar: hsl(220 13% 12%);
+  --titlebar-foreground: hsl(0 0% 80%);
+  
+  --activitybar: hsl(220 13% 14%);
+  --activitybar-foreground: hsl(0 0% 53%);
+  --activitybar-foreground-active: hsl(0 0% 100%);
 }
 
 /* ===== Map CSS variables to Tailwind utilities ===== */
@@ -112,6 +128,14 @@
 
   --color-header: var(--header);
   --color-header-foreground: var(--header-foreground);
+
+  /* New: VSCode-inspired UI elements */
+  --color-titlebar: var(--titlebar);
+  --color-titlebar-foreground: var(--titlebar-foreground);
+  
+  --color-activitybar: var(--activitybar);
+  --color-activitybar-foreground: var(--activitybar-foreground);
+  --color-activitybar-foreground-active: var(--activitybar-foreground-active);
 
   /* Direct brand colors for one-off usage */
   --color-brand-blue: hsl(216 64% 30%);
