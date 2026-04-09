@@ -365,8 +365,8 @@ function getSfxDir(): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'app.asar', 'sfx')
   }
-  // In dev mode, app.getAppPath() points to electron folder, sfx is at project root
-  return path.join(app.getAppPath(), '..', 'sfx')
+  // In dev mode, app.getAppPath() returns project root
+  return path.join(app.getAppPath(), 'sfx')
 }
 
 ipcMain.handle('app:listSounds', () => {
