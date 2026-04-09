@@ -166,6 +166,8 @@ export function ActivityDetailPage() {
           ...activity,
           evidences: activity.evidences?.filter(e => e.id !== evidenceId) || []
         })
+        // Notify Header to update trash badge
+        window.dispatchEvent(new Event('shipit:trash-changed'))
       }
     } finally {
       setDeleting(false)

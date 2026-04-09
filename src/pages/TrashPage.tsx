@@ -54,6 +54,8 @@ export function TrashPage() {
       const success = await window.electronAPI.restoreEvidence(id)
       if (success) {
         setEvidences(prev => prev.filter(e => e.id !== id))
+        // Notify Header to update trash badge
+        window.dispatchEvent(new Event('shipit:trash-changed'))
       }
     } finally {
       setRestoring(null)
@@ -68,6 +70,8 @@ export function TrashPage() {
       const success = await window.electronAPI.permanentlyDeleteEvidence(id)
       if (success) {
         setEvidences(prev => prev.filter(e => e.id !== id))
+        // Notify Header to update trash badge
+        window.dispatchEvent(new Event('shipit:trash-changed'))
       }
     } finally {
       setDeleting(null)
@@ -83,6 +87,8 @@ export function TrashPage() {
         await window.electronAPI.permanentlyDeleteEvidence(ev.id)
       }
       setEvidences([])
+      // Notify Header to update trash badge
+      window.dispatchEvent(new Event('shipit:trash-changed'))
     } finally {
       setEmptyingTrash(false)
     }

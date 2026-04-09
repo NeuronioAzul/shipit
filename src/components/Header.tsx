@@ -57,9 +57,14 @@ export function Header() {
 
   useEffect(() => {
     loadTrashCount()
-    // Refresh count periodically (every 30 seconds)
-    const interval = setInterval(loadTrashCount, 30000)
-    return () => clearInterval(interval)
+    
+    // Listen for trash changes from other components
+    const handleTrashChange = () => loadTrashCount()
+    window.addEventListener('shipit:trash-changed', handleTrashChange)
+    
+    return () => {
+      window.removeEventListener('shipit:trash-changed', handleTrashChange)
+    }
   }, [loadTrashCount])
 
   return (

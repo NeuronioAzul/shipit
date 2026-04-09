@@ -211,6 +211,8 @@ export function ActivityFormPage() {
   async function handleDeleteEvidence(evidenceId: string) {
     if (window.electronAPI) {
       await window.electronAPI.deleteEvidence(evidenceId)
+      // Notify Header to update trash badge
+      window.dispatchEvent(new Event('shipit:trash-changed'))
     } else {
       localDb.deleteEvidence(evidenceId)
     }
