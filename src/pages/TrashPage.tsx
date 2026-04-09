@@ -181,7 +181,7 @@ export function TrashPage() {
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-muted">
                   <img
-                    src={`shipit-evidence://evidence/${ev.id}`}
+                    src={`shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`}
                     alt={ev.caption || 'Evidência'}
                     className="w-full h-full object-cover opacity-60"
                     onError={(e) => {

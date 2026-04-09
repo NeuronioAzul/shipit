@@ -140,7 +140,14 @@ function createTray() {
   })
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Initialize database early to ensure TypeORM metadata is registered
+  const { initDatabase, cleanupTrash } = await import('./database')
+  await initDatabase()
+  
+  // Cleanup old trash items on startup
+  await cleanupTrash()
+
   // Register custom protocol to serve evidence images securely
   protocol.handle('shipit-evidence', (request) => {
     const url = new URL(request.url)
@@ -148,10 +155,11 @@ app.whenReady().then(() => {
     if (!filePath) {
       return new Response('Missing path', { status: 400 })
     }
-    // Security: only allow files inside the evidences directory
+    // Security: only allow files inside evidences or trash directories
     const evidencesDir = path.join(app.getPath('userData'), 'evidences')
+    const trashDir = path.join(app.getPath('userData'), 'trash')
     const resolved = path.resolve(filePath)
-    if (!resolved.startsWith(evidencesDir)) {
+    if (!resolved.startsWith(evidencesDir) && !resolved.startsWith(trashDir)) {
       return new Response('Forbidden', { status: 403 })
     }
     if (!fs.existsSync(resolved)) {
@@ -357,7 +365,8 @@ function getSfxDir(): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'app.asar', 'sfx')
   }
-  return path.join(app.getAppPath(), 'sfx')
+  // In dev mode, app.getAppPath() points to electron folder, sfx is at project root
+  return path.join(app.getAppPath(), '..', 'sfx')
 }
 
 ipcMain.handle('app:listSounds', () => {

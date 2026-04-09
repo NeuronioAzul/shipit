@@ -25,7 +25,13 @@ const STATUS_COLORS: Record<string, string> = {
   'Pendente': 'bg-warning/15 text-warning-foreground',
 }
 
-function SortableEvidenceCard({ evidence }: { evidence: EvidenceData }) {
+function SortableEvidenceCard({ 
+  evidence, 
+  onDelete 
+}: { 
+  evidence: EvidenceData
+  onDelete: (id: string) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
   })
@@ -45,6 +51,13 @@ function SortableEvidenceCard({ evidence }: { evidence: EvidenceData }) {
         title="Arrastar para reordenar"
       >
         <i className="fa-solid fa-grip-vertical text-xs"></i>
+      </button>
+      <button
+        onClick={() => onDelete(evidence.id)}
+        className="absolute top-2 right-2 z-10 p-1.5 rounded bg-destructive/80 text-destructive-foreground hover:bg-destructive cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
+        title="Excluir evidência"
+      >
+        <i className="fa-solid fa-trash text-xs"></i>
       </button>
       <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
         <img
@@ -75,6 +88,8 @@ export function ActivityDetailPage() {
   const [activity, setActivity] = useState<ActivityData | null>(null)
   const [loading, setLoading] = useState(true)
   const [dropActive, setDropActive] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -137,6 +152,23 @@ export function ActivityDetailPage() {
       }
     }
     loadActivity()
+  }
+
+  async function handleDeleteEvidence(evidenceId: string) {
+    if (!window.electronAPI) return
+    setDeleting(true)
+    try {
+      const success = await window.electronAPI.deleteEvidence(evidenceId)
+      if (success && activity) {
+        setActivity({
+          ...activity,
+          evidences: activity.evidences?.filter(e => e.id !== evidenceId) || []
+        })
+      }
+    } finally {
+      setDeleting(false)
+      setConfirmDelete(null)
+    }
   }
 
   function formatDate(d: string | null): string {
@@ -283,7 +315,11 @@ export function ActivityDetailPage() {
                 <SortableContext items={activity.evidences.map(e => e.id)} strategy={rectSortingStrategy}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {activity.evidences.map((ev) => (
-                      <SortableEvidenceCard key={ev.id} evidence={ev} />
+                      <SortableEvidenceCard 
+                        key={ev.id} 
+                        evidence={ev} 
+                        onDelete={(id) => setConfirmDelete(id)}
+                      />
                     ))}
                   </div>
                 </SortableContext>
@@ -308,6 +344,50 @@ export function ActivityDetailPage() {
           Última atualização: {new Date(activity.last_updated).toLocaleString('pt-BR')}
         </div>
       </div>
+
+      {/* Confirm delete modal */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4 text-destructive">
+              <i className="fa-solid fa-triangle-exclamation text-xl"></i>
+              <h2 className="text-lg font-semibold">Excluir evidência?</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              A evidência será movida para a lixeira e poderá ser restaurada em até 3 meses.
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteEvidence(confirmDelete)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    Excluindo...
+                  </>
+                ) : (
+                  'Excluir'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
