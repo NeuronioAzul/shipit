@@ -95,8 +95,8 @@ export function ProfilePage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target
-    // Nome completo sempre em maiúsculas
-    const finalValue = name === 'full_name' ? value.toUpperCase() : value
+    // Nome completo sempre em maiúsculas e sem números
+    const finalValue = name === 'full_name' ? value.replace(/\d/g, '').toUpperCase() : value
     setForm((prev) => ({ ...prev, [name]: finalValue }))
   }
 

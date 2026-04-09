@@ -29,6 +29,8 @@ export function validateProfile(profile: Partial<UserProfileData>): ValidationEr
 
   if (!profile.full_name?.trim()) {
     errors.push({ field: 'full_name', message: 'Nome completo é obrigatório' })
+  } else if (/\d/.test(profile.full_name)) {
+    errors.push({ field: 'full_name', message: 'Nome completo não pode conter números' })
   }
   if (!profile.role) {
     errors.push({ field: 'role', message: 'Cargo é obrigatório' })

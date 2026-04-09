@@ -91,6 +91,11 @@ describe('validateProfile', () => {
     const errors = validateProfile({ ...validProfile, full_name: '  ' })
     expect(errors).toContainEqual({ field: 'full_name', message: 'Nome completo é obrigatório' })
   })
+
+  it('rejects full_name containing numbers', () => {
+    const errors = validateProfile({ ...validProfile, full_name: 'MARIA 123 SILVA' })
+    expect(errors).toContainEqual({ field: 'full_name', message: 'Nome completo não pode conter números' })
+  })
 })
 
 describe('isActivityComplete', () => {
