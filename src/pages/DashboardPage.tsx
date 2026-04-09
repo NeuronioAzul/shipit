@@ -28,12 +28,12 @@ export function DashboardPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [reports, setReports] = useState<ReportData[]>([])
 
-  const storedMonth = sessionStorage.getItem('shipit-dashboard-month')
+  const storedMonth = sessionStorage.getItem('shipit-selected-month')
   const monthRef = searchParams.get('month') || storedMonth || getCurrentMonthRef()
 
-  // Persist selected month so it survives navigation
+  // Persist selected month so it survives navigation across pages
   useEffect(() => {
-    sessionStorage.setItem('shipit-dashboard-month', monthRef)
+    sessionStorage.setItem('shipit-selected-month', monthRef)
   }, [monthRef])
 
   const currentMonthRef = getCurrentMonthRef()

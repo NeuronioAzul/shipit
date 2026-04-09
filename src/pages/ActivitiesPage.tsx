@@ -152,7 +152,13 @@ export function ActivitiesPage() {
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const monthRef = searchParams.get('month') || getCurrentMonthRef()
+  const storedMonth = sessionStorage.getItem('shipit-selected-month')
+  const monthRef = searchParams.get('month') || storedMonth || getCurrentMonthRef()
+
+  // Persist selected month so it survives navigation across pages
+  useEffect(() => {
+    sessionStorage.setItem('shipit-selected-month', monthRef)
+  }, [monthRef])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
