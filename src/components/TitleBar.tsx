@@ -18,21 +18,20 @@ export function TitleBar() {
 
   return (
     <div 
-      className="h-8 bg-titlebar flex items-center justify-between select-none shrink-0"
+      className="h-9 bg-titlebar flex items-center justify-between select-none shrink-0"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Left: App Icon and Title */}
-      <div className="flex items-center gap-2 pl-3">
+      {/* Left: Full Logo */}
+      <div className="flex items-center pl-3">
         <img
-          src="/assets/images/icon-foguete-logo-colorido.svg"
+          src="/assets/images/logo-composto-colorido.svg"
           alt="ShipIt!"
-          className="h-4 w-4"
+          className="h-6 bg-white/90 rounded px-1"
           onError={(e) => {
             // Fallback to PNG if SVG not found
             (e.target as HTMLImageElement).src = '/assets/images/icons/favicon-32x32.png'
           }}
         />
-        <span className="text-titlebar-foreground text-xs font-medium">ShipIt!</span>
       </div>
 
       {/* Right: Window Controls */}

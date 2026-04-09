@@ -21,7 +21,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, '..', 'images', 'icons', 'favicon-96x96.png'),
+    icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
