@@ -1,11 +1,18 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification } from 'electron'
 import path from 'path'
 import fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let alertIntervalId: ReturnType<typeof setInterval> | null = null
+let trayIntervalId: ReturnType<typeof setInterval> | null = null
 const isDev = !app.isPackaged
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'shipit-evidence', privileges: { supportFetchAPI: true, stream: true } },
+  { scheme: 'shipit-sfx', privileges: { supportFetchAPI: true, stream: true } },
+])
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -91,6 +98,22 @@ function createTray() {
         mainWindow?.webContents.send('app:navigate', '/activities')
       },
     },
+    {
+      label: 'Perfil',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/profile')
+      },
+    },
+    {
+      label: 'Configurações',
+      click: () => {
+        mainWindow?.show()
+        mainWindow?.focus()
+        mainWindow?.webContents.send('app:navigate', '/settings')
+      },
+    },
     { type: 'separator' },
     {
       label: 'Sair',
@@ -138,12 +161,35 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(resolved).href)
   })
 
+  // Register custom protocol to serve sound files
+  protocol.handle('shipit-sfx', (request) => {
+    const url = new URL(request.url)
+    const filename = url.searchParams.get('file')
+    if (!filename) {
+      return new Response('Missing file', { status: 400 })
+    }
+    const safe = path.basename(filename)
+    const sfxDir = getSfxDir()
+    const filePath = path.join(sfxDir, safe)
+    const resolved = path.resolve(filePath)
+    if (!resolved.startsWith(path.resolve(sfxDir))) {
+      return new Response('Forbidden', { status: 403 })
+    }
+    if (!fs.existsSync(resolved)) {
+      return new Response('Not found', { status: 404 })
+    }
+    const { pathToFileURL } = require('url') as typeof import('url')
+    return net.fetch(pathToFileURL(resolved).href)
+  })
+
   createWindow()
   createTray()
+  startSchedulers()
 })
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    stopSchedulers()
     app.quit()
   }
 })
@@ -223,6 +269,26 @@ ipcMain.handle('db:getEvidenceFilePath', async (_event, id: string) => {
   return getEvidenceFilePath(id)
 })
 
+ipcMain.handle('db:reorderEvidences', async (_event, items) => {
+  const { reorderEvidences } = await import('./database')
+  return reorderEvidences(items)
+})
+
+ipcMain.handle('db:getDeletedEvidences', async () => {
+  const { getDeletedEvidences } = await import('./database')
+  return getDeletedEvidences()
+})
+
+ipcMain.handle('db:restoreEvidence', async (_event, id: string) => {
+  const { restoreEvidence } = await import('./database')
+  return restoreEvidence(id)
+})
+
+ipcMain.handle('db:permanentlyDeleteEvidence', async (_event, id: string) => {
+  const { permanentlyDeleteEvidence } = await import('./database')
+  return permanentlyDeleteEvidence(id)
+})
+
 // ──── Dialog IPC ────
 
 ipcMain.handle('app:selectImages', async () => {
@@ -239,6 +305,245 @@ ipcMain.handle('app:selectImages', async () => {
 // ──── Tray Status IPC ────
 
 ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yellow' | 'red') => {
+  stopTrayBlink()
+  setTrayIcon(status)
+})
+
+// ──── App Settings (JSON file in userData) ────
+
+function getSettingsPath(): string {
+  return path.join(app.getPath('userData'), 'settings.json')
+}
+
+function loadSettings(): Record<string, unknown> {
+  const p = getSettingsPath()
+  if (fs.existsSync(p)) {
+    try { return JSON.parse(fs.readFileSync(p, 'utf-8')) } catch { /* ignore */ }
+  }
+  return {}
+}
+
+function saveSettingsFile(data: Record<string, unknown>): void {
+  fs.writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2), 'utf-8')
+}
+
+ipcMain.handle('app:getSettings', () => {
+  return loadSettings()
+})
+
+ipcMain.handle('app:saveSettings', (_event, partial: Record<string, unknown>) => {
+  const current = loadSettings()
+  const merged = { ...current, ...partial }
+  saveSettingsFile(merged)
+  return merged
+})
+
+ipcMain.handle('app:selectDirectory', async () => {
+  if (!mainWindow) return null
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+    title: 'Selecionar pasta para relatórios',
+  })
+  return result.canceled ? null : result.filePaths[0]
+})
+
+ipcMain.handle('app:getDefaultReportsDir', () => {
+  return path.join(app.getPath('userData'), 'reports')
+})
+
+// ──── Sound Playback IPC ────
+
+function getSfxDir(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar', 'sfx')
+  }
+  return path.join(app.getAppPath(), 'sfx')
+}
+
+ipcMain.handle('app:listSounds', () => {
+  const dir = getSfxDir()
+  if (!fs.existsSync(dir)) return []
+  return fs.readdirSync(dir).filter(f => f.endsWith('.mp3')).sort()
+})
+
+ipcMain.handle('app:getSoundPath', (_event, filename: string) => {
+  // Sanitize filename to prevent path traversal
+  const safe = path.basename(filename)
+  const filePath = path.join(getSfxDir(), safe)
+  if (!fs.existsSync(filePath)) return null
+  return filePath
+})
+
+ipcMain.handle('app:playSound', (_event, filename: string) => {
+  const safe = path.basename(filename)
+  const filePath = path.join(getSfxDir(), safe)
+  if (!fs.existsSync(filePath)) return false
+  // Send file data to renderer for playback via data URL
+  const buffer = fs.readFileSync(filePath)
+  const base64 = buffer.toString('base64')
+  mainWindow?.webContents.send('app:playSoundData', `data:audio/mpeg;base64,${base64}`)
+  return true
+})
+
+// ──── Auto-launch IPC ────
+
+ipcMain.handle('app:getAutoLaunch', () => {
+  return app.getLoginItemSettings().openAtLogin
+})
+
+ipcMain.handle('app:setAutoLaunch', (_event, enabled: boolean) => {
+  app.setLoginItemSettings({ openAtLogin: enabled })
+  return app.getLoginItemSettings().openAtLogin
+})
+
+// ──── Report Generation IPC ────
+
+ipcMain.handle('app:generateReport', async (_event, monthReference: string) => {
+  try {
+    const { getReportPayload, saveReport } = await import('./database')
+    const { generateDocxReport, openInFolder } = await import('./report-generator')
+    const { v7: uuidv7 } = await import('uuid')
+
+    const { profile, activities } = await getReportPayload(monthReference)
+    if (!profile) {
+      return { success: false, error: 'Perfil do usuário não encontrado.' }
+    }
+    if (activities.length === 0) {
+      return { success: false, error: 'Nenhuma atividade encontrada para este mês.' }
+    }
+
+    const result = await generateDocxReport({
+      profile,
+      activities,
+      monthReference,
+      reportsDir: loadSettings().reportsDirectory as string | undefined,
+    })
+
+    // Save report record in DB
+    await saveReport({
+      id: uuidv7(),
+      month_reference: monthReference,
+      file_path: result.filePath,
+      report_name: result.reportName,
+      status: 'Gerado',
+      activityIds: activities.map(a => a.id),
+    })
+
+    return { success: true, filePath: result.filePath }
+  } catch (err: any) {
+    console.error('Report generation error:', err)
+    return { success: false, error: err.message || 'Erro desconhecido ao gerar relatório.' }
+  }
+})
+
+ipcMain.handle('app:openFileInFolder', async (_event, filePath: string) => {
+  const { openInFolder } = await import('./report-generator')
+  openInFolder(filePath)
+})
+
+ipcMain.handle('db:getReports', async (_event, monthReference: string) => {
+  const { getReports } = await import('./database')
+  return getReports(monthReference)
+})
+
+// ──── Alert IPC ────
+
+ipcMain.handle('db:getAlert', async () => {
+  const { getAlert } = await import('./database')
+  return getAlert()
+})
+
+ipcMain.handle('db:saveAlert', async (_event, data) => {
+  const { saveAlert } = await import('./database')
+  return saveAlert(data)
+})
+
+// ──── Alert Scheduler ────
+
+function getCurrentMonthRef(): string {
+  const now = new Date()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const yyyy = now.getFullYear()
+  return `${mm}/${yyyy}`
+}
+
+function getDaysUntilEndOfMonth(): number {
+  const now = new Date()
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return lastDay.getDate() - now.getDate()
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+}
+
+async function checkAndFireAlerts(): Promise<void> {
+  try {
+    const { getAlert, updateLastAlertSent, countIncompleteActivities } = await import('./database')
+    const alert = await getAlert()
+    if (!alert || !alert.alert_enabled) return
+
+    const now = new Date()
+    const daysLeft = getDaysUntilEndOfMonth()
+
+    // Parse config arrays
+    const daysBefore: number[] = JSON.parse(alert.alert_days_before || '[]')
+    const frequencies: number[] = JSON.parse(alert.alert_frequency || '[]')
+
+    // Check if today matches any alert day
+    const dayIndex = daysBefore.indexOf(daysLeft)
+    if (dayIndex === -1) return
+
+    // Check if current time >= alert_time
+    const [alertHour, alertMin] = (alert.alert_time || '09:00').split(':').map(Number)
+    if (now.getHours() < alertHour || (now.getHours() === alertHour && now.getMinutes() < alertMin)) return
+
+    // Check if we already alerted today
+    if (alert.last_alert_sent && isSameDay(new Date(alert.last_alert_sent), now)) return
+
+    // Check incomplete activities
+    const monthRef = getCurrentMonthRef()
+    const incomplete = await countIncompleteActivities(monthRef)
+    if (incomplete === 0) return
+
+    // Fire notification
+    const notification = new Notification({
+      title: 'ShipIt! — Lembrete',
+      body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
+      icon: path.join(__dirname, '..', 'images', 'icons', 'favicon-96x96.png'),
+    })
+    notification.on('click', () => {
+      mainWindow?.show()
+      mainWindow?.focus()
+    })
+    notification.show()
+
+    // Play sound if enabled
+    if (alert.alert_sound_enabled) {
+      const settings = loadSettings()
+      const soundFile = (settings.alertSound as string) || alert.alert_sound_file
+      if (soundFile) {
+        const safe = path.basename(soundFile)
+        const filePath = path.join(getSfxDir(), safe)
+        if (fs.existsSync(filePath)) {
+          const buffer = fs.readFileSync(filePath)
+          const base64 = buffer.toString('base64')
+          mainWindow?.webContents.send('app:playSoundData', `data:audio/mpeg;base64,${base64}`)
+        }
+      }
+    }
+
+    await updateLastAlertSent()
+  } catch (err) {
+    console.error('Alert scheduler error:', err)
+  }
+}
+
+// ──── Tray Auto-Status ────
+
+function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
   if (!tray) return
   const statusMap: Record<string, string> = {
     default: 'tray-icon-foguete-dark-mode-default-2-escuro.png',
@@ -252,4 +557,78 @@ ipcMain.handle('app:setTrayStatus', (_event, status: 'default' | 'green' | 'yell
   if (!icon.isEmpty()) {
     tray.setImage(icon.resize({ width: 16, height: 16 }))
   }
-})
+}
+
+let trayBlinkState = false
+let trayBlinkIntervalId: ReturnType<typeof setInterval> | null = null
+
+function startTrayBlink(status: 'yellow' | 'red'): void {
+  stopTrayBlink()
+  trayBlinkState = false
+  trayBlinkIntervalId = setInterval(() => {
+    trayBlinkState = !trayBlinkState
+    setTrayIcon(trayBlinkState ? status : 'default')
+  }, 1000)
+}
+
+function stopTrayBlink(): void {
+  if (trayBlinkIntervalId) {
+    clearInterval(trayBlinkIntervalId)
+    trayBlinkIntervalId = null
+  }
+}
+
+async function updateTrayStatus(): Promise<void> {
+  try {
+    const { countIncompleteActivities, countActivities } = await import('./database')
+    const monthRef = getCurrentMonthRef()
+    const incomplete = await countIncompleteActivities(monthRef)
+    const total = await countActivities(monthRef)
+    const daysLeft = getDaysUntilEndOfMonth()
+
+    if (total === 0) {
+      // No activities yet — default icon
+      stopTrayBlink()
+      setTrayIcon('default')
+    } else if (incomplete === 0) {
+      // All good
+      stopTrayBlink()
+      setTrayIcon('green')
+    } else if (daysLeft <= 3) {
+      // Urgent — blink red
+      startTrayBlink('red')
+    } else {
+      // Has incomplete — blink yellow
+      startTrayBlink('yellow')
+    }
+  } catch (err) {
+    console.error('Tray status update error:', err)
+  }
+}
+
+function startSchedulers(): void {
+  // Check alerts every minute
+  alertIntervalId = setInterval(checkAndFireAlerts, 60_000)
+  // Check tray status every 5 minutes
+  trayIntervalId = setInterval(updateTrayStatus, 300_000)
+
+  // Run immediately on startup (with a small delay to let DB init)
+  setTimeout(async () => {
+    checkAndFireAlerts()
+    updateTrayStatus()
+    // Cleanup old trash items
+    try {
+      const { cleanupTrash } = await import('./database')
+      const cleaned = await cleanupTrash()
+      if (cleaned > 0) console.log(`Trash cleanup: removed ${cleaned} item(s)`)
+    } catch (err) {
+      console.error('Trash cleanup error:', err)
+    }
+  }, 3000)
+}
+
+function stopSchedulers(): void {
+  if (alertIntervalId) { clearInterval(alertIntervalId); alertIntervalId = null }
+  if (trayIntervalId) { clearInterval(trayIntervalId); trayIntervalId = null }
+  stopTrayBlink()
+}

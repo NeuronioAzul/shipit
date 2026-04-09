@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
 import type { UserProfileData } from '../vite-env'
 import { validateProfile, type ValidationError } from '../utils/validation'
 
@@ -43,8 +42,7 @@ interface ProfileForm {
   profile_type: string
   correlating_activities: string
   attendance_type: string
-  squad_project_application: string
-  mode: 'dark' | 'light'
+  project_scope: string
 }
 
 const initialForm: ProfileForm = {
@@ -55,14 +53,12 @@ const initialForm: ProfileForm = {
   profile_type: '',
   correlating_activities: '',
   attendance_type: '',
-  squad_project_application: '',
-  mode: 'dark',
+  project_scope: '',
 }
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { theme, setTheme } = useTheme()
-  const [form, setForm] = useState<ProfileForm>({ ...initialForm, mode: theme })
+  const [form, setForm] = useState<ProfileForm>({ ...initialForm })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -87,8 +83,7 @@ export function ProfilePage() {
           profile_type: profile.profile_type || '',
           correlating_activities: profile.correlating_activities || '',
           attendance_type: profile.attendance_type || '',
-          squad_project_application: profile.squad_project_application || '',
-          mode: profile.mode || 'dark',
+          project_scope: profile.project_scope || '',
         })
         setIsEditing(true)
       }
@@ -101,10 +96,6 @@ export function ProfilePage() {
   ) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
-
-    if (name === 'mode') {
-      setTheme(value as 'dark' | 'light')
-    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -323,21 +314,21 @@ export function ProfilePage() {
 
         {/* Squad/Projeto/Aplicação */}
         <div>
-          <label htmlFor="squad_project_application" className={labelClass}>
+          <label htmlFor="project_scope" className={labelClass}>
             Squad / Projeto / Aplicação <span className="text-destructive">*</span>
           </label>
           <input
-            id="squad_project_application"
-            name="squad_project_application"
+            id="project_scope"
+            name="project_scope"
             type="text"
             required
-            value={form.squad_project_application}
+            value={form.project_scope}
             onChange={handleChange}
             placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={fieldClass('squad_project_application')}
+            className={fieldClass('project_scope')}
           />
-          {fieldError('squad_project_application') && (
-            <p className="text-xs text-destructive mt-1">{fieldError('squad_project_application')}</p>
+          {fieldError('project_scope') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('project_scope')}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
             Separe com vírgula caso atue em mais de um. Ex: Squad 2 / Projeto SIMEC, Squad SESU / Projeto PNAES
@@ -365,37 +356,6 @@ export function ProfilePage() {
           <p className="text-xs text-muted-foreground mt-1">
             Copie do arquivo modelo que você recebeu.
           </p>
-        </div>
-
-        {/* Modo (Dark/Light) */}
-        <div>
-          <label className={labelClass}>Aparência</label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="mode"
-                value="dark"
-                checked={form.mode === 'dark'}
-                onChange={handleChange}
-                className="accent-accent"
-              />
-              <i className="fa-solid fa-moon text-muted-foreground"></i>
-              <span className="text-sm">Modo Escuro</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="mode"
-                value="light"
-                checked={form.mode === 'light'}
-                onChange={handleChange}
-                className="accent-accent"
-              />
-              <i className="fa-solid fa-sun text-muted-foreground"></i>
-              <span className="text-sm">Modo Claro</span>
-            </label>
-          </div>
         </div>
 
         {/* Submit */}

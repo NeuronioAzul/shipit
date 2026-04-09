@@ -74,17 +74,26 @@ export async function saveUserProfile(
 export async function getActivities(monthReference: string): Promise<Activity[]> {
   const db = await getDb()
   const repo = db.getRepository(Activity)
-  return repo.find({
+  const activities = await repo.find({
     where: { month_reference: monthReference },
     relations: ['evidences'],
     order: { order: 'ASC', last_updated: 'DESC' },
   })
+  // Exclude soft-deleted evidences
+  for (const act of activities) {
+    act.evidences = (act.evidences || []).filter(e => !e.deleted_at)
+  }
+  return activities
 }
 
 export async function getActivity(id: string): Promise<Activity | null> {
   const db = await getDb()
   const repo = db.getRepository(Activity)
-  return repo.findOne({ where: { id }, relations: ['evidences'] })
+  const activity = await repo.findOne({ where: { id }, relations: ['evidences'] })
+  if (activity) {
+    activity.evidences = (activity.evidences || []).filter(e => !e.deleted_at)
+  }
+  return activity
 }
 
 export async function saveActivity(data: Partial<Activity>): Promise<Activity> {
@@ -204,7 +213,61 @@ export async function deleteEvidence(id: string): Promise<boolean> {
   const evidence = await repo.findOne({ where: { id } })
   if (!evidence) return false
 
-  // Delete the file from disk
+  // Soft delete: move file to trash directory and mark deleted_at
+  const trashDir = path.join(app.getPath('userData'), 'trash')
+  if (!fs.existsSync(trashDir)) {
+    fs.mkdirSync(trashDir, { recursive: true })
+  }
+
+  if (fs.existsSync(evidence.file_path)) {
+    const trashPath = path.join(trashDir, path.basename(evidence.file_path))
+    fs.renameSync(evidence.file_path, trashPath)
+    evidence.file_path = trashPath
+  }
+
+  evidence.deleted_at = new Date()
+  await repo.save(evidence)
+  return true
+}
+
+export async function getDeletedEvidences(): Promise<Evidence[]> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+  return repo.createQueryBuilder('evidence')
+    .where('evidence.deleted_at IS NOT NULL')
+    .orderBy('evidence.deleted_at', 'DESC')
+    .getMany()
+}
+
+export async function restoreEvidence(id: string): Promise<boolean> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+  const evidence = await repo.findOne({ where: { id } })
+  if (!evidence || !evidence.deleted_at) return false
+
+  // Move file back to evidences directory
+  const evidencesDir = path.join(app.getPath('userData'), 'evidences')
+  if (!fs.existsSync(evidencesDir)) {
+    fs.mkdirSync(evidencesDir, { recursive: true })
+  }
+
+  if (fs.existsSync(evidence.file_path)) {
+    const restoredPath = path.join(evidencesDir, path.basename(evidence.file_path))
+    fs.renameSync(evidence.file_path, restoredPath)
+    evidence.file_path = restoredPath
+  }
+
+  evidence.deleted_at = null
+  await repo.save(evidence)
+  return true
+}
+
+export async function permanentlyDeleteEvidence(id: string): Promise<boolean> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+  const evidence = await repo.findOne({ where: { id } })
+  if (!evidence) return false
+
   if (fs.existsSync(evidence.file_path)) {
     fs.unlinkSync(evidence.file_path)
   }
@@ -213,9 +276,159 @@ export async function deleteEvidence(id: string): Promise<boolean> {
   return (result.affected ?? 0) > 0
 }
 
+/** Permanently delete evidences that have been in trash for over 3 months */
+export async function cleanupTrash(): Promise<number> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+  const threeMonthsAgo = new Date()
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+
+  const old = await repo.createQueryBuilder('evidence')
+    .where('evidence.deleted_at IS NOT NULL')
+    .andWhere('evidence.deleted_at < :date', { date: threeMonthsAgo.toISOString() })
+    .getMany()
+
+  let cleaned = 0
+  for (const ev of old) {
+    if (fs.existsSync(ev.file_path)) {
+      fs.unlinkSync(ev.file_path)
+    }
+    await repo.delete({ id: ev.id })
+    cleaned++
+  }
+  return cleaned
+}
+
 export async function getEvidenceFilePath(id: string): Promise<string | null> {
   const db = await getDb()
   const repo = db.getRepository(Evidence)
   const evidence = await repo.findOne({ where: { id } })
   return evidence?.file_path ?? null
+}
+
+export async function reorderEvidences(
+  items: { id: string; sort_index: number }[]
+): Promise<void> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+  for (const item of items) {
+    await repo.update({ id: item.id }, { sort_index: item.sort_index })
+  }
+}
+
+// ──── Reports ────
+
+export async function saveReport(data: {
+  id: string
+  month_reference: string
+  file_path: string
+  report_name: string
+  status: string
+  activityIds: string[]
+}): Promise<Report> {
+  const db = await getDb()
+
+  // Mark previous reports for same month as Excluído
+  const reportRepo = db.getRepository(Report)
+  const existing = await reportRepo.find({ where: { month_reference: data.month_reference, status: 'Gerado' as any } })
+  for (const old of existing) {
+    old.status = 'Excluído'
+    await reportRepo.save(old)
+  }
+
+  const report = reportRepo.create({
+    id: data.id,
+    month_reference: data.month_reference,
+    file_path: data.file_path,
+    report_name: data.report_name,
+    status: data.status as any,
+    date_generated: new Date(),
+  })
+  await reportRepo.save(report)
+
+  // Create ActivityReport entries
+  const arRepo = db.getRepository(ActivityReport)
+  for (const actId of data.activityIds) {
+    const ar = arRepo.create({
+      id: uuidv7(),
+      report_id: report.id,
+      activity_id: actId,
+      date_added: new Date(),
+    })
+    await arRepo.save(ar)
+  }
+
+  return report
+}
+
+export async function getReportPayload(monthReference: string) {
+  const db = await getDb()
+  const profile = await db.getRepository(UserProfile).findOne({ where: {} })
+  const activities = await db.getRepository(Activity).find({
+    where: { month_reference: monthReference },
+    relations: ['evidences'],
+    order: { order: 'ASC', last_updated: 'DESC' },
+  })
+  for (const act of activities) {
+    act.evidences = (act.evidences || []).filter(e => !e.deleted_at)
+  }
+  return { profile, activities }
+}
+
+export async function getReports(monthReference: string): Promise<Report[]> {
+  const db = await getDb()
+  return db.getRepository(Report).find({
+    where: { month_reference: monthReference },
+    order: { date_generated: 'DESC' },
+  })
+}
+
+// ──── Alerts ────
+
+export async function getAlert(): Promise<Alert | null> {
+  const db = await getDb()
+  return db.getRepository(Alert).findOne({ where: {} })
+}
+
+export async function saveAlert(data: Partial<Alert>): Promise<Alert> {
+  const db = await getDb()
+  const repo = db.getRepository(Alert)
+  let alert = await repo.findOne({ where: {} })
+
+  if (alert) {
+    Object.assign(alert, data)
+  } else {
+    // Need a profile to link to
+    const profile = await db.getRepository(UserProfile).findOne({ where: {} })
+    if (!profile) throw new Error('Perfil não encontrado para vincular alerta.')
+    alert = repo.create({ ...data, profile })
+  }
+  return repo.save(alert)
+}
+
+export async function updateLastAlertSent(): Promise<void> {
+  const db = await getDb()
+  const repo = db.getRepository(Alert)
+  const alert = await repo.findOne({ where: {} })
+  if (alert) {
+    alert.last_alert_sent = new Date()
+    await repo.save(alert)
+  }
+}
+
+/** Count incomplete activities for a given month */
+export async function countIncompleteActivities(monthReference: string): Promise<number> {
+  const db = await getDb()
+  const activities = await db.getRepository(Activity).find({
+    where: { month_reference: monthReference },
+  })
+  return activities.filter(a => a.status !== 'Concluído').length
+}
+
+/** Count total activities for a given month */
+export async function countActivities(monthReference: string): Promise<number> {
+  const db = await getDb()
+  return db.getRepository(Activity).count({
+    where: { month_reference: monthReference },
+  })
 }

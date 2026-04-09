@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import type { ActivityData } from '../vite-env'
+import type { ActivityData, ReportData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 
@@ -23,8 +23,21 @@ export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [activities, setActivities] = useState<ActivityData[]>([])
   const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [reportResult, setReportResult] = useState<{ success: boolean; filePath?: string; error?: string } | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [reports, setReports] = useState<ReportData[]>([])
 
-  const monthRef = searchParams.get('month') || getCurrentMonthRef()
+  const storedMonth = sessionStorage.getItem('shipit-dashboard-month')
+  const monthRef = searchParams.get('month') || storedMonth || getCurrentMonthRef()
+
+  // Persist selected month so it survives navigation
+  useEffect(() => {
+    sessionStorage.setItem('shipit-dashboard-month', monthRef)
+  }, [monthRef])
+
+  const currentMonthRef = getCurrentMonthRef()
+  const isCurrentMonth = monthRef === currentMonthRef
 
   const loadActivities = useCallback(async () => {
     setLoading(true)
@@ -36,6 +49,12 @@ export function DashboardPage() {
         data = localDb.getActivities(monthRef)
       }
       setActivities(data)
+
+      // Load reports for this month
+      if (window.electronAPI) {
+        const reps = await window.electronAPI.getReports(monthRef)
+        setReports(reps)
+      }
     } finally {
       setLoading(false)
     }
@@ -110,34 +129,40 @@ export function DashboardPage() {
             <i className="fa-solid fa-plus"></i>
             Nova Atividade
           </button>
-          <button
-            onClick={() => navigate('/profile')}
-            className="px-3 py-2 border border-border text-foreground rounded-lg
-              hover:bg-muted transition-colors cursor-pointer"
-            title="Configurações"
-          >
-            <i className="fa-solid fa-gear"></i>
-          </button>
         </div>
       </div>
 
       {/* Month selector */}
-      <div className="flex items-center justify-center gap-4 mb-6 select-none">
-        <button
-          onClick={() => changeMonth(-1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
-        >
-          <i className="fa-solid fa-chevron-left"></i>
-        </button>
-        <span className="text-lg font-medium capitalize min-w-48 text-center">
-          {monthName}
-        </span>
-        <button
-          onClick={() => changeMonth(1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
-        >
-          <i className="fa-solid fa-chevron-right"></i>
-        </button>
+
+      <div className="relative flex items-center justify-center mb-6 select-none">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => changeMonth(-1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          >
+            <i className="fa-solid fa-chevron-left"></i>
+          </button>
+          <span className="text-lg font-medium capitalize min-w-48 text-center">
+            {monthName}
+          </span>
+          <button
+            onClick={() => changeMonth(1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          >
+            <i className="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+        {!isCurrentMonth && (
+          <button
+            onClick={() => setSearchParams({ month: currentMonthRef })}
+            className="absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
+              hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Ir para o mês atual"
+          >
+            <i className="fa-solid fa-calendar-day"></i>
+            Mês Atual
+          </button>
+        )}
       </div>
 
       {/* Loading */}
@@ -325,21 +350,163 @@ export function DashboardPage() {
 
           {/* Generate report button */}
           {activities.length > 0 && (
-            <div className="flex justify-center">
-              <button
-                disabled={incompletas > 0}
-                className="px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
-                  hover:opacity-90 transition-all cursor-pointer shadow-lg flex items-center gap-2
-                  disabled:opacity-40 disabled:cursor-not-allowed"
-                title={incompletas > 0 ? 'Preencha todas as atividades antes de gerar o relatório' : 'Gerar relatório mensal'}
-                onClick={() => {
-                  // Phase 3: PDF/DOCX generation
-                  alert('Funcionalidade de geração de relatório será implementada na Fase 3.')
-                }}
-              >
-                <i className="fa-solid fa-file-pdf text-lg"></i>
-                Gerar Relatório — {monthName}
-              </button>
+            <div className="flex flex-col items-center gap-3">
+              {/* Report result feedback */}
+              {reportResult && (
+                <div
+                  className={`w-full max-w-lg p-3 rounded-lg text-sm flex items-center gap-2 ${reportResult.success
+                      ? 'bg-success/10 border border-success/30 text-success'
+                      : 'bg-destructive/10 border border-destructive/30 text-destructive'
+                    }`}
+                >
+                  <i className={`fa-solid ${reportResult.success ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
+                  <span className="flex-1">
+                    {reportResult.success
+                      ? 'Relatório gerado com sucesso!'
+                      : `Erro: ${reportResult.error}`}
+                  </span>
+                  {reportResult.success && reportResult.filePath && window.electronAPI && (
+                    <button
+                      onClick={() => window.electronAPI!.openFileInFolder(reportResult.filePath!)}
+                      className="px-3 py-1 bg-success/20 rounded text-xs font-medium hover:bg-success/30 transition-colors cursor-pointer"
+                    >
+                      <i className="fa-solid fa-folder-open mr-1"></i>
+                      Abrir pasta
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setReportResult(null)}
+                    className="text-current opacity-60 hover:opacity-100 cursor-pointer"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              )}
+
+              {/* Confirmation dialog */}
+              {showConfirm && (
+                <div className="w-full max-w-lg p-4 bg-card border border-border rounded-lg shadow-lg">
+                  <div className="flex items-center gap-2 mb-3 font-medium">
+                    <i className="fa-solid fa-file-word text-primary"></i>
+                    <span>Confirmar geração do relatório</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Gerar relatório DOCX para <strong className="text-foreground capitalize">{monthName}</strong>?
+                    {' '}O arquivo será salvo na pasta de relatórios do app.
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setShowConfirm(false)}
+                      className="px-4 py-2 border border-border text-foreground rounded-lg
+                        hover:bg-muted transition-colors cursor-pointer text-sm"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setShowConfirm(false)
+                        setGenerating(true)
+                        setReportResult(null)
+                        try {
+                          if (window.electronAPI) {
+                            const result = await window.electronAPI.generateReport(monthRef)
+                            setReportResult(result)
+                            if (result.success) {
+                              const reps = await window.electronAPI.getReports(monthRef)
+                              setReports(reps)
+                            }
+                          } else {
+                            setReportResult({ success: false, error: 'Disponível apenas no app desktop.' })
+                          }
+                        } catch (err: any) {
+                          setReportResult({ success: false, error: err.message || 'Erro inesperado.' })
+                        } finally {
+                          setGenerating(false)
+                        }
+                      }}
+                      className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
+                        hover:opacity-90 transition-all cursor-pointer text-sm flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-file-word"></i>
+                      Gerar DOCX
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Main button */}
+              {!showConfirm && (
+                <button
+                  disabled={incompletas > 0 || generating}
+                  className="px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
+                    hover:opacity-90 transition-all cursor-pointer shadow-lg flex items-center gap-2
+                    disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={incompletas > 0 ? 'Preencha todas as atividades antes de gerar o relatório' : 'Gerar relatório mensal'}
+                  onClick={() => setShowConfirm(true)}
+                >
+                  {generating ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin text-lg"></i>
+                      Gerando relatório...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-file-word text-lg"></i>
+                      Gerar Relatório — {monthName}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Reports history */}
+          {reports.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-4 mt-6">
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <i className="fa-solid fa-clock-rotate-left"></i>
+                Histórico de Relatórios
+              </h2>
+              <div className="space-y-2">
+                {reports.map((report) => {
+                  const statusConfig: Record<string, { icon: string; color: string; label: string }> = {
+                    'Gerado': { icon: 'fa-check-circle', color: 'text-success', label: 'Gerado' },
+                    'Falha': { icon: 'fa-triangle-exclamation', color: 'text-destructive', label: 'Falha' },
+                    'Excluído': { icon: 'fa-trash', color: 'text-muted-foreground', label: 'Excluído' },
+                  }
+                  const st = statusConfig[report.status] || statusConfig['Gerado']
+                  const dateStr = new Date(report.date_generated).toLocaleString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })
+
+                  return (
+                    <div
+                      key={report.id}
+                      className={`flex items-center gap-3 p-2.5 rounded-lg ${
+                        report.status === 'Excluído' ? 'opacity-50' : 'hover:bg-muted/50'
+                      } transition-colors`}
+                    >
+                      <i className={`fa-solid ${st.icon} ${st.color}`}></i>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{report.report_name}</p>
+                        <p className="text-xs text-muted-foreground">{dateStr} — {st.label}</p>
+                      </div>
+                      {report.status === 'Gerado' && window.electronAPI && (
+                        <button
+                          onClick={() => window.electronAPI!.openFileInFolder(report.file_path)}
+                          className="px-2.5 py-1 text-xs border border-border rounded-lg
+                            hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                          title="Abrir pasta do relatório"
+                        >
+                          <i className="fa-solid fa-folder-open"></i>
+                          Abrir
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </>

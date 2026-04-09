@@ -1,6 +1,9 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 07/04/2026
+> Atualizado em: 08/04/2026 (v1.1.0)
+>
+> Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
+> Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
 
 ---
 
@@ -49,7 +52,7 @@
 - [x] Seletor de mês de referência
 - [x] Opção editar atividade
 - [x] Opção excluir atividade (com confirmação)
-- [ ] Reorganização por drag & drop (campo `order`)
+- [x] Reorganização por drag & drop (campo `order`) — via `@dnd-kit/sortable`
 
 ### Fase 2.2: Tela de Detalhes da Atividade ✅
 
@@ -74,8 +77,8 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar editando atividades existentes que não foi fechada deve ser exibida.
 - [x] Ícone deve refletir o status do app (ex: alerta para atividades incompletas)
 - [x] Menu de contexto no ícone com opções rápidas (ex: "Nova Atividade", "Abrir Dashboard", "Sair")
-- [ ] Compatibilidade com Windows, macOS e Linux (ajustes de ícone e comportamento conforme plataforma)
-- [ ] Configuração para iniciar o app junto com o sistema operacional, pode alterar em configurações.
+- [ ] Compatibilidade com macOS e Linux (ajustes de ícone e comportamento conforme plataforma)
+- [x] Configuração para iniciar o app junto com o sistema operacional, pode alterar em configurações.
 
 ### Fase 2.4: Sistema de Rascunho e Salvamento Automático ✅
 
@@ -95,28 +98,89 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 ---
 
-## Fase 3: O Motor de PDF
+## Fase 3: O Motor de Relatório DOCX ✅
 
-- [ ] Confirmação do mês antes de gerar
-- [ ] Template HTML/CSS idêntico ao modelo MEC
-- [ ] Serviço de geração via Puppeteer (ou DOCX via template)
-- [ ] Um print por página no PDF, legenda abaixo da imagem
-- [ ] Referências de páginas na coluna "Referência" da tabela
-- [ ] Preview do PDF antes de salvar
-- [ ] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.pdf`
-- [ ] Histórico de relatórios gerados (entidade Report)
-- [ ] Status do relatório (Gerado, Falha, Excluído)
+- [x] Confirmação do mês antes de gerar
+- [x] Serviço de geração via DOCX (template OpenXML com jszip + xmldom)
+- [x] Um print por página no DOCX, legenda abaixo da imagem
+- [x] Referências de páginas (PAGEREF) na coluna "Referência" da tabela
+- [x] Nomenclatura: `RELATÓRIO DE SERVIÇO - <CARGO>_<NOME>_<MÊS>.docx`
+- [x] Histórico de relatórios gerados (entidade Report)
+- [x] Status do relatório (Gerado, Falha, Excluído)
+- [x] Ação com botão para abrir relatório gerado na pasta de destino
+- [x] Encarte A: agrupamento por escopo de projeto com atividades
+- [x] Encarte B: páginas de evidência com imagens e bookmarks
+- [x] Checkboxes de atendimento em linhas separadas
 
 ---
 
-## Fase 4: Polimento e Distribuição
+## Fase 4: Configurações e perfil ✅
 
-- [ ] Validação de margens e quebras de tabela no PDF
-- [ ] Sistema de alertas (notificações antes do fim do mês)
-- [ ] Lixeira de evidências (reter 3 meses)
-- [ ] Configuração do electron-builder
-  - [ ] .exe (Windows 10/11)
+- [x] Tela de perfil do usuário (acessível no Header via ícone de usuário)
+- [x] Separar configurações de perfil e configurações do app
+- [x] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
+- [x] Configurações do app:
+  - [x] tema (dark/light) — persistido via localStorage, na tela de Configurações
+  - [x] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
+  - [x] opções de notificação — seção "Notificações" com toggle, dias, horário, mensagem, som
+  - [x] comportamento do app (ex: iniciar com o sistema)
+  - [ ] escolha do diretório de armazenamento dos dados (opcional — adiado)
+  - [x] escolha do diretório de armazenamento dos relatórios gerados
+
+---
+
+## Alterações e correções
+
+- [x] Arrastar e soltar evidências na tela de detalhes da atividade — `@dnd-kit` + zona de drop para novos arquivos
+- [x] Arrastar e soltar para reorganizar atividades na listagem (campo `order` no banco) — `@dnd-kit/sortable`
+- [x] A parte sobre que está em configurações do app não está completa e precisa ficar no menubar — movida para modal "Sobre" no Header
+- [x] Ajustar os menus para refletir as novas telas e funcionalidades — Header com nav: Dashboard, Atividades, Perfil, Configurações, Sobre
+- [x] Criar o arquivo de configuração do tailwind para definir as cores da marca e os tokens de tema — usando `@theme inline` no CSS
+
+---
+
+## Depois que tudo estiver pronto, podemos pensar em:
+
+### Fase 5: Alertas e Notificações ✅
+
+- [x] Scheduler de alertas no main process (verifica a cada 60s)
+- [x] Integração com Notification API nativa do Electron
+- [x] Atualização automática do ícone do tray (verde/amarelo/vermelho com blinking)
+- [x] Seção de configuração de alertas na SettingsPage (toggle, dias, horário, mensagem, som)
+
+### Fase 6: Drag & Drop ✅
+
+- [x] Reordenar atividades na listagem via `@dnd-kit/sortable` com drag handles
+- [x] Reordenar evidências na tela de detalhes via `@dnd-kit/sortable`
+- [x] Zona de drop na `ActivityDetailPage` para adicionar novas evidências
+
+### Fase 7: Menus e Navegação ✅
+
+- [x] Modal "Sobre o ShipIt!" acessível via ícone no Header
+- [x] Header com nav links diretos: Dashboard, Atividades, Perfil, Configurações, Sobre
+- [x] Menu do tray atualizado com Perfil e Configurações
+
+### Fase 8: Polimento (Parcial)
+
+- [x] Validação de margens e quebras de tabela no DOCX (`ensureCantSplit` em linhas de tabela)
+- [x] Data da capa do DOCX usando último dia útil do mês de referência
+- [x] Suporte a gif/bmp/webp no gerador DOCX
+- [x] Lixeira de evidências (soft delete + auto-limpeza > 3 meses)
+- [x] Testes unitários com Vitest (15 testes: validation.ts)
+- [ ] UI de gerenciamento da lixeira (visualizar/restaurar itens)
+- [ ] Testes do report-generator (geração DOCX com dados mock)
+- [ ] Testes de integração para IPC handlers
+- [ ] Testes E2E básicos (Playwright)
+- [ ] Revisão geral de UI (responsividade, feedback visual, acessibilidade)
+
+### Fase 9: Distribuição Multiplataforma
+
+- [x] Configuração do electron-builder
+  - [x] .exe (Windows 10/11)
   - [ ] .dmg (macOS)
   - [ ] .AppImage (Linux)
-- [ ] Ícones do app configurados (favicon, tray, instalador)
-- [ ] Testes finais e empacotamento
+- [x] Ícones do app configurados (favicon, tray, instalador)
+- [ ] Ajustar ícones de tray para macOS (template images)
+- [ ] Testar auto-launch e paths em cada plataforma
+- [ ] Testes finais e empacotamento de release
+

@@ -2,6 +2,8 @@
 
 ## 1. Visão Geral
 
+O que significa "ShipIt!"? O nome é uma brincadeira com a expressão "Ship It!" usada no mundo do desenvolvimento de software para indicar que algo está pronto para ser lançado ou entregue. O nome reflete a missão do aplicativo de ajudar os profissionais a "enviar" seus relatórios mensais de atividades de forma rápida e eficiente, sem complicações.
+
 O ShipIt! é uma aplicação desktop multiplataforma (Windows, macOS e Linux) projetada para automatizar a criação do "Relatório Mensal de Atividades Desenvolvidas" seguindo o padrão institucional do MEC (Ministério da Educação). O foco é facilitar a vida dos profissionais  desenvolvedores, arquitetos, levantadores de requisitos e testadores, permitindo registros diários com evidências (prints e links) que se consolidarão em um PDF formatado ao final do mês. 
 
 Fácil de acessar ficando no system tray, o ShipIt! é a solução ideal para quem busca praticidade e eficiência na documentação de suas atividades desenvolvidas para o relatório mensal. 
@@ -35,7 +37,7 @@ O banco de dados local será estruturado em eixos A, A.1, B, C, D e E:
 - *profile_type*: Texto (Ex: `DEV-9`) valores reais de (DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06, DEV-06, DEV-07, DEV-08, DEV-09, DEV-10)
 - *correlating_activities*: Texto Longo (Ex: `Desenvolve ... artificial.`) é um texto explicativo para correlacionar as atividades do mês com o perfil do usuário, será copiado do arquivo modelo que o profissional receber.
 - *attendance_type*: Enum (Presencial, Remoto, Híbrido)
-- *squad_project_application*: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o usuário pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
+- *project_scope*: Texto (Ex: `Squad 2 / Projeto SIMEC; Squad SESU / Projeto PNAES`) Pode ter mais do que um valor, separados por vírgula, pois o usuário pode atuar em mais de uma squad/projeto/aplicação. Adicionar exemplo de preenchimento (`<Squad/Projeto/Aplicação>: <nomear a Squad, o projeto e a aplicação. Exemplo: Squad SESU / Projeto PNAES>`)
 - *last_updated*: Timestamp (Data e hora da última atualização do perfil) (preenchido automaticamente) apenas loga a última vez que o usuário atualizou o perfil, para fins de controle e para exibir essa informação na tela de configurações do perfil do usuário.
 - *mode*: Enum (Dark Mode *Default, Light Mode) (preenchido automaticamente) o usuário escolhe o modo na configuração inicial, e pode alterar posteriormente nas configurações do perfil do usuário, para personalizar a aparência do aplicativo de acordo com sua preferência visual.
 
@@ -114,7 +116,7 @@ Para gerar o relatório mensal, os seguintes campos precisam estar preenchidos:
   - profile_type
   - correlating_activities
   - attendance_type
-  - squad_project_application
+  - project_scope
 - *Atividades*: ter pelo menos uma atividade registrada no mês selecionado com os seguintes campos preenchidos:
   - description
   - date_start

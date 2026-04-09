@@ -29,15 +29,53 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateEvidenceCaption: (id: string, caption: string) =>
     ipcRenderer.invoke('db:updateEvidenceCaption', id, caption),
   deleteEvidence: (id: string) => ipcRenderer.invoke('db:deleteEvidence', id),
+  getDeletedEvidences: () => ipcRenderer.invoke('db:getDeletedEvidences'),
+  restoreEvidence: (id: string) => ipcRenderer.invoke('db:restoreEvidence', id),
+  permanentlyDeleteEvidence: (id: string) => ipcRenderer.invoke('db:permanentlyDeleteEvidence', id),
   getEvidenceFilePath: (id: string) =>
     ipcRenderer.invoke('db:getEvidenceFilePath', id),
+  reorderEvidences: (items: { id: string; sort_index: number }[]) =>
+    ipcRenderer.invoke('db:reorderEvidences', items),
 
   // Dialogs
   selectImages: () => ipcRenderer.invoke('app:selectImages'),
 
+  // Reports
+  generateReport: (monthReference: string) =>
+    ipcRenderer.invoke('app:generateReport', monthReference),
+  openFileInFolder: (filePath: string) =>
+    ipcRenderer.invoke('app:openFileInFolder', filePath),
+  getReports: (monthReference: string) =>
+    ipcRenderer.invoke('db:getReports', monthReference),
+
   // Tray
   setTrayStatus: (status: 'default' | 'green' | 'yellow' | 'red') =>
     ipcRenderer.invoke('app:setTrayStatus', status),
+
+  // App Settings
+  getSettings: () => ipcRenderer.invoke('app:getSettings'),
+  saveSettings: (partial: Record<string, unknown>) =>
+    ipcRenderer.invoke('app:saveSettings', partial),
+  selectDirectory: () => ipcRenderer.invoke('app:selectDirectory'),
+  getDefaultReportsDir: () => ipcRenderer.invoke('app:getDefaultReportsDir'),
+
+  // Sounds
+  listSounds: () => ipcRenderer.invoke('app:listSounds'),
+  getSoundPath: (filename: string) => ipcRenderer.invoke('app:getSoundPath', filename),
+  playSound: (filename: string) => ipcRenderer.invoke('app:playSound', filename),
+  onPlaySoundData: (callback: (dataUrl: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, dataUrl: string) => callback(dataUrl)
+    ipcRenderer.on('app:playSoundData', handler)
+    return () => { ipcRenderer.removeListener('app:playSoundData', handler) }
+  },
+
+  // Auto-launch
+  getAutoLaunch: () => ipcRenderer.invoke('app:getAutoLaunch'),
+  setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('app:setAutoLaunch', enabled),
+
+  // Alerts
+  getAlert: () => ipcRenderer.invoke('db:getAlert'),
+  saveAlert: (data: Record<string, unknown>) => ipcRenderer.invoke('db:saveAlert', data),
 
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => {

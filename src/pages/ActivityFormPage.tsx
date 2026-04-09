@@ -16,6 +16,7 @@ interface ActivityForm {
   link_ref: string
   attendance_type: string
   month_reference: string
+  project_scope: string
 }
 
 export function ActivityFormPage() {
@@ -34,6 +35,7 @@ export function ActivityFormPage() {
     link_ref: '',
     attendance_type: '',
     month_reference: defaultMonth,
+    project_scope: '',
   })
   const [evidences, setEvidences] = useState<EvidenceData[]>([])
   const [activityId, setActivityId] = useState<string | null>(id || null)
@@ -45,10 +47,10 @@ export function ActivityFormPage() {
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialLoadDone = useRef(false)
 
-  // Load profile attendance for default
+  // Load profile attendance and project_scope for defaults
   useEffect(() => {
     async function loadProfile() {
-      let profile: { attendance_type?: string } | null = null
+      let profile: { attendance_type?: string; project_scope?: string } | null = null
       if (window.electronAPI) {
         profile = await window.electronAPI.getUserProfile()
       } else {
@@ -61,6 +63,7 @@ export function ActivityFormPage() {
           setForm((prev) => ({
             ...prev,
             attendance_type: prev.attendance_type || profile!.attendance_type!,
+            project_scope: prev.project_scope || profile!.project_scope || '',
           }))
         }
       }
@@ -86,6 +89,7 @@ export function ActivityFormPage() {
         link_ref: activity.link_ref || '',
         attendance_type: activity.attendance_type || '',
         month_reference: activity.month_reference,
+        project_scope: activity.project_scope || '',
       })
       setEvidences(activity.evidences || [])
       setActivityId(activity.id)
@@ -128,6 +132,7 @@ export function ActivityFormPage() {
           link_ref: form.link_ref || null,
           attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
           month_reference: form.month_reference,
+          project_scope: form.project_scope || null,
         }
         if (activityId) data.id = activityId
 
@@ -177,6 +182,7 @@ export function ActivityFormPage() {
         link_ref: form.link_ref || null,
         attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
         month_reference: form.month_reference,
+        project_scope: form.project_scope || null,
       }
 
       if (activityId) data.id = activityId
@@ -302,9 +308,25 @@ export function ActivityFormPage() {
             name="description"
             value={form.description}
             onChange={handleChange}
+            onPaste={(e) => {
+              const plain = e.clipboardData.getData('text/plain')
+              if (plain) {
+                e.preventDefault()
+                const target = e.currentTarget
+                const start = target.selectionStart
+                const end = target.selectionEnd
+                const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
+                setForm((prev) => ({ ...prev, description: newValue }))
+                setAutoSaveStatus('idle')
+                // Restore cursor position after React re-render
+                requestAnimationFrame(() => {
+                  target.selectionStart = target.selectionEnd = start + plain.length
+                })
+              }
+            }}
             rows={5}
             placeholder="Descreva a atividade realizada..."
-            className={fieldClass('description') + ' resize-y'}
+            className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
           />
           {fieldError('description') && (
             <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
@@ -404,6 +426,25 @@ export function ActivityFormPage() {
               <p className="text-xs text-destructive mt-1">{fieldError('month_reference')}</p>
             )}
           </div>
+        </div>
+
+        {/* Links de Referência */}
+        <div>
+          <label htmlFor="project_scope" className={labelClass}>
+            Squad / Projeto / Aplicação
+          </label>
+          <input
+            id="project_scope"
+            name="project_scope"
+            type="text"
+            value={form.project_scope}
+            onChange={handleChange}
+            placeholder="Ex: Squad SESU / Projeto PNAES"
+            className={inputClass}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Agrupa atividades por projeto no relatório. Herdado do perfil, editável por atividade.
+          </p>
         </div>
 
         {/* Links de Referência */}

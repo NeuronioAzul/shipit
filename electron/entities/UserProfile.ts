@@ -30,7 +30,6 @@ export type SeniorityLevel =
   | 'Master'
 
 export type AttendanceType = 'Presencial' | 'Remoto' | 'Híbrido'
-export type AppMode = 'dark' | 'light'
 
 @Entity('user_profile')
 export class UserProfile {
@@ -59,10 +58,7 @@ export class UserProfile {
   attendance_type!: AttendanceType
 
   @Column({ type: 'text', nullable: true })
-  squad_project_application!: string
-
-  @Column({ type: 'text', default: 'dark' })
-  mode!: AppMode
+  project_scope!: string
 
   @UpdateDateColumn()
   last_updated!: Date
