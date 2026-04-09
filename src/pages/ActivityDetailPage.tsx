@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   DndContext,
   closestCenter,
@@ -166,9 +167,11 @@ export function ActivityDetailPage() {
           ...activity,
           evidences: activity.evidences?.filter(e => e.id !== evidenceId) || []
         })
-        // Notify Header to update trash badge
         window.dispatchEvent(new Event('shipit:trash-changed'))
+        toast.success('Evidência movida para a lixeira')
       }
+    } catch {
+      toast.error('Erro ao excluir evidência')
     } finally {
       setDeleting(false)
       setConfirmDelete(null)

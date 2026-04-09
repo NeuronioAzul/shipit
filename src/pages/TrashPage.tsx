@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import type { EvidenceData } from '../vite-env'
+import { SkeletonEvidenceGrid } from '../components/Skeleton'
 
 function formatDate(d: string | null): string {
   if (!d) return '—'
@@ -54,9 +56,11 @@ export function TrashPage() {
       const success = await window.electronAPI.restoreEvidence(id)
       if (success) {
         setEvidences(prev => prev.filter(e => e.id !== id))
-        // Notify Header to update trash badge
         window.dispatchEvent(new Event('shipit:trash-changed'))
+        toast.success('Evidência restaurada com sucesso!')
       }
+    } catch {
+      toast.error('Erro ao restaurar evidência')
     } finally {
       setRestoring(null)
     }
@@ -70,9 +74,11 @@ export function TrashPage() {
       const success = await window.electronAPI.permanentlyDeleteEvidence(id)
       if (success) {
         setEvidences(prev => prev.filter(e => e.id !== id))
-        // Notify Header to update trash badge
         window.dispatchEvent(new Event('shipit:trash-changed'))
+        toast.success('Evidência excluída permanentemente')
       }
+    } catch {
+      toast.error('Erro ao excluir evidência')
     } finally {
       setDeleting(null)
     }
@@ -87,8 +93,10 @@ export function TrashPage() {
         await window.electronAPI.permanentlyDeleteEvidence(ev.id)
       }
       setEvidences([])
-      // Notify Header to update trash badge
       window.dispatchEvent(new Event('shipit:trash-changed'))
+      toast.success('Lixeira esvaziada com sucesso!')
+    } catch {
+      toast.error('Erro ao esvaziar lixeira')
     } finally {
       setEmptyingTrash(false)
     }
@@ -155,13 +163,8 @@ export function TrashPage() {
         </div>
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="text-center py-12 text-muted-foreground">
-          <i className="fa-solid fa-spinner fa-spin text-2xl mb-3"></i>
-          <p>Carregando...</p>
-        </div>
-      )}
+      {/* Loading skeleton */}
+      {loading && <SkeletonEvidenceGrid count={6} />}
 
       {/* Empty state */}
       {!loading && evidences.length === 0 && (

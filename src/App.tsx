@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { Toaster } from 'sonner'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { AppLayout } from './components/AppLayout'
 import { HomePage } from './pages/HomePage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -20,11 +21,29 @@ function ElectronNavigator() {
   return null
 }
 
+/** Themed Toaster wrapper */
+function ThemedToaster() {
+  const { theme } = useTheme()
+  return (
+    <Toaster
+      theme={theme}
+      position="bottom-right"
+      toastOptions={{
+        className: 'shipit-toast',
+        duration: 4000,
+      }}
+      richColors
+      closeButton
+    />
+  )
+}
+
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark">
       <BrowserRouter>
         <ElectronNavigator />
+        <ThemedToaster />
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<HomePage />} />

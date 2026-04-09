@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   DndContext,
   closestCenter,
@@ -20,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { ActivityData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
+import { SkeletonActivityItem } from '../components/Skeleton'
 
 const STATUS_COLORS: Record<string, string> = {
   'Em andamento': 'bg-brand-blue/15 text-primary',
@@ -192,10 +194,15 @@ export function ActivitiesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (window.electronAPI) {
-      await window.electronAPI.deleteActivity(id)
-    } else {
-      localDb.deleteActivity(id)
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.deleteActivity(id)
+      } else {
+        localDb.deleteActivity(id)
+      }
+      toast.success('Atividade excluída')
+    } catch {
+      toast.error('Erro ao excluir atividade')
     }
     setDeleteId(null)
     loadActivities()
@@ -268,10 +275,12 @@ export function ActivitiesPage() {
         </button>
       </div>
 
-      {/* Loading */}
+      {/* Loading skeleton */}
       {loading && (
-        <div className="flex justify-center py-12">
-          <i className="fa-solid fa-spinner fa-spin text-3xl text-muted-foreground"></i>
+        <div className="space-y-3">
+          <SkeletonActivityItem />
+          <SkeletonActivityItem />
+          <SkeletonActivityItem />
         </div>
       )}
 

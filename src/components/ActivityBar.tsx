@@ -55,8 +55,9 @@ export function ActivityBar() {
                 }`
               }
               title={item.title}
+              aria-label={item.title}
             >
-              <i className={`fa-solid ${item.icon} text-xl`}></i>
+              <i className={`fa-solid ${item.icon} text-xl`} aria-hidden="true"></i>
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="absolute top-1.5 right-1.5 bg-accent text-accent-foreground text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5">
                   {item.badge > 99 ? '99+' : item.badge}
@@ -80,8 +81,9 @@ export function ActivityBar() {
                 }`
               }
               title={item.title}
+              aria-label={item.title}
             >
-              <i className={`fa-solid ${item.icon} text-xl`}></i>
+              <i className={`fa-solid ${item.icon} text-xl`} aria-hidden="true"></i>
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="absolute top-1.5 right-1.5 bg-accent text-accent-foreground text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5">
                   {item.badge > 99 ? '99+' : item.badge}
@@ -95,8 +97,9 @@ export function ActivityBar() {
             onClick={() => setShowAbout(true)}
             className="w-12 h-12 flex items-center justify-center text-activitybar-foreground hover:text-activitybar-foreground-active transition-colors cursor-pointer"
             title="Sobre o ShipIt!"
+            aria-label="Sobre o ShipIt!"
           >
-            <i className="fa-solid fa-circle-info text-xl"></i>
+            <i className="fa-solid fa-circle-info text-xl" aria-hidden="true"></i>
           </button>
         </nav>
       </aside>

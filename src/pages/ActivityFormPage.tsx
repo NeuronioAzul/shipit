@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
@@ -40,7 +41,6 @@ export function ActivityFormPage() {
   const [evidences, setEvidences] = useState<EvidenceData[]>([])
   const [activityId, setActivityId] = useState<string | null>(id || null)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
   const [profileAttendance, setProfileAttendance] = useState<string>('')
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -114,7 +114,7 @@ export function ActivityFormPage() {
   // Auto-save: debounce 2s after any form change (only if activity already has an id)
   useEffect(() => {
     if (!initialLoadDone.current) return
-    if (saving || saved) return
+    if (saving) return
 
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
 
@@ -187,18 +187,19 @@ export function ActivityFormPage() {
 
       if (activityId) data.id = activityId
 
-      let saved: ActivityData
+      let savedActivity: ActivityData
       if (window.electronAPI) {
-        saved = await window.electronAPI.saveActivity(data)
+        savedActivity = await window.electronAPI.saveActivity(data)
       } else {
-        saved = localDb.saveActivity(data)
+        savedActivity = localDb.saveActivity(data)
       }
-      setActivityId(saved.id)
-      setSaved(true)
-
+      setActivityId(savedActivity.id)
+      toast.success('Atividade salva com sucesso!')
       setTimeout(() => {
         navigate(`/activities?month=${form.month_reference}`)
-      }, 800)
+      }, 600)
+    } catch (err) {
+      toast.error('Erro ao salvar atividade')
     } finally {
       setSaving(false)
     }
@@ -285,13 +286,6 @@ export function ActivityFormPage() {
           </span>
         )}
       </div>
-
-      {saved && (
-        <div className="mb-4 p-3 bg-success/10 border border-success/30 rounded-lg text-success flex items-center gap-2">
-          <i className="fa-solid fa-check-circle"></i>
-          <span>Atividade salva com sucesso!</span>
-        </div>
-      )}
 
       {errors.length > 0 && (
         <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">

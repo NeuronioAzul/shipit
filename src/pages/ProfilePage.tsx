@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import type { UserProfileData } from '../vite-env'
 import { validateProfile, type ValidationError } from '../utils/validation'
 
@@ -60,7 +61,6 @@ export function ProfilePage() {
   const navigate = useNavigate()
   const [form, setForm] = useState<ProfileForm>({ ...initialForm })
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
 
@@ -117,10 +117,12 @@ export function ProfilePage() {
       } else {
         localStorage.setItem('shipit-profile', JSON.stringify(form))
       }
-      setSaved(true)
+      toast.success('Perfil salvo com sucesso!')
       setTimeout(() => {
         navigate('/')
-      }, 1200)
+      }, 800)
+    } catch (err) {
+      toast.error('Erro ao salvar perfil')
     } finally {
       setSaving(false)
     }
@@ -157,13 +159,6 @@ export function ProfilePage() {
           {isEditing ? 'Editar Perfil' : 'Configurações Iniciais'}
         </h1>
       </div>
-
-      {saved && (
-        <div className="mb-4 p-3 bg-success/10 border border-success/30 rounded-lg text-success flex items-center gap-2">
-          <i className="fa-solid fa-check-circle"></i>
-          <span>Perfil salvo com sucesso!</span>
-        </div>
-      )}
 
       {errors.length > 0 && (
         <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">

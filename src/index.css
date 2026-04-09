@@ -156,3 +156,25 @@
     font-family: var(--font-sans);
   }
 }
+
+/* ===== Toast (sonner) custom styles ===== */
+.shipit-toast {
+  font-family: var(--font-sans);
+}
+
+/* ===== Focus ring for accessibility ===== */
+@layer base {
+  *:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}

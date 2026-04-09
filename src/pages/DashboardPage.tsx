@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import type { ActivityData, ReportData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
+import { SkeletonStats, Skeleton } from '../components/Skeleton'
 
 const STATUS_COLORS: Record<string, string> = {
   'Em andamento': 'bg-brand-blue/15 text-primary',
@@ -165,10 +167,18 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Loading */}
+      {/* Loading skeleton */}
       {loading && (
-        <div className="flex justify-center py-12">
-          <i className="fa-solid fa-spinner fa-spin text-3xl text-muted-foreground"></i>
+        <div className="space-y-6">
+          <SkeletonStats />
+          <div className="bg-card border border-border rounded-lg p-4">
+            <Skeleton className="h-5 w-40 mb-4" />
+            <div className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-3/4" />
+            </div>
+          </div>
         </div>
       )}
 
@@ -414,12 +424,17 @@ export function DashboardPage() {
                             if (result.success) {
                               const reps = await window.electronAPI.getReports(monthRef)
                               setReports(reps)
+                              toast.success('Relatório gerado com sucesso!')
+                            } else {
+                              toast.error(result.error || 'Erro ao gerar relatório')
                             }
                           } else {
                             setReportResult({ success: false, error: 'Disponível apenas no app desktop.' })
+                            toast.error('Disponível apenas no app desktop.')
                           }
                         } catch (err: any) {
                           setReportResult({ success: false, error: err.message || 'Erro inesperado.' })
+                          toast.error(err.message || 'Erro inesperado ao gerar relatório')
                         } finally {
                           setGenerating(false)
                         }
