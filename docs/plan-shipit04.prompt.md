@@ -79,3 +79,9 @@ Itens de baixa prioridade para considerar após a release v1.1:
 | Estatísticas anuais | Média | Dashboard com overview do ano (atividades, evidências, relatórios) |
 | Atalhos de teclado | Baixa | `Ctrl+N` nova atividade, `Ctrl+S` salvar, `Ctrl+G` gerar relatório |
 | i18n | Alta | Suporte a inglês e espanhol além do português |
+
+
+
+
+
+
