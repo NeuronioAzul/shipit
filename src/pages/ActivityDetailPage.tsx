@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   DndContext,
@@ -90,6 +90,8 @@ export function ActivityDetailPage() {
   const [dropActive, setDropActive] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -168,6 +170,82 @@ export function ActivityDetailPage() {
     } finally {
       setDeleting(false)
       setConfirmDelete(null)
+    }
+  }
+
+  async function handleFileSelect() {
+    if (!id) return
+    if (window.electronAPI) {
+      const paths = await window.electronAPI.selectImages()
+      if (paths.length === 0) return
+      setUploading(true)
+      try {
+        for (const filePath of paths) {
+          await window.electronAPI.saveEvidence(id, filePath, null)
+        }
+        loadActivity()
+      } finally {
+        setUploading(false)
+      }
+    } else {
+      fileInputRef.current?.click()
+    }
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!id || !e.target.files || e.target.files.length === 0) return
+    handleFilesFromInput(e.target.files)
+    e.target.value = ''
+  }
+
+  async function handleFilesFromInput(files: FileList) {
+    if (!id || !window.electronAPI) return
+    setUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) continue
+        const buffer = await file.arrayBuffer()
+        const ext = '.' + (file.name.split('.').pop() || 'png')
+        await window.electronAPI.saveEvidenceFromBuffer(id, buffer, ext, null)
+      }
+      loadActivity()
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function handlePaste() {
+    if (!id || !window.electronAPI) return
+    try {
+      const clipboardItems = await navigator.clipboard.read()
+      const imageFiles: File[] = []
+
+      for (const item of clipboardItems) {
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type)
+            const ext = type.split('/')[1] || 'png'
+            const file = new File([blob], `clipboard.${ext}`, { type })
+            imageFiles.push(file)
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        setUploading(true)
+        try {
+          for (const file of imageFiles) {
+            const buffer = await file.arrayBuffer()
+            const ext = '.' + (file.name.split('.').pop() || 'png')
+            await window.electronAPI.saveEvidenceFromBuffer(id, buffer, ext, null)
+          }
+          loadActivity()
+        } finally {
+          setUploading(false)
+        }
+      }
+    } catch {
+      // Clipboard API not available or permission denied
     }
   }
 
@@ -300,14 +378,41 @@ export function ActivityDetailPage() {
 
           {(!activity.evidences || activity.evidences.length === 0) ? (
             <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                dropActive ? 'border-primary bg-primary/5' : 'border-border'
+              onClick={handleFileSelect}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                dropActive ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'
               }`}
             >
-              <i className="fa-solid fa-cloud-arrow-up text-3xl text-muted-foreground/40 mb-2"></i>
-              <p className="text-sm text-muted-foreground">
-                Arraste imagens aqui para adicionar evidências.
-              </p>
+              {uploading ? (
+                <div className="text-muted-foreground">
+                  <i className="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                  <p>Enviando...</p>
+                </div>
+              ) : (
+                <>
+                  <i className="fa-solid fa-cloud-arrow-up text-3xl text-muted-foreground mb-3 block"></i>
+                  <p className="text-foreground font-medium">
+                    Arraste imagens aqui ou clique para selecionar
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    PNG, JPG, GIF, BMP, WebP
+                  </p>
+                  <div className="flex items-center justify-center gap-3 mt-3">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handlePaste()
+                      }}
+                      className="text-sm px-3 py-1 border border-border rounded-md
+                        hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      <i className="fa-solid fa-paste mr-1"></i>
+                      Colar da Área de Transferência
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <>
@@ -326,17 +431,49 @@ export function ActivityDetailPage() {
               </DndContext>
 
               <div
-                className={`mt-4 border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                  dropActive ? 'border-primary bg-primary/5' : 'border-border'
+                onClick={handleFileSelect}
+                className={`mt-4 border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
+                  dropActive ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'
                 }`}
               >
-                <p className="text-xs text-muted-foreground">
-                  <i className="fa-solid fa-plus mr-1"></i>
-                  Arraste imagens aqui para adicionar mais evidências
-                </p>
+                {uploading ? (
+                  <div className="text-muted-foreground">
+                    <i className="fa-solid fa-spinner fa-spin text-lg"></i>
+                    <span className="ml-2 text-sm">Enviando...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      <i className="fa-solid fa-cloud-arrow-up mr-1"></i>
+                      Arraste ou clique para selecionar
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handlePaste()
+                      }}
+                      className="text-xs px-2 py-1 border border-border rounded
+                        hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      <i className="fa-solid fa-paste mr-1"></i>
+                      Colar
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
+
+          {/* Hidden file input (browser fallback) */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleInputChange}
+            className="hidden"
+          />
         </div>
 
         {/* Meta */}
