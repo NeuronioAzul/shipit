@@ -67,6 +67,7 @@ function createTray() {
   const trayIconPath = path.join(
     __dirname,
     '..',
+    'assets',
     'images',
     'tray',
     'tray-icon-foguete-dark-mode-default-2-escuro.png'
@@ -187,10 +188,10 @@ app.whenReady().then(async () => {
       return new Response('Missing file', { status: 400 })
     }
     const safe = path.basename(filename)
-    const sfxDir = getSfxDir()
-    const filePath = path.join(sfxDir, safe)
+    const soundsDir = getSoundsDir()
+    const filePath = path.join(soundsDir, safe)
     const resolved = path.resolve(filePath)
-    if (!resolved.startsWith(path.resolve(sfxDir))) {
+    if (!resolved.startsWith(path.resolve(soundsDir))) {
       return new Response('Forbidden', { status: 403 })
     }
     if (!fs.existsSync(resolved)) {
@@ -371,16 +372,16 @@ ipcMain.handle('app:getDefaultReportsDir', () => {
 
 // ──── Sound Playback IPC ────
 
-function getSfxDir(): string {
+function getSoundsDir(): string {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar', 'sfx')
+    return path.join(process.resourcesPath, 'app.asar', 'assets', 'sounds')
   }
   // In dev mode, app.getAppPath() returns project root
-  return path.join(app.getAppPath(), 'sfx')
+  return path.join(app.getAppPath(), 'assets', 'sounds')
 }
 
 ipcMain.handle('app:listSounds', () => {
-  const dir = getSfxDir()
+  const dir = getSoundsDir()
   if (!fs.existsSync(dir)) return []
   return fs.readdirSync(dir).filter(f => f.endsWith('.mp3')).sort()
 })
@@ -388,14 +389,14 @@ ipcMain.handle('app:listSounds', () => {
 ipcMain.handle('app:getSoundPath', (_event, filename: string) => {
   // Sanitize filename to prevent path traversal
   const safe = path.basename(filename)
-  const filePath = path.join(getSfxDir(), safe)
+  const filePath = path.join(getSoundsDir(), safe)
   if (!fs.existsSync(filePath)) return null
   return filePath
 })
 
 ipcMain.handle('app:playSound', (_event, filename: string) => {
   const safe = path.basename(filename)
-  const filePath = path.join(getSfxDir(), safe)
+  const filePath = path.join(getSoundsDir(), safe)
   if (!fs.existsSync(filePath)) return false
   // Send file data to renderer for playback via data URL
   const buffer = fs.readFileSync(filePath)
@@ -545,7 +546,7 @@ async function checkAndFireAlerts(): Promise<void> {
       const soundFile = (settings.alertSound as string) || alert.alert_sound_file
       if (soundFile) {
         const safe = path.basename(soundFile)
-        const filePath = path.join(getSfxDir(), safe)
+        const filePath = path.join(getSoundsDir(), safe)
         if (fs.existsSync(filePath)) {
           const buffer = fs.readFileSync(filePath)
           const base64 = buffer.toString('base64')

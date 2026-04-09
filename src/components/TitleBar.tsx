@@ -24,12 +24,12 @@ export function TitleBar() {
       {/* Left: App Icon and Title */}
       <div className="flex items-center gap-2 pl-3">
         <img
-          src="/images/icon-foguete-logo-colorido.svg"
+          src="/assets/images/icon-foguete-logo-colorido.svg"
           alt="ShipIt!"
           className="h-4 w-4"
           onError={(e) => {
             // Fallback to PNG if SVG not found
-            (e.target as HTMLImageElement).src = '/images/icons/favicon-32x32.png'
+            (e.target as HTMLImageElement).src = '/assets/images/icons/favicon-32x32.png'
           }}
         />
         <span className="text-titlebar-foreground text-xs font-medium">ShipIt!</span>

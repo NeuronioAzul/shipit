@@ -121,7 +121,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Configurações de perfil: cargo, tipo de atendimento, atividades correlatas, escopo do projeto/squad etc.
 - [x] Configurações do app:
   - [x] tema (dark/light) — persistido via localStorage, na tela de Configurações
-  - [x] escolha do som para notificações entre os sons pré-configurados na pasta `sfx/`
+  - [x] escolha do som para notificações entre os sons pré-configurados na pasta `assets/sounds/`
   - [x] opções de notificação — seção "Notificações" com toggle, dias, horário, mensagem, som
   - [x] comportamento do app (ex: iniciar com o sistema)
   - [ ] escolha do diretório de armazenamento dos dados (opcional — adiado)

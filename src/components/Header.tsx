@@ -25,7 +25,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex items-center gap-4 mb-4">
           <img
-            src="/images/logo-composto-colorido.svg"
+            src="/assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-12 bg-white/90 rounded-md p-1"
           />
@@ -78,7 +78,7 @@ export function Header() {
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <img
-            src="/images/logo-composto-colorido.svg"
+            src="/assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-8 bg-white/90 rounded-md p-[3px]"
           />

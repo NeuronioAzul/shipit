@@ -112,8 +112,9 @@ shipit/
 │   │   └── localDb.ts         # Fallback localStorage (browser dev)
 │   └── utils/
 │       └── validation.ts      # Validação de campos obrigatórios
-├── images/                    # Logos, ícones, tray icons
-├── sfx/                       # Sons de alerta (14 MP3s)
+├── assets/                    # Recursos estáticos
+│   ├── images/                # Logos, ícones, tray icons
+│   └── sounds/                # Sons de alerta (14 MP3s)
 ├── docs/                      # Documentação e templates
 │   ├── ARCHITECTURE.md
 │   ├── DEPENDENCIES.md
