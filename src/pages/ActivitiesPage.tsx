@@ -74,8 +74,9 @@ function SortableActivityItem({
           {...listeners}
           className="mt-1 p-1 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground transition-colors touch-none"
           title="Arrastar para reordenar"
+          aria-label="Arrastar para reordenar atividade"
         >
-          <i className="fa-solid fa-grip-vertical"></i>
+          <i className="fa-solid fa-grip-vertical" aria-hidden="true"></i>
         </button>
 
         <div
@@ -131,13 +132,15 @@ function SortableActivityItem({
             onClick={() => onNavigate(`/activities/${activity.id}/edit`)}
             className="p-2 rounded hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
             title="Editar"
+            aria-label="Editar atividade"
           >
-            <i className="fa-solid fa-pen-to-square"></i>
+            <i className="fa-solid fa-pen-to-square" aria-hidden="true"></i>
           </button>
           <button
             onClick={() => onDelete(activity.id)}
             className="p-2 rounded hover:bg-destructive/10 transition-colors cursor-pointer text-muted-foreground hover:text-destructive"
             title="Excluir"
+            aria-label="Excluir atividade"
           >
             <i className="fa-solid fa-trash-can"></i>
           </button>
@@ -260,18 +263,20 @@ export function ActivitiesPage() {
       <div className="flex items-center justify-center gap-4 mb-6 select-none">
         <button
           onClick={() => changeMonth(-1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          aria-label="Mês anterior"
         >
-          <i className="fa-solid fa-chevron-left"></i>
+          <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
         </button>
         <span className="text-lg font-medium capitalize min-w-48 text-center">
           {monthName}
         </span>
         <button
           onClick={() => changeMonth(1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          aria-label="Próximo mês"
         >
-          <i className="fa-solid fa-chevron-right"></i>
+          <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -323,9 +328,9 @@ export function ActivitiesPage() {
 
       {/* Delete confirmation modal */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="alertdialog" aria-modal="true" aria-labelledby="delete-activity-title">
           <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4 shadow-2xl">
-            <h3 className="text-lg font-semibold mb-2">Excluir Atividade</h3>
+            <h3 id="delete-activity-title" className="text-lg font-semibold mb-2">Excluir Atividade</h3>
             <p className="text-muted-foreground mb-4">
               Tem certeza? Esta ação não pode ser desfeita. As evidências associadas também serão removidas.
             </p>

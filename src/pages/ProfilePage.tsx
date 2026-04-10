@@ -150,10 +150,11 @@ export function ProfilePage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/')}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           title="Voltar"
+          aria-label="Voltar ao Dashboard"
         >
-          <i className="fa-solid fa-arrow-left text-lg"></i>
+          <i className="fa-solid fa-arrow-left text-lg" aria-hidden="true"></i>
         </button>
         <h1 className="text-2xl font-bold">
           {isEditing ? 'Editar Perfil' : 'Configurações Iniciais'}

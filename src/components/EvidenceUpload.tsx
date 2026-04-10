@@ -84,8 +84,9 @@ function SortableEvidenceCard({
           className="absolute top-2 left-2 p-1.5 bg-black/50 text-white/80 rounded
             opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
           title="Arrastar para reordenar"
+          aria-label="Arrastar para reordenar evidência"
         >
-          <i className="fa-solid fa-grip-vertical text-xs"></i>
+          <i className="fa-solid fa-grip-vertical text-xs" aria-hidden="true"></i>
         </button>
         {/* Delete button */}
         <button
@@ -94,8 +95,9 @@ function SortableEvidenceCard({
           className="absolute top-2 right-2 p-1.5 bg-destructive/80 text-destructive-foreground rounded
             opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-destructive"
           title="Remover evidência"
+          aria-label="Remover evidência"
         >
-          <i className="fa-solid fa-trash text-xs"></i>
+          <i className="fa-solid fa-trash text-xs" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -120,8 +122,9 @@ function SortableEvidenceCard({
               type="button"
               onClick={() => saveCaption(evidence.id)}
               className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm cursor-pointer hover:opacity-90"
+              aria-label="Salvar legenda"
             >
-              <i className="fa-solid fa-check"></i>
+              <i className="fa-solid fa-check" aria-hidden="true"></i>
             </button>
           </div>
         ) : (

@@ -50,15 +50,17 @@ function SortableEvidenceCard({
         {...listeners}
         className="absolute top-2 left-2 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover/ev:opacity-100 transition-opacity touch-none"
         title="Arrastar para reordenar"
+        aria-label="Arrastar para reordenar evidência"
       >
-        <i className="fa-solid fa-grip-vertical text-xs"></i>
+        <i className="fa-solid fa-grip-vertical text-xs" aria-hidden="true"></i>
       </button>
       <button
         onClick={() => onDelete(evidence.id)}
         className="absolute top-2 right-2 z-10 p-1.5 rounded bg-destructive/80 text-destructive-foreground hover:bg-destructive cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
         title="Excluir evidência"
+        aria-label="Excluir evidência"
       >
-        <i className="fa-solid fa-trash text-xs"></i>
+        <i className="fa-solid fa-trash text-xs" aria-hidden="true"></i>
       </button>
       <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
         <img
@@ -295,10 +297,11 @@ export function ActivityDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(`/activities?month=${activity.month_reference}`)}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
+            aria-label="Voltar para lista de atividades"
           >
-            <i className="fa-solid fa-arrow-left text-lg"></i>
+            <i className="fa-solid fa-arrow-left text-lg" aria-hidden="true"></i>
           </button>
           <h1 className="text-2xl font-bold">Detalhes da Atividade</h1>
         </div>
@@ -492,14 +495,15 @@ export function ActivityDetailPage() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmDelete(null)}
+          role="alertdialog" aria-modal="true" aria-labelledby="detail-delete-title"
         >
           <div
             className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4 text-destructive">
-              <i className="fa-solid fa-triangle-exclamation text-xl"></i>
-              <h2 className="text-lg font-semibold">Excluir evidência?</h2>
+              <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+              <h2 id="detail-delete-title" className="text-lg font-semibold">Excluir evidência?</h2>
             </div>
             <p className="text-muted-foreground mb-6">
               A evidência será movida para a lixeira e poderá ser restaurada em até 3 meses.
