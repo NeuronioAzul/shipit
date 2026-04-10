@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 08/04/2026 (v1.1.0)
+> Atualizado em: 10/04/2026 (v1.2.0)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -160,18 +160,41 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Header com nav links diretos: Dashboard, Atividades, Perfil, Configurações, Sobre
 - [x] Menu do tray atualizado com Perfil e Configurações
 
-### Fase 8: Polimento (Parcial)
+### Fase 8: Polimento ✅
 
 - [x] Validação de margens e quebras de tabela no DOCX (`ensureCantSplit` em linhas de tabela)
 - [x] Data da capa do DOCX usando último dia útil do mês de referência
 - [x] Suporte a gif/bmp/webp no gerador DOCX
 - [x] Lixeira de evidências (soft delete + auto-limpeza > 3 meses)
-- [x] Testes unitários com Vitest (15 testes: validation.ts)
-- [ ] UI de gerenciamento da lixeira (visualizar/restaurar itens)
-- [ ] Testes do report-generator (geração DOCX com dados mock)
-- [ ] Testes de integração para IPC handlers
-- [ ] Testes E2E básicos (Playwright)
-- [ ] Revisão geral de UI (responsividade, feedback visual, acessibilidade)
+- [x] Testes unitários com Vitest (16 testes: validation.ts)
+- [x] UI de gerenciamento da lixeira (visualizar/restaurar itens)
+- [x] Testes do report-generator (9 unit + 9 integration)
+- [x] Testes de integração para database CRUD (20 testes)
+- [ ] Testes E2E básicos (Playwright) — adiado
+- [x] Revisão geral de UI (responsividade, feedback visual, acessibilidade)
+
+### Fase 10: Testes Automatizados ✅
+
+- [x] Testes unitários para `getLastBusinessDay()` (9 testes)
+- [x] Testes de integração para `generateDocxReport()` com template fixture (9 testes)
+- [x] Testes de integração para database CRUD com sql.js in-memory (20 testes)
+- [x] Refatoração: `initDatabase()` aceita overrides de `DataSourceOptions`
+- [x] Refatoração: `generateDocxReport()` aceita `templatePath` no payload
+- [x] Exclusão de `dist-electron/` do Vitest config
+- [x] Total: 54 testes passando (16 validation + 9 report unit + 9 report integration + 20 database)
+
+### Fase 11: Revisão UI/UX ✅
+
+- [x] Análise WCAG AA de paleta de cores (palette-test.html com comparação atual vs proposta)
+- [x] Auditoria de acessibilidade: `aria-label` em todos os botões icon-only
+- [x] Auditoria de acessibilidade: `role="dialog"` / `role="alertdialog"` + `aria-modal` em todos os modais
+- [x] Auditoria de acessibilidade: handler de Escape em modais About
+- [x] Auditoria de acessibilidade: `aria-hidden="true"` em ícones decorativos
+- [x] Auditoria de acessibilidade: `focus-visible:ring` em elementos interativos chave
+- [x] Responsividade: `minWidth: 800, minHeight: 600` no BrowserWindow
+- [x] Consistência visual: sem cores hardcoded, tokens padronizados, hierarquia tipográfica consistente
+- [x] Animações: fade-in de página (`animate-page-in`), entrada de modal (`animate-modal-in`), shake (`animate-shake`)
+- [x] CSS keyframes para `fade-in`, `modal-fade-in`, `shake` em `index.css`
 
 ### Fase 9: Distribuição Multiplataforma
 
