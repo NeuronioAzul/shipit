@@ -196,6 +196,22 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Animações: fade-in de página (`animate-page-in`), entrada de modal (`animate-modal-in`), shake (`animate-shake`)
 - [x] CSS keyframes para `fade-in`, `modal-fade-in`, `shake` em `index.css`
 
+### Fase 12: Correção de Bugs e Estabilização ✅
+
+- [x] Corrigir caminho do tray icon em `setTrayIcon()` (faltava `'assets'`)
+- [x] Corrigir CHANGELOG: ordem descendente, data correta em [1.2.0]
+- [x] Atualizar `package.json` version para `1.2.0`
+- [x] Remover `cleanupTrash()` duplicada em `startSchedulers()`
+- [x] Corrigir rId colisão no gerador DOCX (nextRId dinâmico)
+- [x] Adicionar suporte a dimensões GIF/BMP em `getImageDimensions()`
+
+### Fase 13: Animações e Feedback Visual ✅
+
+- [x] Shake animation no drag handle ao arrastar evidência pela imagem
+- [x] Loading spinners em botões (Gerar Relatório, Salvar) — já implementados na v1.1.0
+- [x] Transições de página com `key={location.pathname}` no AppLayout
+- [x] Drop zones com efeito `scale` + `ring` durante drag & drop
+
 ### Fase 9: Distribuição Multiplataforma
 
 - [x] Configuração do electron-builder

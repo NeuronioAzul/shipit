@@ -81,6 +81,14 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Removida chamada duplicada de `cleanupTrash()` em `startSchedulers()`
 - Corrigida ordem das seções no CHANGELOG.md (descendente)
 - Atualizado `package.json` version para `1.2.0`
+- Corrigido `nextRId` hardcoded no gerador DOCX — agora calcula dinamicamente a partir dos rIds existentes no template
+- Adicionado suporte a dimensões de imagens GIF e BMP no gerador DOCX
+
+### Animações e Feedback Visual (Fase 13) ✨
+
+- Shake animation no drag handle ao tentar arrastar evidência pela imagem (ActivityDetailPage e EvidenceUpload)
+- Transições de página com fade-in a cada navegação via `key={location.pathname}` no AppLayout
+- Drop zones com `scale` + `ring` effect durante drag & drop de arquivos
 
 ---
 
