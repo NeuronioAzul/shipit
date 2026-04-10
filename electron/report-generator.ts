@@ -29,6 +29,7 @@ interface ReportPayload {
   activities: Activity[]
   monthReference: string
   reportsDir?: string
+  templatePath?: string
 }
 
 interface ProjectGroup {
@@ -51,7 +52,7 @@ function stripAccents(str: string): string {
 }
 
 /** Get the last business day (Mon–Fri) of the given month/year */
-function getLastBusinessDay(month: number, year: number): Date {
+export function getLastBusinessDay(month: number, year: number): Date {
   const lastDay = new Date(year, month, 0) // last calendar day of the month
   while (lastDay.getDay() === 0 || lastDay.getDay() === 6) {
     lastDay.setDate(lastDay.getDate() - 1)
@@ -248,7 +249,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   const [mm, yyyy] = monthReference.split('/')
 
   // Load template
-  const templatePath = getTemplatePath()
+  const templatePath = payload.templatePath || getTemplatePath()
   if (!fs.existsSync(templatePath)) {
     throw new Error(`Template não encontrado: ${templatePath}`)
   }
