@@ -14,7 +14,7 @@ export function AppLayout() {
         <ActivityBar />
         
         {/* Scrollable content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-6 animate-page-in">
           <Outlet />
         </main>
       </div>

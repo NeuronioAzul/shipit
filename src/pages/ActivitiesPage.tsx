@@ -329,7 +329,7 @@ export function ActivitiesPage() {
       {/* Delete confirmation modal */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="alertdialog" aria-modal="true" aria-labelledby="delete-activity-title">
-          <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4 shadow-2xl">
+          <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4 shadow-2xl animate-modal-in">
             <h3 id="delete-activity-title" className="text-lg font-semibold mb-2">Excluir Atividade</h3>
             <p className="text-muted-foreground mb-4">
               Tem certeza? Esta ação não pode ser desfeita. As evidências associadas também serão removidas.

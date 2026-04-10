@@ -498,7 +498,7 @@ export function ActivityDetailPage() {
           role="alertdialog" aria-modal="true" aria-labelledby="detail-delete-title"
         >
           <div
-            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4 text-destructive">
