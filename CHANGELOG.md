@@ -7,6 +7,104 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+## [Unreleased]
+
+### Pendente
+
+- Testes E2E básicos (Playwright)
+- Diretório de armazenamento de dados customizável (opcional)
+
+### Adicionado (Fase 14 — Paleta WCAG AA)
+
+- Nova paleta de cores com conformidade WCAG AA (contraste mínimo 4.5:1)
+- Formato migrado de `hsl()` para `rgb()` em todas as variáveis CSS
+- Novos tokens: `--secondary`, `--popover`, `--info`, `--surface-*`, `--disabled-*`, `--selection-*`, `--chart-*`, `--radius-*`, `--shadow-*`
+- Estilos `::selection` para seleção de texto com cores da marca
+- Token `--sidebar-bg` renomeado para `--sidebar` (consistência)
+- Cor hardcoded `#e81123` substituída por token `destructive` no TitleBar
+
+### Adicionado (Fase 15 — Testes)
+
+- Teste de cascade FK em `deleteActivity`: cria Activity + Evidence + ActivityReport, deleta e verifica remoção em cascata
+- Builds para macOS (.dmg) e Linux (.AppImage)
+- Ajustes de tray para macOS (template images) e Linux (AppIndicator)
+- Testes finais e empacotamento multiplataforma
+
+---
+
+## [1.2.0] — 2026-04-10
+
+### Testes Automatizados (Fase 10) ✅
+
+- 9 testes unitários para `getLastBusinessDay()` (semana, sáb→sex, dom→sex, fevereiro, todos os meses)
+- 9 testes de integração para `generateDocxReport()` com template real (nomenclatura MEC, placeholders, múltiplos projetos, evidências PNG, fallback de escopo)
+- 20 testes de integração para database CRUD com sql.js in-memory (UserProfile, Activity, Evidence, Alert, contagens)
+- Refatoração: `initDatabase()` aceita `Partial<DataSourceOptions>` para facilitar testes
+- Refatoração: `generateDocxReport()` aceita `templatePath` no payload
+- Adicionado `resetDatabase()` para limpar DataSource entre testes
+- Total: **54 testes** (16 validation + 9 report unit + 9 report integration + 20 database)
+- Exclusão de `dist-electron/` do Vitest config para evitar conflito com builds CommonJS
+
+### Revisão UI/UX (Fase 11) ✅
+
+#### Acessibilidade (WCAG AA)
+
+- Análise de contraste WCAG AA com `palette-test.html` (paleta atual vs proposta)
+- `aria-label` em todos os botões icon-only (nav links, back buttons, drag handles, delete, play)
+- `role="dialog"` + `aria-modal="true"` + `aria-labelledby` nos modais About
+- `role="alertdialog"` + `aria-modal="true"` + `aria-labelledby` nos modais de confirmação de exclusão
+- Handler de `Escape` para fechar modais About (Header e ActivityBar)
+- `aria-hidden="true"` em ícones Font Awesome decorativos
+- `focus-visible:ring-2 focus-visible:ring-ring` em botões icon-only e links de navegação
+
+#### Responsividade
+
+- `minWidth` do BrowserWindow reduzido de 900 para 800 (mínimo: 800×600)
+- Verificação de grids responsivos (`grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`)
+- Gantt chart com `overflow-x-auto` confirmado funcional
+
+#### Consistência Visual
+
+- Zero cores hardcoded (sem `bg-blue-500`, `text-gray-*` etc.)
+- Tokens padronizados via CSS variables + Tailwind `@theme inline`
+- Hierarquia tipográfica consistente: h1=`text-2xl font-bold`, h2=`text-lg font-semibold`
+- Mix intencional `fa-solid` (ações) vs `fa-regular` (metadata) em ícones
+
+#### Animações e Transições
+
+- Keyframe `fade-in`: entrada de página com fade + translateY suave (0.2s)
+- Keyframe `modal-fade-in`: entrada de modal com scale + fade (0.15s)
+- Keyframe `shake`: animação de rejeição para drop inválido (0.4s)
+- Classe `animate-page-in` aplicada ao wrapper `<main>` do `AppLayout`
+- Classe `animate-modal-in` aplicada aos painéis internos de todos os modais
+
+### Dependências adicionadas (Fase 11)
+
+- `sql.js` (devDependency) — SQLite puro em JavaScript para testes sem native modules
+
+### Arquivos modificados
+
+- `electron/report-generator.ts` — export `getLastBusinessDay()`, param `templatePath` no payload
+- `electron/database.ts` — `initDatabase(overrides?)`, `resetDatabase()`, constante `ALL_ENTITIES`
+- `electron/main.ts` — `minWidth: 800`
+
+### Correções (Fase 12) 🐛
+
+- Corrigido caminho do ícone de tray em `setTrayIcon()` (faltava `'assets'` no path)
+- Removida chamada duplicada de `cleanupTrash()` em `startSchedulers()`
+- Corrigida ordem das seções no CHANGELOG.md (descendente)
+- Atualizado `package.json` version para `1.2.0`
+- Corrigido `nextRId` hardcoded no gerador DOCX — agora calcula dinamicamente a partir dos rIds existentes no template
+- Adicionado suporte a dimensões de imagens GIF e BMP no gerador DOCX
+
+### Animações e Feedback Visual (Fase 13) ✨
+
+- Shake animation no drag handle ao tentar arrastar evidência pela imagem (ActivityDetailPage e EvidenceUpload)
+- Transições de página com fade-in a cada navegação via `key={location.pathname}` no AppLayout
+- Drop zones com `scale` + `ring` effect durante drag & drop de arquivos
+
+---
+
 ## [1.1.0] — 2026-04-08
 
 ### Implementações do Plano de Continuidade v2
@@ -188,19 +286,24 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Path alias `@/*` → `src/*` no frontend
 - TypeScript strict mode em todo o projeto
 - UI em português (pt-BR), identificadores em inglês
+- `src/index.css` — keyframes e classes de animação
+- `src/components/AppLayout.tsx` — `animate-page-in` no `<main>`
+- `src/components/Header.tsx` — aria-labels, role="dialog", Escape handler, animate-modal-in
+- `src/components/ActivityBar.tsx` — role="dialog", Escape handler, animate-modal-in
+- `src/components/EvidenceUpload.tsx` — aria-labels em drag handle/delete/save
+- `src/pages/ProfilePage.tsx` — aria-label no back button
+- `src/pages/SettingsPage.tsx` — aria-label no back button e play button
+- `src/pages/ActivityFormPage.tsx` — aria-label no back button
+- `src/pages/DashboardPage.tsx` — aria-labels nos botões de mês
+- `src/pages/ActivitiesPage.tsx` — aria-labels em drag handle/edit/delete, role="alertdialog" no modal
+- `src/pages/ActivityDetailPage.tsx` — aria-labels, role="alertdialog", animate-modal-in
+- `src/pages/TrashPage.tsx` — aria-labels, role="alertdialog", animate-modal-in
+- `vite.config.ts` — excluir `dist-electron/` dos testes
 
----
+### Arquivos criados
 
-## [Unreleased]
-
-### Pendente
-
-- UI de gerenciamento da lixeira (visualizar/restaurar evidências deletadas)
-- Testes do report-generator (geração DOCX com dados mock)
-- Testes de integração para IPC handlers
-- Testes E2E básicos (Playwright)
-- Revisão geral de UI (responsividade, feedback visual, acessibilidade)
-- Diretório de armazenamento de dados customizável (opcional)
-- Builds para macOS (.dmg) e Linux (.AppImage)
-- Ajustes de tray para macOS (template images) e Linux (AppIndicator)
-- Testes finais e empacotamento multiplataforma
+- `electron/report-generator.test.ts` — 9 unit tests
+- `electron/report-generator.integration.test.ts` — 9 integration tests
+- `electron/database.test.ts` — 20 integration tests
+- `electron/__fixtures__/template.docx` — template DOCX para testes
+- `docs/new-ui-ux-visual/palette-test.html` — análise visual WCAG AA

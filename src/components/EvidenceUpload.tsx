@@ -48,11 +48,21 @@ function SortableEvidenceCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
   })
+  const handleRef = useRef<HTMLButtonElement>(null)
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  }
+
+  function handleImageDragStart(e: React.DragEvent) {
+    e.preventDefault()
+    if (handleRef.current) {
+      handleRef.current.classList.remove('animate-shake')
+      void handleRef.current.offsetWidth
+      handleRef.current.classList.add('animate-shake')
+    }
   }
 
   return (
@@ -71,6 +81,8 @@ function SortableEvidenceCard({
           }
           alt={evidence.caption || 'Evidência'}
           className="w-full h-full object-contain"
+          draggable
+          onDragStart={handleImageDragStart}
           onError={(e) => {
             ;(e.target as HTMLImageElement).src = ''
             ;(e.target as HTMLImageElement).style.display = 'none'
@@ -78,14 +90,16 @@ function SortableEvidenceCard({
         />
         {/* Drag handle */}
         <button
+          ref={handleRef}
           type="button"
           {...attributes}
           {...listeners}
           className="absolute top-2 left-2 p-1.5 bg-black/50 text-white/80 rounded
             opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
           title="Arrastar para reordenar"
+          aria-label="Arrastar para reordenar evidência"
         >
-          <i className="fa-solid fa-grip-vertical text-xs"></i>
+          <i className="fa-solid fa-grip-vertical text-xs" aria-hidden="true"></i>
         </button>
         {/* Delete button */}
         <button
@@ -94,8 +108,9 @@ function SortableEvidenceCard({
           className="absolute top-2 right-2 p-1.5 bg-destructive/80 text-destructive-foreground rounded
             opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-destructive"
           title="Remover evidência"
+          aria-label="Remover evidência"
         >
-          <i className="fa-solid fa-trash text-xs"></i>
+          <i className="fa-solid fa-trash text-xs" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -120,8 +135,9 @@ function SortableEvidenceCard({
               type="button"
               onClick={() => saveCaption(evidence.id)}
               className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm cursor-pointer hover:opacity-90"
+              aria-label="Salvar legenda"
             >
-              <i className="fa-solid fa-check"></i>
+              <i className="fa-solid fa-check" aria-hidden="true"></i>
             </button>
           </div>
         ) : (
@@ -308,8 +324,8 @@ export function EvidenceUpload({
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-          ${dragging ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'}`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer
+          ${dragging ? 'border-accent bg-accent/10 scale-[1.02] ring-2 ring-accent/30' : 'border-border hover:border-primary hover:bg-muted/30'}`}
         onClick={handleFileSelect}
       >
         {uploading ? (

@@ -117,24 +117,32 @@ function AboutModal({ onClose }: { onClose: () => void }) {
     window.electronAPI?.getVersion().then(setVersion)
   }, [])
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-sidebar">
       <div
-        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <i className="fa-solid fa-circle-info text-primary"></i>
+          <h2 id="about-modal-title-sidebar" className="text-lg font-semibold flex items-center gap-2">
+            <i className="fa-solid fa-circle-info text-primary" aria-hidden="true"></i>
             Sobre o ShipIt!
           </h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-            <i className="fa-solid fa-xmark text-lg"></i>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label="Fechar">
+            <i className="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
           </button>
         </div>
         <div className="flex items-center gap-4 mb-4">
           <img
-            src="/images/logo-composto-colorido.svg"
+            src="/assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-12 bg-white/90 rounded-md p-1"
           />

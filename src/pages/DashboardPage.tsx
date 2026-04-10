@@ -140,18 +140,20 @@ export function DashboardPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => changeMonth(-1)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            aria-label="Mês anterior"
           >
-            <i className="fa-solid fa-chevron-left"></i>
+            <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
           </button>
           <span className="text-lg font-medium capitalize min-w-48 text-center">
             {monthName}
           </span>
           <button
             onClick={() => changeMonth(1)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            aria-label="Próximo mês"
           >
-            <i className="fa-solid fa-chevron-right"></i>
+            <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
           </button>
         </div>
         {!isCurrentMonth && (

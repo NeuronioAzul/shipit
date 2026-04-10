@@ -36,6 +36,7 @@ function SortableEvidenceCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
   })
+  const handleRef = useRef<HTMLButtonElement>(null)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -43,22 +44,35 @@ function SortableEvidenceCard({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  function handleImageDragStart(e: React.DragEvent) {
+    e.preventDefault()
+    if (handleRef.current) {
+      handleRef.current.classList.remove('animate-shake')
+      // Force reflow to re-trigger animation
+      void handleRef.current.offsetWidth
+      handleRef.current.classList.add('animate-shake')
+    }
+  }
+
   return (
     <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden group/ev relative">
       <button
+        ref={handleRef}
         {...attributes}
         {...listeners}
         className="absolute top-2 left-2 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover/ev:opacity-100 transition-opacity touch-none"
         title="Arrastar para reordenar"
+        aria-label="Arrastar para reordenar evidência"
       >
-        <i className="fa-solid fa-grip-vertical text-xs"></i>
+        <i className="fa-solid fa-grip-vertical text-xs" aria-hidden="true"></i>
       </button>
       <button
         onClick={() => onDelete(evidence.id)}
         className="absolute top-2 right-2 z-10 p-1.5 rounded bg-destructive/80 text-destructive-foreground hover:bg-destructive cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
         title="Excluir evidência"
+        aria-label="Excluir evidência"
       >
-        <i className="fa-solid fa-trash text-xs"></i>
+        <i className="fa-solid fa-trash text-xs" aria-hidden="true"></i>
       </button>
       <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
         <img
@@ -69,6 +83,8 @@ function SortableEvidenceCard({
           }
           alt={evidence.caption || 'Evidência'}
           className="w-full h-full object-contain"
+          draggable
+          onDragStart={handleImageDragStart}
           onError={(e) => {
             ;(e.target as HTMLImageElement).style.display = 'none'
           }}
@@ -295,10 +311,11 @@ export function ActivityDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(`/activities?month=${activity.month_reference}`)}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
+            aria-label="Voltar para lista de atividades"
           >
-            <i className="fa-solid fa-arrow-left text-lg"></i>
+            <i className="fa-solid fa-arrow-left text-lg" aria-hidden="true"></i>
           </button>
           <h1 className="text-2xl font-bold">Detalhes da Atividade</h1>
         </div>
@@ -384,8 +401,10 @@ export function ActivityDetailPage() {
           {(!activity.evidences || activity.evidences.length === 0) ? (
             <div
               onClick={handleFileSelect}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                dropActive ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                dropActive 
+                  ? 'border-accent bg-accent/10 scale-[1.02] ring-2 ring-accent/30' 
+                  : 'border-border hover:border-primary hover:bg-muted/30'
               }`}
             >
               {uploading ? (
@@ -437,8 +456,10 @@ export function ActivityDetailPage() {
 
               <div
                 onClick={handleFileSelect}
-                className={`mt-4 border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
-                  dropActive ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'
+                className={`mt-4 border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer ${
+                  dropActive 
+                    ? 'border-accent bg-accent/10 scale-[1.02] ring-2 ring-accent/30' 
+                    : 'border-border hover:border-primary hover:bg-muted/30'
                 }`}
               >
                 {uploading ? (
@@ -492,14 +513,15 @@ export function ActivityDetailPage() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmDelete(null)}
+          role="alertdialog" aria-modal="true" aria-labelledby="detail-delete-title"
         >
           <div
-            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4 text-destructive">
-              <i className="fa-solid fa-triangle-exclamation text-xl"></i>
-              <h2 className="text-lg font-semibold">Excluir evidência?</h2>
+              <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+              <h2 id="detail-delete-title" className="text-lg font-semibold">Excluir evidência?</h2>
             </div>
             <p className="text-muted-foreground mb-6">
               A evidência será movida para a lixeira e poderá ser restaurada em até 3 meses.

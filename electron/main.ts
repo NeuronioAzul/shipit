@@ -3,6 +3,11 @@ import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol,
 import path from 'path'
 import fs from 'fs'
 
+// Set AppUserModelId for Windows notifications to show correct app name and icon
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.neuronioazul.shipit')
+}
+
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let alertIntervalId: ReturnType<typeof setInterval> | null = null
@@ -18,10 +23,10 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
     height: 750,
-    minWidth: 900,
+    minWidth: 800,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, '..', 'images', 'icons', 'favicon-96x96.png'),
+    icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -67,6 +72,7 @@ function createTray() {
   const trayIconPath = path.join(
     __dirname,
     '..',
+    'assets',
     'images',
     'tray',
     'tray-icon-foguete-dark-mode-default-2-escuro.png'
@@ -187,10 +193,10 @@ app.whenReady().then(async () => {
       return new Response('Missing file', { status: 400 })
     }
     const safe = path.basename(filename)
-    const sfxDir = getSfxDir()
-    const filePath = path.join(sfxDir, safe)
+    const soundsDir = getSoundsDir()
+    const filePath = path.join(soundsDir, safe)
     const resolved = path.resolve(filePath)
-    if (!resolved.startsWith(path.resolve(sfxDir))) {
+    if (!resolved.startsWith(path.resolve(soundsDir))) {
       return new Response('Forbidden', { status: 403 })
     }
     if (!fs.existsSync(resolved)) {
@@ -371,16 +377,16 @@ ipcMain.handle('app:getDefaultReportsDir', () => {
 
 // ──── Sound Playback IPC ────
 
-function getSfxDir(): string {
+function getSoundsDir(): string {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar', 'sfx')
+    return path.join(process.resourcesPath, 'app.asar', 'assets', 'sounds')
   }
   // In dev mode, app.getAppPath() returns project root
-  return path.join(app.getAppPath(), 'sfx')
+  return path.join(app.getAppPath(), 'assets', 'sounds')
 }
 
 ipcMain.handle('app:listSounds', () => {
-  const dir = getSfxDir()
+  const dir = getSoundsDir()
   if (!fs.existsSync(dir)) return []
   return fs.readdirSync(dir).filter(f => f.endsWith('.mp3')).sort()
 })
@@ -388,14 +394,14 @@ ipcMain.handle('app:listSounds', () => {
 ipcMain.handle('app:getSoundPath', (_event, filename: string) => {
   // Sanitize filename to prevent path traversal
   const safe = path.basename(filename)
-  const filePath = path.join(getSfxDir(), safe)
+  const filePath = path.join(getSoundsDir(), safe)
   if (!fs.existsSync(filePath)) return null
   return filePath
 })
 
 ipcMain.handle('app:playSound', (_event, filename: string) => {
   const safe = path.basename(filename)
-  const filePath = path.join(getSfxDir(), safe)
+  const filePath = path.join(getSoundsDir(), safe)
   if (!fs.existsSync(filePath)) return false
   // Send file data to renderer for playback via data URL
   const buffer = fs.readFileSync(filePath)
@@ -531,7 +537,7 @@ async function checkAndFireAlerts(): Promise<void> {
     const notification = new Notification({
       title: 'ShipIt! — Lembrete',
       body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
-      icon: path.join(__dirname, '..', 'images', 'icons', 'favicon-96x96.png'),
+      icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     })
     notification.on('click', () => {
       mainWindow?.show()
@@ -545,7 +551,7 @@ async function checkAndFireAlerts(): Promise<void> {
       const soundFile = (settings.alertSound as string) || alert.alert_sound_file
       if (soundFile) {
         const safe = path.basename(soundFile)
-        const filePath = path.join(getSfxDir(), safe)
+        const filePath = path.join(getSoundsDir(), safe)
         if (fs.existsSync(filePath)) {
           const buffer = fs.readFileSync(filePath)
           const base64 = buffer.toString('base64')
@@ -571,7 +577,7 @@ function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
     red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
   }
   const iconFile = statusMap[status] || statusMap['default']
-  const iconPath = path.join(__dirname, '..', 'images', 'tray', iconFile)
+  const iconPath = path.join(__dirname, '..', 'assets', 'images', 'tray', iconFile)
   const icon = nativeImage.createFromPath(iconPath)
   if (!icon.isEmpty()) {
     tray.setImage(icon.resize({ width: 16, height: 16 }))
@@ -635,14 +641,6 @@ function startSchedulers(): void {
   setTimeout(async () => {
     checkAndFireAlerts()
     updateTrayStatus()
-    // Cleanup old trash items
-    try {
-      const { cleanupTrash } = await import('./database')
-      const cleaned = await cleanupTrash()
-      if (cleaned > 0) console.log(`Trash cleanup: removed ${cleaned} item(s)`)
-    } catch (err) {
-      console.error('Trash cleanup error:', err)
-    }
   }, 3000)
 }
 

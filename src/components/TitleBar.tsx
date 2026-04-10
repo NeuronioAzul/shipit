@@ -18,21 +18,20 @@ export function TitleBar() {
 
   return (
     <div 
-      className="h-8 bg-titlebar flex items-center justify-between select-none shrink-0"
+      className="h-13.25 bg-titlebar flex items-center justify-between select-none shrink-0"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Left: App Icon and Title */}
-      <div className="flex items-center gap-2 pl-3">
+      {/* Left: Full Logo */}
+      <div className="flex items-center pl-3">
         <img
-          src="/images/icon-foguete-logo-colorido.svg"
+          src="/assets/images/logo-composto-colorido.svg"
           alt="ShipIt!"
-          className="h-4 w-4"
+          className="h-7 bg-white/90 rounded px-1"
           onError={(e) => {
             // Fallback to PNG if SVG not found
-            (e.target as HTMLImageElement).src = '/images/icons/favicon-32x32.png'
+            (e.target as HTMLImageElement).src = '/assets/images/icons/favicon-32x32.png'
           }}
         />
-        <span className="text-titlebar-foreground text-xs font-medium">ShipIt!</span>
       </div>
 
       {/* Right: Window Controls */}
@@ -76,7 +75,7 @@ export function TitleBar() {
         {/* Close */}
         <button
           onClick={handleClose}
-          className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-[#e81123] hover:text-white transition-colors"
+          className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-destructive hover:text-destructive-foreground transition-colors"
           title="Fechar"
           aria-label="Fechar janela"
         >

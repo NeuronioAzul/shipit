@@ -180,13 +180,13 @@ shipit-evidence://host?path=C:\Users\...\evidences\abc.png
 
 ### `shipit-sfx://`
 
-Serve arquivos de som da pasta `sfx/`.
+Serve arquivos de som da pasta `assets/sounds/`.
 
 ```
 shipit-sfx://host?file=alert-sound-01.mp3
 ```
 
-**Segurança**: Usa `path.basename()` para prevenir path traversal; valida que o arquivo está dentro de `sfx/`.
+**Segurança**: Usa `path.basename()` para prevenir path traversal; valida que o arquivo está dentro de `assets/sounds/`.
 
 Ambos registrados como privilegiados com `supportFetchAPI` e `stream` antes de `app.ready()`.
 

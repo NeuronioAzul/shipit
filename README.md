@@ -1,5 +1,5 @@
 <p align="center" style="Background: linear-gradient(90deg, #06b6d4, #3b82f6); -webkit-background-clip: text; color: transparent;">
-  <img src="images/logo-composto-colorido.svg" alt="ShipIt! Logo" width="400" />
+  <img src="assets/images/logo-composto-colorido.svg" alt="ShipIt! Logo" width="400" />
 </p>
 
 <h1 align="center">ShipIt!</h1>

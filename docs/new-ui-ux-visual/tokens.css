@@ -1,0 +1,190 @@
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* Brand */
+    --brand-blue: 12 53 109;      /* #0C356D */
+    --brand-orange: 232 110 33;   /* #E86E21 */
+    --brand-white: 255 255 255;   /* #FFFFFF */
+
+    /* App foundation */
+    --background: 247 249 252;    /* #F7F9FC */
+    --foreground: 16 35 63;       /* #10233F */
+
+    /* Surfaces */
+    --card: 255 255 255;          /* #FFFFFF */
+    --card-foreground: 16 35 63;  /* #10233F */
+    --popover: 255 255 255;       /* #FFFFFF */
+    --popover-foreground: 16 35 63;
+
+    /* Semantic actions */
+    --primary: 12 53 109;         /* #0C356D */
+    --primary-foreground: 255 255 255;
+
+    --secondary: 234 241 251;     /* #EAF1FB */
+    --secondary-foreground: 12 53 109;
+
+    --muted: 238 243 249;         /* #EEF3F9 */
+    --muted-foreground: 74 91 117;/* #4A5B75 */
+
+    --accent: 232 110 33;         /* #E86E21 */
+    --accent-foreground: 17 24 39;/* #111827 */
+
+    /* Interactive + borders */
+    --border: 216 226 238;        /* #D8E2EE */
+    --input: 255 255 255;
+    --ring: 97 124 160;           /* #617CA0 */
+
+    /* Elevation states */
+    --surface-1: 255 255 255;
+    --surface-2: 247 249 252;
+    --surface-3: 238 243 249;
+    --surface-hover: 238 243 249; /* #EEF3F9 */
+    --surface-active: 229 237 246;/* #E5EDF6 */
+
+    /* Navigation */
+    --sidebar: 12 53 109;         /* #0C356D */
+    --sidebar-foreground: 247 249 252;
+    --sidebar-border: 9 40 82;    /* #092852 */
+
+    /* Status */
+    --success: 15 138 95;         /* #0F8A5F */
+    --success-foreground: 255 255 255;
+
+    --warning: 188 81 18;         /* #BC5112 */
+    --warning-foreground: 255 255 255;
+
+    --destructive: 197 58 47;     /* #C53A2F */
+    --destructive-foreground: 255 255 255;
+
+    --info: 47 107 222;           /* #2F6BDE */
+    --info-foreground: 255 255 255;
+
+    /* Disabled */
+    --disabled-bg: 241 245 249;   /* #F1F5F9 */
+    --disabled-fg: 148 163 184;   /* #94A3B8 */
+
+    /* Selection / overlays */
+    --selection: 12 53 109;
+    --selection-foreground: 255 255 255;
+    --overlay: 8 20 39;
+
+    /* Charts */
+    --chart-1: 12 53 109;
+    --chart-2: 232 110 33;
+    --chart-3: 47 107 222;
+    --chart-4: 15 138 95;
+    --chart-5: 188 81 18;
+
+    /* Radius */
+    --radius-xs: 0.375rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+
+    /* Shadows */
+    --shadow-soft: 0 8px 24px -12px rgb(8 20 39 / 0.18);
+    --shadow-card: 0 10px 30px -16px rgb(12 53 109 / 0.18);
+    --shadow-modal: 0 20px 60px -20px rgb(8 20 39 / 0.28);
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    /* App foundation */
+    --background: 8 20 39;        /* #081427 */
+    --foreground: 234 241 251;    /* #EAF1FB */
+
+    /* Surfaces */
+    --card: 13 29 53;             /* #0D1D35 */
+    --card-foreground: 234 241 251;
+    --popover: 17 37 68;          /* #112544 */
+    --popover-foreground: 234 241 251;
+
+    /* Semantic actions */
+    --primary: 232 110 33;        /* #E86E21 */
+    --primary-foreground: 11 18 32;
+
+    --secondary: 22 48 85;        /* #163055 */
+    --secondary-foreground: 234 241 251;
+
+    --muted: 17 37 68;            /* #112544 */
+    --muted-foreground: 157 176 200; /* #9DB0C8 */
+
+    --accent: 146 164 189;        /* #92A4BD */
+    --accent-foreground: 8 20 39;
+
+    /* Interactive + borders */
+    --border: 31 53 86;           /* #1F3556 */
+    --input: 17 37 68;
+    --ring: 240 161 111;          /* #F0A16F */
+
+    /* Elevation states */
+    --surface-1: 13 29 53;
+    --surface-2: 17 37 68;
+    --surface-3: 22 48 85;
+    --surface-hover: 22 48 85;    /* #163055 */
+    --surface-active: 28 59 103;  /* #1C3B67 */
+
+    /* Navigation */
+    --sidebar: 10 24 48;          /* #0A1830 */
+    --sidebar-foreground: 234 241 251;
+    --sidebar-border: 31 53 86;
+
+    /* Status */
+    --success: 52 211 153;        /* #34D399 */
+    --success-foreground: 8 20 39;
+
+    --warning: 245 158 11;        /* #F59E0B */
+    --warning-foreground: 8 20 39;
+
+    --destructive: 248 113 113;   /* #F87171 */
+    --destructive-foreground: 8 20 39;
+
+    --info: 96 165 250;           /* #60A5FA */
+    --info-foreground: 8 20 39;
+
+    /* Disabled */
+    --disabled-bg: 16 32 58;      /* #10203A */
+    --disabled-fg: 96 117 143;    /* #60758F */
+
+    /* Selection / overlays */
+    --selection: 232 110 33;
+    --selection-foreground: 11 18 32;
+    --overlay: 0 0 0;
+
+    /* Charts */
+    --chart-1: 232 110 33;
+    --chart-2: 96 165 250;
+    --chart-3: 52 211 153;
+    --chart-4: 245 158 11;
+    --chart-5: 146 164 189;
+
+    /* Shadows */
+    --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.35);
+    --shadow-card: 0 12px 32px -16px rgb(0 0 0 / 0.45);
+    --shadow-modal: 0 24px 72px -24px rgb(0 0 0 / 0.55);
+  }
+
+  * {
+    border-color: rgb(var(--border) / 1);
+  }
+
+  html,
+  body {
+    background-color: rgb(var(--background) / 1);
+    color: rgb(var(--foreground) / 1);
+  }
+
+  ::selection {
+    background-color: rgb(var(--selection) / 0.22);
+    color: rgb(var(--foreground) / 1);
+  }
+
+  .dark ::selection {
+    background-color: rgb(var(--selection) / 0.35);
+    color: rgb(var(--selection-foreground) / 1);
+  }
+}

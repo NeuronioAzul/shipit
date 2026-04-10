@@ -140,10 +140,11 @@ export function SettingsPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/')}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           title="Voltar"
+          aria-label="Voltar ao Dashboard"
         >
-          <i className="fa-solid fa-arrow-left text-lg"></i>
+          <i className="fa-solid fa-arrow-left text-lg" aria-hidden="true"></i>
         </button>
         <h1 className="text-2xl font-bold">Configurações</h1>
       </div>
@@ -252,8 +253,9 @@ export function SettingsPage() {
                 onClick={() => handlePlaySound(selectedSound)}
                 className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm whitespace-nowrap"
                 title="Ouvir som"
+                aria-label="Ouvir som selecionado"
               >
-                <i className="fa-solid fa-play"></i>
+                <i className="fa-solid fa-play" aria-hidden="true"></i>
               </button>
             )}
           </div>

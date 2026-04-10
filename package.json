@@ -1,6 +1,6 @@
 {
   "name": "shipit",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Automatize a criação do Relatório Mensal de Atividades Desenvolvidas seguindo o padrão institucional do MEC.",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -60,6 +60,7 @@
     "concurrently": "^9.2.1",
     "electron": "^41.1.1",
     "electron-builder": "^26.8.1",
+    "sql.js": "^1.14.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
     "vite": "^8.0.5",
@@ -76,8 +77,7 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "images/**/*",
-      "sfx/**/*",
+      "assets/**/*",
       "!**/*.map"
     ],
     "extraResources": [
@@ -95,7 +95,7 @@
           ]
         }
       ],
-      "icon": "images/icons/ms-icon-310x310.png",
+      "icon": "assets/images/icons/ms-icon-310x310.png",
       "signAndEditExecutable": false
     },
     "nsis": {
@@ -106,14 +106,14 @@
       "target": [
         "dmg"
       ],
-      "icon": "images/icons/apple-icon.png",
+      "icon": "assets/images/icons/apple-icon.png",
       "category": "public.app-category.productivity"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "images/icons",
+      "icon": "assets/images/icons",
       "category": "Office"
     },
     "asar": true,

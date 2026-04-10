@@ -8,24 +8,32 @@ function AboutModal({ onClose }: { onClose: () => void }) {
     window.electronAPI?.getVersion().then(setVersion)
   }, [])
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-header">
       <div
-        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <i className="fa-solid fa-circle-info text-primary"></i>
+          <h2 id="about-modal-title-header" className="text-lg font-semibold flex items-center gap-2">
+            <i className="fa-solid fa-circle-info text-primary" aria-hidden="true"></i>
             Sobre o ShipIt!
           </h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-            <i className="fa-solid fa-xmark text-lg"></i>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label="Fechar">
+            <i className="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
           </button>
         </div>
         <div className="flex items-center gap-4 mb-4">
           <img
-            src="/images/logo-composto-colorido.svg"
+            src="/assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-12 bg-white/90 rounded-md p-1"
           />
@@ -78,7 +86,7 @@ export function Header() {
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <img
-            src="/images/logo-composto-colorido.svg"
+            src="/assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-8 bg-white/90 rounded-md p-[3px]"
           />
@@ -90,40 +98,45 @@ export function Header() {
         >
           <Link
             to="/"
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Dashboard"
+            aria-label="Dashboard"
           >
-            <i className="fa-solid fa-chart-line text-lg"></i>
+            <i className="fa-solid fa-chart-line text-lg" aria-hidden="true"></i>
           </Link>
 
           <Link
             to="/activities"
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Atividades"
+            aria-label="Atividades"
           >
-            <i className="fa-solid fa-list-check text-lg"></i>
+            <i className="fa-solid fa-list-check text-lg" aria-hidden="true"></i>
           </Link>
 
           <Link
             to="/profile"
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Perfil"
+            aria-label="Perfil"
           >
-            <i className="fa-solid fa-user text-lg"></i>
+            <i className="fa-solid fa-user text-lg" aria-hidden="true"></i>
           </Link>
 
           <Link
             to="/settings"
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Configurações"
+            aria-label="Configurações"
           >
-            <i className="fa-solid fa-gear text-lg"></i>
+            <i className="fa-solid fa-gear text-lg" aria-hidden="true"></i>
           </Link>
 
           <Link
             to="/trash"
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors relative"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors relative rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Lixeira"
+            aria-label="Lixeira"
           >
             <i className="fa-solid fa-trash-can text-lg"></i>
             {trashCount > 0 && (
@@ -135,10 +148,11 @@ export function Header() {
 
           <button
             onClick={() => setShowAbout(true)}
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors cursor-pointer"
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Sobre o ShipIt!"
+            aria-label="Sobre o ShipIt!"
           >
-            <i className="fa-solid fa-circle-info text-lg"></i>
+            <i className="fa-solid fa-circle-info text-lg" aria-hidden="true"></i>
           </button>
         </nav>
       </header>

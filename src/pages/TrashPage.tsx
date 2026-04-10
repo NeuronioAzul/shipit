@@ -108,10 +108,11 @@ export function TrashPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
+            aria-label="Voltar"
           >
-            <i className="fa-solid fa-arrow-left text-lg"></i>
+            <i className="fa-solid fa-arrow-left text-lg" aria-hidden="true"></i>
           </button>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <i className="fa-solid fa-trash-can text-muted-foreground"></i>
@@ -239,6 +240,7 @@ export function TrashPage() {
                       disabled={restoring === ev.id || deleting === ev.id}
                       className="px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Excluir permanentemente"
+                      aria-label="Excluir permanentemente"
                     >
                       {deleting === ev.id ? (
                         <i className="fa-solid fa-spinner fa-spin"></i>
@@ -259,14 +261,15 @@ export function TrashPage() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmDelete(null)}
+          role="alertdialog" aria-modal="true" aria-labelledby="trash-delete-title"
         >
           <div
-            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4 text-destructive">
-              <i className="fa-solid fa-triangle-exclamation text-xl"></i>
-              <h2 className="text-lg font-semibold">Excluir permanentemente?</h2>
+              <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+              <h2 id="trash-delete-title" className="text-lg font-semibold">Excluir permanentemente?</h2>
             </div>
             <p className="text-muted-foreground mb-6">
               Esta ação não pode ser desfeita. O arquivo será excluído permanentemente do sistema.
@@ -294,14 +297,15 @@ export function TrashPage() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmEmpty(false)}
+          role="alertdialog" aria-modal="true" aria-labelledby="trash-empty-title"
         >
           <div
-            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4"
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4 text-destructive">
-              <i className="fa-solid fa-triangle-exclamation text-xl"></i>
-              <h2 className="text-lg font-semibold">Esvaziar lixeira?</h2>
+              <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+              <h2 id="trash-empty-title" className="text-lg font-semibold">Esvaziar lixeira?</h2>
             </div>
             <p className="text-muted-foreground mb-6">
               Esta ação excluirá permanentemente <strong>{evidences.length}</strong> {evidences.length === 1 ? 'evidência' : 'evidências'}.

@@ -29,6 +29,7 @@ interface ReportPayload {
   activities: Activity[]
   monthReference: string
   reportsDir?: string
+  templatePath?: string
 }
 
 interface ProjectGroup {
@@ -51,7 +52,7 @@ function stripAccents(str: string): string {
 }
 
 /** Get the last business day (Mon–Fri) of the given month/year */
-function getLastBusinessDay(month: number, year: number): Date {
+export function getLastBusinessDay(month: number, year: number): Date {
   const lastDay = new Date(year, month, 0) // last calendar day of the month
   while (lastDay.getDay() === 0 || lastDay.getDay() === 6) {
     lastDay.setDate(lastDay.getDate() - 1)
@@ -103,7 +104,7 @@ function groupByProject(activities: Activity[]): ProjectGroup[] {
   }))
 }
 
-/** Get image dimensions from PNG/JPEG file header */
+/** Get image dimensions from PNG/JPEG/GIF/BMP file header */
 function getImageDimensions(filePath: string): { width: number; height: number } | null {
   try {
     const buf = fs.readFileSync(filePath)
@@ -113,20 +114,34 @@ function getImageDimensions(filePath: string): { width: number; height: number }
       const height = buf.readUInt32BE(20)
       return { width, height }
     }
+    // GIF: bytes 6-9 contain width (2 bytes LE) and height (2 bytes LE)
+    if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf.length >= 10) {
+      const width = buf.readUInt16LE(6)
+      const height = buf.readUInt16LE(8)
+      return { width, height }
+    }
+    // BMP: bytes 18-25 contain width (4 bytes LE) and height (4 bytes LE)
+    if (buf[0] === 0x42 && buf[1] === 0x4D && buf.length >= 26) {
+      const width = buf.readInt32LE(18)
+      const height = Math.abs(buf.readInt32LE(22))
+      return { width, height }
+    }
     // JPEG: scan for SOF0 marker (0xFF 0xC0)
-    let i = 2
-    while (i < buf.length - 8) {
-      if (buf[i] === 0xFF) {
-        const marker = buf[i + 1]
-        if (marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
-          const height = buf.readUInt16BE(i + 5)
-          const width = buf.readUInt16BE(i + 7)
-          return { width, height }
+    if (buf[0] === 0xFF && buf[1] === 0xD8) {
+      let i = 2
+      while (i < buf.length - 8) {
+        if (buf[i] === 0xFF) {
+          const marker = buf[i + 1]
+          if (marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+            const height = buf.readUInt16BE(i + 5)
+            const width = buf.readUInt16BE(i + 7)
+            return { width, height }
+          }
+          const segLen = buf.readUInt16BE(i + 2)
+          i += 2 + segLen
+        } else {
+          i++
         }
-        const segLen = buf.readUInt16BE(i + 2)
-        i += 2 + segLen
-      } else {
-        i++
       }
     }
     return null
@@ -248,7 +263,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   const [mm, yyyy] = monthReference.split('/')
 
   // Load template
-  const templatePath = getTemplatePath()
+  const templatePath = payload.templatePath || getTemplatePath()
   if (!fs.existsSync(templatePath)) {
     throw new Error(`Template não encontrado: ${templatePath}`)
   }
@@ -385,9 +400,10 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
 
       // Track evidence bookmarks for this activity
       const bookmarks: string[] = []
+      const actIdClean = act.id.replace(/-/g, '')
       const evidences = (act.evidences || []).sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0))
       for (let i = 0; i < evidences.length; i++) {
-        bookmarks.push(`ev_${act.id.substring(0, 8)}_${i}`)
+        bookmarks.push(`ev_${actIdClean}_${i}`)
       }
       if (bookmarks.length > 0) {
         activityPageRefs.set(act.id, bookmarks)
@@ -409,7 +425,21 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
     }
   }
 
-  let nextRId = 29 // Continue from existing rIds
+  let nextRId = 1 // Will be computed from existing relationships
+  // Scan existing rIds to avoid collisions
+  const existingRels = relsDom.documentElement!.childNodes
+  for (let i = 0; i < existingRels.length; i++) {
+    const node = existingRels[i] as unknown as Element
+    if (node.getAttribute) {
+      const id = node.getAttribute('Id')
+      if (id && id.startsWith('rId')) {
+        const num = parseInt(id.substring(3), 10)
+        if (!isNaN(num) && num >= nextRId) {
+          nextRId = num + 1
+        }
+      }
+    }
+  }
   let bookmarkIdCounter = 100
   let evidenceGlobalIdx = 0
   const body = doc.documentElement!.getElementsByTagNameNS(W_NS, 'body')[0]
@@ -447,7 +477,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
 
           // Build evidence page
           const bmId = bookmarkIdCounter++
-          const bmName = `ev_${act.id.substring(0, 8)}_${i}`
+          const bmName = `ev_${act.id.replace(/-/g, '')}_${i}`
           const caption = ev.caption || `Evidência ${evidenceGlobalIdx + 1}`
 
           evidenceFragments.push(

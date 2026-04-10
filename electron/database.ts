@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { DataSource } from 'typeorm'
+import { DataSource, type DataSourceOptions } from 'typeorm'
 import { UserProfile } from './entities/UserProfile'
 import { Alert } from './entities/Alert'
 import { Activity } from './entities/Activity'
@@ -13,23 +13,27 @@ import { v7 as uuidv7 } from 'uuid'
 
 let dataSource: DataSource | null = null
 
+const ALL_ENTITIES = [UserProfile, Alert, Activity, Evidence, Report, ActivityReport]
+
 function getDbPath(): string {
   const userDataPath = app.getPath('userData')
   return path.join(userDataPath, 'shipit.db')
 }
 
-export async function initDatabase(): Promise<DataSource> {
+export async function initDatabase(overrides?: Partial<DataSourceOptions>): Promise<DataSource> {
   if (dataSource && dataSource.isInitialized) {
     return dataSource
   }
 
-  dataSource = new DataSource({
+  const defaultOpts: DataSourceOptions = {
     type: 'better-sqlite3',
     database: getDbPath(),
-    entities: [UserProfile, Alert, Activity, Evidence, Report, ActivityReport],
+    entities: ALL_ENTITIES,
     synchronize: true,
     logging: false,
-  })
+  }
+
+  dataSource = new DataSource({ ...defaultOpts, ...overrides } as DataSourceOptions)
 
   await dataSource.initialize()
   return dataSource
@@ -40,6 +44,14 @@ export async function getDb(): Promise<DataSource> {
     return initDatabase()
   }
   return dataSource
+}
+
+/** Reset the singleton DataSource (for testing) */
+export async function resetDatabase(): Promise<void> {
+  if (dataSource && dataSource.isInitialized) {
+    await dataSource.destroy()
+  }
+  dataSource = null
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
@@ -119,7 +131,8 @@ export async function saveActivity(data: Partial<Activity>): Promise<Activity> {
 
 export async function deleteActivity(id: string): Promise<boolean> {
   const db = await getDb()
-  // Delete evidences first
+  // Delete related records first to satisfy foreign key constraints
+  await db.getRepository(ActivityReport).delete({ activity_id: id })
   await db.getRepository(Evidence).delete({ activity_id: id })
   const result = await db.getRepository(Activity).delete({ id })
   return (result.affected ?? 0) > 0
