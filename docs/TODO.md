@@ -139,7 +139,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 ---
 
-## Depois que tudo estiver pronto, podemos pensar em:
+## Depois que tudo estiver pronto, podemos pensar em
 
 ### Fase 5: Alertas e Notificações ✅
 
@@ -183,4 +183,3 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [ ] Ajustar ícones de tray para macOS (template images)
 - [ ] Testar auto-launch e paths em cada plataforma
 - [ ] Testes finais e empacotamento de release
-
