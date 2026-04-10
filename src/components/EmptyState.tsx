@@ -1,5 +1,3 @@
-import fogueteSvg from '../../assets/images/icon-foguete-logo-tons-cinza.svg'
-
 interface EmptyStateProps {
   onCreateProfile: () => void
 }
@@ -8,7 +6,7 @@ export function EmptyState({ onCreateProfile }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] gap-8 select-none">
       <img
-        src={fogueteSvg}
+        src="./assets/images/icon-foguete-logo-tons-cinza.svg"
         alt="ShipIt! Foguete"
         className="w-40 h-40 opacity-30"
         draggable={false}

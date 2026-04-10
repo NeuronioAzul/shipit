@@ -80,7 +80,7 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "assets/**/*",
+      "public/**/*",
       "!**/*.map"
     ],
     "extraResources": [
@@ -98,7 +98,7 @@
           ]
         }
       ],
-      "icon": "assets/images/icons/ms-icon-310x310.png",
+      "icon": "public/assets/images/icons/ms-icon-310x310.png",
       "signAndEditExecutable": false
     },
     "nsis": {
@@ -109,14 +109,14 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/images/icons/apple-icon.png",
+      "icon": "public/assets/images/icons/apple-icon.png",
       "category": "public.app-category.productivity"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "assets/images/icons",
+      "icon": "public/assets/images/icons",
       "category": "Office"
     },
     "asar": true,

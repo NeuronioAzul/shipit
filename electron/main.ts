@@ -26,7 +26,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
+    icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -72,6 +72,7 @@ function createTray() {
   const trayIconPath = path.join(
     __dirname,
     '..',
+    'public',
     'assets',
     'images',
     'tray',
@@ -379,10 +380,10 @@ ipcMain.handle('app:getDefaultReportsDir', () => {
 
 function getSoundsDir(): string {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar', 'assets', 'sounds')
+    return path.join(process.resourcesPath, 'app.asar', 'public', 'assets', 'sounds')
   }
   // In dev mode, app.getAppPath() returns project root
-  return path.join(app.getAppPath(), 'assets', 'sounds')
+  return path.join(app.getAppPath(), 'public', 'assets', 'sounds')
 }
 
 ipcMain.handle('app:listSounds', () => {
@@ -537,7 +538,7 @@ async function checkAndFireAlerts(): Promise<void> {
     const notification = new Notification({
       title: 'ShipIt! — Lembrete',
       body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
-      icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
+      icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     })
     notification.on('click', () => {
       mainWindow?.show()
@@ -577,7 +578,7 @@ function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
     red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
   }
   const iconFile = statusMap[status] || statusMap['default']
-  const iconPath = path.join(__dirname, '..', 'assets', 'images', 'tray', iconFile)
+  const iconPath = path.join(__dirname, '..', 'public', 'assets', 'images', 'tray', iconFile)
   const icon = nativeImage.createFromPath(iconPath)
   if (!icon.isEmpty()) {
     tray.setImage(icon.resize({ width: 16, height: 16 }))

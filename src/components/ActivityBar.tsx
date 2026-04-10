@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
-import logoSvg from '../../assets/images/logo-composto-colorido.svg'
 
 interface NavItem {
   to: string
@@ -143,7 +142,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex items-center gap-4 mb-4">
           <img
-            src={logoSvg}
+            src="./assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-12 bg-white/90 rounded-md p-1"
           />

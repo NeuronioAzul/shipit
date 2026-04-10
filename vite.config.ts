@@ -21,6 +21,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    exclude: ['dist-electron/**', 'node_modules/**'],
+    exclude: ['dist-electron/**', 'node_modules/**', 'e2e/**'],
   },
 })
