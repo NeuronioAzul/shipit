@@ -1,0 +1,26 @@
+npx vitest run 
+
+npx vitest run electron/report-generator.test.ts 2>&1 | Select-Object -Last 30
+
+# Phase 10.2: Report generator tests with payload mock. I need to refactor generateDocxReport() to accept an optional templatePath parameter, then create tests with a fixture DOCX template.
+
+New-Item -ItemType Directory -Path "C:\Users\Mauro\Desktop\shipit\electron\__fixtures__" -Force; Copy-Item "C:\Users\Mauro\Desktop\shipit\docs\Relatórios 2026\RELATÓRIO DE SERVIÇO - TEMPLATE.docx" "C:\Users\Mauro\Desktop\shipit\electron\__fixtures__\template.docx"
+
+npx vitest run electron/report-generator.integration.test.ts 2>&1 | Select-Object -Last 40
+
+# Phase 10.3: Database integration tests. I need to refactor getDb() / initDatabase() to accept optional DataSource options for :memory: testing, then create the test file.
+
+npx vitest run electron/database.test.ts 2>&1 | Select-Object -Last 40
+
+npm install --save-dev sql.js 2>&1 | Select-Object -Last 10
+
+# Phase 11.1: WCAG AA palette analysis. Let me analyze the proposed palette from tokens.css and the current palette in index.css, then create the test HTML.
+
+
+Phase 11.2: Accessibility audit. I need to audit all the UI component files for aria-label, label htmlFor, focus rings, keyboard nav, and roles. Let me read all the relevant files:
+
+
+Phase 11.5 — Animations and Transitions:
+
+
+
