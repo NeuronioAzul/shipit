@@ -400,9 +400,10 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
 
       // Track evidence bookmarks for this activity
       const bookmarks: string[] = []
+      const actIdClean = act.id.replace(/-/g, '')
       const evidences = (act.evidences || []).sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0))
       for (let i = 0; i < evidences.length; i++) {
-        bookmarks.push(`ev_${act.id.substring(0, 8)}_${i}`)
+        bookmarks.push(`ev_${actIdClean}_${i}`)
       }
       if (bookmarks.length > 0) {
         activityPageRefs.set(act.id, bookmarks)
@@ -476,7 +477,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
 
           // Build evidence page
           const bmId = bookmarkIdCounter++
-          const bmName = `ev_${act.id.substring(0, 8)}_${i}`
+          const bmName = `ev_${act.id.replace(/-/g, '')}_${i}`
           const caption = ev.caption || `Evidência ${evidenceGlobalIdx + 1}`
 
           evidenceFragments.push(
