@@ -577,7 +577,7 @@ function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
     red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
   }
   const iconFile = statusMap[status] || statusMap['default']
-  const iconPath = path.join(__dirname, '..', 'images', 'tray', iconFile)
+  const iconPath = path.join(__dirname, '..', 'assets', 'images', 'tray', iconFile)
   const icon = nativeImage.createFromPath(iconPath)
   if (!icon.isEmpty()) {
     tray.setImage(icon.resize({ width: 16, height: 16 }))
@@ -641,14 +641,6 @@ function startSchedulers(): void {
   setTimeout(async () => {
     checkAndFireAlerts()
     updateTrayStatus()
-    // Cleanup old trash items
-    try {
-      const { cleanupTrash } = await import('./database')
-      const cleaned = await cleanupTrash()
-      if (cleaned > 0) console.log(`Trash cleanup: removed ${cleaned} item(s)`)
-    } catch (err) {
-      console.error('Trash cleanup error:', err)
-    }
   }, 3000)
 }
 
