@@ -24,3 +24,4 @@ Phase 11.5 — Animations and Transitions:
 
 
 
+npx tsc -p tsconfig.electron.json --noEmit 2>&1
