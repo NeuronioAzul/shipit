@@ -11,8 +11,17 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Pendente
 
-- Testes E2E básicos (Playwright)
 - Diretório de armazenamento de dados customizável (opcional)
+
+### Adicionado (Fase 15.2 — Testes E2E)
+
+- 4 testes E2E com Playwright + Electron:
+  - Janela inicia visível
+  - EmptyState em DB limpo + navegação entre todas as telas (Atividades, Perfil, Configurações, Lixeira, Dashboard)
+  - Toggle dark/light theme via rádio na tela de Configurações
+  - Criação de atividade via formulário (preenchimento + submit + verificação)
+- Cleanup: `app.exit(0)` no teardown para evitar hang do tray
+- `waitForURL` para sincronizar navegação entre rotas
 
 ### Adicionado (Fase 14 — Paleta WCAG AA)
 

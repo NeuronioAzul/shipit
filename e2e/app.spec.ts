@@ -12,55 +12,74 @@ test.beforeAll(async () => {
   })
 
   page = await app.firstWindow()
-  page.on('pageerror', err => console.log('PAGE EXCEPTION:', err.message))
 
-  // Wait for the page to finish loading (HTML/CSS/JS)
-  await page.waitForLoadState('load')
-  // Give React some extra time to mount + run effects
-  await page.waitForTimeout(5_000)
+  // Wait for the page to finish loading
+  await page.waitForLoadState('domcontentloaded')
+  // Give React extra time to mount + run effects
+  await page.waitForTimeout(2_000)
 })
 
 test.afterAll(async () => {
-  await app.close()
+  // Force kill — the tray intercepts normal close and app.quit waits for handlers
+  await app.evaluate(({ app }) => {
+    app.exit(0)
+  })
+})
+
+// ──── Window ────
+
+test('window starts visible', async () => {
+  const isVisible = await app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0]
+    return win?.isVisible() ?? false
+  })
+  expect(isVisible).toBe(true)
 })
 
 // ──── Navigation ────
 
-test('navigates to all main screens', async () => {
-  // Dashboard is the default route
-  await expect(page.locator('text=Dashboard')).toBeVisible()
+test('shows EmptyState on fresh DB and navigates to all screens', async () => {
+  // Fresh DB → EmptyState with "Bem-vindo ao ShipIt!"
+  await expect(page.locator('text=Bem-vindo')).toBeVisible({ timeout: 5_000 })
 
-  // Navigate to Atividades
-  await page.click('[title="Atividades"], [aria-label*="Atividades"]')
-  await expect(page.locator('h1:text("Atividades")')).toBeVisible({ timeout: 5_000 })
+  // Navigate to Atividades via sidebar
+  await page.click('[title="Atividades"]')
+  await expect(page.locator('h1:has-text("Atividades")')).toBeVisible({ timeout: 5_000 })
 
-  // Navigate to Perfil
-  await page.click('[title="Perfil"], [aria-label*="Perfil"]')
-  await expect(page.locator('h1:text("Perfil")')).toBeVisible({ timeout: 5_000 })
+  // Navigate to Perfil (h1 shows "Configurações Iniciais" or "Editar Perfil")
+  await page.click('[title="Perfil"]')
+  await page.waitForURL(/#\/profile/)
+  await expect(page.locator('h1')).toBeVisible({ timeout: 5_000 })
 
   // Navigate to Configurações
-  await page.click('[title="Configurações"], [aria-label*="Configurações"]')
-  await expect(page.locator('h1:text("Configurações")')).toBeVisible({ timeout: 5_000 })
+  await page.click('[title="Configurações"]')
+  await page.waitForURL(/#\/settings/)
+  await expect(page.locator('h1:has-text("Configurações")')).toBeVisible({ timeout: 5_000 })
+
+  // Navigate to Lixeira
+  await page.click('[title="Lixeira"]')
+  await page.waitForURL(/#\/trash/)
+  await expect(page.locator('h1:has-text("Lixeira")')).toBeVisible({ timeout: 5_000 })
 
   // Back to Dashboard
-  await page.click('[title="Dashboard"], [aria-label*="Dashboard"]')
-  await expect(page.locator('text=Dashboard')).toBeVisible({ timeout: 5_000 })
+  await page.click('[title="Dashboard"]')
+  await page.waitForURL(/#\/$/)
+  await expect(page.locator('text=Bem-vindo')).toBeVisible({ timeout: 5_000 })
 })
 
 // ──── Theme Toggle ────
 
 test('toggles dark/light theme', async () => {
-  // Navigate to settings
-  await page.click('[title="Configurações"], [aria-label*="Configurações"]')
-  await page.waitForSelector('h1:text("Configurações")', { timeout: 5_000 })
+  await page.click('[title="Configurações"]')
+  await page.waitForSelector('h1:has-text("Configurações")', { timeout: 5_000 })
 
   const html = page.locator('html')
 
-  // Click light mode radio
+  // Switch to light mode
   await page.click('input[value="light"]')
   await expect(html).not.toHaveClass(/dark/)
 
-  // Click dark mode radio
+  // Switch back to dark mode
   await page.click('input[value="dark"]')
   await expect(html).toHaveClass(/dark/)
 })
@@ -68,43 +87,23 @@ test('toggles dark/light theme', async () => {
 // ──── Activity Creation ────
 
 test('creates an activity', async () => {
-  // Navigate to Atividades
-  await page.click('[title="Atividades"], [aria-label*="Atividades"]')
-  await page.waitForSelector('h1:text("Atividades")', { timeout: 5_000 })
+  await page.click('[title="Atividades"]')
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
 
-  // Click "Nova Atividade" button
-  const newBtn = page.locator('button:has-text("Nova Atividade"), a:has-text("Nova Atividade")')
-  if (await newBtn.isVisible()) {
-    await newBtn.click()
-  } else {
-    // Empty state: click the primary action button
-    const emptyAction = page.locator('button:has-text("Criar"), a:has-text("Nova Atividade")')
-    await emptyAction.first().click()
-  }
+  // Click "Nova Atividade"
+  await page.click('button:has-text("Nova Atividade")')
 
-  // Fill description
-  await page.waitForSelector('textarea, input[name="description"]', { timeout: 5_000 })
-  const descInput = page.locator('textarea').first()
-  await descInput.fill('Atividade E2E teste Playwright')
+  // Fill the description (required field)
+  const descInput = page.locator('textarea#description')
+  await descInput.waitFor({ timeout: 5_000 })
+  await descInput.fill('Atividade E2E Playwright')
 
-  // Submit
-  const saveBtn = page.locator('button:has-text("Salvar")')
-  await saveBtn.click()
+  // Submit the form
+  await page.click('button[type="submit"]')
 
-  // Should redirect back to activity list or detail
-  await page.waitForTimeout(1_000)
+  // Should navigate back to activities list
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
 
-  // Navigate to Atividades to verify
-  await page.click('[title="Atividades"], [aria-label*="Atividades"]')
-  await expect(page.locator('text=Atividade E2E teste Playwright')).toBeVisible({ timeout: 5_000 })
-})
-
-// ──── Window Controls ────
-
-test('window starts visible and can be minimized', async () => {
-  const isVisible = await app.evaluate(({ BrowserWindow }) => {
-    const win = BrowserWindow.getAllWindows()[0]
-    return win?.isVisible() ?? false
-  })
-  expect(isVisible).toBe(true)
+  // Verify the created activity appears
+  await expect(page.locator('text=Atividade E2E Playwright').first()).toBeVisible({ timeout: 5_000 })
 })

@@ -170,7 +170,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] UI de gerenciamento da lixeira (visualizar/restaurar itens)
 - [x] Testes do report-generator (9 unit + 9 integration)
 - [x] Testes de integração para database CRUD (20 testes)
-- [ ] Testes E2E básicos (Playwright) — adiado
+- [x] Testes E2E básicos (Playwright) — 4 testes (janela visível, navegação, tema, criação de atividade)
 - [x] Revisão geral de UI (responsividade, feedback visual, acessibilidade)
 
 ### Fase 10: Testes Automatizados ✅
@@ -221,10 +221,10 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Remoção de cor hardcoded `#e81123` no TitleBar
 - [x] Renomeação `--sidebar-bg` → `--sidebar`
 
-### Fase 15: Melhorar Cobertura de Testes (parcial) ✅
+### Fase 15: Melhorar Cobertura de Testes ✅
 
 - [x] Teste de cascade FK em `deleteActivity` (Activity + Evidence + ActivityReport)
-- [ ] Testes E2E com Playwright (adiado)
+- [x] Testes E2E com Playwright (4 testes: janela visível, navegação entre telas, toggle de tema, criação de atividade)
 
 ### Fase 9: Distribuição Multiplataforma
 
