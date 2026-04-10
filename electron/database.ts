@@ -131,7 +131,8 @@ export async function saveActivity(data: Partial<Activity>): Promise<Activity> {
 
 export async function deleteActivity(id: string): Promise<boolean> {
   const db = await getDb()
-  // Delete evidences first
+  // Delete related records first to satisfy foreign key constraints
+  await db.getRepository(ActivityReport).delete({ activity_id: id })
   await db.getRepository(Evidence).delete({ activity_id: id })
   const result = await db.getRepository(Activity).delete({ id })
   return (result.affected ?? 0) > 0
