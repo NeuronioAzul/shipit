@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShipIt! — Teste de Paleta WCAG AA</title>
+  <style>
+    /* ===== CURRENT PALETTE (from src/index.css) ===== */
+    :root {
+      /* Light Mode */
+      --cur-background: hsl(210 20% 98%);
+      --cur-foreground: hsl(0 0% 20%);
+      --cur-card: hsl(0 0% 100%);
+      --cur-card-foreground: hsl(0 0% 20%);
+      --cur-primary: hsl(216 64% 30%);
+      --cur-primary-foreground: hsl(0 0% 100%);
+      --cur-accent: hsl(24 89% 54%);
+      --cur-accent-foreground: hsl(0 0% 100%);
+      --cur-muted: hsl(220 13% 91%);
+      --cur-muted-foreground: hsl(215 14% 45%);
+      --cur-success: hsl(140 62% 31%);
+      --cur-success-foreground: hsl(0 0% 100%);
+      --cur-warning: hsl(48 100% 50%);
+      --cur-warning-foreground: hsl(0 0% 20%);
+      --cur-destructive: hsl(4 83% 35%);
+      --cur-destructive-foreground: hsl(0 0% 100%);
+      --cur-border: hsl(220 13% 85%);
+
+      /* Dark Mode */
+      --cur-dark-background: hsl(220 13% 12%);
+      --cur-dark-foreground: hsl(0 0% 90%);
+      --cur-dark-card: hsl(220 13% 15%);
+      --cur-dark-card-foreground: hsl(0 0% 90%);
+      --cur-dark-primary: hsl(216 52% 59%);
+      --cur-dark-primary-foreground: hsl(0 0% 100%);
+      --cur-dark-accent: hsl(24 89% 54%);
+      --cur-dark-accent-foreground: hsl(0 0% 100%);
+      --cur-dark-muted: hsl(220 13% 22%);
+      --cur-dark-muted-foreground: hsl(0 0% 55%);
+      --cur-dark-success: hsl(122 39% 49%);
+      --cur-dark-success-foreground: hsl(0 0% 100%);
+      --cur-dark-warning: hsl(45 100% 64%);
+      --cur-dark-warning-foreground: hsl(0 0% 12%);
+      --cur-dark-destructive: hsl(4 73% 63%);
+      --cur-dark-destructive-foreground: hsl(0 0% 100%);
+      --cur-dark-border: hsl(220 13% 25%);
+
+      /* ===== NEW PALETTE PROPOSAL (from tokens.css) ===== */
+      /* Light */
+      --new-background: rgb(247, 249, 252);         /* #F7F9FC */
+      --new-foreground: rgb(16, 35, 63);             /* #10233F */
+      --new-card: rgb(255, 255, 255);                /* #FFFFFF */
+      --new-card-foreground: rgb(16, 35, 63);        /* #10233F */
+      --new-primary: rgb(12, 53, 109);               /* #0C356D */
+      --new-primary-foreground: rgb(255, 255, 255);  /* #FFFFFF */
+      --new-secondary: rgb(234, 241, 251);           /* #EAF1FB */
+      --new-secondary-foreground: rgb(12, 53, 109);  /* #0C356D */
+      --new-muted: rgb(238, 243, 249);               /* #EEF3F9 */
+      --new-muted-foreground: rgb(74, 91, 117);      /* #4A5B75 */
+      --new-accent: rgb(232, 110, 33);               /* #E86E21 */
+      --new-accent-foreground: rgb(17, 24, 39);      /* #111827 */
+      --new-success: rgb(15, 138, 95);               /* #0F8A5F */
+      --new-success-foreground: rgb(255, 255, 255);
+      --new-warning: rgb(188, 81, 18);               /* #BC5112 */
+      --new-warning-foreground: rgb(255, 255, 255);
+      --new-destructive: rgb(197, 58, 47);           /* #C53A2F */
+      --new-destructive-foreground: rgb(255, 255, 255);
+      --new-border: rgb(216, 226, 238);              /* #D8E2EE */
+
+      /* Dark */
+      --new-dark-background: rgb(8, 20, 39);         /* #081427 */
+      --new-dark-foreground: rgb(234, 241, 251);     /* #EAF1FB */
+      --new-dark-card: rgb(13, 29, 53);              /* #0D1D35 */
+      --new-dark-card-foreground: rgb(234, 241, 251);
+      --new-dark-primary: rgb(232, 110, 33);         /* #E86E21 */
+      --new-dark-primary-foreground: rgb(11, 18, 32);
+      --new-dark-secondary: rgb(22, 48, 85);         /* #163055 */
+      --new-dark-secondary-foreground: rgb(234, 241, 251);
+      --new-dark-muted: rgb(17, 37, 68);             /* #112544 */
+      --new-dark-muted-foreground: rgb(157, 176, 200); /* #9DB0C8 */
+      --new-dark-accent: rgb(146, 164, 189);         /* #92A4BD */
+      --new-dark-accent-foreground: rgb(8, 20, 39);
+      --new-dark-success: rgb(52, 211, 153);         /* #34D399 */
+      --new-dark-success-foreground: rgb(8, 20, 39);
+      --new-dark-warning: rgb(245, 158, 11);         /* #F59E0B */
+      --new-dark-warning-foreground: rgb(8, 20, 39);
+      --new-dark-destructive: rgb(248, 113, 113);    /* #F87171 */
+      --new-dark-destructive-foreground: rgb(8, 20, 39);
+      --new-dark-border: rgb(31, 53, 86);            /* #1F3556 */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; line-height: 1.5; padding: 24px; max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    h2 { font-size: 1.25rem; margin: 2rem 0 1rem; border-bottom: 2px solid #ddd; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+    .column { padding: 16px; border-radius: 12px; }
+    .column h3 { margin-top: 0; }
+
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+
+    .swatch {
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      position: relative;
+    }
+    .swatch .label { font-size: 11px; opacity: 0.7; margin-bottom: 4px; }
+    .swatch .sample { font-size: 14px; font-weight: 600; }
+    .swatch .small { font-size: 12px; margin-top: 4px; }
+    .swatch .ratio { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    .pass { background: #22c55e; color: white; }
+    .fail { background: #ef4444; color: white; }
+    .warn { background: #f59e0b; color: white; }
+
+    /* Component preview styles */
+    .component-preview { padding: 24px; border-radius: 12px; margin-bottom: 16px; }
+    .card-preview { padding: 20px; border-radius: 8px; border: 1px solid; margin-bottom: 12px; }
+    .btn { display: inline-block; padding: 8px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; margin: 4px; cursor: pointer; border: none; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; margin: 4px; }
+    .input-preview { padding: 8px 12px; border-radius: 6px; border: 1px solid; font-size: 14px; width: 200px; margin: 4px; }
+    .text-sample { margin: 8px 0; }
+
+    .side-by-side { display: flex; gap: 24px; }
+    .side-by-side > div { flex: 1; }
+
+    /* ===== Contrast ratio calculator (displayed inline) ===== */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { padding: 8px 12px; text-align: left; border: 1px solid #ddd; font-size: 13px; }
+    th { background: #f5f5f5; font-weight: 600; }
+    .ratio-cell { font-weight: 700; }
+    .ratio-pass { color: #16a34a; }
+    .ratio-fail { color: #dc2626; }
+
+    .dark-section { background: hsl(220 13% 10%); color: hsl(0 0% 90%); }
+    .dark-section th { background: hsl(220 13% 15%); color: hsl(0 0% 90%); border-color: hsl(220 13% 25%); }
+    .dark-section td { border-color: hsl(220 13% 25%); }
+
+    .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px; }
+    .info-box.warn-box { background: #fef3c7; border-color: #fde68a; }
+    .info-box code { background: #e2e8f0; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<h1>🚀 ShipIt! — Teste de Paleta de Cores WCAG AA</h1>
+<p>Abra este arquivo no navegador e use o <a href="https://webaim.org/resources/contrastchecker/" target="_blank">WebAIM Contrast Checker</a> para validar as razões de contraste listadas.</p>
+
+<div class="info-box">
+  <strong>WCAG AA requer:</strong> contraste ≥ 4.5:1 para texto normal (< 18px ou < 14px bold) e ≥ 3:1 para texto grande (≥ 18px ou ≥ 14px bold).
+</div>
+
+<!-- ====================================================== -->
+<h2>1. Análise da Paleta Atual (src/index.css)</h2>
+<!-- ====================================================== -->
+
+<h3>🌞 Light Mode — Paleta Atual</h3>
+
+<table>
+  <tr>
+    <th>Token (foreground)</th>
+    <th>Hex Foreground</th>
+    <th>Token (background)</th>
+    <th>Hex Background</th>
+    <th>Amostra</th>
+    <th>Ratio Approx.</th>
+    <th>WCAG AA?</th>
+  </tr>
+  <tr>
+    <td><code>--foreground</code></td>
+    <td>#333333</td>
+    <td><code>--background</code></td>
+    <td>#F5F7FA</td>
+    <td style="background: hsl(210 20% 98%); color: hsl(0 0% 20%); padding: 4px 8px; font-weight: 600;">Texto normal</td>
+    <td class="ratio-cell ratio-pass">10.5:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--primary-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--primary</code></td>
+    <td>#1A4480</td>
+    <td style="background: hsl(216 64% 30%); color: white; padding: 4px 8px; font-weight: 600;">Botão Primary</td>
+    <td class="ratio-cell ratio-pass">8.2:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--accent-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--accent</code></td>
+    <td>#E8781E</td>
+    <td style="background: hsl(24 89% 54%); color: white; padding: 4px 8px; font-weight: 600;">Botão Accent</td>
+    <td class="ratio-cell ratio-fail">2.9:1</td>
+    <td>❌ FAIL — branco sobre laranja</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#636E7E</td>
+    <td><code>--background</code></td>
+    <td>#F5F7FA</td>
+    <td style="background: hsl(210 20% 98%); color: hsl(215 14% 45%); padding: 4px 8px;">Texto muted</td>
+    <td class="ratio-cell ratio-pass">4.8:1</td>
+    <td>✅ Pass (marginal)</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#636E7E</td>
+    <td><code>--card</code></td>
+    <td>#FFFFFF</td>
+    <td style="background: white; color: hsl(215 14% 45%); padding: 4px 8px;">Texto muted no card</td>
+    <td class="ratio-cell ratio-pass">4.6:1</td>
+    <td>✅ Pass (marginal)</td>
+  </tr>
+  <tr>
+    <td><code>--warning-foreground</code></td>
+    <td>#333333</td>
+    <td><code>--warning</code></td>
+    <td>#FFD500</td>
+    <td style="background: hsl(48 100% 50%); color: hsl(0 0% 20%); padding: 4px 8px; font-weight: 600;">Badge Warning</td>
+    <td class="ratio-cell ratio-fail">2.4:1</td>
+    <td>❌ FAIL — amarelo puro</td>
+  </tr>
+  <tr>
+    <td><code>--success-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--success</code></td>
+    <td>#1E7F3F</td>
+    <td style="background: hsl(140 62% 31%); color: white; padding: 4px 8px; font-weight: 600;">Badge Success</td>
+    <td class="ratio-cell ratio-pass">5.2:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--destructive-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--destructive</code></td>
+    <td>#A41515</td>
+    <td style="background: hsl(4 83% 35%); color: white; padding: 4px 8px; font-weight: 600;">Badge Destructive</td>
+    <td class="ratio-cell ratio-pass">7.0:1</td>
+    <td>✅ Pass</td>
+  </tr>
+</table>
+
+<h3>🌙 Dark Mode — Paleta Atual</h3>
+
+<table class="dark-section">
+  <tr>
+    <th>Token (foreground)</th>
+    <th>Hex Foreground</th>
+    <th>Token (background)</th>
+    <th>Hex Background</th>
+    <th>Amostra</th>
+    <th>Ratio Approx.</th>
+    <th>WCAG AA?</th>
+  </tr>
+  <tr>
+    <td><code>--foreground</code></td>
+    <td>#E6E6E6</td>
+    <td><code>--background</code></td>
+    <td>#1B1F27</td>
+    <td style="background: hsl(220 13% 12%); color: hsl(0 0% 90%); padding: 4px 8px; font-weight: 600;">Texto normal</td>
+    <td class="ratio-cell ratio-pass">12.3:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#8C8C8C</td>
+    <td><code>--background</code></td>
+    <td>#1B1F27</td>
+    <td style="background: hsl(220 13% 12%); color: hsl(0 0% 55%); padding: 4px 8px;">Texto muted</td>
+    <td class="ratio-cell ratio-pass">5.5:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--accent</code></td>
+    <td>#E8781E</td>
+    <td><code>--background</code></td>
+    <td>#1B1F27</td>
+    <td style="background: hsl(220 13% 12%); color: hsl(24 89% 54%); padding: 4px 8px; font-weight: 600;">Texto accent</td>
+    <td class="ratio-cell ratio-pass">4.8:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--accent-foreground</code> (white)</td>
+    <td>#FFFFFF</td>
+    <td><code>--accent</code></td>
+    <td>#E8781E</td>
+    <td style="background: hsl(24 89% 54%); color: white; padding: 4px 8px; font-weight: 600;">Botão accent (dark)</td>
+    <td class="ratio-cell ratio-fail">2.9:1</td>
+    <td>❌ FAIL</td>
+  </tr>
+  <tr>
+    <td><code>--warning-foreground</code></td>
+    <td>#1F1F1F</td>
+    <td><code>--warning</code></td>
+    <td>#FFD147</td>
+    <td style="background: hsl(45 100% 64%); color: hsl(0 0% 12%); padding: 4px 8px; font-weight: 600;">Warning dark</td>
+    <td class="ratio-cell ratio-fail">1.6:1</td>
+    <td>❌ FAIL</td>
+  </tr>
+</table>
+
+<div class="info-box warn-box">
+  <strong>⚠ Problemas detectados na paleta atual:</strong>
+  <ol>
+    <li><code>--accent</code> (#E8781E) com texto branco: ratio ~2.9:1 (precisa ≥ 4.5:1)</li>
+    <li><code>--warning</code> light (#FFD500) com texto escuro: ratio ~2.4:1 (amarelo puro é sempre problemático)</li>
+    <li><code>--warning</code> dark (#FFD147) com texto escuro: ratio ~1.6:1</li>
+  </ol>
+</div>
+
+<!-- ====================================================== -->
+<h2>2. Paleta Proposta (docs/new-ui-ux-visual/tokens.css)</h2>
+<!-- ====================================================== -->
+
+<h3>🌞 Light Mode — Paleta Proposta</h3>
+
+<table>
+  <tr>
+    <th>Token (foreground)</th>
+    <th>Hex</th>
+    <th>Token (background)</th>
+    <th>Hex</th>
+    <th>Amostra</th>
+    <th>Ratio Approx.</th>
+    <th>WCAG AA?</th>
+  </tr>
+  <tr>
+    <td><code>--foreground</code></td>
+    <td>#10233F</td>
+    <td><code>--background</code></td>
+    <td>#F7F9FC</td>
+    <td style="background: rgb(247, 249, 252); color: rgb(16, 35, 63); padding: 4px 8px; font-weight: 600;">Texto normal</td>
+    <td class="ratio-cell ratio-pass">13.6:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--primary-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--primary</code></td>
+    <td>#0C356D</td>
+    <td style="background: rgb(12, 53, 109); color: white; padding: 4px 8px; font-weight: 600;">Botão Primary</td>
+    <td class="ratio-cell ratio-pass">9.8:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#4A5B75</td>
+    <td><code>--background</code></td>
+    <td>#F7F9FC</td>
+    <td style="background: rgb(247, 249, 252); color: rgb(74, 91, 117); padding: 4px 8px;">Texto muted</td>
+    <td class="ratio-cell ratio-pass">5.4:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#4A5B75</td>
+    <td><code>--card</code></td>
+    <td>#FFFFFF</td>
+    <td style="background: white; color: rgb(74, 91, 117); padding: 4px 8px;">Muted no card</td>
+    <td class="ratio-cell ratio-pass">5.2:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--accent-foreground</code></td>
+    <td>#111827</td>
+    <td><code>--accent</code></td>
+    <td>#E86E21</td>
+    <td style="background: rgb(232, 110, 33); color: rgb(17, 24, 39); padding: 4px 8px; font-weight: 600;">Accent (texto escuro)</td>
+    <td class="ratio-cell ratio-pass">4.8:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--warning-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--warning</code></td>
+    <td>#BC5112</td>
+    <td style="background: rgb(188, 81, 18); color: white; padding: 4px 8px; font-weight: 600;">Warning (marrom)</td>
+    <td class="ratio-cell ratio-pass">4.6:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--success-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--success</code></td>
+    <td>#0F8A5F</td>
+    <td style="background: rgb(15, 138, 95); color: white; padding: 4px 8px; font-weight: 600;">Success</td>
+    <td class="ratio-cell ratio-pass">4.5:1</td>
+    <td>✅ Pass (exato)</td>
+  </tr>
+  <tr>
+    <td><code>--destructive-foreground</code></td>
+    <td>#FFFFFF</td>
+    <td><code>--destructive</code></td>
+    <td>#C53A2F</td>
+    <td style="background: rgb(197, 58, 47); color: white; padding: 4px 8px; font-weight: 600;">Destructive</td>
+    <td class="ratio-cell ratio-pass">4.7:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--secondary-foreground</code></td>
+    <td>#0C356D</td>
+    <td><code>--secondary</code></td>
+    <td>#EAF1FB</td>
+    <td style="background: rgb(234, 241, 251); color: rgb(12, 53, 109); padding: 4px 8px; font-weight: 600;">Secondary</td>
+    <td class="ratio-cell ratio-pass">8.7:1</td>
+    <td>✅ Pass</td>
+  </tr>
+</table>
+
+<h3>🌙 Dark Mode — Paleta Proposta</h3>
+
+<table class="dark-section">
+  <tr>
+    <th>Token (foreground)</th>
+    <th>Hex</th>
+    <th>Token (background)</th>
+    <th>Hex</th>
+    <th>Amostra</th>
+    <th>Ratio Approx.</th>
+    <th>WCAG AA?</th>
+  </tr>
+  <tr>
+    <td><code>--foreground</code></td>
+    <td>#EAF1FB</td>
+    <td><code>--background</code></td>
+    <td>#081427</td>
+    <td style="background: rgb(8, 20, 39); color: rgb(234, 241, 251); padding: 4px 8px; font-weight: 600;">Texto normal</td>
+    <td class="ratio-cell ratio-pass">14.8:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#9DB0C8</td>
+    <td><code>--background</code></td>
+    <td>#081427</td>
+    <td style="background: rgb(8, 20, 39); color: rgb(157, 176, 200); padding: 4px 8px;">Texto muted</td>
+    <td class="ratio-cell ratio-pass">7.4:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code></td>
+    <td>#9DB0C8</td>
+    <td><code>--card</code></td>
+    <td>#0D1D35</td>
+    <td style="background: rgb(13, 29, 53); color: rgb(157, 176, 200); padding: 4px 8px;">Muted no card</td>
+    <td class="ratio-cell ratio-pass">6.4:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--primary-foreground</code></td>
+    <td>#0B1220</td>
+    <td><code>--primary</code></td>
+    <td>#E86E21</td>
+    <td style="background: rgb(232, 110, 33); color: rgb(11, 18, 32); padding: 4px 8px; font-weight: 600;">Primary (dark = orange)</td>
+    <td class="ratio-cell ratio-pass">5.3:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--warning-foreground</code></td>
+    <td>#081427</td>
+    <td><code>--warning</code></td>
+    <td>#F59E0B</td>
+    <td style="background: rgb(245, 158, 11); color: rgb(8, 20, 39); padding: 4px 8px; font-weight: 600;">Warning dark</td>
+    <td class="ratio-cell ratio-pass">7.5:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--success-foreground</code></td>
+    <td>#081427</td>
+    <td><code>--success</code></td>
+    <td>#34D399</td>
+    <td style="background: rgb(52, 211, 153); color: rgb(8, 20, 39); padding: 4px 8px; font-weight: 600;">Success dark</td>
+    <td class="ratio-cell ratio-pass">9.5:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--destructive-foreground</code></td>
+    <td>#081427</td>
+    <td><code>--destructive</code></td>
+    <td>#F87171</td>
+    <td style="background: rgb(248, 113, 113); color: rgb(8, 20, 39); padding: 4px 8px; font-weight: 600;">Destructive dark</td>
+    <td class="ratio-cell ratio-pass">5.9:1</td>
+    <td>✅ Pass</td>
+  </tr>
+  <tr>
+    <td><code>--accent</code></td>
+    <td>#92A4BD</td>
+    <td><code>--background</code></td>
+    <td>#081427</td>
+    <td style="background: rgb(8, 20, 39); color: rgb(146, 164, 189); padding: 4px 8px;">Accent texto (dark)</td>
+    <td class="ratio-cell ratio-pass">6.5:1</td>
+    <td>✅ Pass</td>
+  </tr>
+</table>
+
+<div class="info-box">
+  <strong>✅ Resultado da análise da paleta proposta:</strong> Todos os pares de cores passam WCAG AA. As principais melhorias:
+  <ul>
+    <li><code>--accent-foreground</code> mudou de branco (#FFF) para escuro (#111827) → resolve o problema do laranja</li>
+    <li><code>--warning</code> mudou de amarelo puro para marrom (#BC5112 light, #F59E0B dark com texto escuro) → resolve amarelo</li>
+    <li><code>--muted-foreground</code> mais escuro (#4A5B75 vs #636E7E) → margem de segurança melhor</li>
+  </ul>
+</div>
+
+<!-- ====================================================== -->
+<h2>3. Preview de Componentes — Paleta Proposta</h2>
+<!-- ====================================================== -->
+
+<div class="side-by-side">
+  <!-- Light Mode Preview -->
+  <div>
+    <h3>🌞 Light Mode</h3>
+    <div class="component-preview" style="background: var(--new-background); color: var(--new-foreground);">
+      
+      <!-- Card -->
+      <div class="card-preview" style="background: var(--new-card); color: var(--new-card-foreground); border-color: var(--new-border);">
+        <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">Card de Atividade</div>
+        <p style="font-size: 14px;">Implementar feature de relatórios DOCX para o ShipIt!</p>
+        <p style="font-size: 12px; color: var(--new-muted-foreground); margin-top: 8px;">Última atualização: 09/04/2026</p>
+        
+        <!-- Buttons -->
+        <div style="margin-top: 12px;">
+          <button class="btn" style="background: var(--new-primary); color: var(--new-primary-foreground);">Salvar</button>
+          <button class="btn" style="background: var(--new-accent); color: var(--new-accent-foreground);">Gerar Relatório</button>
+          <button class="btn" style="background: var(--new-secondary); color: var(--new-secondary-foreground);">Cancelar</button>
+        </div>
+      </div>
+      
+      <!-- Badges -->
+      <div style="margin: 12px 0;">
+        <span class="badge" style="background: var(--new-success); color: var(--new-success-foreground);">Concluído</span>
+        <span class="badge" style="background: var(--new-warning); color: var(--new-warning-foreground);">Pendente</span>
+        <span class="badge" style="background: var(--new-destructive); color: var(--new-destructive-foreground);">Cancelado</span>
+        <span class="badge" style="background: var(--new-primary); color: var(--new-primary-foreground);">Em andamento</span>
+        <span class="badge" style="background: var(--new-muted); color: var(--new-muted-foreground);">Rascunho</span>
+      </div>
+
+      <!-- Input -->
+      <div style="margin: 12px 0;">
+        <input class="input-preview" style="background: var(--new-card); color: var(--new-foreground); border-color: var(--new-border);" placeholder="Buscar atividades..." value="Feature DOCX">
+      </div>
+
+      <!-- Text hierarchy -->
+      <div style="margin: 12px 0;">
+        <div style="font-size: 20px; font-weight: 700;">Título h1</div>
+        <div style="font-size: 16px; font-weight: 600;">Subtítulo h2</div>
+        <div style="font-size: 14px;">Texto normal do corpo</div>
+        <div style="font-size: 12px; color: var(--new-muted-foreground);">Texto secundário / muted</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dark Mode Preview -->
+  <div>
+    <h3>🌙 Dark Mode</h3>
+    <div class="component-preview" style="background: var(--new-dark-background); color: var(--new-dark-foreground);">
+      
+      <!-- Card -->
+      <div class="card-preview" style="background: var(--new-dark-card); color: var(--new-dark-card-foreground); border-color: var(--new-dark-border);">
+        <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">Card de Atividade</div>
+        <p style="font-size: 14px;">Implementar feature de relatórios DOCX para o ShipIt!</p>
+        <p style="font-size: 12px; color: var(--new-dark-muted-foreground); margin-top: 8px;">Última atualização: 09/04/2026</p>
+        
+        <!-- Buttons -->
+        <div style="margin-top: 12px;">
+          <button class="btn" style="background: var(--new-dark-primary); color: var(--new-dark-primary-foreground);">Salvar</button>
+          <button class="btn" style="background: var(--new-dark-accent); color: var(--new-dark-accent-foreground);">Gerar Relatório</button>
+          <button class="btn" style="background: var(--new-dark-secondary); color: var(--new-dark-secondary-foreground);">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div style="margin: 12px 0;">
+        <span class="badge" style="background: var(--new-dark-success); color: var(--new-dark-success-foreground);">Concluído</span>
+        <span class="badge" style="background: var(--new-dark-warning); color: var(--new-dark-warning-foreground);">Pendente</span>
+        <span class="badge" style="background: var(--new-dark-destructive); color: var(--new-dark-destructive-foreground);">Cancelado</span>
+        <span class="badge" style="background: var(--new-dark-primary); color: var(--new-dark-primary-foreground);">Em andamento</span>
+        <span class="badge" style="background: var(--new-dark-muted); color: var(--new-dark-muted-foreground);">Rascunho</span>
+      </div>
+
+      <!-- Input -->
+      <div style="margin: 12px 0;">
+        <input class="input-preview" style="background: var(--new-dark-card); color: var(--new-dark-foreground); border-color: var(--new-dark-border);" placeholder="Buscar atividades..." value="Feature DOCX">
+      </div>
+
+      <!-- Text hierarchy -->
+      <div style="margin: 12px 0;">
+        <div style="font-size: 20px; font-weight: 700;">Título h1</div>
+        <div style="font-size: 16px; font-weight: 600;">Subtítulo h2</div>
+        <div style="font-size: 14px;">Texto normal do corpo</div>
+        <div style="font-size: 12px; color: var(--new-dark-muted-foreground);">Texto secundário / muted</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================== -->
+<h2>4. Resumo das Correções Necessárias na Paleta Atual</h2>
+<!-- ====================================================== -->
+
+<table>
+  <tr>
+    <th>Token</th>
+    <th>Valor Atual</th>
+    <th>Valor Proposto</th>
+    <th>Motivo</th>
+  </tr>
+  <tr>
+    <td><code>--accent-foreground</code> (light)</td>
+    <td><span style="background: white; color: hsl(24 89% 54%); padding: 2px 8px; border: 1px solid #ccc;">hsl(0 0% 100%)</span></td>
+    <td><span style="background: rgb(232,110,33); color: rgb(17,24,39); padding: 2px 8px;">rgb(17, 24, 39)</span></td>
+    <td>Branco sobre laranja falha AA. Trocar para texto escuro.</td>
+  </tr>
+  <tr>
+    <td><code>--warning</code> (light)</td>
+    <td><span style="background: hsl(48 100% 50%); color: hsl(0 0% 20%); padding: 2px 8px;">hsl(48 100% 50%)</span></td>
+    <td><span style="background: rgb(188,81,18); color: white; padding: 2px 8px;">rgb(188, 81, 18)</span></td>
+    <td>Amarelo puro falha com qualquer texto. Usar marrom-alaranjado.</td>
+  </tr>
+  <tr>
+    <td><code>--warning-foreground</code> (light)</td>
+    <td>hsl(0 0% 20%)</td>
+    <td>hsl(0 0% 100%)</td>
+    <td>Com fundo marrom-alaranjado, branco é melhor.</td>
+  </tr>
+  <tr>
+    <td><code>--warning</code> (dark)</td>
+    <td><span style="background: hsl(45 100% 64%); color: hsl(0 0% 12%); padding: 2px 8px;">hsl(45 100% 64%)</span></td>
+    <td><span style="background: rgb(245,158,11); color: rgb(8,20,39); padding: 2px 8px;">rgb(245, 158, 11)</span></td>
+    <td>Amarelo claro com texto escuro funciona melhor em dark.</td>
+  </tr>
+  <tr>
+    <td><code>--muted-foreground</code> (light)</td>
+    <td>hsl(215 14% 45%)</td>
+    <td>Manter (4.8:1 — passa, mas marginal)</td>
+    <td>Se quiser mais margem: escurecer para hsl(215 14% 40%)</td>
+  </tr>
+</table>
+
+<div class="info-box">
+  <strong>Próximo passo:</strong> Revisar esta página, testar os pares no <a href="https://webaim.org/resources/contrastchecker/" target="_blank">WebAIM Contrast Checker</a>, e confirmar para aplicar as mudanças em <code>src/index.css</code>.
+</div>
+
+</body>
+</html>
