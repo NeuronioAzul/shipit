@@ -428,7 +428,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   // Scan existing rIds to avoid collisions
   const existingRels = relsDom.documentElement!.childNodes
   for (let i = 0; i < existingRels.length; i++) {
-    const node = existingRels[i] as Element
+    const node = existingRels[i] as unknown as Element
     if (node.getAttribute) {
       const id = node.getAttribute('Id')
       if (id && id.startsWith('rId')) {

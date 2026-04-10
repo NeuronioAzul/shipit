@@ -36,6 +36,7 @@ function SortableEvidenceCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
   })
+  const handleRef = useRef<HTMLButtonElement>(null)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -43,9 +44,20 @@ function SortableEvidenceCard({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  function handleImageDragStart(e: React.DragEvent) {
+    e.preventDefault()
+    if (handleRef.current) {
+      handleRef.current.classList.remove('animate-shake')
+      // Force reflow to re-trigger animation
+      void handleRef.current.offsetWidth
+      handleRef.current.classList.add('animate-shake')
+    }
+  }
+
   return (
     <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden group/ev relative">
       <button
+        ref={handleRef}
         {...attributes}
         {...listeners}
         className="absolute top-2 left-2 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover/ev:opacity-100 transition-opacity touch-none"
@@ -71,6 +83,8 @@ function SortableEvidenceCard({
           }
           alt={evidence.caption || 'Evidência'}
           className="w-full h-full object-contain"
+          draggable
+          onDragStart={handleImageDragStart}
           onError={(e) => {
             ;(e.target as HTMLImageElement).style.display = 'none'
           }}
@@ -387,8 +401,10 @@ export function ActivityDetailPage() {
           {(!activity.evidences || activity.evidences.length === 0) ? (
             <div
               onClick={handleFileSelect}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                dropActive ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                dropActive 
+                  ? 'border-accent bg-accent/10 scale-[1.02] ring-2 ring-accent/30' 
+                  : 'border-border hover:border-primary hover:bg-muted/30'
               }`}
             >
               {uploading ? (
@@ -440,8 +456,10 @@ export function ActivityDetailPage() {
 
               <div
                 onClick={handleFileSelect}
-                className={`mt-4 border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
-                  dropActive ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'
+                className={`mt-4 border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer ${
+                  dropActive 
+                    ? 'border-accent bg-accent/10 scale-[1.02] ring-2 ring-accent/30' 
+                    : 'border-border hover:border-primary hover:bg-muted/30'
                 }`}
               >
                 {uploading ? (

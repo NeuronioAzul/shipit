@@ -48,11 +48,21 @@ function SortableEvidenceCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
   })
+  const handleRef = useRef<HTMLButtonElement>(null)
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  }
+
+  function handleImageDragStart(e: React.DragEvent) {
+    e.preventDefault()
+    if (handleRef.current) {
+      handleRef.current.classList.remove('animate-shake')
+      void handleRef.current.offsetWidth
+      handleRef.current.classList.add('animate-shake')
+    }
   }
 
   return (
@@ -71,6 +81,8 @@ function SortableEvidenceCard({
           }
           alt={evidence.caption || 'Evidência'}
           className="w-full h-full object-contain"
+          draggable
+          onDragStart={handleImageDragStart}
           onError={(e) => {
             ;(e.target as HTMLImageElement).src = ''
             ;(e.target as HTMLImageElement).style.display = 'none'
@@ -78,6 +90,7 @@ function SortableEvidenceCard({
         />
         {/* Drag handle */}
         <button
+          ref={handleRef}
           type="button"
           {...attributes}
           {...listeners}
@@ -311,8 +324,8 @@ export function EvidenceUpload({
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-          ${dragging ? 'border-accent bg-accent/10' : 'border-border hover:border-primary hover:bg-muted/30'}`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer
+          ${dragging ? 'border-accent bg-accent/10 scale-[1.02] ring-2 ring-accent/30' : 'border-border hover:border-primary hover:bg-muted/30'}`}
         onClick={handleFileSelect}
       >
         {uploading ? (
