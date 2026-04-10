@@ -26,7 +26,7 @@ export function TitleBar() {
         <img
           src="/assets/images/logo-composto-colorido.svg"
           alt="ShipIt!"
-          className="h-6 bg-white/90 rounded px-1"
+          className="h-7 bg-white/90 rounded px-1"
           onError={(e) => {
             // Fallback to PNG if SVG not found
             (e.target as HTMLImageElement).src = '/assets/images/icons/favicon-32x32.png'
