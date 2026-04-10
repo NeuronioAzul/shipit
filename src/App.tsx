@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'
@@ -41,7 +41,7 @@ function ThemedToaster() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark">
-      <BrowserRouter>
+      <HashRouter>
         <ElectronNavigator />
         <ThemedToaster />
         <Routes>
@@ -56,7 +56,7 @@ export default function App() {
             <Route path="/activities/:id/edit" element={<ActivityFormPage />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </ThemeProvider>
   )
 }

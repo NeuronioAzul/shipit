@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import logoSvg from '../../assets/images/logo-composto-colorido.svg'
 
 function AboutModal({ onClose }: { onClose: () => void }) {
   const [version, setVersion] = useState('')
@@ -33,7 +34,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex items-center gap-4 mb-4">
           <img
-            src="/assets/images/logo-composto-colorido.svg"
+            src={logoSvg}
             alt="ShipIt! Logo"
             className="h-12 bg-white/90 rounded-md p-1"
           />
@@ -86,7 +87,7 @@ export function Header() {
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <img
-            src="/assets/images/logo-composto-colorido.svg"
+            src={logoSvg}
             alt="ShipIt! Logo"
             className="h-8 bg-white/90 rounded-md p-[3px]"
           />

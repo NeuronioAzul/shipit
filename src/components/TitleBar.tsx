@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import logoSvg from '../../assets/images/logo-composto-colorido.svg'
+import faviconPng from '../../assets/images/icons/favicon-32x32.png'
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
@@ -24,12 +26,12 @@ export function TitleBar() {
       {/* Left: Full Logo */}
       <div className="flex items-center pl-3">
         <img
-          src="/assets/images/logo-composto-colorido.svg"
+          src={logoSvg}
           alt="ShipIt!"
           className="h-7 bg-white/90 rounded px-1"
           onError={(e) => {
             // Fallback to PNG if SVG not found
-            (e.target as HTMLImageElement).src = '/assets/images/icons/favicon-32x32.png'
+            (e.target as HTMLImageElement).src = faviconPng
           }}
         />
       </div>

@@ -38,7 +38,7 @@ function createWindow() {
     backgroundColor: '#1e1e1e',
   })
 
-  if (isDev) {
+  if (isDev && !process.env.PLAYWRIGHT) {
     mainWindow.loadURL('http://localhost:5173')
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
