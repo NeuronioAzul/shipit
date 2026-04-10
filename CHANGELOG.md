@@ -13,6 +13,19 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 - Testes E2E básicos (Playwright)
 - Diretório de armazenamento de dados customizável (opcional)
+
+### Adicionado (Fase 14 — Paleta WCAG AA)
+
+- Nova paleta de cores com conformidade WCAG AA (contraste mínimo 4.5:1)
+- Formato migrado de `hsl()` para `rgb()` em todas as variáveis CSS
+- Novos tokens: `--secondary`, `--popover`, `--info`, `--surface-*`, `--disabled-*`, `--selection-*`, `--chart-*`, `--radius-*`, `--shadow-*`
+- Estilos `::selection` para seleção de texto com cores da marca
+- Token `--sidebar-bg` renomeado para `--sidebar` (consistência)
+- Cor hardcoded `#e81123` substituída por token `destructive` no TitleBar
+
+### Adicionado (Fase 15 — Testes)
+
+- Teste de cascade FK em `deleteActivity`: cria Activity + Evidence + ActivityReport, deleta e verifica remoção em cascata
 - Builds para macOS (.dmg) e Linux (.AppImage)
 - Ajustes de tray para macOS (template images) e Linux (AppIndicator)
 - Testes finais e empacotamento multiplataforma

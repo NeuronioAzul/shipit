@@ -212,6 +212,20 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Transições de página com `key={location.pathname}` no AppLayout
 - [x] Drop zones com efeito `scale` + `ring` durante drag & drop
 
+### Fase 14: Aplicar Nova Paleta de Cores ✅
+
+- [x] Validação da paleta proposta (WCAG AA)
+- [x] Substituição de variáveis CSS: `hsl()` → `rgb()` com valores da `tokens.css`
+- [x] Novos tokens: `--secondary`, `--popover`, `--info`, `--surface-*`, `--disabled-*`, `--selection-*`, `--chart-*`, `--radius-*`, `--shadow-*`
+- [x] Estilos `::selection` para seleção de texto
+- [x] Remoção de cor hardcoded `#e81123` no TitleBar
+- [x] Renomeação `--sidebar-bg` → `--sidebar`
+
+### Fase 15: Melhorar Cobertura de Testes (parcial) ✅
+
+- [x] Teste de cascade FK em `deleteActivity` (Activity + Evidence + ActivityReport)
+- [ ] Testes E2E com Playwright (adiado)
+
 ### Fase 9: Distribuição Multiplataforma
 
 - [x] Configuração do electron-builder

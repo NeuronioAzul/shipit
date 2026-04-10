@@ -31,6 +31,7 @@ import {
   saveAlert,
   countActivities,
   countIncompleteActivities,
+  getDb,
 } from './database'
 
 beforeEach(async () => {
@@ -179,6 +180,65 @@ describe('Activity CRUD', () => {
   it('returns false when deleting non-existent activity', async () => {
     const deleted = await deleteActivity('nonexistent-id')
     expect(deleted).toBe(false)
+  })
+
+  it('cascade-deletes evidences and activity_reports on activity removal', async () => {
+    const db = await getDb()
+
+    // Create activity with evidence
+    const activity = await saveActivity({
+      description: 'Atividade com dependentes',
+      status: 'Concluído',
+      month_reference: '03/2026',
+      order: 1,
+    })
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shipit-fk-'))
+    const imgPath = path.join(tmpDir, 'ev.png')
+    fs.writeFileSync(imgPath, Buffer.from([0x89, 0x50, 0x4E, 0x47]))
+
+    const ev = await saveEvidence(activity.id, imgPath, 'Evidência FK')
+
+    // Insert an ActivityReport row (needs a Report row first for FK constraint)
+    const { ActivityReport } = await import('./entities/ActivityReport')
+    const { Report } = await import('./entities/Report')
+    const { v7: uuidv7 } = await import('uuid')
+
+    const reportRepo = db.getRepository(Report)
+    const report = await reportRepo.save({
+      id: uuidv7(),
+      month_reference: '03/2026',
+      file_path: '/tmp/test-report.docx',
+      report_name: 'Relatório Teste FK',
+      status: 'Gerado',
+    })
+
+    const arRepo = db.getRepository(ActivityReport)
+    await arRepo.save({
+      id: uuidv7(),
+      report_id: report.id,
+      activity_id: activity.id,
+    })
+
+    // Confirm rows exist before delete
+    const evidenceBefore = await db.getRepository((await import('./entities/Evidence')).Evidence)
+      .countBy({ activity_id: activity.id })
+    const arBefore = await arRepo.countBy({ activity_id: activity.id })
+    expect(evidenceBefore).toBe(1)
+    expect(arBefore).toBe(1)
+
+    // Delete the activity
+    const deleted = await deleteActivity(activity.id)
+    expect(deleted).toBe(true)
+
+    // Verify cascade: both Evidence and ActivityReport rows removed
+    const evidenceAfter = await db.getRepository((await import('./entities/Evidence')).Evidence)
+      .countBy({ activity_id: activity.id })
+    const arAfter = await arRepo.countBy({ activity_id: activity.id })
+    expect(evidenceAfter).toBe(0)
+    expect(arAfter).toBe(0)
+
+    fs.rmSync(tmpDir, { recursive: true, force: true })
   })
 })
 

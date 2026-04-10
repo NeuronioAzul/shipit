@@ -75,7 +75,7 @@ export function TitleBar() {
         {/* Close */}
         <button
           onClick={handleClose}
-          className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-[#e81123] hover:text-white transition-colors"
+          className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-destructive hover:text-destructive-foreground transition-colors"
           title="Fechar"
           aria-label="Fechar janela"
         >
