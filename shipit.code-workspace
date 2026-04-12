@@ -290,7 +290,8 @@
             "bradlc.vscode-tailwindcss",
             "eamodio.gitlens",
             "mermaidchart.vscode-mermaid-chart",
-            "neuronioazul.image-details"
+            "neuronioazul.image-details",
+            "github.vscode-github-actions"
         ]
     }
 }

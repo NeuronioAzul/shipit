@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
 
@@ -210,6 +211,28 @@ app.whenReady().then(async () => {
   createWindow()
   createTray()
   startSchedulers()
+
+  // Auto-update: check for updates only in packaged builds
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
+
+    autoUpdater.on('update-available', (info) => {
+      new Notification({
+        title: 'ShipIt! — Atualização disponível',
+        body: `Versão ${info.version} está sendo baixada...`,
+      }).show()
+    })
+
+    autoUpdater.on('update-downloaded', (info) => {
+      new Notification({
+        title: 'ShipIt! — Atualização pronta',
+        body: `Versão ${info.version} será instalada ao reiniciar o app.`,
+      }).show()
+    })
+
+    autoUpdater.checkForUpdatesAndNotify()
+  }
 })
 
 app.on('window-all-closed', () => {

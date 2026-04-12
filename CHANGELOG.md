@@ -12,6 +12,18 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ### Pendente
 
 - Diretório de armazenamento de dados customizável (opcional)
+- Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
+
+### Adicionado (Fase 9.1 — CI/CD & Auto-Update)
+
+- Workflow GitHub Actions (`.github/workflows/release.yml`) para build & release multiplataforma
+  - Trigger por tag semver (`v*.*.*`)
+  - 3 jobs paralelos: Windows (.exe), macOS (.dmg), Linux (.AppImage)
+  - Testes unitários como gate antes do build
+  - Publicação automática no GitHub Releases com `--publish always`
+- `electron-updater` para auto-update: notifica sobre atualizações disponíveis e prontas sem forçar restart
+- Config `publish` (provider: github) no `build` do `package.json`
+- Ícone macOS atualizado para `.icns` (`apple-icon.icns`)
 
 ### Adicionado (Fase 15.2 — Testes E2E)
 

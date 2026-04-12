@@ -41,6 +41,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@xmldom/xmldom": "^0.9.9",
     "better-sqlite3": "^12.8.0",
+    "electron-updater": "^6.8.3",
     "jszip": "^3.10.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -74,6 +75,11 @@
     "appId": "com.neuronioazul.shipit",
     "productName": "ShipIt!",
     "copyright": "Copyright © 2026 NeuronioAzul",
+    "publish": {
+      "provider": "github",
+      "owner": "NeuronioAzul",
+      "repo": "shipit"
+    },
     "directories": {
       "output": "release"
     },
@@ -85,7 +91,7 @@
     ],
     "extraResources": [
       {
-        "from": "docs/Relatórios 2026/RELATÓRIO DE SERVIÇO - TEMPLATE.docx",
+        "from": "public/RELATÓRIO DE SERVIÇO - TEMPLATE.docx",
         "to": "RELATÓRIO DE SERVIÇO - TEMPLATE.docx"
       }
     ],
@@ -109,7 +115,7 @@
       "target": [
         "dmg"
       ],
-      "icon": "public/assets/images/icons/apple-icon.png",
+      "icon": "public/assets/images/icons/apple-icon.icns",
       "category": "public.app-category.productivity"
     },
     "linux": {

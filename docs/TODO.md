@@ -230,9 +230,22 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 - [x] Configuração do electron-builder
   - [x] .exe (Windows 10/11)
-  - [ ] .dmg (macOS)
-  - [ ] .AppImage (Linux)
+  - [x] .dmg (macOS)
+  - [x] .AppImage (Linux)
 - [x] Ícones do app configurados (favicon, tray, instalador)
 - [ ] Ajustar ícones de tray para macOS (template images)
 - [ ] Testar auto-launch e paths em cada plataforma
-- [ ] Testes finais e empacotamento de release
+- [x] Testes finais e empacotamento de release
+
+### Fase 9.1: CI/CD — Build & Release Multiplataforma
+
+- [x] Instalar `electron-updater` como dependência de produção
+- [x] Configurar `publish` (provider: github) no `build` do `package.json`
+- [x] Auto-update em `electron/main.ts` (notifica sem forçar restart)
+- [x] Workflow GitHub Actions (`.github/workflows/release.yml`)
+  - [x] Trigger por tag semver (`v*.*.*`)
+  - [x] Build paralelo: Windows (.exe), macOS (.dmg), Linux (.AppImage)
+  - [x] Testes unitários como gate antes do build
+  - [x] Publicação automática no GitHub Releases
+- [x] Ícone macOS atualizado para `.icns`
+- [ ] Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
