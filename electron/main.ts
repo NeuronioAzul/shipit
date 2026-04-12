@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
 
@@ -26,7 +27,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
+    icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -38,7 +39,7 @@ function createWindow() {
     backgroundColor: '#1e1e1e',
   })
 
-  if (isDev) {
+  if (isDev && !process.env.PLAYWRIGHT) {
     mainWindow.loadURL('http://localhost:5173')
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
@@ -72,6 +73,7 @@ function createTray() {
   const trayIconPath = path.join(
     __dirname,
     '..',
+    'public',
     'assets',
     'images',
     'tray',
@@ -209,6 +211,28 @@ app.whenReady().then(async () => {
   createWindow()
   createTray()
   startSchedulers()
+
+  // Auto-update: check for updates only in packaged builds
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
+
+    autoUpdater.on('update-available', (info) => {
+      new Notification({
+        title: 'ShipIt! — Atualização disponível',
+        body: `Versão ${info.version} está sendo baixada...`,
+      }).show()
+    })
+
+    autoUpdater.on('update-downloaded', (info) => {
+      new Notification({
+        title: 'ShipIt! — Atualização pronta',
+        body: `Versão ${info.version} será instalada ao reiniciar o app.`,
+      }).show()
+    })
+
+    autoUpdater.checkForUpdatesAndNotify()
+  }
 })
 
 app.on('window-all-closed', () => {
@@ -379,10 +403,10 @@ ipcMain.handle('app:getDefaultReportsDir', () => {
 
 function getSoundsDir(): string {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar', 'assets', 'sounds')
+    return path.join(process.resourcesPath, 'app.asar', 'public', 'assets', 'sounds')
   }
   // In dev mode, app.getAppPath() returns project root
-  return path.join(app.getAppPath(), 'assets', 'sounds')
+  return path.join(app.getAppPath(), 'public', 'assets', 'sounds')
 }
 
 ipcMain.handle('app:listSounds', () => {
@@ -537,7 +561,7 @@ async function checkAndFireAlerts(): Promise<void> {
     const notification = new Notification({
       title: 'ShipIt! — Lembrete',
       body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
-      icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
+      icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     })
     notification.on('click', () => {
       mainWindow?.show()
@@ -577,7 +601,7 @@ function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
     red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
   }
   const iconFile = statusMap[status] || statusMap['default']
-  const iconPath = path.join(__dirname, '..', 'assets', 'images', 'tray', iconFile)
+  const iconPath = path.join(__dirname, '..', 'public', 'assets', 'images', 'tray', iconFile)
   const icon = nativeImage.createFromPath(iconPath)
   if (!icon.isEmpty()) {
     tray.setImage(icon.resize({ width: 16, height: 16 }))

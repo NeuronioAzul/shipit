@@ -170,7 +170,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] UI de gerenciamento da lixeira (visualizar/restaurar itens)
 - [x] Testes do report-generator (9 unit + 9 integration)
 - [x] Testes de integração para database CRUD (20 testes)
-- [ ] Testes E2E básicos (Playwright) — adiado
+- [x] Testes E2E básicos (Playwright) — 4 testes (janela visível, navegação, tema, criação de atividade)
 - [x] Revisão geral de UI (responsividade, feedback visual, acessibilidade)
 
 ### Fase 10: Testes Automatizados ✅
@@ -221,18 +221,31 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Remoção de cor hardcoded `#e81123` no TitleBar
 - [x] Renomeação `--sidebar-bg` → `--sidebar`
 
-### Fase 15: Melhorar Cobertura de Testes (parcial) ✅
+### Fase 15: Melhorar Cobertura de Testes ✅
 
 - [x] Teste de cascade FK em `deleteActivity` (Activity + Evidence + ActivityReport)
-- [ ] Testes E2E com Playwright (adiado)
+- [x] Testes E2E com Playwright (4 testes: janela visível, navegação entre telas, toggle de tema, criação de atividade)
 
 ### Fase 9: Distribuição Multiplataforma
 
 - [x] Configuração do electron-builder
   - [x] .exe (Windows 10/11)
-  - [ ] .dmg (macOS)
-  - [ ] .AppImage (Linux)
+  - [x] .dmg (macOS)
+  - [x] .AppImage (Linux)
 - [x] Ícones do app configurados (favicon, tray, instalador)
 - [ ] Ajustar ícones de tray para macOS (template images)
 - [ ] Testar auto-launch e paths em cada plataforma
-- [ ] Testes finais e empacotamento de release
+- [x] Testes finais e empacotamento de release
+
+### Fase 9.1: CI/CD — Build & Release Multiplataforma
+
+- [x] Instalar `electron-updater` como dependência de produção
+- [x] Configurar `publish` (provider: github) no `build` do `package.json`
+- [x] Auto-update em `electron/main.ts` (notifica sem forçar restart)
+- [x] Workflow GitHub Actions (`.github/workflows/release.yml`)
+  - [x] Trigger por tag semver (`v*.*.*`)
+  - [x] Build paralelo: Windows (.exe), macOS (.dmg), Linux (.AppImage)
+  - [x] Testes unitários como gate antes do build
+  - [x] Publicação automática no GitHub Releases
+- [x] Ícone macOS atualizado para `.icns`
+- [ ] Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)

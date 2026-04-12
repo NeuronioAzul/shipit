@@ -10,6 +10,7 @@
     "dist": "npm run build && electron-builder",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "postinstall": "electron-builder install-app-deps"
   },
   "repository": {
@@ -40,6 +41,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@xmldom/xmldom": "^0.9.9",
     "better-sqlite3": "^12.8.0",
+    "electron-updater": "^6.8.3",
     "jszip": "^3.10.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -51,6 +53,7 @@
     "xpath": "^0.0.34"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.2.14",
@@ -60,6 +63,7 @@
     "concurrently": "^9.2.1",
     "electron": "^41.1.1",
     "electron-builder": "^26.8.1",
+    "electron-playwright-helpers": "^2.1.0",
     "sql.js": "^1.14.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
@@ -71,18 +75,23 @@
     "appId": "com.neuronioazul.shipit",
     "productName": "ShipIt!",
     "copyright": "Copyright © 2026 NeuronioAzul",
+    "publish": {
+      "provider": "github",
+      "owner": "NeuronioAzul",
+      "repo": "shipit"
+    },
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "assets/**/*",
+      "public/**/*",
       "!**/*.map"
     ],
     "extraResources": [
       {
-        "from": "docs/Relatórios 2026/RELATÓRIO DE SERVIÇO - TEMPLATE.docx",
+        "from": "public/RELATÓRIO DE SERVIÇO - TEMPLATE.docx",
         "to": "RELATÓRIO DE SERVIÇO - TEMPLATE.docx"
       }
     ],
@@ -95,7 +104,7 @@
           ]
         }
       ],
-      "icon": "assets/images/icons/ms-icon-310x310.png",
+      "icon": "public/assets/images/icons/ms-icon-310x310.png",
       "signAndEditExecutable": false
     },
     "nsis": {
@@ -106,14 +115,14 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/images/icons/apple-icon.png",
+      "icon": "public/assets/images/icons/apple-icon.icns",
       "category": "public.app-category.productivity"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "assets/images/icons",
+      "icon": "public/assets/images/icons",
       "category": "Office"
     },
     "asar": true,

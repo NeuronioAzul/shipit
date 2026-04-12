@@ -33,7 +33,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex items-center gap-4 mb-4">
           <img
-            src="/assets/images/logo-composto-colorido.svg"
+            src="./assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
             className="h-12 bg-white/90 rounded-md p-1"
           />
@@ -86,9 +86,9 @@ export function Header() {
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <img
-            src="/assets/images/logo-composto-colorido.svg"
+            src="./assets/images/logo-composto-colorido.svg"
             alt="ShipIt! Logo"
-            className="h-8 bg-white/90 rounded-md p-[3px]"
+            className="h-8 bg-white/90 rounded-md p-0.75"
           />
         </Link>
 
@@ -140,7 +140,7 @@ export function Header() {
           >
             <i className="fa-solid fa-trash-can text-lg"></i>
             {trashCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-[16px] h-4 flex items-center justify-center rounded-full px-1">
+              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-4 h-4 flex items-center justify-center rounded-full px-1">
                 {trashCount > 99 ? '99+' : trashCount}
               </span>
             )}
