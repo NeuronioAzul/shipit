@@ -278,7 +278,10 @@
                 "args": ["-NoLogo"]
             }
         },
-        "terminal.integrated.tabs.defaultIcon": "terminal-powershell"
+        "terminal.integrated.tabs.defaultIcon": "terminal-powershell",
+        "terminal.integrated.env.windows": {
+            "PATH": "C:\\Program Files\\GitHub CLI;${env:PATH}"
+        }
     },
     "extensions": {
         "recommendations": [
