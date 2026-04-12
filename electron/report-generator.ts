@@ -69,7 +69,7 @@ function formatDateBR(dateStr: string | null): string {
 function getTemplatePath(): string {
   const isDev = !app.isPackaged
   if (isDev) {
-    return path.join(app.getAppPath(), 'docs', 'Relatórios 2026', 'RELATÓRIO DE SERVIÇO - TEMPLATE.docx')
+    return path.join(app.getAppPath(), 'public', 'RELATÓRIO DE SERVIÇO - TEMPLATE.docx')
   }
   // In production, template is bundled in extraResources
   return path.join(process.resourcesPath, 'RELATÓRIO DE SERVIÇO - TEMPLATE.docx')
