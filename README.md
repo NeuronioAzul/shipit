@@ -46,11 +46,22 @@ O **ShipIt!** é uma aplicação desktop multiplataforma para profissionais de T
 
 Baixe o instalador para sua plataforma na página de [Releases](https://github.com/NeuronioAzul/shipit/releases):
 
-| Plataforma | Formato |
-|------------|---------|
-| Windows    | `.exe` (NSIS) |
-| macOS      | `.dmg` |
-| Linux      | `.AppImage` |
+| Plataforma | Formato | Descrição |
+|------------|---------|-----------|
+| Windows    | `.exe` (Setup) | Instalador NSIS (recomendado) |
+| Windows    | `.exe` (Portable) | Executável portátil, sem instalação |
+| Windows    | `.msi` | Instalador MSI para deploy corporativo |
+| macOS      | `.dmg` (arm64) | Apple Silicon (M1/M2/M3/M4) |
+| macOS      | `.dmg` (x64) | Intel |
+| Linux      | `.AppImage` | Universal, sem instalação |
+| Linux      | `.deb` | Debian/Ubuntu |
+| Linux      | `.rpm` | Fedora/RHEL |
+
+### Qual versão baixar?
+
+- **Windows**: use o **Setup (.exe)** se quiser instalar normalmente. Use o **Portable** para rodar sem instalar.
+- **macOS**: use **arm64** se tem Mac com chip Apple Silicon (M1+). Use **x64** se tem Mac Intel.
+- **Linux**: **AppImage** roda em qualquer distro. Use **.deb** ou **.rpm** se preferir instalar pelo gerenciador de pacotes.
 
 ---
 

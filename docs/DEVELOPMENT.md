@@ -51,11 +51,24 @@ npm run dist
 
 Os artefatos são gerados na pasta `release/`:
 
-| Plataforma | Formato       | Configuração |
-| ---------- | ------------- | ------------ |
-| Windows    | `.exe` (NSIS) | x64          |
-| macOS      | `.dmg`        | Universal    |
-| Linux      | `.AppImage`   | x64          |
+| Plataforma | Formato              | Configuração |
+| ---------- | -------------------- | ------------ |
+| Windows    | `.exe` (NSIS Setup)  | x64          |
+| Windows    | `.exe` (Portable)    | x64          |
+| Windows    | `.msi`               | x64          |
+| macOS      | `.dmg`               | arm64, x64   |
+| Linux      | `.AppImage`          | x64          |
+| Linux      | `.deb`               | amd64        |
+| Linux      | `.rpm`               | x86_64       |
+
+### CI/CD
+
+O workflow `.github/workflows/release.yml` é acionado por tags semver (`v*.*.*`):
+
+1. **create-release**: cria GitHub Release como **draft** (revisão manual antes de publicar)
+2. **build-windows**: compila e publica `.exe` (Setup + Portable) e `.msi`
+3. **build-macos**: compila DMGs para arm64 e x64
+4. **build-linux**: compila AppImage, `.deb` e `.rpm`
 
 ---
 

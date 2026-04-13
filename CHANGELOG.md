@@ -14,6 +14,22 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Diretório de armazenamento de dados customizável (opcional)
 - Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
 
+### Adicionado (Fase 16 — Ícone, Instaladores, Busca, Auto-Update UI)
+
+- **Ícone corrigido**: gerado `ShipIt.ico` (multi-size 256px+) a partir do PNG 310×310; `build.win.icon` aponta para `.ico`
+- **Instaladores multi-formato**:
+  - Windows: NSIS Setup + Portable + MSI (x64)
+  - macOS: DMG com builds separados para arm64 e x64
+  - Linux: AppImage + deb + rpm
+  - `artifactName` descritivo por target (ex: `ShipIt-1.2.1-Windows-x64-Setup.exe`)
+- **Release workflow**: job `create-release` cria draft GitHub Release; 3 build jobs publicam artefatos; upload inclui `.msi`, `.deb`, `.rpm`
+- **Barra de busca** (estilo VS Code Command Palette): componente `SearchBar` no TitleBar com atalho `Ctrl+K`, debounce 300ms, dropdown de resultados, navegação para atividade ou filtro avançado
+- **Busca backend**: `searchActivities(query)` com `LIKE` em `description`, `project_scope`, `link_ref` e `Evidence.caption`; IPC handler `db:searchActivities`
+- **Filtro avançado na ActivitiesPage**: painel de filtros (texto, status, atendimento, escopo) com pills removíveis; modo busca via `?search=QUERY`
+- **Botão "Verificar atualizações"** na SettingsPage: seção "Atualizações" com botão, estados visuais (verificando, disponível, baixando, pronta, erro), botão "Reiniciar e atualizar" quando downloaded
+- **IPC auto-update**: handlers `app:checkForUpdate` e `app:installUpdate`; listeners de `autoUpdater` enviam estado para renderer via `app:updateStatus`
+- Token CSS `--titlebar-search` para background do input de busca
+
 ### Adicionado (Fase 9.1 — CI/CD & Auto-Update)
 
 - Workflow GitHub Actions (`.github/workflows/release.yml`) para build & release multiplataforma
