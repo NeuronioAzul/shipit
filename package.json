@@ -24,7 +24,10 @@
     "mec",
     "pdf"
   ],
-  "author": "NeuronioAzul",
+  "author": {
+    "name": "Neurônio Azul",
+    "email": "mauro.rocha.t@gmail.com"
+  },
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/NeuronioAzul/shipit/issues"
