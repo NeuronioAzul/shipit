@@ -486,14 +486,31 @@ export function SettingsPage() {
 
         {/* Sobre */}
         <section className="bg-card border border-border rounded-lg p-5">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <i className="fa-solid fa-circle-info text-primary"></i>
-            Sobre
+            Sobre o ShipIt!
           </h2>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p><span className="text-foreground font-medium">ShipIt!</span> — Relatório Mensal de Atividades</p>
-            {version && <p>Versão {version}</p>}
-            <p>Electron + React + TypeScript</p>
+          <div className="text-sm text-muted-foreground space-y-3">
+            <p className="leading-relaxed">
+              O <span className="text-foreground font-medium">ShipIt!</span> foi criado para facilitar a vida de quem precisa
+              entregar relatórios mensais de atividades. Em vez de perder tempo formatando documentos,
+              você registra suas atividades ao longo do mês, anexa evidências e, quando precisar,
+              gera o relatório pronto com um clique. Simples assim.
+            </p>
+            {version && (
+              <p>
+                <span className="text-foreground font-medium">Versão</span> {version}
+              </p>
+            )}
+            <div className="pt-2 border-t border-border/50">
+              <p className="text-foreground font-medium">Mauro Rocha Tavares</p>
+              <a
+                href="mailto:mauro.rocha.t@gmail.com"
+                className="text-primary hover:underline"
+              >
+                mauro.rocha.t@gmail.com
+              </a>
+            </div>
           </div>
         </section>
       </div>
