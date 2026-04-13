@@ -8,6 +8,7 @@ export interface ElectronAPI {
 
   // Activities
   getActivities: (monthReference: string) => Promise<ActivityData[]>
+  searchActivities: (query: string) => Promise<ActivityData[]>
   getActivity: (id: string) => Promise<ActivityData | null>
   saveActivity: (data: Partial<ActivityData>) => Promise<ActivityData>
   deleteActivity: (id: string) => Promise<boolean>

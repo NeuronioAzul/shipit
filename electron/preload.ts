@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Activities
   getActivities: (monthReference: string) =>
     ipcRenderer.invoke('db:getActivities', monthReference),
+  searchActivities: (query: string) =>
+    ipcRenderer.invoke('db:searchActivities', query),
   getActivity: (id: string) => ipcRenderer.invoke('db:getActivity', id),
   saveActivity: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('db:saveActivity', data),

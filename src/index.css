@@ -65,6 +65,7 @@
   /* Titlebar */
   --titlebar: rgb(238, 243, 249);
   --titlebar-foreground: rgb(16, 35, 63);
+  --titlebar-search: rgb(255, 255, 255);
 
   /* ActivityBar */
   --activitybar: rgb(247, 249, 252);
@@ -163,6 +164,7 @@
   /* Titlebar */
   --titlebar: rgb(8, 20, 39);
   --titlebar-foreground: rgb(157, 176, 200);
+  --titlebar-search: rgb(18, 36, 63);
 
   /* ActivityBar */
   --activitybar: rgb(13, 29, 53);
@@ -243,6 +245,7 @@
 
   --color-titlebar: var(--titlebar);
   --color-titlebar-foreground: var(--titlebar-foreground);
+  --color-titlebar-search: var(--titlebar-search);
 
   --color-activitybar: var(--activitybar);
   --color-activitybar-foreground: var(--activitybar-foreground);
