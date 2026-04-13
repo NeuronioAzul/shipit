@@ -253,10 +253,10 @@ Abaixo estão as imagens dos ícones do System Tray em diferentes variações de
 
 | Imagem | Descrição |
 |-------|-----------|
-| images\tray\tray-icon-foguete-dark-mode-default-2-escuro.png | Ícone do foguete do ShipIt! em modo escuro padrão 2 |
-| images\tray\tray-icon-foguete-dark-mode-red-2-escuro.png | Ícone do foguete do ShipIt! em modo escuro vermelho 2 |
-| images\tray\tray-icon-foguete-dark-mode-yellow-2-escuro.png | Ícone do foguete do ShipIt! em modo escuro amarelo 2 |
-| images\tray\tray-icon-foguete-dark-mode-green-2-escuro.png | Ícone do foguete do ShipIt! em modo escuro verde 2 |
+| images\tray\tray-icon-foguete-black.png | Ícone do foguete do ShipIt! em modo escuro padrão 2 |
+| images\tray\tray-icon-foguete-red.png | Ícone do foguete do ShipIt! em modo escuro vermelho 2 |
+| images\tray\tray-icon-foguete-yellow.png | Ícone do foguete do ShipIt! em modo escuro amarelo 2 |
+| images\tray\tray-icon-foguete-green.png | Ícone do foguete do ShipIt! em modo escuro verde 2 |
 
 As variações de cor para alertas no System Tray (vermelho para alerta está atrasado, amarelo para atenção faltam 5 dias para o fim do mês, verde para sucesso tudo tranquilo nada atrasado) permitem que o usuário identifique rapidamente o status das atividades e os alertas relacionados ao preenchimento do relatório mensal, mesmo sem abrir a interface do aplicativo.
 

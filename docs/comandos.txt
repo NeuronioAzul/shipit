@@ -25,3 +25,25 @@ Phase 11.5 — Animations and Transitions:
 
 
 npx tsc -p tsconfig.electron.json --noEmit 2>&1
+
+
+# observa o actions
+gh run watch 
+
+# abre a action na web
+gh run view 24299234419 --web
+
+# criar uma pr
+gh pr create --base main --head dev --title "fix(ci): macos-13 retired + Node.js 24 opt-in" --body "- Runner ``macos-13`` não está mais disponível — alterado para ``macos-latest```n- Adicionado ``FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`` para eliminar warnings de deprecação"
+
+# merge do pr
+gh pr merge 4 --merge --delete-branch=false
+
+# Now delete the old tag and create a new one on the updated main:
+git push origin --delete v1.2.1-beta.1 ; git tag -d v1.2.1-beta.1
+
+git checkout main ; git pull origin main
+
+git tag v1.2.1-beta.1 ; git push origin v1.2.1-beta.1
+
+gh run list --limit 3

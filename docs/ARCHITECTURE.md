@@ -1,4 +1,4 @@
-# Arquitetura do ShipIt!
+# Arquitetura do ShipIt
 
 > Documento técnico detalhando a arquitetura, decisões de design e fluxos internos do aplicativo.
 
@@ -8,33 +8,33 @@
 
 O ShipIt! segue a arquitetura padrão do Electron com separação estrita entre **processo principal** (main) e **processo de renderização** (renderer), comunicando-se exclusivamente via IPC.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Electron Shell                         │
-│                                                             │
-│  ┌──────────────────┐  contextBridge  ┌──────────────────┐  │
-│  │   Main Process   │◄──────────────►│    Renderer       │  │
-│  │   (Node.js)      │   IPC invoke/  │    (React SPA)    │  │
-│  │                   │   handle       │                   │  │
-│  │  ├─ main.ts      │                │  ├─ App.tsx       │  │
-│  │  ├─ database.ts  │                │  ├─ pages/        │  │
-│  │  ├─ report-gen.  │                │  ├─ components/   │  │
-│  │  └─ entities/    │                │  ├─ contexts/     │  │
-│  │                   │                │  └─ services/     │  │
-│  └──────────────────┘                └──────────────────┘  │
-│           │                                    │            │
-│           ▼                                    ▼            │
-│     ┌──────────┐                     ┌──────────────┐      │
-│     │  SQLite  │                     │  localStorage │      │
-│     │ shipit.db│                     │  (theme, etc) │      │
-│     └──────────┘                     └──────────────┘      │
-│           │                                                 │
-│           ▼                                                 │
-│     ┌──────────────┐                                       │
-│     │ settings.json│                                       │
-│     │ (userData)   │                                       │
-│     └──────────────┘                                       │
-└─────────────────────────────────────────────────────────────┘
+```text
+┌──────────────────────────────────────────────────────────────┐
+│                      Electron Shell                          │
+│                                                              │
+│  ┌──────────────────┐  contextBridge  ┌───────────────────┐  │
+│  │   Main Process   │◄───────────────►│    Renderer       │  │
+│  │   (Node.js)      │   IPC invoke/   │    (React SPA)    │  │
+│  │                  │   handle        │                   │  │
+│  │  ├─ main.ts      │                 │  ├─ App.tsx       │  │
+│  │  ├─ database.ts  │                 │  ├─ pages/        │  │
+│  │  ├─ report-gen.  │                 │  ├─ components/   │  │
+│  │  └─ entities/    │                 │  ├─ contexts/     │  │
+│  │                  │                 │  └─ services/     │  │
+│  └──────────────────┘                 └───────────────────┘  │
+│           │                                     │            │
+│           ▼                                     ▼            │
+│     ┌──────────┐                        ┌───────────────┐    │
+│     │  SQLite  │                        │  localStorage │    │
+│     │ shipit.db│                        │  (theme, etc) │    │
+│     └──────────┘                        └───────────────┘    │
+│           │                                                  │
+│           ▼                                                  │
+│    ┌──────────────┐                                          │
+│    │ settings.json│                                          │
+│    │ (userData)   │                                          │
+│    └──────────────┘                                          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -52,14 +52,14 @@ Responsável por:
 
 #### Prefixos IPC
 
-| Prefixo | Escopo | Exemplos |
-|---------|--------|----------|
-| `db:`   | Banco de dados (CRUD) | `db:getUserProfile`, `db:saveActivity`, `db:getReports` |
+| Prefixo | Escopo                 | Exemplos                                                   |
+|---------|------------------------|------------------------------------------------------------|
+| `db:`   | Banco de dados (CRUD)  | `db:getUserProfile`, `db:saveActivity`, `db:getReports`    |
 | `app:`  | Funcionalidades do app | `app:getVersion`, `app:generateReport`, `app:selectImages` |
 
 #### Handlers registrados
 
-```
+```text
 db:getUserProfile          db:saveUserProfile
 db:getActivities           db:getActivity
 db:saveActivity            db:deleteActivity
@@ -105,7 +105,7 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 ### `entities/` — Modelo de Dados
 
 | Entidade | Tabela | PK | Descrição |
-|----------|--------|-----|-----------|
+| ---------- | -------- | ----- | ----------- |
 | `UserProfile` | `user_profile` | Auto-increment | Perfil do usuário (cargo, contrato, etc.) |
 | `Alert` | `alerts` | Auto-increment | Configuração de alertas (1:1 com UserProfile) |
 | `Activity` | `activities` | UUID v7 | Atividade registrada com período e status |
@@ -114,6 +114,7 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 | `ActivityReport` | `activities_report` | UUID v7 | Junction table: atividade ↔ relatório |
 
 **Relacionamentos**:
+
 - `UserProfile` 1:1 `Alert` (cascade, eager)
 - `Activity` 1:N `Evidence` (cascade)
 - `Report` 1:N `ActivityReport` (cascade)
@@ -125,7 +126,7 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 
 ### Roteamento
 
-```
+```text
 /                          → HomePage (Dashboard ou EmptyState)
 /profile                   → ProfilePage
 /settings                  → SettingsPage
@@ -140,7 +141,7 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outl
 ### Componentes Principais
 
 | Componente | Responsabilidade |
-|------------|-----------------|
+| ------------ | ----------------- |
 | `AppLayout` | Layout wrapper com Header |
 | `Header` | Barra superior draggable, ícone do usuário (→ perfil), engrenagem (→ configurações) |
 | `EmptyState` | Tela inicial quando não há perfil cadastrado |
@@ -149,19 +150,19 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outl
 ### Contextos
 
 | Contexto | Função |
-|----------|--------|
+| ---------- | -------- |
 | `ThemeContext` | Gerencia dark/light mode, persiste em `localStorage` |
 
 ### Serviços
 
 | Serviço | Função |
-|---------|--------|
+| --------- | ------- |
 | `localDb.ts` | Fallback com `localStorage` quando `window.electronAPI` não está disponível (dev no browser) |
 
 ### Validação
 
 | Módulo | Função |
-|--------|--------|
+| -------- | -------- |
 | `validation.ts` | Valida campos obrigatórios do perfil e das atividades antes da geração do relatório |
 
 ---
@@ -172,7 +173,7 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outl
 
 Serve imagens de evidência armazenadas em `{userData}/evidences/`.
 
-```
+```text
 shipit-evidence://host?path=C:\Users\...\evidences\abc.png
 ```
 
@@ -182,7 +183,7 @@ shipit-evidence://host?path=C:\Users\...\evidences\abc.png
 
 Serve arquivos de som da pasta `assets/sounds/`.
 
-```
+```text
 shipit-sfx://host?file=alert-sound-01.mp3
 ```
 
@@ -202,6 +203,35 @@ Banco principal para todos os dados estruturados. Caminho: `{userData}/shipit.db
 - Entidades com decorators (`@Entity`, `@Column`, `@OneToMany`, etc.)
 - UUID v7 como primary key (exceto UserProfile que usa auto-increment)
 
+### Auto-Update
+
+O `electron-updater` é integrado ao `main.ts` e executa apenas em builds empacotados:
+
+```text
+app.whenReady()
+  └── app.isPackaged?
+        ├── Sim → autoUpdater.checkForUpdatesAndNotify()
+        │         ├── GET latest*.yml do GitHub Releases
+        │         ├── Compara versão remota vs local
+        │         ├── Download automático em background
+        │         └── Notification nativa ao usuário
+        └── Não → skip (modo dev)
+```
+
+Config de publish no `package.json`:
+
+```json
+{
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "NeuronioAzul",
+      "repo": "shipit"
+    }
+  }
+}
+```
+
 ### `settings.json`
 
 Configurações do app (não do perfil). Caminho: `{userData}/settings.json`.
@@ -218,6 +248,7 @@ Merge parcial: `saveSettings({ key: value })` faz merge com as configurações e
 ### `localStorage`
 
 Usado apenas no renderer para:
+
 - `shipit-theme`: preferência de tema (`dark` | `light`)
 - Fallback de dados quando `electronAPI` não está disponível (dev no browser)
 
@@ -225,19 +256,19 @@ Usado apenas no renderer para:
 
 ## Fluxo de Geração de Relatório
 
-```
-┌─────────────┐     ┌──────────────┐     ┌───────────────────┐
+```text
+┌──────────────┐     ┌──────────────┐     ┌───────────────────┐
 │  Dashboard   │────►│  Validação   │────►│  Confirmação Mês  │
-│  Botão Gerar │     │  Perfil +    │     │  Dialog            │
+│  Botão Gerar │     │  Perfil +    │     │  Dialog           │
 │              │     │  Atividades  │     │                   │
-└─────────────┘     └──────────────┘     └─────────┬─────────┘
+└──────────────┘     └──────────────┘     └─────────┬─────────┘
                                                     │
                                                     ▼
-┌─────────────┐     ┌──────────────┐     ┌───────────────────┐
-│  Feedback   │◄────│  Salvar no   │◄────│  generateDocx     │
-│  Toast +    │     │  banco       │     │  Report()         │
-│  Histórico  │     │  (Report)    │     │                   │
-└─────────────┘     └──────────────┘     └───────────────────┘
+ ┌─────────────┐     ┌──────────────┐     ┌───────────────────┐
+ │  Feedback   │◄────│  Salvar no   │◄────│  generateDocx     │
+ │  Toast +    │     │  banco       │     │  Report()         │
+ │  Histórico  │     │  (Report)    │     │                   │
+ └─────────────┘     └──────────────┘     └───────────────────┘
 ```
 
 1. Usuário clica "Gerar Relatório" no Dashboard
@@ -257,7 +288,7 @@ Usado apenas no renderer para:
 ### Dois processos TypeScript
 
 | Fonte | tsconfig | Target | Module | Output |
-|-------|----------|--------|--------|--------|
+| ------- | ---------- | -------- | -------- | -------- |
 | `src/` | `tsconfig.json` | ES2020 | ESNext (bundler) | `dist/` (via Vite) |
 | `electron/` | `tsconfig.electron.json` | ES2020 | CommonJS (node10) | `dist-electron/` |
 
@@ -283,7 +314,7 @@ npm run dist
 ## Decisões Técnicas
 
 | Decisão | Motivo |
-|---------|--------|
+| --------- | -------- |
 | SQLite (não PostgreSQL/MySQL) | 100% offline, sem servidor externo, um único arquivo |
 | DOCX via OpenXML (não Puppeteer PDF) | O modelo do MEC é DOCX; manipulação direta garante fidelidade ao template |
 | UUID v7 (não auto-increment) | Ordenação cronológica natural + unicidade global |
@@ -291,3 +322,5 @@ npm run dist
 | `settings.json` separado do SQLite | Configurações do app vs. dados do usuário; evita colisão com `synchronize: true` |
 | Font Awesome via npm | 100% offline; sem CDN ou dependências externas |
 | `contextIsolation: true` | Segurança: renderer não tem acesso ao Node.js |
+| `electron-updater` + GitHub Releases | Auto-update sem servidor próprio; blockmaps para delta updates |
+| CI/CD via GitHub Actions | Build multiplataforma paralelo; testes como gate; sem code signing por agora |

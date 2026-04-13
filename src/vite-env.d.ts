@@ -8,6 +8,7 @@ export interface ElectronAPI {
 
   // Activities
   getActivities: (monthReference: string) => Promise<ActivityData[]>
+  searchActivities: (query: string) => Promise<ActivityData[]>
   getActivity: (id: string) => Promise<ActivityData | null>
   saveActivity: (data: Partial<ActivityData>) => Promise<ActivityData>
   deleteActivity: (id: string) => Promise<boolean>
@@ -55,6 +56,11 @@ export interface ElectronAPI {
   getAlert: () => Promise<AlertData | null>
   saveAlert: (data: Partial<AlertData>) => Promise<AlertData>
 
+  // Auto-update
+  checkForUpdate: () => Promise<{ status: string; error?: string }>
+  installUpdate: () => Promise<void>
+  onUpdateStatus: (callback: (data: UpdateStatusData) => void) => () => void
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => () => void
 
@@ -64,6 +70,12 @@ export interface ElectronAPI {
   windowClose: () => Promise<void>
   windowIsMaximized: () => Promise<boolean>
   onWindowMaximized: (callback: (isMaximized: boolean) => void) => () => void
+}
+
+export interface UpdateStatusData {
+  status: 'checking' | 'available' | 'not-available' | 'downloaded' | 'error' | 'dev'
+  version?: string
+  error?: string
 }
 
 export interface AppSettings {

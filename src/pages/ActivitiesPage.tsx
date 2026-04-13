@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { ActivityData } from '../vite-env'
+import type { ActivityData, ActivityStatus, AttendanceType } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonActivityItem } from '../components/Skeleton'
@@ -157,6 +157,15 @@ export function ActivitiesPage() {
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
+  // Filter state
+  const searchQuery = searchParams.get('search') || ''
+  const [filterText, setFilterText] = useState(searchQuery)
+  const [filterStatus, setFilterStatus] = useState<ActivityStatus | ''>('')
+  const [filterAttendance, setFilterAttendance] = useState<AttendanceType | ''>('')
+  const [filterScope, setFilterScope] = useState('')
+  const [showFilters, setShowFilters] = useState(!!searchQuery)
+  const isSearchMode = !!searchQuery
+
   const storedMonth = sessionStorage.getItem('shipit-selected-month')
   const monthRef = searchParams.get('month') || storedMonth || getCurrentMonthRef()
 
@@ -174,7 +183,9 @@ export function ActivitiesPage() {
     setLoading(true)
     try {
       let data: ActivityData[]
-      if (window.electronAPI) {
+      if (isSearchMode && window.electronAPI) {
+        data = await window.electronAPI.searchActivities(searchQuery)
+      } else if (window.electronAPI) {
         data = await window.electronAPI.getActivities(monthRef)
       } else {
         data = localDb.getActivities(monthRef)
@@ -183,7 +194,7 @@ export function ActivitiesPage() {
     } finally {
       setLoading(false)
     }
-  }, [monthRef])
+  }, [monthRef, isSearchMode, searchQuery])
 
   useEffect(() => {
     loadActivities()
@@ -234,6 +245,35 @@ export function ActivitiesPage() {
     { month: 'long', year: 'numeric' }
   )
 
+  // Client-side filtering
+  const filteredActivities = activities.filter(a => {
+    if (filterText && !isSearchMode) {
+      const lower = filterText.toLowerCase()
+      const match = a.description?.toLowerCase().includes(lower) ||
+        a.project_scope?.toLowerCase().includes(lower) ||
+        a.link_ref?.toLowerCase().includes(lower)
+      if (!match) return false
+    }
+    if (filterStatus && a.status !== filterStatus) return false
+    if (filterAttendance && a.attendance_type !== filterAttendance) return false
+    if (filterScope && !a.project_scope?.toLowerCase().includes(filterScope.toLowerCase())) return false
+    return true
+  })
+
+  const hasActiveFilters = !!filterText || !!filterStatus || !!filterAttendance || !!filterScope
+
+  function clearFilters() {
+    setFilterText('')
+    setFilterStatus('')
+    setFilterAttendance('')
+    setFilterScope('')
+    if (isSearchMode) {
+      const params = new URLSearchParams(searchParams)
+      params.delete('search')
+      setSearchParams(params)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -246,39 +286,150 @@ export function ActivitiesPage() {
           >
             <i className="fa-solid fa-arrow-left text-lg"></i>
           </button>
-          <h1 className="text-2xl font-bold">Atividades</h1>
+          <h1 className="text-2xl font-bold">
+            {isSearchMode ? `Resultados para "${searchQuery}"` : 'Atividades'}
+          </h1>
         </div>
 
-        <button
-          onClick={() => navigate(`/activities/new?month=${monthRef}`)}
-          className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
-            hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
-        >
-          <i className="fa-solid fa-plus"></i>
-          Nova Atividade
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-3 py-2 rounded-lg border transition-colors cursor-pointer text-sm flex items-center gap-1.5 ${
+              showFilters || hasActiveFilters
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
+            }`}
+            title="Filtros"
+          >
+            <i className="fa-solid fa-filter text-xs"></i>
+            Filtros
+            {hasActiveFilters && (
+              <span className="w-2 h-2 rounded-full bg-accent"></span>
+            )}
+          </button>
+          <button
+            onClick={() => navigate(`/activities/new?month=${monthRef}`)}
+            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
+              hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
+          >
+            <i className="fa-solid fa-plus"></i>
+            Nova Atividade
+          </button>
+        </div>
       </div>
 
-      {/* Month selector */}
-      <div className="flex items-center justify-center gap-4 mb-6 select-none">
-        <button
-          onClick={() => changeMonth(-1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          aria-label="Mês anterior"
-        >
-          <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
-        </button>
-        <span className="text-lg font-medium capitalize min-w-48 text-center">
-          {monthName}
-        </span>
-        <button
-          onClick={() => changeMonth(1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          aria-label="Próximo mês"
-        >
-          <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
-        </button>
-      </div>
+      {/* Filter panel */}
+      {showFilters && (
+        <div className="bg-card border border-border rounded-lg p-4 mb-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Texto livre</label>
+              <input
+                type="text"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                placeholder="Buscar..."
+                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as ActivityStatus | '')}
+                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+              >
+                <option value="">Todos</option>
+                <option value="Em andamento">Em andamento</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Atendimento</label>
+              <select
+                value={filterAttendance}
+                onChange={(e) => setFilterAttendance(e.target.value as AttendanceType | '')}
+                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+              >
+                <option value="">Todos</option>
+                <option value="Presencial">Presencial</option>
+                <option value="Remoto">Remoto</option>
+                <option value="Híbrido">Híbrido</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo</label>
+              <input
+                type="text"
+                value={filterScope}
+                onChange={(e) => setFilterScope(e.target.value)}
+                placeholder="Filtrar por escopo..."
+                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+              />
+            </div>
+          </div>
+          {/* Active filter pills */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {filterText && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                  Texto: {filterText}
+                  <button onClick={() => setFilterText('')} className="hover:text-destructive cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
+                </span>
+              )}
+              {filterStatus && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                  Status: {filterStatus}
+                  <button onClick={() => setFilterStatus('')} className="hover:text-destructive cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
+                </span>
+              )}
+              {filterAttendance && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                  Atendimento: {filterAttendance}
+                  <button onClick={() => setFilterAttendance('')} className="hover:text-destructive cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
+                </span>
+              )}
+              {filterScope && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                  Escopo: {filterScope}
+                  <button onClick={() => setFilterScope('')} className="hover:text-destructive cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
+                </span>
+              )}
+              <button
+                onClick={clearFilters}
+                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer underline"
+              >
+                Limpar filtros
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Month selector (hidden in search mode) */}
+      {!isSearchMode && (
+        <div className="flex items-center justify-center gap-4 mb-6 select-none">
+          <button
+            onClick={() => changeMonth(-1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            aria-label="Mês anterior"
+          >
+            <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <span className="text-lg font-medium capitalize min-w-48 text-center">
+            {monthName}
+          </span>
+          <button
+            onClick={() => changeMonth(1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            aria-label="Próximo mês"
+          >
+            <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      )}
 
       {/* Loading skeleton */}
       {loading && (
@@ -290,29 +441,41 @@ export function ActivitiesPage() {
       )}
 
       {/* Empty state */}
-      {!loading && activities.length === 0 && (
+      {!loading && filteredActivities.length === 0 && (
         <div className="text-center py-16">
-          <i className="fa-solid fa-clipboard-list text-5xl text-muted-foreground/30 mb-4"></i>
+          <i className={`fa-solid ${hasActiveFilters ? 'fa-filter-circle-xmark' : 'fa-clipboard-list'} text-5xl text-muted-foreground/30 mb-4`}></i>
           <p className="text-muted-foreground text-lg">
-            Nenhuma atividade registrada neste mês.
+            {hasActiveFilters
+              ? 'Nenhuma atividade corresponde aos filtros.'
+              : 'Nenhuma atividade registrada neste mês.'}
           </p>
-          <button
-            onClick={() => navigate(`/activities/new?month=${monthRef}`)}
-            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg
-              hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-2"
-          >
-            <i className="fa-solid fa-plus"></i>
-            Registrar Atividade
-          </button>
+          {hasActiveFilters ? (
+            <button
+              onClick={clearFilters}
+              className="mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
+            >
+              <i className="fa-solid fa-xmark"></i>
+              Limpar filtros
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(`/activities/new?month=${monthRef}`)}
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg
+                hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-2"
+            >
+              <i className="fa-solid fa-plus"></i>
+              Registrar Atividade
+            </button>
+          )}
         </div>
       )}
 
       {/* Activity list */}
-      {!loading && activities.length > 0 && (
+      {!loading && filteredActivities.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={activities.map(a => a.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={filteredActivities.map(a => a.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
-              {activities.map((activity, idx) => (
+              {filteredActivities.map((activity, idx) => (
                 <SortableActivityItem
                   key={activity.id}
                   activity={activity}

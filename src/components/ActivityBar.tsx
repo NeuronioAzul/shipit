@@ -128,7 +128,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-sidebar">
       <div
-        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
+        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-md w-full mx-4 animate-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -151,10 +151,18 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             <p className="text-muted-foreground text-sm">Relatório Mensal de Atividades</p>
           </div>
         </div>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+          Registre suas atividades ao longo do mês, anexe evidências e gere
+          o relatório pronto com um clique. Simples assim.
+        </p>
         <div className="text-sm text-muted-foreground space-y-1">
-          {version && <p>Versão {version}</p>}
-          <p>Electron + React + TypeScript</p>
-          <p className="pt-2 text-xs">Desenvolvido para gerenciar atividades e gerar relatórios de serviço.</p>
+          {version && <p><span className="text-foreground font-medium">Versão</span> {version}</p>}
+          <div className="pt-2 border-t border-border/50">
+            <p className="text-foreground font-medium">Mauro Rocha Tavares</p>
+            <a href="mailto:mauro.rocha.t@gmail.com" className="text-primary hover:underline text-xs">
+              mauro.rocha.t@gmail.com
+            </a>
+          </div>
         </div>
       </div>
     </div>

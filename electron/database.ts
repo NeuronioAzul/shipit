@@ -445,3 +445,30 @@ export async function countActivities(monthReference: string): Promise<number> {
     where: { month_reference: monthReference },
   })
 }
+
+/** Search activities across all months by query string */
+export async function searchActivities(query: string): Promise<Activity[]> {
+  const db = await getDb()
+  const like = `%${query}%`
+  const activities = await db.getRepository(Activity)
+    .createQueryBuilder('activity')
+    .leftJoinAndSelect('activity.evidences', 'evidence', 'evidence.deleted_at IS NULL')
+    .where('activity.description LIKE :like', { like })
+    .orWhere('activity.project_scope LIKE :like', { like })
+    .orWhere('activity.link_ref LIKE :like', { like })
+    .orWhere('evidence.caption LIKE :like', { like })
+    .orderBy('activity.last_updated', 'DESC')
+    .take(50)
+    .getMany()
+  // Deduplicate (join may produce duplicates)
+  const seen = new Set<string>()
+  const unique: Activity[] = []
+  for (const act of activities) {
+    if (!seen.has(act.id)) {
+      seen.add(act.id)
+      act.evidences = (act.evidences || []).filter(e => !e.deleted_at)
+      unique.push(act)
+    }
+  }
+  return unique
+}

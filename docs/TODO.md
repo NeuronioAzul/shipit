@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 10/04/2026 (v1.2.0)
+> Atualizado em: 13/04/2026 (v1.2.1)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -249,3 +249,23 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
   - [x] Publicação automática no GitHub Releases
 - [x] Ícone macOS atualizado para `.icns`
 - [ ] Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
+
+### Fase 16: Ícone, Instaladores Multi-formato, Busca, Auto-Update UI ✅
+
+- [x] Corrigir ícone Windows: gerar `ShipIt.ico` (multi-size) a partir do PNG 310×310
+- [x] `build.win.icon` aponta para `ShipIt.ico` em vez do PNG
+- [x] Instaladores multi-formato:
+  - [x] Windows: NSIS Setup + Portable + MSI (x64)
+  - [x] macOS: DMG separado para arm64 e x64
+  - [x] Linux: AppImage + deb + rpm
+  - [x] `artifactName` descritivo por target
+- [x] Workflow release: job `create-release` (draft) → 3 build jobs com novos targets
+- [x] Barra de busca na TitleBar (estilo Command Palette) com `Ctrl+K`
+- [x] Backend: `searchActivities(query)` com LIKE em `description`, `project_scope`, `link_ref`, `Evidence.caption`
+- [x] IPC `db:searchActivities` + preload + tipo
+- [x] Filtro avançado na ActivitiesPage (texto, status, atendimento, escopo, pills removíveis)
+- [x] Botão "Verificar atualizações" na SettingsPage com estados visuais
+- [x] IPC `app:checkForUpdate` e `app:installUpdate`
+- [x] Listeners autoUpdater → renderer via `app:updateStatus`
+- [x] Token CSS `--titlebar-search`
+- [x] Documentação atualizada: README (download expandido), CHANGELOG, TODO, DEVELOPMENT

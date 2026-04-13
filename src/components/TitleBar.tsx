@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { SearchBar } from './SearchBar'
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
@@ -32,6 +33,14 @@ export function TitleBar() {
             (e.target as HTMLImageElement).src = './assets/images/icons/favicon-32x32.png'
           }}
         />
+      </div>
+
+      {/* Center: Search Bar */}
+      <div
+        className="flex-1 flex justify-center"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
+        <SearchBar />
       </div>
 
       {/* Right: Window Controls */}

@@ -1,6 +1,6 @@
 {
   "name": "shipit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Automatize a criação do Relatório Mensal de Atividades Desenvolvidas seguindo o padrão institucional do MEC.",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -95,35 +95,56 @@
         "to": "RELATÓRIO DE SERVIÇO - TEMPLATE.docx"
       }
     ],
+    "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        },
+        {
+          "target": "msi",
+          "arch": ["x64"]
         }
       ],
-      "icon": "public/assets/images/icons/ms-icon-310x310.png",
+      "icon": "public/assets/images/icons/ShipIt.ico",
       "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "ShipIt-${version}-Windows-x64-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "ShipIt-${version}-Windows-x64-Portable.${ext}"
+    },
+    "msi": {
+      "artifactName": "ShipIt-${version}-Windows-x64.${ext}"
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
       ],
       "icon": "public/assets/images/icons/apple-icon.icns",
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "artifactName": "ShipIt-${version}-macOS-${arch}.${ext}"
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb",
+        "rpm"
       ],
       "icon": "public/assets/images/icons",
-      "category": "Office"
+      "category": "Office",
+      "artifactName": "ShipIt-${version}-Linux-${arch}.${ext}"
     },
     "asar": true,
     "asarUnpack": [
