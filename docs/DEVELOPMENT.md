@@ -37,6 +37,8 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build |
 | `npm run preview`  | Preview do build do Vite |
 | `npm run dist`     | Build completo + empacotamento com electron-builder |
+| `npm test`         | Executa 55 testes unitários e de integração (Vitest) |
+| `npm run test:e2e` | Testes end-to-end com Playwright |
 
 ---
 
@@ -76,6 +78,10 @@ Os artefatos são gerados na pasta `release/`:
 
 ```
 shipit/
+├── .github/
+│   ├── copilot-instructions.md
+│   └── workflows/
+│       └── release.yml        # CI/CD: build & release multiplataforma
 ├── electron/                  # Processo principal (Electron, CommonJS)
 │   ├── main.ts                # App lifecycle, IPC handlers, System Tray
 │   ├── database.ts            # DataSource, CRUD, queries
@@ -192,6 +198,65 @@ erDiagram
     }
     Activity ||--o{ ActivityReport : referenced_in
 ```
+
+---
+
+## CI/CD — Build & Release Multiplataforma
+
+O projeto usa GitHub Actions para build automatizado e publicação de releases.
+
+### Como funciona
+
+1. Faça suas alterações na branch `dev`
+2. Crie um PR de `dev` → `main` e faça merge
+3. Crie uma tag semver na `main`: `git tag v1.2.1 && git push origin v1.2.1`
+4. O workflow dispara automaticamente e publica no GitHub Releases
+
+### Workflow `.github/workflows/release.yml`
+
+- **Trigger**: push de tag `v*.*.*` (ex: `v1.2.1`, `v1.3.0-beta.1`)
+- **3 jobs paralelos**:
+
+| Job | Runner | Artefato | Formato |
+| --- | ------ | -------- | ------- |
+| `build-windows` | `windows-latest` | `shipit-setup-X.Y.Z.exe` | NSIS installer |
+| `build-macos` | `macos-latest` | `shipit-X.Y.Z.dmg` | Disk image |
+| `build-linux` | `ubuntu-latest` | `shipit-X.Y.Z-x86_64.AppImage` | Executável portátil |
+
+Cada job executa: `npm ci` → `npm test` (gate) → `npm run build` → `electron-builder --publish always`
+
+### Artefatos gerados no GitHub Release
+
+| Arquivo | Descrição |
+| ------- | --------- |
+| `shipit-setup-X.Y.Z.exe` | Instalador Windows |
+| `shipit-X.Y.Z.dmg` | Instalador macOS |
+| `shipit-X.Y.Z-x86_64.AppImage` | Executável Linux |
+| `*.blockmap` | Mapas de blocos para delta updates (só os blocos alterados são baixados) |
+| `latest.yml` | Manifesto auto-update Windows — contém versão, sha512 e URL do .exe |
+| `latest-mac.yml` | Manifesto auto-update macOS |
+| `latest-linux.yml` | Manifesto auto-update Linux |
+
+### Auto-Update (`electron-updater`)
+
+Em builds empacotados (`app.isPackaged`), o app verifica atualizações automaticamente ao iniciar:
+
+1. Consulta o `latest*.yml` correspondente à plataforma no GitHub Releases
+2. Se houver versão mais recente, baixa automaticamente em background
+3. Notifica o usuário via `Notification` nativa ("Atualização disponível" / "Atualização pronta")
+4. Instala ao reiniciar o app — **não força restart**
+
+### Pré-requisitos
+
+- Token `GITHUB_TOKEN` (built-in do Actions, sem configuração)
+- Permissão `contents: write` no workflow
+- Versão no `package.json` deve ser atualizada antes de criar a tag
+
+### Notas
+
+- **Sem code signing**: macOS pede "Abrir mesmo assim" manualmente; Windows pode exibir SmartScreen
+- **Minutes do GitHub Actions**: macOS consome 10x mais minutos. Free tier = 2000 min/mês
+- **Testes como gate**: se os 55 testes falharem, o build não é publicado
 
 ---
 

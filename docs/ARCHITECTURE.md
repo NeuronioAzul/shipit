@@ -202,6 +202,35 @@ Banco principal para todos os dados estruturados. Caminho: `{userData}/shipit.db
 - Entidades com decorators (`@Entity`, `@Column`, `@OneToMany`, etc.)
 - UUID v7 como primary key (exceto UserProfile que usa auto-increment)
 
+### Auto-Update
+
+O `electron-updater` é integrado ao `main.ts` e executa apenas em builds empacotados:
+
+```
+app.whenReady()
+  └── app.isPackaged?
+        ├── Sim → autoUpdater.checkForUpdatesAndNotify()
+        │         ├── GET latest*.yml do GitHub Releases
+        │         ├── Compara versão remota vs local
+        │         ├── Download automático em background
+        │         └── Notification nativa ao usuário
+        └── Não → skip (modo dev)
+```
+
+Config de publish no `package.json`:
+
+```json
+{
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "NeuronioAzul",
+      "repo": "shipit"
+    }
+  }
+}
+```
+
 ### `settings.json`
 
 Configurações do app (não do perfil). Caminho: `{userData}/settings.json`.
@@ -291,3 +320,5 @@ npm run dist
 | `settings.json` separado do SQLite | Configurações do app vs. dados do usuário; evita colisão com `synchronize: true` |
 | Font Awesome via npm | 100% offline; sem CDN ou dependências externas |
 | `contextIsolation: true` | Segurança: renderer não tem acesso ao Node.js |
+| `electron-updater` + GitHub Releases | Auto-update sem servidor próprio; blockmaps para delta updates |
+| CI/CD via GitHub Actions | Build multiplataforma paralelo; testes como gate; sem code signing por agora |
