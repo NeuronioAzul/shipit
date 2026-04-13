@@ -77,7 +77,7 @@ function createTray() {
     'assets',
     'images',
     'tray',
-    'tray-icon-foguete-dark-mode-default-2-escuro.png'
+    'tray-icon-foguete-black.png'
   )
   const icon = nativeImage.createFromPath(trayIconPath)
   const trayIcon = icon.isEmpty() ? nativeImage.createEmpty() : icon.resize({ width: 16, height: 16 })
@@ -595,10 +595,10 @@ async function checkAndFireAlerts(): Promise<void> {
 function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
   if (!tray) return
   const statusMap: Record<string, string> = {
-    default: 'tray-icon-foguete-dark-mode-default-2-escuro.png',
-    green: 'tray-icon-foguete-dark-mode-verde-2-escuro.png',
-    yellow: 'tray-icon-foguete-dark-mode-yellow-2-escuro.png',
-    red: 'tray-icon-foguete-dark-mode-red-2-escuro.png',
+    default: 'tray-icon-foguete-black.png',
+    green: 'tray-icon-foguete-green.png',
+    yellow: 'tray-icon-foguete-yellow.png',
+    red: 'tray-icon-foguete-red.png',
   }
   const iconFile = statusMap[status] || statusMap['default']
   const iconPath = path.join(__dirname, '..', 'public', 'assets', 'images', 'tray', iconFile)
