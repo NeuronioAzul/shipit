@@ -77,6 +77,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAlert: () => ipcRenderer.invoke('db:getAlert'),
   saveAlert: (data: Record<string, unknown>) => ipcRenderer.invoke('db:saveAlert', data),
 
+  // Auto-update
+  checkForUpdate: () => ipcRenderer.invoke('app:checkForUpdate'),
+  installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
+  onUpdateStatus: (callback: (data: { status: string; version?: string; error?: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { status: string; version?: string; error?: string }) => callback(data)
+    ipcRenderer.on('app:updateStatus', handler)
+    return () => { ipcRenderer.removeListener('app:updateStatus', handler) }
+  },
+
   // Navigation (main → renderer)
   onNavigate: (callback: (path: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, path: string) => callback(path)

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
-import type { AppSettings } from '../vite-env'
+import type { AppSettings, UpdateStatusData } from '../vite-env'
 
 export function SettingsPage() {
   const navigate = useNavigate()
@@ -23,6 +23,10 @@ export function SettingsPage() {
   const [alertMessage, setAlertMessage] = useState('Lembrete: Preencha os campos obrigatórios para gerar o relatório mensal!')
   const [alertSoundEnabled, setAlertSoundEnabled] = useState(true)
   const [alertSaved, setAlertSaved] = useState(false)
+
+  // Update state
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatusData>({ status: 'not-available' })
+  const [isElectron] = useState(() => !!window.electronAPI)
 
   useEffect(() => {
     async function load() {
@@ -54,6 +58,7 @@ export function SettingsPage() {
 
     // Listen for sound data from main process
     let cleanupSound: (() => void) | undefined
+    let cleanupUpdate: (() => void) | undefined
     if (window.electronAPI) {
       cleanupSound = window.electronAPI.onPlaySoundData((dataUrl) => {
         if (audioRef.current) {
@@ -63,10 +68,14 @@ export function SettingsPage() {
         audioRef.current = audio
         audio.play().catch(() => {})
       })
+      cleanupUpdate = window.electronAPI.onUpdateStatus((data) => {
+        setUpdateStatus(data)
+      })
     }
 
     return () => {
       cleanupSound?.()
+      cleanupUpdate?.()
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current = null
@@ -133,6 +142,20 @@ export function SettingsPage() {
     })
     setAlertSaved(true)
     setTimeout(() => setAlertSaved(false), 2000)
+  }
+
+  async function handleCheckForUpdate() {
+    if (!window.electronAPI) return
+    setUpdateStatus({ status: 'checking' })
+    const result = await window.electronAPI.checkForUpdate()
+    if (result.status === 'dev') {
+      setUpdateStatus({ status: 'dev' })
+    }
+  }
+
+  async function handleInstallUpdate() {
+    if (!window.electronAPI) return
+    await window.electronAPI.installUpdate()
   }
 
   return (
@@ -404,6 +427,61 @@ export function SettingsPage() {
             <i className="fa-solid fa-pen-to-square"></i>
             Editar Perfil
           </button>
+        </section>
+
+        {/* Atualizações */}
+        <section className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <i className="fa-solid fa-download text-primary"></i>
+            Atualizações
+          </h2>
+          {!isElectron ? (
+            <p className="text-sm text-muted-foreground italic">
+              Disponível apenas na versão instalada.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleCheckForUpdate}
+                  disabled={updateStatus.status === 'checking' || updateStatus.status === 'available'}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <i className={`fa-solid ${updateStatus.status === 'checking' ? 'fa-spinner fa-spin' : 'fa-rotate'}`}></i>
+                  Verificar atualizações
+                </button>
+                {updateStatus.status === 'downloaded' && (
+                  <button
+                    onClick={handleInstallUpdate}
+                    className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
+                  >
+                    <i className="fa-solid fa-arrow-rotate-right"></i>
+                    Reiniciar e atualizar
+                  </button>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {updateStatus.status === 'checking' && (
+                  <span className="flex items-center gap-1"><i className="fa-solid fa-spinner fa-spin text-xs"></i> Verificando...</span>
+                )}
+                {updateStatus.status === 'not-available' && (
+                  <span className="flex items-center gap-1 text-success"><i className="fa-solid fa-check text-xs"></i> Você está na versão mais recente.</span>
+                )}
+                {updateStatus.status === 'available' && (
+                  <span className="flex items-center gap-1"><i className="fa-solid fa-cloud-arrow-down text-xs"></i> Versão {updateStatus.version} disponível — Baixando...</span>
+                )}
+                {updateStatus.status === 'downloaded' && (
+                  <span className="flex items-center gap-1 text-accent"><i className="fa-solid fa-circle-check text-xs"></i> Versão {updateStatus.version} pronta — Reinicie para instalar.</span>
+                )}
+                {updateStatus.status === 'error' && (
+                  <span className="flex items-center gap-1 text-destructive"><i className="fa-solid fa-circle-xmark text-xs"></i> Erro: {updateStatus.error}</span>
+                )}
+                {updateStatus.status === 'dev' && (
+                  <span className="italic">Disponível apenas na versão instalada.</span>
+                )}
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Sobre */}

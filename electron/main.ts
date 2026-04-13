@@ -217,18 +217,32 @@ app.whenReady().then(async () => {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
 
+    autoUpdater.on('checking-for-update', () => {
+      mainWindow?.webContents.send('app:updateStatus', { status: 'checking' })
+    })
+
     autoUpdater.on('update-available', (info) => {
+      mainWindow?.webContents.send('app:updateStatus', { status: 'available', version: info.version })
       new Notification({
         title: 'ShipIt! — Atualização disponível',
         body: `Versão ${info.version} está sendo baixada...`,
       }).show()
     })
 
+    autoUpdater.on('update-not-available', () => {
+      mainWindow?.webContents.send('app:updateStatus', { status: 'not-available' })
+    })
+
     autoUpdater.on('update-downloaded', (info) => {
+      mainWindow?.webContents.send('app:updateStatus', { status: 'downloaded', version: info.version })
       new Notification({
         title: 'ShipIt! — Atualização pronta',
         body: `Versão ${info.version} será instalada ao reiniciar o app.`,
       }).show()
+    })
+
+    autoUpdater.on('error', (err) => {
+      mainWindow?.webContents.send('app:updateStatus', { status: 'error', error: err.message })
     })
 
     autoUpdater.checkForUpdatesAndNotify()
@@ -268,6 +282,11 @@ ipcMain.handle('app:getVersion', () => {
 ipcMain.handle('db:getActivities', async (_event, monthReference: string) => {
   const { getActivities } = await import('./database')
   return getActivities(monthReference)
+})
+
+ipcMain.handle('db:searchActivities', async (_event, query: string) => {
+  const { searchActivities } = await import('./database')
+  return searchActivities(query)
 })
 
 ipcMain.handle('db:getActivity', async (_event, id: string) => {
@@ -673,6 +692,24 @@ function stopSchedulers(): void {
   if (trayIntervalId) { clearInterval(trayIntervalId); trayIntervalId = null }
   stopTrayBlink()
 }
+
+// ──── Window Controls IPC ────
+
+// ──── Auto-Update IPC ────
+
+ipcMain.handle('app:checkForUpdate', async () => {
+  if (!app.isPackaged) return { status: 'dev' }
+  try {
+    await autoUpdater.checkForUpdatesAndNotify()
+    return { status: 'checking' }
+  } catch (err: any) {
+    return { status: 'error', error: err.message }
+  }
+})
+
+ipcMain.handle('app:installUpdate', () => {
+  autoUpdater.quitAndInstall()
+})
 
 // ──── Window Controls IPC ────
 
