@@ -1,6 +1,6 @@
 # Plan: Ícone do App + Release + Instaladores + Busca + Auto-Update UI + Docs
 
-Corrigir o ícone Electron aparecendo no lugar do foguete, gerar instaladores multi-formato com nomes claros por OS/arch, release como draft manual, barra de busca na title bar (estilo VS Code) com filtro avançado, botão de verificar atualização nas Configurações, e atualizar toda a documentação.
+Corrigir o ícone Electron aparecendo no lugar do icone do foguete, gerar instaladores multi-formato com nomes claros por OS/arch, release como draft manual, barra de busca na title bar (estilo VS Code) com filtro avançado, botão de verificar atualização nas Configurações, e atualizar toda a documentação.
 
 ---
 
