@@ -31,14 +31,14 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 
 ### Comandos disponíveis
 
-| Comando            | Descrição |
-|--------------------|-----------|
-| `npm run dev`      | Vite dev server + Electron em paralelo |
-| `npm run build`    | Compila TypeScript + Vite build + Electron build |
-| `npm run preview`  | Preview do build do Vite |
-| `npm run dist`     | Build completo + empacotamento com electron-builder |
+| Comando            | Descrição                                            |
+| ------------------ | ---------------------------------------------------- |
+| `npm run dev`      | Vite dev server + Electron em paralelo               |
+| `npm run build`    | Compila TypeScript + Vite build + Electron build     |
+| `npm run preview`  | Preview do build do Vite                             |
+| `npm run dist`     | Build completo + empacotamento com electron-builder  |
 | `npm test`         | Executa 55 testes unitários e de integração (Vitest) |
-| `npm run test:e2e` | Testes end-to-end com Playwright |
+| `npm run test:e2e` | Testes end-to-end com Playwright                     |
 
 ---
 
@@ -51,32 +51,32 @@ npm run dist
 
 Os artefatos são gerados na pasta `release/`:
 
-| Plataforma | Formato   | Configuração |
-|------------|-----------|-------------|
-| Windows    | `.exe` (NSIS) | x64 |
-| macOS      | `.dmg`   | Universal |
-| Linux      | `.AppImage` | x64 |
+| Plataforma | Formato       | Configuração |
+| ---------- | ------------- | ------------ |
+| Windows    | `.exe` (NSIS) | x64          |
+| macOS      | `.dmg`        | Universal    |
+| Linux      | `.AppImage`   | x64          |
 
 ---
 
 ## Stack Tecnológica
 
-| Camada     | Tecnologia                  | Função |
-|------------|----------------------------|--------|
-| Desktop    | Electron 41 (CommonJS)     | Janela principal, System Tray, IPC, protocolos customizados |
-| UI         | React 19 + React Router 7  | SPA com rotas para Dashboard, Atividades, Perfil, Configurações |
-| Estilização| Tailwind CSS 4             | `@theme inline` com variáveis CSS, dark/light mode |
-| ORM        | TypeORM 0.3 + better-sqlite3 | SQLite local em `userData/shipit.db` |
-| Relatórios | jszip + @xmldom/xmldom + xpath | Geração de DOCX via manipulação OpenXML de template |
-| Build      | Vite 8                     | Bundler do frontend com HMR |
-| Linguagem  | TypeScript 6               | Tipagem estrita em todo o projeto |
-| Ícones     | Font Awesome 7             | Self-hosted via npm, sem CDN |
+| Camada      | Tecnologia                     | Função                                                          |
+| ----------- | ------------------------------ |---------------------------------------------------------------- |
+| Desktop     | Electron 41 (CommonJS)         | Janela principal, System Tray, IPC, protocolos customizados     |
+| UI          | React 19 + React Router 7      | SPA com rotas para Dashboard, Atividades, Perfil, Configurações |
+| Estilização | Tailwind CSS 4                 | `@theme inline` com variáveis CSS, dark/light mode              |
+| ORM         | TypeORM 0.3 + better-sqlite 3  | SQLite local em `userData/shipit.db`                            |
+| Relatórios  | jszip + @xmldom/xmldom + xpath | Geração de DOCX via manipulação OpenXML de template             |
+| Build       | Vite 8                         | Bundler do frontend com HMR                                     |
+| Linguagem   | TypeScript 6                   | Tipagem estrita em todo o projeto                               |
+| Ícones      | Font Awesome 7                 | Self-hosted via npm, sem CDN                                    |
 
 ---
 
 ## Estrutura do Projeto
 
-```
+```text
 shipit/
 ├── .github/
 │   ├── copilot-instructions.md
