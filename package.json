@@ -84,7 +84,8 @@
       "repo": "shipit"
     },
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
@@ -114,8 +115,7 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "public/assets/images/icons/ShipIt.ico",
-      "signAndEditExecutable": false
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
