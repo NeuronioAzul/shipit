@@ -27,7 +27,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, '..', 'build', 'icon.ico'),
+    icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'ShipIt.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
