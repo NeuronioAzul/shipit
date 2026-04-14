@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 13/04/2026 (v1.2.1)
+> Atualizado em: 14/04/2026 (v1.2.1)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -269,3 +269,13 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Listeners autoUpdater → renderer via `app:updateStatus`
 - [x] Token CSS `--titlebar-search`
 - [x] Documentação atualizada: README (download expandido), CHANGELOG, TODO, DEVELOPMENT
+
+### Fase 16.1: Correção de Ícones no App Empacotado ✅
+
+- [x] Corrigir `BrowserWindow.icon`: apontar para `public/assets/images/icons/ShipIt.ico` (existe no asar)
+- [x] Remover `signAndEditExecutable: false` do `package.json` (impedia injeção do ícone no .exe)
+- [x] Regenerar `build/icon.ico` com 9 tamanhos (16–256px, 32bpp RGBA)
+- [x] Sincronizar `public/assets/images/icons/ShipIt.ico` com `build/icon.ico`
+- [x] Atualizar ícones de tray (novas versões em alta qualidade)
+- [x] Atualizar campo `author` em `package.json` para objeto com name + email
+- [x] Validar: .exe mostra ícone correto no File Explorer, taskbar e lista de programas
