@@ -70,6 +70,27 @@ O workflow `.github/workflows/release.yml` é acionado por tags semver (`v*.*.*`
 3. **build-macos**: compila DMGs para arm64 e x64
 4. **build-linux**: compila AppImage, `.deb` e `.rpm`
 
+### Ícones
+
+O app usa dois arquivos `.ico` com papéis distintos:
+
+| Arquivo | Uso | Incluído no asar? |
+|---------|-----|-------------------|
+| `build/icon.ico` | Embutido no `.exe` pelo electron-builder (File Explorer, instalador, Add/Remove Programs) | Não |
+| `public/assets/images/icons/ShipIt.ico` | `BrowserWindow.icon` em runtime (taskbar quando app aberto) | Sim |
+
+Ambos são idênticos (9 tamanhos: 16–256px, 32bpp RGBA). O diretório `build/` é o `buildResources` do electron-builder e **não** é empacotado no asar — por isso o ícone de runtime deve apontar para `public/`.
+
+Outros ícones:
+
+| Arquivo | Uso |
+|---------|-----|
+| `public/assets/images/tray/tray-icon-foguete-*.png` | Ícones do System Tray (black/green/yellow/red) |
+| `public/assets/images/icons/favicon-96x96.png` | Notificações nativas do Electron |
+| `public/assets/images/icons/apple-icon.icns` | Ícone macOS (electron-builder) |
+
+> **Importante**: `signAndEditExecutable` deve ser `true` (padrão) no `package.json` — se `false`, o electron-builder não substitui o ícone do Electron no `.exe`.
+
 ---
 
 ## Stack Tecnológica

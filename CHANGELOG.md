@@ -14,6 +14,15 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Diretório de armazenamento de dados customizável (opcional)
 - Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
 
+### Corrigido (Fase 16.1 — Correção de Ícones)
+
+- **BrowserWindow icon**: caminho alterado de `build/icon.ico` → `public/assets/images/icons/ShipIt.ico` (o diretório `build/` não é incluído no asar empacotado, causava fallback para ícone do Electron)
+- **`signAndEditExecutable`**: removida flag `false` que impedia o electron-builder de injetar o ícone customizado no `.exe`
+- **`build/icon.ico`**: regenerado com 9 tamanhos (16–256px, 32bpp RGBA) para uso pelo electron-builder no `.exe` e instalador
+- **`public/assets/images/icons/ShipIt.ico`**: mesmo ícone multi-size, disponível dentro do asar para uso em runtime (BrowserWindow, notificações)
+- **Ícones de tray**: atualizados com novas versões em alta qualidade (black, green, yellow, red, orange)
+- **`package.json` author**: atualizado para objeto com `name` + `email` (necessário para campo maintainer do `.deb`)
+
 ### Adicionado (Fase 16 — Ícone, Instaladores, Busca, Auto-Update UI)
 
 - **Ícone corrigido**: gerado `ShipIt.ico` (multi-size 256px+) a partir do PNG 310×310; `build.win.icon` aponta para `.ico`
