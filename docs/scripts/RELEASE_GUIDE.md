@@ -37,14 +37,14 @@ gh auth refresh -s repo,write:packages
 
 ### Copilot CLI (opcional)
 
-O script pode usar `gh copilot` para gerar mensagens de commit e entradas de CHANGELOG automaticamente. Se não estiver instalado, o script faz fallback para entrada manual.
+O script pode usar `gh copilot` para gerar mensagens de commit e entradas de CHANGELOG automaticamente. O Copilot CLI já vem integrado no `gh` CLI 2.x — não precisa instalar extensão. Se não estiver disponível, o script faz fallback para entrada manual.
 
 ```bash
-# Instalar extensão Copilot CLI
-gh extension install github/gh-copilot
+# Verificar se está disponível (já vem built-in no gh 2.x)
+gh copilot -- --version
 
-# Testar
-gh copilot suggest -t shell "list files"
+# Testar com um prompt simples
+gh copilot -p "Say hello" -s
 ```
 
 ---

@@ -39,6 +39,7 @@ gh auth refresh
 ### `gh auth token` retorna vazio
 
 O token pode estar armazenado no credential manager do sistema. Tente:
+
 ```bash
 gh auth status  # mostra se está autenticado
 gh auth login   # re-autentica se necessário
@@ -51,11 +52,13 @@ gh auth login   # re-autentica se necessário
 ### `not on branch dev`
 
 O script espera que você esteja na branch `dev`. Para trocar:
+
 ```bash
 git checkout dev
 ```
 
 Se houver mudanças não commitadas:
+
 ```bash
 git stash
 git checkout dev
@@ -94,6 +97,7 @@ git push origin vX.Y.Z
 ### `fatal: tag 'vX.Y.Z' already exists`
 
 O script detecta tags existentes e pula a criação. Se precisar forçar:
+
 ```bash
 git tag -d vX.Y.Z
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
@@ -165,6 +169,7 @@ gh run view <RUN_ID> --log
 ```
 
 Possíveis causas:
+
 - Tag não segue o padrão `v*.*.*` (ex: `v1.3` sem patch)
 - Workflow desabilitado no repositório
 - Erro de sintaxe no `.github/workflows/release.yml`
@@ -237,6 +242,7 @@ python docs/scripts/release.py --version X.Y.Z
 ```
 
 Ele detecta:
+
 - PR existente → reutiliza
 - PR já mergeado → pula merge
 - Tag existente → pula criação
@@ -282,6 +288,33 @@ gh release list --limit 5
 # Status do CI
 gh run list --workflow=release.yml --limit 3
 ```
+
+---
+
+## Copilot CLI
+
+### `"copilot" matches the name of a built-in command or alias`
+
+O Copilot CLI agora é built-in no `gh` CLI 2.x. Não use `gh extension install`:
+
+```bash
+# ERRADO (não é mais extensão)
+gh extension install github/gh-copilot
+
+# CORRETO (já vem built-in)
+gh copilot -- --version
+gh copilot -p "test" -s
+```
+
+Se tiver a extensão antiga instalada, remova-a:
+
+```bash
+gh extension remove github/gh-copilot
+```
+
+### Copilot não gera resposta útil
+
+O script usa `gh copilot -p "..." -s --no-color` em modo não-interativo. Se as respostas não forem úteis, use `--skip-changelog` e `--skip-commit` para entrada manual.
 
 ---
 
