@@ -43,6 +43,7 @@ POLL_INTERVAL_SECONDS = 15
 # Output colorido (ANSI)
 # ================================================================================================
 
+
 class Colors:
     RED = "\033[0;31m"
     GREEN = "\033[0;32m"
@@ -106,6 +107,7 @@ def print_dry_run(text: str) -> None:
 # ================================================================================================
 # Utilitários
 # ================================================================================================
+
 
 def run_cmd(
     args: list[str],
@@ -226,6 +228,7 @@ def copilot_prompt(prompt: str, allow_tools: list[str] | None = None) -> str | N
 # Step 1: Validação de ambiente
 # ================================================================================================
 
+
 def check_environment() -> bool:
     """Verifica pré-requisitos: git, gh CLI, autenticação, branch."""
     print_header("Step 1/11 — Validação de Ambiente")
@@ -262,19 +265,32 @@ def check_environment() -> bool:
         print_success("gh autenticado")
         # Verificar escopos
         if "repo" not in auth_output.lower():
-            print_warning("Escopo 'repo' pode não estar presente. Verifique com: gh auth status")
+            print_warning(
+                "Escopo 'repo' pode não estar presente. Verifique com: gh auth status"
+            )
 
-    # gh copilot (opcional)
+    # gh copilot (opcional — built-in no gh CLI 2.x)
     print_step("Verificando gh copilot...")
     if copilot_available():
-        print_success("gh copilot disponível (será usado para gerar commit messages e CHANGELOG)")
+        print_success(
+            "gh copilot disponível (será usado para gerar commit messages e CHANGELOG)"
+        )
     else:
-        print_warning("gh copilot não disponível. Commit messages e CHANGELOG serão manuais.")
-        print_info("Instale com: gh extension install github/gh-copilot")
+        print_warning(
+            "gh copilot não disponível. Commit messages e CHANGELOG serão manuais."
+        )
+        print_info(
+            "Requer gh CLI 2.x com Copilot. Verifique com: gh copilot -- --version"
+        )
+        print_info(
+            "Consulte o arquivo de troubleshooting: docs/scripts/RELEASE_TROUBLESHOOTING.md"
+        )
 
     # Rate limit
     print_step("Verificando rate limit da API GitHub...")
-    result = run_cmd(["gh", "api", "rate_limit", "--jq", ".rate.remaining"], check=False)
+    result = run_cmd(
+        ["gh", "api", "rate_limit", "--jq", ".rate.remaining"], check=False
+    )
     if result.returncode == 0:
         remaining = result.stdout.strip()
         print_info(f"Rate limit restante: {remaining} requisições")
@@ -300,6 +316,7 @@ def check_environment() -> bool:
 # ================================================================================================
 # Step 2-3: Detectar mudanças e commit
 # ================================================================================================
+
 
 def has_uncommitted_changes() -> bool:
     """Verifica se há mudanças não commitadas."""
@@ -331,8 +348,13 @@ def do_commit(dry_run: bool) -> None:
     commit_msg = None
     if copilot_available():
         print_step("Gerando mensagem de commit via gh copilot...")
-        diff_stat = run_cmd(["git", "diff", "--cached", "--stat"], check=False).stdout.strip()
-        diff_short = run_cmd(["git", "diff", "--cached", "--no-ext-diff", "--no-color", "--stat"], check=False).stdout.strip()
+        diff_stat = run_cmd(
+            ["git", "diff", "--cached", "--stat"], check=False
+        ).stdout.strip()
+        diff_short = run_cmd(
+            ["git", "diff", "--cached", "--no-ext-diff", "--no-color", "--stat"],
+            check=False,
+        ).stdout.strip()
         prompt = (
             "Generate a concise git commit message in conventional commits format "
             "(feat/fix/chore/docs/refactor prefix) for the following staged changes. "
@@ -374,6 +396,7 @@ def do_commit(dry_run: bool) -> None:
 # Step 4: Atualizar CHANGELOG.md com IA
 # ================================================================================================
 
+
 def update_changelog(version: str, dry_run: bool) -> None:
     """Atualiza CHANGELOG.md com entrada para a nova versão."""
     print_header("Step 4/11 — Atualizar CHANGELOG.md")
@@ -392,8 +415,12 @@ def update_changelog(version: str, dry_run: bool) -> None:
     last_tag = result.stdout.strip() if result.returncode == 0 else ""
 
     diff_range = f"{last_tag}..HEAD" if last_tag else "HEAD~20..HEAD"
-    diff_result = run_cmd(["git", "log", diff_range, "--oneline", "--no-merges"], check=False)
-    commits = diff_result.stdout.strip() if diff_result.returncode == 0 else "(sem commits)"
+    diff_result = run_cmd(
+        ["git", "log", diff_range, "--oneline", "--no-merges"], check=False
+    )
+    commits = (
+        diff_result.stdout.strip() if diff_result.returncode == 0 else "(sem commits)"
+    )
 
     # Tentar usar gh copilot para gerar entry
     changelog_entry = None
@@ -417,7 +444,7 @@ def update_changelog(version: str, dry_run: bool) -> None:
             # O conteúdo real começa com "### " (seção Keep a Changelog)
             section_match = re.search(r"^### ", suggested, re.MULTILINE)
             if section_match:
-                suggested = suggested[section_match.start():]
+                suggested = suggested[section_match.start() :]
             suggested = suggested.strip()
             print()
             print_info("Entrada gerada pelo Copilot:")
@@ -446,7 +473,9 @@ def update_changelog(version: str, dry_run: bool) -> None:
                 lines.append(line)
         except (EOFError, KeyboardInterrupt):
             pass
-        changelog_entry = "\n".join(lines) if lines else f"- Atualização para versão {version}"
+        changelog_entry = (
+            "\n".join(lines) if lines else f"- Atualização para versão {version}"
+        )
 
     # Montar nova seção
     new_section = f"\n{section_header}\n\n{changelog_entry}\n"
@@ -460,7 +489,7 @@ def update_changelog(version: str, dry_run: bool) -> None:
     if marker in changelog_content:
         # Encontrar o próximo "## [" após Unreleased para inserir antes dele
         unreleased_idx = changelog_content.index(marker)
-        rest = changelog_content[unreleased_idx + len(marker):]
+        rest = changelog_content[unreleased_idx + len(marker) :]
         next_section_match = re.search(r"\n## \[", rest)
         if next_section_match:
             insert_pos = unreleased_idx + len(marker) + next_section_match.start()
@@ -481,7 +510,7 @@ def update_changelog(version: str, dry_run: bool) -> None:
                 changelog_content[: after_sep + 1]
                 + "\n"
                 + new_section
-                + changelog_content[after_sep + 1:]
+                + changelog_content[after_sep + 1 :]
             )
         else:
             updated = changelog_content + "\n" + new_section
@@ -498,6 +527,7 @@ def update_changelog(version: str, dry_run: bool) -> None:
 # ================================================================================================
 # Step 5: Bump version
 # ================================================================================================
+
 
 def bump_version(version: str, dry_run: bool) -> str:
     """Atualiza a versão no package.json."""
@@ -518,7 +548,9 @@ def bump_version(version: str, dry_run: bool) -> str:
         print()
 
         try:
-            choice = input(f"{_c(Colors.YELLOW, '❯')} Escolha [1-4] (padrão: 1): ").strip()
+            choice = input(
+                f"{_c(Colors.YELLOW, '❯')} Escolha [1-4] (padrão: 1): "
+            ).strip()
         except (EOFError, KeyboardInterrupt):
             print()
             sys.exit(1)
@@ -531,7 +563,9 @@ def bump_version(version: str, dry_run: bool) -> str:
             new_version = suggestions["major"]
         elif choice == "4":
             try:
-                new_version = input(f"{_c(Colors.YELLOW, '❯')} Versão customizada (X.Y.Z): ").strip()
+                new_version = input(
+                    f"{_c(Colors.YELLOW, '❯')} Versão customizada (X.Y.Z): "
+                ).strip()
             except (EOFError, KeyboardInterrupt):
                 print()
                 sys.exit(1)
@@ -557,7 +591,9 @@ def bump_version(version: str, dry_run: bool) -> str:
 
     # Atualizar package.json
     pkg_content = PACKAGE_JSON.read_text(encoding="utf-8")
-    updated = pkg_content.replace(f'"version": "{current}"', f'"version": "{new_version}"', 1)
+    updated = pkg_content.replace(
+        f'"version": "{current}"', f'"version": "{new_version}"', 1
+    )
     PACKAGE_JSON.write_text(updated, encoding="utf-8")
     print_success(f"package.json atualizado: {current} → {new_version}")
 
@@ -572,6 +608,7 @@ def bump_version(version: str, dry_run: bool) -> str:
 # ================================================================================================
 # Step 6: Push dev branch
 # ================================================================================================
+
 
 def push_dev(dry_run: bool) -> None:
     """Envia commits para origin/dev."""
@@ -589,6 +626,7 @@ def push_dev(dry_run: bool) -> None:
 # Step 7: Criar PR (dev → main)
 # ================================================================================================
 
+
 def create_pr(version: str, dry_run: bool) -> int | None:
     """Cria PR de dev → main. Retorna número do PR."""
     print_header("Step 7/11 — Criar PR (dev → main)")
@@ -596,7 +634,19 @@ def create_pr(version: str, dry_run: bool) -> int | None:
     # Verificar se já existe PR aberto
     print_step("Verificando PRs existentes...")
     result = run_cmd(
-        ["gh", "pr", "list", "--base", "main", "--head", "dev", "--state", "open", "--json", "number,title"],
+        [
+            "gh",
+            "pr",
+            "list",
+            "--base",
+            "main",
+            "--head",
+            "dev",
+            "--state",
+            "open",
+            "--json",
+            "number,title",
+        ],
         check=False,
     )
     if result.returncode == 0 and result.stdout.strip() not in ("", "[]"):
@@ -609,7 +659,21 @@ def create_pr(version: str, dry_run: bool) -> int | None:
 
     # Verificar se PR já foi mergeado recentemente
     result = run_cmd(
-        ["gh", "pr", "list", "--base", "main", "--head", "dev", "--state", "merged", "--json", "number,title", "--limit", "1"],
+        [
+            "gh",
+            "pr",
+            "list",
+            "--base",
+            "main",
+            "--head",
+            "dev",
+            "--state",
+            "merged",
+            "--json",
+            "number,title",
+            "--limit",
+            "1",
+        ],
         check=False,
     )
 
@@ -621,13 +685,21 @@ def create_pr(version: str, dry_run: bool) -> int | None:
         return None
 
     print_step(f"Criando PR: {title}")
-    result = run_cmd([
-        "gh", "pr", "create",
-        "--base", "main",
-        "--head", "dev",
-        "--title", title,
-        "--body", body,
-    ])
+    result = run_cmd(
+        [
+            "gh",
+            "pr",
+            "create",
+            "--base",
+            "main",
+            "--head",
+            "dev",
+            "--title",
+            title,
+            "--body",
+            body,
+        ]
+    )
     # Extrair número do PR da URL retornada
     pr_url = result.stdout.strip()
     pr_match = re.search(r"/pull/(\d+)", pr_url)
@@ -643,6 +715,7 @@ def create_pr(version: str, dry_run: bool) -> int | None:
 # ================================================================================================
 # Step 8: Merge PR
 # ================================================================================================
+
 
 def merge_pr(pr_number: int | None, dry_run: bool) -> None:
     """Faz squash merge do PR."""
@@ -674,11 +747,17 @@ def merge_pr(pr_number: int | None, dry_run: bool) -> None:
         print_warning("Merge cancelado pelo usuário.")
         sys.exit(1)
 
-    result = run_cmd([
-        "gh", "pr", "merge", str(pr_number),
-        "--squash",
-        "--delete-branch=false",
-    ], check=False)
+    result = run_cmd(
+        [
+            "gh",
+            "pr",
+            "merge",
+            str(pr_number),
+            "--squash",
+            "--delete-branch=false",
+        ],
+        check=False,
+    )
 
     if result.returncode != 0:
         error_msg = (result.stderr or result.stdout).strip()
@@ -693,6 +772,7 @@ def merge_pr(pr_number: int | None, dry_run: bool) -> None:
 # Step 9: Criar e enviar tag
 # ================================================================================================
 
+
 def create_and_push_tag(version: str, dry_run: bool) -> None:
     """Cria tag e envia para origin. Sincroniza dev com main."""
     print_header("Step 9/11 — Criar e Enviar Tag")
@@ -704,7 +784,9 @@ def create_and_push_tag(version: str, dry_run: bool) -> None:
     if result.stdout.strip():
         print_success(f"Tag {tag_name} já existe localmente. Pulando criação.")
         # Verificar se está no remote
-        result = run_cmd(["git", "ls-remote", "--tags", "origin", tag_name], check=False)
+        result = run_cmd(
+            ["git", "ls-remote", "--tags", "origin", tag_name], check=False
+        )
         if result.stdout.strip():
             print_success(f"Tag {tag_name} já existe no remote.")
             return
@@ -736,7 +818,9 @@ def create_and_push_tag(version: str, dry_run: bool) -> None:
     # Sincronizar dev com main
     print_step("Sincronizando dev com main...")
     run_cmd(["git", "checkout", "dev"])
-    run_cmd(["git", "merge", "main", "-m", f"chore: sync dev with main after {tag_name}"])
+    run_cmd(
+        ["git", "merge", "main", "-m", f"chore: sync dev with main after {tag_name}"]
+    )
     run_cmd(["git", "push", "origin", "dev"])
     print_success("Branch dev sincronizada com main.")
 
@@ -745,6 +829,7 @@ def create_and_push_tag(version: str, dry_run: bool) -> None:
 # Step 10: Aguardar CI/CD draft release
 # ================================================================================================
 
+
 def wait_for_draft_release(version: str, dry_run: bool) -> None:
     """Aguarda CI/CD criar o draft release no GitHub."""
     print_header("Step 10/11 — Aguardar CI/CD Draft Release")
@@ -752,7 +837,9 @@ def wait_for_draft_release(version: str, dry_run: bool) -> None:
     tag_name = f"v{version}"
 
     if dry_run:
-        print_dry_run(f"Aguardaria draft release para {tag_name} (timeout: {TIMEOUT_CI_SECONDS}s)")
+        print_dry_run(
+            f"Aguardaria draft release para {tag_name} (timeout: {TIMEOUT_CI_SECONDS}s)"
+        )
         return
 
     print_step(f"Aguardando CI/CD criar draft release para {tag_name}...")
@@ -769,7 +856,9 @@ def wait_for_draft_release(version: str, dry_run: bool) -> None:
             release_name = data.get("name", tag_name)
             print_success(f"Release encontrada: {release_name}")
             if data.get("isDraft"):
-                print_info("Release está em modo draft (CI/CD ainda pode estar buildando).")
+                print_info(
+                    "Release está em modo draft (CI/CD ainda pode estar buildando)."
+                )
             return
 
         remaining = TIMEOUT_CI_SECONDS - elapsed
@@ -778,7 +867,9 @@ def wait_for_draft_release(version: str, dry_run: bool) -> None:
         elapsed += POLL_INTERVAL_SECONDS
 
     print()
-    print_warning(f"Timeout de {TIMEOUT_CI_SECONDS}s atingido. Release pode ainda não existir.")
+    print_warning(
+        f"Timeout de {TIMEOUT_CI_SECONDS}s atingido. Release pode ainda não existir."
+    )
     print_info(f"Verifique manualmente: gh release view {tag_name}")
     if not confirm("Deseja continuar para a publicação mesmo assim?"):
         sys.exit(1)
@@ -787,6 +878,7 @@ def wait_for_draft_release(version: str, dry_run: bool) -> None:
 # ================================================================================================
 # Step 11: Publicar release
 # ================================================================================================
+
 
 def publish_release(version: str, dry_run: bool) -> None:
     """Publica a release (draft → published)."""
@@ -805,7 +897,9 @@ def publish_release(version: str, dry_run: bool) -> None:
     )
     if result.returncode != 0:
         print_error(f"Release {tag_name} não encontrada.")
-        print_info(f"Crie manualmente: gh release create {tag_name} --draft --generate-notes")
+        print_info(
+            f"Crie manualmente: gh release create {tag_name} --draft --generate-notes"
+        )
         sys.exit(1)
 
     data = json.loads(result.stdout)
@@ -818,19 +912,29 @@ def publish_release(version: str, dry_run: bool) -> None:
 
     if not confirm(f"Publicar release {tag_name}? (draft → published)", "y"):
         print_warning("Publicação cancelada.")
-        print_info(f"Publique manualmente: gh release edit {tag_name} --draft=false --latest")
+        print_info(
+            f"Publique manualmente: gh release edit {tag_name} --draft=false --latest"
+        )
         return
 
-    result = run_cmd([
-        "gh", "release", "edit", tag_name,
-        "--draft=false",
-        "--latest",
-    ], check=False)
+    result = run_cmd(
+        [
+            "gh",
+            "release",
+            "edit",
+            tag_name,
+            "--draft=false",
+            "--latest",
+        ],
+        check=False,
+    )
 
     if result.returncode != 0:
         error_msg = (result.stderr or result.stdout).strip()
         print_error(f"Falha ao publicar: {error_msg}")
-        print_info(f"Tente manualmente: gh release edit {tag_name} --draft=false --latest")
+        print_info(
+            f"Tente manualmente: gh release edit {tag_name} --draft=false --latest"
+        )
         sys.exit(1)
 
     print_success(f"Release {tag_name} publicada com sucesso!")
@@ -842,6 +946,7 @@ def publish_release(version: str, dry_run: bool) -> None:
 # ================================================================================================
 # Main
 # ================================================================================================
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -857,7 +962,8 @@ Exemplos:
         """,
     )
     parser.add_argument(
-        "--version", "-v",
+        "--version",
+        "-v",
         type=str,
         default="",
         help="Versão para release (X.Y.Z). Se omitida, será solicitada interativamente.",
@@ -891,7 +997,9 @@ def main() -> None:
 
     # Step 1: Validação de ambiente
     if not check_environment():
-        print_error("Validação de ambiente falhou. Corrija os erros acima e tente novamente.")
+        print_error(
+            "Validação de ambiente falhou. Corrija os erros acima e tente novamente."
+        )
         sys.exit(1)
 
     # Step 2-3: Commit (condicional)
