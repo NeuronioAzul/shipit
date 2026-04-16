@@ -279,3 +279,16 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Atualizar ícones de tray (novas versões em alta qualidade)
 - [x] Atualizar campo `author` em `package.json` para objeto com name + email
 - [x] Validar: .exe mostra ícone correto no File Explorer, taskbar e lista de programas
+
+### Automação de Release ✅
+
+- [x] Script Python `docs/scripts/release.py` para automação completa do fluxo de release
+  - [x] Validação de ambiente (git, gh CLI, autenticação, branch)
+  - [x] Commit condicional de mudanças pendentes (com fallback manual)
+  - [x] Atualização de CHANGELOG.md via Copilot CLI (com fallback manual)
+  - [x] Bump de versão no package.json (patch/minor/major/custom)
+  - [x] Push, PR (dev → main), squash merge, tag, aguardar CI/CD, publicar release
+  - [x] `--dry-run`, `--skip-changelog`, `--skip-commit`, `--version`, `--help`
+  - [x] Resumibilidade: detecta estado atual e pula passos concluídos
+  - [x] Compatibilidade Windows (subprocess, encoding UTF-8)
+- [x] Documentação: `RELEASE_GUIDE.md`, `RELEASE_TROUBLESHOOTING.md`, `README.md`
