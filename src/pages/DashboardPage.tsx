@@ -187,7 +187,7 @@ export function DashboardPage() {
       {!loading && (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          <div id='summary-cards' className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
             {summaryCards.map((card) => (
               <div
                 key={card.label}

@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
+import { ThemeSelector } from '../components/ThemeSelector'
 import type { AppSettings, UpdateStatusData } from '../vite-env'
 
 export function SettingsPage() {
   const navigate = useNavigate()
-  const { theme, setTheme } = useTheme()
   const [reportsDir, setReportsDir] = useState('')
   const [defaultDir, setDefaultDir] = useState('')
   const [version, setVersion] = useState('')
@@ -179,32 +178,7 @@ export function SettingsPage() {
             <i className="fa-solid fa-palette text-primary"></i>
             Aparência
           </h2>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="theme"
-                value="dark"
-                checked={theme === 'dark'}
-                onChange={() => setTheme('dark')}
-                className="accent-accent"
-              />
-              <i className="fa-solid fa-moon text-muted-foreground"></i>
-              <span className="text-sm">Modo Escuro</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="theme"
-                value="light"
-                checked={theme === 'light'}
-                onChange={() => setTheme('light')}
-                className="accent-accent"
-              />
-              <i className="fa-solid fa-sun text-muted-foreground"></i>
-              <span className="text-sm">Modo Claro</span>
-            </label>
-          </div>
+          <ThemeSelector />
         </section>
 
         {/* Diretório de Relatórios */}

@@ -23,10 +23,10 @@ function ElectronNavigator() {
 
 /** Themed Toaster wrapper */
 function ThemedToaster() {
-  const { theme } = useTheme()
+  const { isDark } = useTheme()
   return (
     <Toaster
-      theme={theme}
+      theme={isDark ? 'dark' : 'light'}
       position="bottom-right"
       toastOptions={{
         className: 'shipit-toast',
