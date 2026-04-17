@@ -299,7 +299,7 @@ export function ActivityDetailPage() {
   const links = parseLinks(activity.link_ref)
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -436,7 +436,7 @@ export function ActivityDetailPage() {
             <>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEvidenceDragEnd}>
                 <SortableContext items={activity.evidences.map(e => e.id)} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {activity.evidences.map((ev) => (
                       <SortableEvidenceCard 
                         key={ev.id} 
