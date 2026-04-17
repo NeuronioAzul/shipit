@@ -49,7 +49,7 @@ function SortableEvidenceCard({
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden group/ev relative">
+    <div ref={setNodeRef} style={style} className="cyber-neon-border bg-card border border-border rounded-lg overflow-hidden group p-2 relative">
       <button
         ref={handleRef}
         {...attributes}
@@ -473,8 +473,8 @@ export function ActivityDetailPage() {
                         e.stopPropagation()
                         handlePaste()
                       }}
-                      className="text-xs px-2 py-1 border border-border rounded
-                        hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                      className="cyber-neon-border text-xs px-2 py-1 border border-border rounded-lg cursor-pointer 
+                      hover:bg-success transition-colors text-foreground hover:text-foreground"
                     >
                       <i className="fa-solid fa-paste mr-1"></i>
                       Colar

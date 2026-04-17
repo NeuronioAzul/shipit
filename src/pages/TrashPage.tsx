@@ -147,7 +147,7 @@ export function TrashPage() {
       </div>
 
       {/* Info banner */}
-      <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+      <div className="bg-card border border-border rounded-lg overflow-hidden p-4 mb-6">
         <div className="flex items-start gap-3">
           <i className="fa-solid fa-circle-info text-primary mt-0.5"></i>
           <div className="text-sm text-muted-foreground">
@@ -186,7 +186,7 @@ export function TrashPage() {
             return (
               <div
                 key={ev.id}
-                className="bg-card border border-border rounded-lg overflow-hidden group"
+                className="bg-card border border-border rounded-lg overflow-hidden group p-2"
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-muted">
@@ -199,7 +199,7 @@ export function TrashPage() {
                     }}
                   />
                   {/* Overlay with days left */}
-                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                  <div className={`cyber-neon-border absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                     isExpiringSoon
                       ? 'bg-destructive text-destructive-foreground'
                       : 'bg-background/80 text-muted-foreground'

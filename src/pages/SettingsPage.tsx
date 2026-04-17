@@ -195,12 +195,12 @@ export function SettingsPage() {
               type="text"
               readOnly
               value={reportsDir}
-              className="flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg truncate"
+              className="cyber-input flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg truncate"
               title={reportsDir}
             />
             <button
               onClick={handleSelectDir}
-              className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+              className="cyber-button px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
             >
               <i className="fa-solid fa-folder-open mr-1"></i>
               Alterar
@@ -236,7 +236,7 @@ export function SettingsPage() {
             <select
               value={selectedSound}
               onChange={(e) => handleSelectSound(e.target.value)}
-              className="flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg"
+              className="cyber-input flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg"
             >
               <option value="">Sem som</option>
               {sounds.map((s) => (
@@ -248,7 +248,7 @@ export function SettingsPage() {
             {selectedSound && (
               <button
                 onClick={() => handlePlaySound(selectedSound)}
-                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+                className="cyber-button px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
                 title="Ouvir som"
                 aria-label="Ouvir som selecionado"
               >
@@ -340,7 +340,7 @@ export function SettingsPage() {
                   type="time"
                   value={alertTime}
                   onChange={(e) => setAlertTime(e.target.value)}
-                  className="px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg"
+                  className="cyber-input px-3 py-2 text-foreground text-sm border border-border rounded-lg"
                 />
               </div>
 
@@ -351,7 +351,7 @@ export function SettingsPage() {
                   value={alertMessage}
                   onChange={(e) => setAlertMessage(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg resize-none"
+                  className="cyber-input w-full px-3 py-2 text-foreground text-sm border border-border rounded-lg resize-none"
                 />
               </div>
 

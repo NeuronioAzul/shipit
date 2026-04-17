@@ -281,10 +281,11 @@ export function ActivitiesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-3 py-2 rounded-lg border transition-colors cursor-pointer text-sm flex items-center gap-1.5 ${
+            className={`px-4 py-2 bg-primary text-primary-foreground rounded-lg
+            hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2 ${
               showFilters || hasActiveFilters
-                ? 'bg-primary/10 border-primary/30 text-primary'
-                : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
+                ? 'bg-primary/20 hover:bg-primary'
+                : ''
             }`}
             title="Filtros"
           >
@@ -308,6 +309,9 @@ export function ActivitiesPage() {
       {/* Filter panel */}
       {showFilters && (
         <div className="bg-card border border-border rounded-lg p-4 mb-4 space-y-3">
+          <div>
+            <h3>Filtros</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Texto livre</label>
@@ -316,7 +320,7 @@ export function ActivitiesPage() {
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
                 placeholder="Buscar..."
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
               />
             </div>
             <div>
@@ -324,7 +328,7 @@ export function ActivitiesPage() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as ActivityStatus | '')}
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
               >
                 <option value="">Todos</option>
                 <option value="Em andamento">Em andamento</option>
@@ -338,7 +342,7 @@ export function ActivitiesPage() {
               <select
                 value={filterAttendance}
                 onChange={(e) => setFilterAttendance(e.target.value as AttendanceType | '')}
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
               >
                 <option value="">Todos</option>
                 <option value="Presencial">Presencial</option>
@@ -353,7 +357,7 @@ export function ActivitiesPage() {
                 value={filterScope}
                 onChange={(e) => setFilterScope(e.target.value)}
                 placeholder="Filtrar por escopo..."
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
               />
             </div>
           </div>
@@ -439,7 +443,7 @@ export function ActivitiesPage() {
           {hasActiveFilters ? (
             <button
               onClick={clearFilters}
-              className="mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="cyber-neon-border mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
             >
               <i className="fa-solid fa-xmark"></i>
               Limpar filtros

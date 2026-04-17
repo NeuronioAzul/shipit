@@ -69,7 +69,7 @@ function SortableEvidenceCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-card border border-border rounded-lg overflow-hidden group"
+      className="cyber-neon-border p-2 bg-card border border-border rounded-lg overflow-hidden group"
     >
       {/* Image preview */}
       <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden relative">

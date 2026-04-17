@@ -6,9 +6,9 @@ function ThemeCard({ theme, isActive, onSelect }: { theme: ThemeMetadata; isActi
     <button
       onClick={onSelect}
       className={`
-        relative flex flex-col gap-2 p-3 rounded-lg border-2 text-left cursor-pointer transition-all
+        cyber-neon-border relative flex flex-col gap-2 p-3 rounded-lg border-2 text-left cursor-pointer transition-all
         ${isActive
-          ? 'border-primary ring-2 ring-primary/30 bg-surface-1'
+          ? 'border-primary border border-3'
           : 'border-border bg-card hover:border-primary/40 hover:bg-surface-hover'
         }
       `}
