@@ -360,7 +360,7 @@ export function ActivitiesPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo: (Squad / Projeto / Aplicação)</label>
               <input
                 type="text"
                 value={filterScope}

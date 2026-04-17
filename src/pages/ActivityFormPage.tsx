@@ -436,7 +436,7 @@ export function ActivityFormPage() {
         {/* Links de Referência */}
         <div>
           <label htmlFor="project_scope" className={labelClass}>
-            Squad / Projeto / Aplicação
+            Escopo: (Squad / Projeto / Aplicação)
           </label>
           <input
             id="project_scope"

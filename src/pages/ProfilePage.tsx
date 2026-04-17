@@ -313,7 +313,7 @@ export function ProfilePage() {
         {/* Squad/Projeto/Aplicação */}
         <div>
           <label htmlFor="project_scope" className={labelClass}>
-            Squad / Projeto / Aplicação <span className="text-destructive">*</span>
+            Escopo: (Squad / Projeto / Aplicação) <span className="text-destructive">*</span>
           </label>
           <input
             id="project_scope"
