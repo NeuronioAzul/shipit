@@ -27,7 +27,7 @@ export function ThemeProvider({
     return defaultTheme
   })
 
-  const transitionTimeout = useRef<ReturnType<typeof setTimeout>>()
+  const transitionTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const isDark = getThemeById(theme).base === 'dark'
 
