@@ -9,6 +9,7 @@ Electron desktop app (v1.2.2) for software engineers to track activities, genera
 | Desktop | Electron 41 (CommonJS) | Context isolation, preload bridge, system tray |
 | UI | React 19 + React Router 7 | SPA with `AppLayout` wrapper, `HashRouter` |
 | Styling | Tailwind CSS 4 | `@theme inline` in `src/index.css`, no config file |
+| Theming | 11 themes (CSS variables) | `src/themes/themes.ts` registry + `themes.css` palettes + `ThemeContext` |
 | ORM | TypeORM 0.3 + better-sqlite3 | SQLite stored in `userData/shipit.db` |
 | Build | Vite 8 | `@vitejs/plugin-react` + `@tailwindcss/vite` |
 | Language | TypeScript 6 | Strict mode everywhere |
@@ -122,11 +123,16 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 
 ### Theming
 
-- CSS variables defined in `src/index.css` under `@theme inline` (Tailwind v4 pattern)
-- Light/dark via `.dark` class on `<html>`, managed by `ThemeContext`
-- Brand colors: primary blue (`rgb(12, 53, 109)`), accent orange (`rgb(232, 110, 33)`)
-- WCAG AA compliant contrast ratios
-- Persist theme choice in `localStorage.shipit-theme`
+- **11 themes** across 3 categories: main (Light, Dark), personality (Colorful, Rose & Violet, Minimalist, Futuristic, Ocean, Sunset), accessibility (High Contrast, High Contrast Dark), bonus (Cyberpunk)
+- `ThemeId` union type: `'light' | 'dark' | 'colorful' | 'rose-violet' | 'minimalist' | 'futuristic' | 'ocean' | 'sunset' | 'high-contrast' | 'high-contrast-dark' | 'cyberpunk'`
+- `ThemeMetadata` interface in `src/themes/themes.ts`: id, label, description, icon, category, base (`'dark'`|`'light'`), preview colors
+- CSS variables (60+ per theme) defined in `src/themes/themes.css` via `[data-theme="id"]` selectors
+- `@theme inline` in `src/index.css` maps CSS variables to Tailwind tokens
+- `ThemeContext` stores full theme ID, computes `isDark` from base property, applies theme class + data attribute to `<html>`
+- Smooth 200ms transitions on theme switch
+- Persist theme choice in `localStorage.shipit-theme` (stores theme ID string, e.g. `"cyberpunk"`)
+- Cyberpunk special effects in `src/themes/cyberpunk-effects.css` (CRT scanlines, neon glow, glitch animations, angular clip-paths)
+- `ThemeSelector` component in SettingsPage with visual grid picker by category
 
 ## File Structure
 
@@ -138,11 +144,12 @@ electron/                   # Main process (CommonJS)
   report-generator.ts       # DOCX generation (JSZip + xmldom)
   entities/                 # TypeORM entity definitions (6 files)
 src/                        # Renderer (ESNext, Vite)
-  pages/                    # 7 route pages
-  components/               # 8 reusable components (AppLayout, Header, TitleBar, SearchBar, EvidenceUpload, ActivityBar, EmptyState, Skeleton)
-  contexts/                 # ThemeContext
+  pages/                    # 8 route pages
+  components/               # 9 reusable components (AppLayout, Header, TitleBar, SearchBar, EvidenceUpload, ActivityBar, EmptyState, Skeleton, ThemeSelector)
+  contexts/                 # ThemeContext (multi-theme support)
   services/                 # localDb.ts (browser fallback)
-  utils/                    # validation.ts
+  themes/                   # Theme system (themes.ts registry, themes.css palettes, cyberpunk-effects.css)
+  utils/                    # validation.ts, statusColors.ts
 e2e/                        # Playwright E2E tests
 docs/                       # Architecture, roadmap, plans, guides
 ```
@@ -157,6 +164,7 @@ docs/                       # Architecture, roadmap, plans, guides
 - **Form pattern**: typed interface for form state, `useEffect` to load, handler to save via IPC
 - **Browser fallback**: when `electronAPI` unavailable, uses `localStorage` via `localDb` service
 - **Tailwind classes**: use CSS variable tokens (`bg-background`, `text-foreground`, `bg-primary`) — not raw color values
+- **Theme files**: theme metadata in `src/themes/themes.ts`, CSS palettes in `src/themes/themes.css`, special effects in `src/themes/cyberpunk-effects.css`
 - **Draggable title bar**: Header uses `WebkitAppRegion: 'drag'`, interactive elements use `'no-drag'`
 - **Language**: UI strings and comments in Portuguese (pt-BR); code identifiers in English
 - **Testing**: unit tests in `*.test.ts` colocated with source, E2E in `e2e/`, use `sql.js` for in-memory DB in tests
@@ -181,4 +189,4 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** (Phases 1–16.1): Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, Navigation & menus, UI/UX polish, CI/CD multiplatform builds, 54+ tests, WCAG AA audit, E2E tests, Icons & installers, Search bar, Auto-update. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments.
+All core phases are **complete** (Phases 1–18): Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, Navigation & menus, UI/UX polish, CI/CD multiplatform builds, 54+ tests, WCAG AA audit, E2E tests, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), Documentation update. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments.

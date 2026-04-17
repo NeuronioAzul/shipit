@@ -7,12 +7,43 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
-## [Unreleased]
+## [1.2.2] — 2026-04-17
 
-### Pendente
+### Adicionado (Fase 17 — Sistema Multi-Tema) 🎨
 
-- Diretório de armazenamento de dados customizável (opcional)
-- Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
+- **11 temas visuais** organizados em 3 categorias:
+  - **Principais**: Claro (modernizado), Escuro (preto profundo com acentos vibrantes)
+  - **Personalidade**: Colorido, Rosa & Violeta, Minimalista, Futurista, Oceano, Pôr do Sol
+  - **Acessibilidade**: Alto Contraste (WCAG AAA claro), Alto Contraste Escuro (WCAG AAA escuro)
+  - **Bônus**: Cyberpunk (neon amarelo/ciano, glitch, scanlines CRT, cantos angulares)
+- **Componente `ThemeSelector`** — seletor visual em grid com cards por categoria, preview de 4 cores, ícone e descrição por tema
+- **Registro de temas** (`src/themes/themes.ts`) — `ThemeMetadata` com id, label, description, icon, category, base (dark/light) e preview colors
+- **60+ variáveis CSS por tema** (`src/themes/themes.css`) — foundation, surfaces, semantic, interactive, navigation, charts, radius, shadows
+- **Temas de alto contraste** com conformidade WCAG AAA (contraste 7:1+)
+- **Efeitos especiais Cyberpunk** (`src/themes/cyberpunk-effects.css`):
+  - Scanlines CRT com overlay
+  - Brilho neon em títulos (text-shadow)
+  - Cantos angulares via `clip-path: polygon()`
+  - Bordas neon com técnica double-polygon
+  - Botões com diagonal clip-path e drop-shadow
+  - Glitch text (aberração cromática) e flickering
+  - Animação card-scan (hover)
+  - Scrollbars neon verdes
+  - Barras Gantt com cantos angulares e glow
+- **Integração no SettingsPage** — seção "Aparência" com `ThemeSelector` no topo das configurações
+
+### Alterado
+
+- **ThemeContext** refatorado de toggle dark/light para suporte multi-tema completo
+  - Estado `theme` armazena `ThemeId` (union de 11 IDs)
+  - `isDark` computado automaticamente a partir da propriedade `base` do tema
+  - Classes CSS removidas e reaplicadas dinamicamente ao trocar tema
+- **Persistência de tema** atualizada: `localStorage.shipit-theme` agora armazena o ID do tema (ex: `"cyberpunk"`, `"ocean"`) em vez de `"dark"`/`"light"`
+- **Transições de tema** suaves com 200ms de duração ao trocar entre temas
+
+---
+
+## [1.2.1] — 2026-04-13
 
 ### Corrigido (Fase 16.1 — Correção de Ícones)
 

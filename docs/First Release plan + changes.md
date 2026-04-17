@@ -11,29 +11,63 @@
                 |_|       
 ```
 
-## Atualização da Documentação
+## Janela do aplicativo
 
-1. Analize o projeto, a pasta `docs/` e Atualize a documentação em `docs/`, incluindo o `./README.md` pois agora ele precisa conter informações e instruções para o usuário final do ShipIt!, e não mais para o time de desenvolvimento, então ele deve conter informações sobre como usar o ShipIt!, como instalar, como configurar, como usar as funcionalidades principais, etc, deixar espações para colocar imagens, gifs, vídeos, etc, para deixar a documentação mais atrativa e fácil de entender, e também para mostrar exemplos de uso do ShipIt! em diferentes cenários.
-2. Analise o changelog e atualize o changelog para refletir as mudanças feitas no projeto
-3. Atualize o `docs/TODO.md` para registrar as tasks concluídas e as próximas tasks a serem feitas, para manter um registro organizado do progresso do projeto e para facilitar a comunicação entre os membros da equipe, e também para mostrar o que já foi feito e o que ainda precisa ser feito, e para manter um planejamento claro e organizado do projeto.
-4. Atualize o `.github/copilot-instructions.md`
-5. Atualize o `docs/ARCHITECTURE.md` para refletir as mudanças feitas na arquitetura do projeto, para mostrar como o projeto está estruturado e organizado, e para facilitar a compreensão do projeto por parte dos novos membros da equipe ou de outros desenvolvedores que possam se interessar pelo projeto, e também para mostrar as decisões de design e arquitetura tomadas durante o desenvolvimento do projeto.
+### fix
+
+- Fix: o campo de busca esta ocupando todo o espaço da menubar, ficando sem espaço para clicar e mover a janela, para resolver isso, o campo de busca deve ter um tamanho máximo definido, para que ele não ocupe todo o espaço da menubar, e para que os usuários possam clicar e arrastar a janela normalmente, sem precisar clicar no campo de busca, e também para melhorar a experiência do usuário.
+
+### features
+
+- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar onde estava.
+- Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar texto, abrir links no navegador.
+- Adicionar um menu ao lado do logo para acessar as funcionalidades
+  - File
+    - Nova Atividade - ctrl+n
+    - divisor ----
+    - Abrir Pasta dos Relatórios - ctrl+o
+    - Abrir Pasta das Evidências - ctrl+e
+    - divisor ----
+    - Salvar - ctrl+s
+    - divisor ----
+    - Configurações - ctrl+, (vírgula)
+    - divisor ----
+    - Sair - ctrl+q
+  - Edit
+    - Copiar - ctrl+c
+    - Recortar - ctrl+x
+    - Colar - ctrl+v
+    - divisor ----
+    - Buscar - ctrl+f -> define o foco no campo de busca para buscar atividades, projetos, evidências, etc
+  - View
+    - Zoom In - ctrl+plus
+    - Zoom Out - ctrl+minus
+    - Reset Zoom - ctrl+0
+  - Janela
+    - Minimizar - ctrl+m
+    - Maximizar - ctrl+shift+m
+    - Fechar - ctrl+q
+  - Ajuda
+    - Sobre o ShipIt!
+    - Verificar Atualizações
 
 ## Tela Detalhes da Atividade
+
+- Na tela `Detalhes da Atividade` exibir todos os dados sobre a atividade.
 
 - Na tela `Detalhes da Atividade` incluir navegação para a próxima atividade do projeto clicando no link "Next Activity" ou "Próxima Atividade" e o link "Previous Activity" ou "Atividade Anterior", para facilitar a navegação entre as atividades do projeto e permitir que os usuários possam acessar facilmente as atividades relacionadas, e também para melhorar a experiência do usuário, tornando a navegação mais fluida e intuitiva, e também para incentivar os usuários a explorar mais o projeto e conhecer todas as atividades disponíveis.
 
 ## Tela cadastro de Atividades
 
-- Na tela de cadastro de atividades, incluir um campo para cadastrar um texto como evidência, 
+- Na tela de cadastro de atividades, incluir um campo para cadastrar um texto como evidência,
 
 ## Layout
 
 - Melhorar o layout do ShipIt!, mantendo uma consistência visual, que todas as páginas e telas do ShipIt! tenham a mesma largura da tela do dashboard, para criar uma experiência mais coesa e agradável para os usuários, e também para mostrar que o ShipIt! é um projeto bem estruturado e organizado, com um design consistente e profissional.
 
-- Ao clicar nas imagens de evidencias, abrir as imagens em um lightbox com zoom, para que os usuários possam visualizar as evidências em um tamanho maior e com mais detalhes, sem precisar sair da página. Isso pode ser feito usando uma biblioteca de lightbox, como por exemplo o `react-image-lightbox` ou o `lightbox2`, para criar um efeito de zoom e navegação entre as imagens, permitindo que os usuários possam explorar as evidências de forma mais interativa e agradável, e também para melhorar a experiência do usuário, tornando a visualização das evidências mais fácil e agradável.
+- Ao clicar nas imagens de evidências, abrir as imagens em um lightbox com zoom, para que os usuários possam visualizar as evidências em um tamanho maior e com mais detalhes, sem precisar sair da página. Isso pode ser feito usando uma biblioteca de lightbox, como por exemplo o `react-image-lightbox` ou o `lightbox2`, para criar um efeito de zoom e navegação entre as imagens, permitindo que os usuários possam explorar as evidências de forma mais interativa e agradável, e também para melhorar a experiência do usuário, tornando a visualização das evidências mais fácil e agradável.
 
-```text 
+```text
  _____     _   _   
 |  ___|   (_) | | 
 | |_  ___ | | | |_  ___ 
@@ -58,11 +92,6 @@ O script deve incluir as seguintes funcionalidades:
 - Incluir na documentação a instrução que explica que o cicd do GitHub irá criar uma release como rascunho quando uma nova tag for enviada, e fornecer o comando para mudar a release de rascunho para publicação.
 - Crie a documentação e readme para o processo de publicação de uma nova release, incluindo a criação de tags e o uso do script automatizado, troubleshooting para erros comuns e melhores práticas, incluindo instruções para verificações e comandos de teste, também inclua instruções e comandos para testar o GH cli token e autenticação, e também para criar um teste e publicar como draft, para verificar se o script de publicação está funcionando corretamente antes de usá-lo em um ambiente de produção.
 
-
-
-
-## Fazendo 
-
 ## Temas para o 'ShipIt!'
 
 Cores melhoraro tema escuro e claro, e criar outros temas para o ShipIt!, como por exemplo um tema colorido, tons de rosa e roxo feminino, alto contraste, preto e branco, um tema minimalista, um tema futurista, etc, para que os usuários possam escolher o tema que mais combina com eles e com o estilo do projeto deles, e também para deixar o ShipIt! mais atrativo e personalizado.
@@ -71,3 +100,15 @@ Leve em conta que teremos outros Temas para que as pessoas com problemas de vis�
 1. Quero mudar as cores do ShipIt! tanto do tema escuro quanto do tema claro, para deixar o ShipIt! mais moderno, atrativo e agradável de usar, e também para melhorar a experiência do usuário, deixando o ShipIt! mais fácil de usar e mais bonito de se olhar, e também para mostrar que o ShipIt! é um projeto atualizado e moderno, que acompanha as tendências de design atuais.
 
 2. Usando as Skills de temas vamos criar Temas, vamos criar outros temas para o ShipIt!, além do tema escuro e claro, vamos criar outros temas, como por exemplo um tema colorido, um tema minimalista, um tema futurista, etc, para que os usuários possam escolher o tema que mais combina com eles e com o estilo do projeto deles, e também para deixar o ShipIt! mais atrativo e personalizado.
+
+## Atualização da Documentação
+
+1. Analize o projeto, a pasta `docs/` e Atualize a documentação em `docs/`, incluindo o `./README.md` pois agora ele precisa conter informações e instruções para o usuário final do ShipIt!, e não mais para o time de desenvolvimento, então ele deve conter informações sobre como usar o ShipIt!, como instalar, como configurar, como usar as funcionalidades principais, etc, deixar espações para colocar imagens, gifs, vídeos, etc, para deixar a documentação mais atrativa e fácil de entender, e também para mostrar exemplos de uso do ShipIt! em diferentes cenários.
+2. Analise e atualize o `./CHANGELOG.md` para refletir as mudanças feitas no projeto já organizando para a próxima publicação. baseando-se nas mudanças feitas no projeto, desde a ultima tag e release publicada.
+3. Atualize o `docs/TODO.md` para registrar as tasks concluídas e as próximas tasks a serem feitas, para manter um registro organizado do progresso do projeto e para facilitar a comunicação entre os membros da equipe, e também para mostrar o que já foi feito e o que ainda precisa ser feito, e para manter um planejamento claro e organizado do projeto.
+4. Atualize o `.github/copilot-instructions.md`
+5. Atualize o `docs/ARCHITECTURE.md` para refletir as mudanças feitas na arquitetura do projeto, para mostrar como o projeto está estruturado e organizado, e para facilitar a compreensão do projeto por parte dos novos membros da equipe ou de outros desenvolvedores que possam se interessar pelo projeto, e também para mostrar as decisões de design e arquitetura tomadas durante o desenvolvimento do projeto.
+
+-----------------------------------------------------------
+
+## Fazendo

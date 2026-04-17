@@ -130,28 +130,36 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 /                          → HomePage (Dashboard ou EmptyState)
 /profile                   → ProfilePage
 /settings                  → SettingsPage
+/trash                     → TrashPage (lixeira de evidências)
 /activities                → ActivitiesPage (listagem)
 /activities/new            → ActivityFormPage (criar)
 /activities/:id            → ActivityDetailPage (visualizar)
 /activities/:id/edit       → ActivityFormPage (editar)
 ```
 
-Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outlet>`.
+Todas as rotas ficam dentro de `<AppLayout>` que renderiza `<TitleBar>` + `<ActivityBar>` + `<Outlet>`.
+
+Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout` → Route outlet
 
 ### Componentes Principais
 
 | Componente | Responsabilidade |
 | ------------ | ----------------- |
-| `AppLayout` | Layout wrapper com Header |
-| `Header` | Barra superior draggable, ícone do usuário (→ perfil), engrenagem (→ configurações) |
+| `AppLayout` | Layout wrapper com TitleBar + ActivityBar + Outlet |
+| `TitleBar` | Barra superior draggable com controles de janela e SearchBar |
+| `Header` | Header com logo, barra de busca (interno ao TitleBar) |
+| `ActivityBar` | Sidebar lateral com nav links: Dashboard, Atividades, Perfil, Configurações, Lixeira, Sobre |
+| `SearchBar` | Barra de busca estilo Command Palette (`Ctrl+K`) com dropdown de resultados |
 | `EmptyState` | Tela inicial quando não há perfil cadastrado |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
+| `ThemeSelector` | Seletor visual de temas em grid com cards por categoria e preview de cores |
+| `Skeleton` | Componentes de loading placeholder |
 
 ### Contextos
 
 | Contexto | Função |
 | ---------- | -------- |
-| `ThemeContext` | Gerencia dark/light mode, persiste em `localStorage` |
+| `ThemeContext` | Gerencia 11 temas, computa `isDark` a partir da base, persiste em `localStorage.shipit-theme` |
 
 ### Serviços
 
@@ -164,6 +172,47 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outl
 | Módulo | Função |
 | -------- | -------- |
 | `validation.ts` | Valida campos obrigatórios do perfil e das atividades antes da geração do relatório |
+
+### Temas (`src/themes/`)
+
+| Arquivo | Função |
+| -------- | -------- |
+| `themes.ts` | Registro de 11 temas com `ThemeMetadata` (id, label, description, icon, category, base, preview) |
+| `themes.css` | 60+ variáveis CSS por tema via seletores `[data-theme="id"]` |
+| `cyberpunk-effects.css` | Efeitos especiais do tema Cyberpunk (scanlines CRT, neon glow, glitch, clip-path angular) |
+
+---
+
+## Arquitetura Multi-Tema
+
+O sistema de temas usa uma cascata de 3 camadas:
+
+```text
+1. Registro (themes.ts)           → ThemeMetadata[] com 11 temas tipados
+2. Paletas CSS (themes.css)       → [data-theme="id"] define 60+ variáveis CSS
+3. Mapeamento Tailwind (index.css) → @theme inline mapeia variáveis para tokens Tailwind
+```
+
+### Fluxo de troca de tema
+
+```text
+ThemeSelector (click)  →  ThemeContext.setTheme(id)  →  localStorage.shipit-theme = id
+                                                       →  <html data-theme="id" class="dark?"> 
+                                                       →  CSS variables recalculadas
+                                                       →  Tailwind tokens atualizados
+                                                       →  Transição suave (200ms)
+```
+
+### Categorias de temas
+
+| Categoria | Temas | Base |
+| --------- | ----- | ---- |
+| Principais | Claro, Escuro | light, dark |
+| Personalidade | Colorido, Rosa & Violeta, Minimalista, Futurista, Oceano, Pôr do Sol | mixed |
+| Acessibilidade | Alto Contraste, Alto Contraste Escuro | light, dark |
+| Bônus | Cyberpunk | dark |
+
+O `ThemeContext` computa `isDark` automaticamente a partir da propriedade `base` do tema selecionado, aplicando a classe `.dark` quando necessário.
 
 ---
 
@@ -249,7 +298,7 @@ Merge parcial: `saveSettings({ key: value })` faz merge com as configurações e
 
 Usado apenas no renderer para:
 
-- `shipit-theme`: preferência de tema (`dark` | `light`)
+- `shipit-theme`: preferência de tema (ID do tema, ex: `"cyberpunk"`, `"ocean"`, `"dark"`)
 - Fallback de dados quando `electronAPI` não está disponível (dev no browser)
 
 ---
@@ -318,7 +367,10 @@ npm run dist
 | SQLite (não PostgreSQL/MySQL) | 100% offline, sem servidor externo, um único arquivo |
 | DOCX via OpenXML (não Puppeteer PDF) | O modelo do MEC é DOCX; manipulação direta garante fidelidade ao template |
 | UUID v7 (não auto-increment) | Ordenação cronológica natural + unicidade global |
-| Tailwind v4 `@theme inline` | Sem arquivo de config; variáveis CSS permitem dark/light via classe `.dark` |
+| Tailwind v4 `@theme inline` | Sem arquivo de config; variáveis CSS permitem multi-tema via `[data-theme]` |
+| Multi-tema via CSS variables | Zero custo em runtime; integração total com Tailwind v4; 11 temas sem CSS-in-JS |
+| Sistema de categorias de temas | Organização visual no seletor: principais, personalidade, acessibilidade |
+| Temas WCAG AAA de alto contraste | Design inclusivo para usuários com baixa visão (contraste 7:1+) |
 | `settings.json` separado do SQLite | Configurações do app vs. dados do usuário; evita colisão com `synchronize: true` |
 | Font Awesome via npm | 100% offline; sem CDN ou dependências externas |
 | `contextIsolation: true` | Segurança: renderer não tem acesso ao Node.js |

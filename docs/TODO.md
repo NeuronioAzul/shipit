@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 14/04/2026 (v1.2.1)
+> Atualizado em: 17/04/2026 (v1.2.2)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -292,3 +292,36 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
   - [x] Resumibilidade: detecta estado atual e pula passos concluídos
   - [x] Compatibilidade Windows (subprocess, encoding UTF-8)
 - [x] Documentação: `RELEASE_GUIDE.md`, `RELEASE_TROUBLESHOOTING.md`, `README.md`
+
+### Fase 17: Sistema Multi-Tema ✅
+
+- [x] Refatorar arquitetura de temas: `src/themes/themes.ts` (registro), `src/themes/themes.css` (paletas)
+- [x] Projetar 11 paletas de temas (2 principais, 6 personalidade, 2 acessibilidade, 1 bônus)
+  - [x] Claro (modernizado) e Escuro (preto profundo)
+  - [x] Colorido, Rosa & Violeta, Minimalista, Futurista, Oceano, Pôr do Sol
+  - [x] Alto Contraste (WCAG AAA claro) e Alto Contraste Escuro (WCAG AAA escuro)
+  - [x] Cyberpunk (neon amarelo/ciano, efeitos especiais)
+- [x] 60+ variáveis CSS por tema (foundation, surfaces, semantic, navigation, charts, radius, shadows)
+- [x] Componente `ThemeSelector` com grid visual por categoria e preview de cores
+- [x] Refatorar `ThemeContext` de toggle dark/light para multi-tema completo
+- [x] Integração do `ThemeSelector` na SettingsPage (seção "Aparência")
+- [x] Efeitos especiais Cyberpunk (`cyberpunk-effects.css`): scanlines CRT, neon glow, glitch, cantos angulares
+- [x] Transições de tema suaves (200ms)
+- [x] Persistência de tema atualizada: `localStorage.shipit-theme` armazena ID do tema
+
+### Fase 18: Atualização da Documentação ✅
+
+- [x] Reescrever `README.md` como documentação para usuário final (instalação, primeiros passos, funcionalidades, FAQ)
+- [x] Atualizar `CHANGELOG.md` com entrada v1.2.2 (multi-tema)
+- [x] Atualizar `docs/TODO.md` com fases 17 e 18
+- [x] Atualizar `.github/copilot-instructions.md` (versão, stack, temas, file structure)
+- [x] Atualizar `docs/ARCHITECTURE.md` (arquitetura multi-tema, decisões técnicas)
+
+---
+
+## Backlog
+
+- [ ] Diretório de armazenamento de dados customizável (opcional, adiado)
+- [ ] Ajustar ícones de tray para macOS (template images)
+- [ ] Testar auto-launch e paths em cada plataforma (macOS/Linux)
+- [ ] Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)
