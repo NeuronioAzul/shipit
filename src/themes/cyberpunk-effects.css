@@ -1,0 +1,566 @@
+/* =====================================================
+   Cyberpunk Theme Effects
+   Active only when .cyberpunk is on <html>
+   Animations adapted from cyberpunk-2077.css reference
+   ===================================================== */
+
+/* --- Theme timing variables --- */
+.cyberpunk {
+  --glitched-duration: 0.9s;
+  --glitched-long-duration: 3s;
+}
+
+/* --- CRT scanline overlay --- */
+.cyberpunk::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgb(0 0 0 / 0.04) 2px,
+    rgb(0 0 0 / 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ===== Typography: Neon text glow ===== */
+
+.cyberpunk h1 {
+  text-shadow:
+    0 0 10px rgb(248 239 2 / 0.5),
+    0 0 40px rgb(248 239 2 / 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  position: relative;
+  padding-bottom: 14px;
+}
+
+.cyberpunk h2 {
+  text-shadow:
+    0 0 8px rgb(0 255 210 / 0.45),
+    0 0 30px rgb(0 255 210 / 0.12);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.cyberpunk h3 {
+  text-shadow: 0 0 6px rgb(57 255 20 / 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* --- Heading decorative underlines (from cyberpunk-2077.css) --- */
+.cyberpunk h1::before {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 2px;
+  width: 100%;
+  height: 10px;
+  background-color: rgb(248 239 2);
+  clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 0px 10px);
+}
+
+.cyberpunk h2::before {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 2px;
+  width: 100%;
+  height: 10px;
+  background-color: rgb(0 255 210);
+  clip-path: polygon(0px 5px, 35px 5px, 40px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 20px 10px, 15px 6px, 0px 6px);
+}
+
+/* Blinking cursor after headings (from cyberpunk-2077.css) */
+.cyberpunk h1::after,
+.cyberpunk h2::after {
+  content: '_';
+  animation: cyber-hx-blink var(--glitched-duration) linear infinite;
+}
+
+.cyberpunk h3::after {
+  content: '_';
+  animation: cyber-hx-blink var(--glitched-duration) linear infinite reverse;
+  animation-duration: calc(var(--glitched-duration) / 2);
+}
+
+@keyframes cyber-hx-blink {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  51% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ===== Angular shapes (replace rounded corners) ===== */
+
+/* Cards, modals, panels — sharp clip-path corners */
+.cyberpunk main .rounded-lg {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+/* Small rounded elements (buttons, inputs with rounded-md/rounded) */
+.cyberpunk main .rounded-md,
+.cyberpunk main .rounded {
+  border-radius: 0 !important;
+}
+
+/* Badges & pills — from rounded-full to sharp chip */
+.cyberpunk main .rounded-full {
+  border-radius: 2px !important;
+}
+
+/* Modal/popover outside main */
+.cyberpunk .rounded-lg[class*="bg-card"] {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+/* ===== Neon border glow on cards ===== */
+.cyberpunk [class*="bg-card"][class*="border"] {
+  box-shadow:
+    0 0 6px rgb(57 255 20 / 0.12),
+    inset 0 0 6px rgb(57 255 20 / 0.04);
+}
+
+.cyberpunk [class*="bg-card"][class*="border"]:hover {
+  box-shadow:
+    0 0 12px rgb(57 255 20 / 0.25),
+    inset 0 0 8px rgb(57 255 20 / 0.06);
+}
+
+/* ===== Buttons ===== */
+.cyberpunk button,
+.cyberpunk a[class*="bg-primary"],
+.cyberpunk a[class*="bg-accent"] {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.cyberpunk main button:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+}
+
+.cyberpunk button:hover:not(:disabled) {
+  box-shadow:
+    0 0 12px rgb(248 239 2 / 0.25),
+    0 0 25px rgb(248 239 2 / 0.08);
+  transition: box-shadow 0.15s ease;
+}
+
+.cyberpunk button[class*="bg-destructive"]:hover:not(:disabled) {
+  box-shadow:
+    0 0 12px rgb(255 0 60 / 0.35),
+    0 0 25px rgb(255 0 60 / 0.12);
+}
+
+/* ===== Input fields ===== */
+.cyberpunk input,
+.cyberpunk textarea,
+.cyberpunk select {
+  border-radius: 0 !important;
+}
+
+.cyberpunk input:focus,
+.cyberpunk textarea:focus,
+.cyberpunk select:focus {
+  box-shadow:
+    0 0 8px rgb(0 255 210 / 0.3),
+    0 0 20px rgb(0 255 210 / 0.08) !important;
+}
+
+/* ===== Scrollbar ===== */
+.cyberpunk ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background-color: rgb(5 5 12);
+}
+
+.cyberpunk ::-webkit-scrollbar-track {
+  background: rgb(12 12 24);
+}
+
+.cyberpunk ::-webkit-scrollbar-thumb {
+  background: rgb(57 255 20 / 0.6);
+  border: 1px solid rgb(248 239 2 / 0.2);
+}
+
+.cyberpunk ::-webkit-scrollbar-thumb:hover {
+  background: rgb(248 239 2);
+}
+
+.cyberpunk ::-webkit-scrollbar-corner {
+  background: rgb(5 5 12);
+}
+
+/* ===== Sidebar neon accent line ===== */
+.cyberpunk [class*="bg-sidebar"][class*="border"] {
+  border-right-width: 1px;
+  border-image: linear-gradient(
+    to bottom,
+    rgb(248 239 2),
+    rgb(0 255 210),
+    rgb(57 255 20)
+  ) 1;
+}
+
+/* ===== Neon link hover ===== */
+.cyberpunk a:hover {
+  text-shadow: 0 0 6px rgb(0 255 210 / 0.4);
+}
+
+/* ===== Table styling ===== */
+.cyberpunk table {
+  border-collapse: collapse;
+}
+
+.cyberpunk th {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  border-bottom: 2px solid rgb(248 239 2) !important;
+  text-shadow: 0 0 4px rgb(248 239 2 / 0.3);
+}
+
+.cyberpunk td {
+  border-bottom: 1px solid rgb(57 255 20 / 0.2) !important;
+}
+
+.cyberpunk tr:hover td {
+  background-color: rgb(57 255 20 / 0.04);
+}
+
+/* ===== Header & TitleBar neon bottom edge ===== */
+.cyberpunk [class*="bg-titlebar"] {
+  border-bottom: 1px solid rgb(248 239 2 / 0.4);
+  box-shadow: 0 2px 10px rgb(248 239 2 / 0.08);
+}
+
+.cyberpunk [class*="bg-header"] {
+  border-bottom: 1px solid rgb(0 255 210 / 0.3);
+  box-shadow: 0 2px 10px rgb(0 255 210 / 0.06);
+}
+
+/* ===== Glitch animations (from cyberpunk-2077.css) ===== */
+
+/* --- h1 glitch: skew + shift (adapted from h1glitched) --- */
+.cyberpunk h1 {
+  animation:
+    cyber-glitch-text 8s linear infinite,
+    cyber-h1-glitch calc(var(--glitched-duration) * 1.4) linear infinite;
+}
+
+@keyframes cyber-h1-glitch {
+  0%, 10% {
+    transform: skew(-2deg);
+    margin-left: -2px;
+  }
+  11%, 50% {
+    transform: skew(0deg);
+    margin-left: 0;
+  }
+  51%, 59% {
+    transform: skew(1.5deg);
+  }
+  60%, 100% {
+    transform: skew(0deg);
+  }
+}
+
+/* --- h1 underline glitch (adapted from h1beforeglitched) --- */
+.cyberpunk h1::before {
+  animation: cyber-h1-underline-glitch calc(var(--glitched-duration) * 2) linear infinite;
+}
+
+@keyframes cyber-h1-underline-glitch {
+  0%, 50% {
+    clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 0px 10px);
+    transform: skew(0deg);
+  }
+  51%, 59% {
+    clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 40% 5px, calc(40% - 30px) 0px, calc(40% + 30px) 0px, calc(45% - 15px) 5px, 100% 5px, 100% 6px, calc(45% - 14px) 6px, calc(40% + 29px) 1px, calc(40% - 29px) 1px, calc(40% + 1px) 6px, 85px 6px, 80px 10px, 0px 10px);
+    transform: skew(0deg);
+  }
+  60%, 100% {
+    clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 0px 10px);
+    transform: skew(0deg);
+  }
+}
+
+/* --- h2 underline glitch: scaleY flip (from h2beforeglitched) --- */
+.cyberpunk h2::before {
+  animation: cyber-h2-underline-glitch calc(var(--glitched-duration) * 2) linear infinite;
+}
+
+@keyframes cyber-h2-underline-glitch {
+  0%, 10% { transform: scaleY(1); }
+  11%, 50% { transform: scaleY(-1); }
+  51%, 100% { transform: scaleY(1); }
+}
+
+/* --- Text glitch: chromatic aberration (for h1) --- */
+@keyframes cyber-glitch-text {
+  0%, 92%, 95%, 97%, 100% {
+    text-shadow:
+      0 0 10px rgb(248 239 2 / 0.5),
+      0 0 40px rgb(248 239 2 / 0.15);
+  }
+  93% {
+    text-shadow:
+      -2px 0 rgb(0 255 210),
+      2px 0 rgb(255 0 60),
+      0 0 10px rgb(248 239 2 / 0.5);
+  }
+  94% {
+    text-shadow:
+      2px 0 rgb(0 255 210),
+      -2px 0 rgb(255 0 60),
+      0 0 15px rgb(248 239 2 / 0.8);
+  }
+  96% {
+    text-shadow:
+      -1px 0 rgb(255 0 60),
+      1px 0 rgb(0 255 210),
+      0 0 12px rgb(248 239 2 / 0.6);
+  }
+}
+
+/* ===== Button hover animation (from buttonhover) ===== */
+.cyberpunk button:hover:not(:disabled) {
+  animation: cyber-button-hover var(--glitched-duration) linear infinite;
+}
+
+@keyframes cyber-button-hover {
+  0%, 60% { transform: skew(0deg); }
+  61%, 70% { transform: skew(5deg); }
+  71%, 100% { transform: skew(0deg); }
+}
+
+/* ===== Card / container scan line (from scannedh) ===== */
+.cyberpunk [class*="bg-card"][class*="border"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.cyberpunk [class*="bg-card"][class*="border"]::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgb(138 230 110);
+  box-shadow: 0 0 8px 2px rgb(138 230 110);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cyberpunk [class*="bg-card"][class*="border"]:hover::after {
+  opacity: 1;
+  animation: cyber-card-scan var(--glitched-long-duration) linear infinite alternate;
+}
+
+@keyframes cyber-card-scan {
+  0% { top: -2px; }
+  100% { top: calc(100% + 2px); }
+}
+
+/* ===== Horizontal separator glitch (from hr glitched) ===== */
+.cyberpunk hr,
+.cyberpunk [class*="border-b"][class*="border-border"]:not(button):not(th):not(td):not(tr) {
+  position: relative;
+}
+
+.cyberpunk hr {
+  border: none;
+  height: 6px;
+  background: rgb(57 255 20);
+  clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+  animation: cyber-hr-glitch var(--glitched-long-duration) linear infinite;
+}
+
+@keyframes cyber-hr-glitch {
+  0%, 15% {
+    transform: skew(0deg);
+    clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+    margin-left: 0;
+  }
+  16% {
+    transform: skew(20deg);
+    clip-path: polygon(1px 0px, 0px 0px, 0px 0px, 8px 6px, 13px 6px, 22px 3px, 42px 2px, 49px 0px, 100% 0px, 100% 0px, 42px 0px, 35px 2px, 22px 3px, 13px 5px, 9px 5px);
+    margin-left: -10px;
+  }
+  20% {
+    transform: skew(-20deg);
+    margin-left: 10px;
+  }
+  21%, 65% {
+    transform: skew(0deg);
+    clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+    margin-left: 0;
+  }
+  66% {
+    transform: skew(20deg);
+    margin-left: -5px;
+  }
+  70% {
+    transform: skew(40deg);
+    margin-left: 10px;
+  }
+  71%, 100% {
+    transform: skew(0deg);
+    clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+    margin-left: 0;
+  }
+}
+
+/* ===== Summary card top-accent line ===== */
+.cyberpunk main [class*="bg-chart-"] {
+  position: relative;
+}
+
+.cyberpunk main [class*="bg-chart-"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* ===== Drop zone pulse glow ===== */
+.cyberpunk [class*="border-dashed"] {
+  border-style: dashed !important;
+  border-color: rgb(0 255 210 / 0.4) !important;
+  animation: cyber-drop-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cyber-drop-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgb(0 255 210 / 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgb(0 255 210 / 0.25);
+  }
+}
+
+/* ===== Tooltip / Popover ===== */
+.cyberpunk [class*="bg-popover"] {
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 10px rgb(248 239 2 / 0.15),
+    0 4px 20px rgb(0 0 0 / 0.6);
+}
+
+/* ===== Focus ring override — neon glow ===== */
+.cyberpunk *:focus-visible {
+  outline: 1px solid rgb(248 239 2) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 8px rgb(248 239 2 / 0.3);
+}
+
+/* ===== Gantt chart: angular bars ===== */
+.cyberpunk .rounded-sm {
+  border-radius: 0 !important;
+}
+
+/* Gantt activity bars — sharp with neon edge */
+.cyberpunk [class*="bg-chart-"][class*="absolute"] {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
+  border-right: 1px solid rgb(138 230 110 / 0.4);
+}
+
+/* Gantt track background — angular */
+.cyberpunk [class*="bg-muted/30"] {
+  border-radius: 0 !important;
+}
+
+/* ===== Activity bar (sidebar) icon neon pulse ===== */
+.cyberpunk [class*="activitybar-foreground-active"] {
+  text-shadow: 0 0 6px currentColor;
+}
+
+/* ===== Flicker animation for muted-foreground elements ===== */
+.cyberpunk .text-muted-foreground {
+  animation: cyber-flicker 5s linear infinite;
+}
+
+@keyframes cyber-flicker {
+  0%, 8%, 10%, 60%, 62%, 64%, 66%, 100% {
+    opacity: 1;
+  }
+  2% { opacity: 0.8; }
+  4% { opacity: 0.9; }
+  6% { opacity: 0.7; }
+  61% { opacity: 0.6; }
+  63% { opacity: 0.85; }
+  65% { opacity: 0.5; }
+}
+
+/* ===== Border-right neon accent on cards (from cyberpunk-2077 button style) ===== */
+.cyberpunk [class*="bg-card"][class*="border"] {
+  border-right: 2px solid rgb(138 230 110 / 0.5) !important;
+}
+
+/* ===== Badges: angular chip with subtle glow ===== */
+.cyberpunk main .rounded-full {
+  box-shadow: 0 0 4px rgb(248 239 2 / 0.15);
+  border: 1px solid rgb(57 255 20 / 0.2);
+}
+
+/* ===== Image/evidence frames ===== */
+.cyberpunk img[class*="object-"] {
+  border: 2px solid rgb(12 12 24);
+  border-right: 2px solid rgb(138 230 110 / 0.5);
+  clip-path: polygon(
+    0 8px, 8px 0,
+    calc(60% - 8px) 0, 60% 8px,
+    100% 8px, 100% calc(100% - 4px),
+    calc(100% - 6px) calc(100% - 4px),
+    calc(80% - 4px) calc(100% - 4px),
+    calc(80% - 6px) 100%,
+    4px 100%, 0 calc(100% - 4px)
+  );
+}
