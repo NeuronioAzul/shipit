@@ -129,7 +129,7 @@ export function TrashPage() {
           <button
             onClick={() => setConfirmEmpty(true)}
             disabled={emptyingTrash}
-            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {emptyingTrash ? (
               <>
@@ -238,7 +238,7 @@ export function TrashPage() {
                     <button
                       onClick={() => setConfirmDelete(ev.id)}
                       disabled={restoring === ev.id || deleting === ev.id}
-                      className="px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="cyber-neon-border px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Excluir permanentemente"
                       aria-label="Excluir permanentemente"
                     >
@@ -277,7 +277,7 @@ export function TrashPage() {
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer"
+                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>

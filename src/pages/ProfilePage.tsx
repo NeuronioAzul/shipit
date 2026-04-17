@@ -129,10 +129,10 @@ export function ProfilePage() {
   }
 
   const inputClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
+    'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
   const inputErrorClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
 
   const labelClass = 'block text-sm font-medium text-foreground mb-1'

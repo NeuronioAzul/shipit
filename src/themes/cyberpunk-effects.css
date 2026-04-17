@@ -99,9 +99,12 @@
   100% { opacity: 1; }
 }
 
-/* ===== Angular shapes (replace rounded corners) ===== */
+/* ===== Angular shapes — diagonal clip-path + double-polygon border ===== */
+/* Technique: element bg = border color (clipped to outer polygon),
+   ::before bg = card color (clipped to inner polygon, inset 1px).
+   The 1px gap between outer and inner polygons reveals the neon border. */
 
-/* Cards, modals, panels — sharp clip-path corners */
+/* All .rounded-lg — angular clip-path shape */
 .cyberpunk main .rounded-lg {
   border-radius: 0 !important;
   clip-path: polygon(
@@ -112,6 +115,49 @@
     10px 100%,
     0 calc(100% - 10px)
   );
+}
+
+/* Card elements — neon border via double-polygon (exclude form fields) */
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea),
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea) {
+  position: relative;
+  isolation: isolate;
+  border-radius: 0 !important;
+  border: none !important;
+  background-color: rgb(57 255 20 / 0.4) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+/* Inner fill — creates 1px neon border at all edges including diagonal cuts */
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea)::before,
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea)::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background-color: var(--card);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Hover: brighter border */
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):hover,
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):hover {
+  background-color: rgb(57 255 20 / 0.65) !important;
 }
 
 /* Small rounded elements (buttons, inputs with rounded-md/rounded) */
@@ -125,33 +171,45 @@
   border-radius: 2px !important;
 }
 
-/* Modal/popover outside main */
-.cyberpunk .rounded-lg[class*="bg-card"] {
-  border-radius: 0 !important;
+/* ===== Buttons ===== */
+/* Neon-bordered button via double-polygon (for outlined/ghost buttons with diagonal cuts) */
+.cyberpunk main button.cyber-neon-border {
+  position: relative;
+  isolation: isolate;
+  border: none !important;
+  background-color: inherit !important;
   clip-path: polygon(
     0 0,
-    calc(100% - 10px) 0,
-    100% 10px,
+    calc(100% - 6px) 0,
+    100% 6px,
     100% 100%,
-    10px 100%,
-    0 calc(100% - 10px)
+    6px 100%,
+    0 calc(100% - 6px)
   );
+  filter: none;
 }
 
-/* ===== Neon border glow on cards ===== */
-.cyberpunk [class*="bg-card"][class*="border"] {
-  box-shadow:
-    0 0 6px rgb(57 255 20 / 0.12),
-    inset 0 0 6px rgb(57 255 20 / 0.04);
+.cyberpunk main button.cyber-neon-border::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background-color: var(--background);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
+  z-index: -1;
+  pointer-events: none;
 }
 
-.cyberpunk [class*="bg-card"][class*="border"]:hover {
-  box-shadow:
-    0 0 12px rgb(57 255 20 / 0.25),
-    inset 0 0 8px rgb(57 255 20 / 0.06);
+.cyberpunk main button.cyber-neon-border:hover {
+  background-color: inherit !important;
 }
 
-/* ===== Buttons ===== */
 .cyberpunk button,
 .cyberpunk a[class*="bg-primary"],
 .cyberpunk a[class*="bg-accent"] {
@@ -170,19 +228,19 @@
     6px 100%,
     0 calc(100% - 6px)
   );
+  filter: drop-shadow(0 0 0.5px rgb(248 239 2 / 0.5))
+    drop-shadow(0 0 0.5px rgb(248 239 2 / 0.3));
 }
 
 .cyberpunk button:hover:not(:disabled) {
-  box-shadow:
-    0 0 12px rgb(248 239 2 / 0.25),
-    0 0 25px rgb(248 239 2 / 0.08);
-  transition: box-shadow 0.15s ease;
+  filter: drop-shadow(0 0 1px rgb(248 239 2 / 0.7))
+    drop-shadow(0 0 6px rgb(248 239 2 / 0.2));
+  transition: filter 0.15s ease;
 }
 
 .cyberpunk button[class*="bg-destructive"]:hover:not(:disabled) {
-  box-shadow:
-    0 0 12px rgb(255 0 60 / 0.35),
-    0 0 25px rgb(255 0 60 / 0.12);
+  filter: drop-shadow(0 0 1px rgb(255 0 60 / 0.7))
+    drop-shadow(0 0 6px rgb(255 0 60 / 0.25));
 }
 
 /* ===== Input fields ===== */
@@ -192,12 +250,49 @@
   border-radius: 0 !important;
 }
 
+/* Date/time picker icons — yellow neon instead of default black */
+.cyberpunk input[type="date"]::-webkit-calendar-picker-indicator,
+.cyberpunk input[type="time"]::-webkit-calendar-picker-indicator,
+.cyberpunk input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(89%) sepia(63%) saturate(1000%) hue-rotate(5deg) brightness(103%) contrast(97%);
+  cursor: pointer;
+}
+
 .cyberpunk input:focus,
 .cyberpunk textarea:focus,
 .cyberpunk select:focus {
   box-shadow:
     0 0 8px rgb(0 255 210 / 0.3),
     0 0 20px rgb(0 255 210 / 0.08) !important;
+}
+
+/* ===== Form fields — colored background with clip-path ===== */
+.cyberpunk .cyber-input {
+  border: none !important;
+  background-color: rgba(191, 0, 255, 0.35) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+}
+
+/* Focus: brighter purple */
+.cyberpunk .cyber-input:focus {
+  background-color: rgba(191, 0, 255, 0.5) !important;
+  box-shadow: none !important;
+}
+
+/* Error state: red tint */
+.cyberpunk .cyber-input.cyber-input-error {
+  background-color: rgba(255, 0, 60, 0.35) !important;
+}
+
+.cyberpunk .cyber-input.cyber-input-error:focus {
+  background-color: rgba(255, 0, 60, 0.5) !important;
 }
 
 /* ===== Scrollbar ===== */
@@ -370,7 +465,6 @@
 /* ===== Card / container scan line (from scannedh) ===== */
 .cyberpunk [class*="bg-card"][class*="border"] {
   position: relative;
-  overflow: hidden;
 }
 
 .cyberpunk [class*="bg-card"][class*="border"]::after {
@@ -498,7 +592,7 @@
   border-radius: 0 !important;
 }
 
-/* Gantt activity bars — sharp with neon edge */
+/* Gantt activity bars — diagonal corners with neon glow */
 .cyberpunk [class*="bg-chart-"][class*="absolute"] {
   border-radius: 0 !important;
   clip-path: polygon(
@@ -509,7 +603,8 @@
     4px 100%,
     0 calc(100% - 4px)
   );
-  border-right: 1px solid rgb(138 230 110 / 0.4);
+  filter: drop-shadow(0 0 0.5px rgb(138 230 110 / 0.5))
+    drop-shadow(0 0 0.5px rgb(138 230 110 / 0.3));
 }
 
 /* Gantt track background — angular */
@@ -539,10 +634,7 @@
   65% { opacity: 0.5; }
 }
 
-/* ===== Border-right neon accent on cards (from cyberpunk-2077 button style) ===== */
-.cyberpunk [class*="bg-card"][class*="border"] {
-  border-right: 2px solid rgb(138 230 110 / 0.5) !important;
-}
+/* Card neon border is handled by double clip-path technique (see angular shapes section) */
 
 /* ===== Badges: angular chip with subtle glow ===== */
 .cyberpunk main .rounded-full {
@@ -552,8 +644,6 @@
 
 /* ===== Image/evidence frames ===== */
 .cyberpunk img[class*="object-"] {
-  border: 2px solid rgb(12 12 24);
-  border-right: 2px solid rgb(138 230 110 / 0.5);
   clip-path: polygon(
     0 8px, 8px 0,
     calc(60% - 8px) 0, 60% 8px,
@@ -563,4 +653,6 @@
     calc(80% - 6px) 100%,
     4px 100%, 0 calc(100% - 4px)
   );
+  filter: drop-shadow(0 0 0.5px rgb(138 230 110 / 0.5))
+    drop-shadow(0 0 0.5px rgb(138 230 110 / 0.3));
 }

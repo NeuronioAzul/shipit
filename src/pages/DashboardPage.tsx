@@ -146,7 +146,7 @@ export function DashboardPage() {
         {!isCurrentMonth && (
           <button
             onClick={() => setSearchParams({ month: currentMonthRef })}
-            className="absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
+            className="cyber-neon-border absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
               hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
             title="Ir para o mês atual"
           >
@@ -396,8 +396,9 @@ export function DashboardPage() {
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setShowConfirm(false)}
-                      className="px-4 py-2 border border-border text-foreground rounded-lg
-                        hover:bg-muted transition-colors cursor-pointer text-sm"
+                      className="px-4 py-2
+                      bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer
+                         text-sm"
                     >
                       Cancelar
                     </button>
@@ -499,8 +500,8 @@ export function DashboardPage() {
                       {report.status === 'Gerado' && window.electronAPI && (
                         <button
                           onClick={() => window.electronAPI!.openFileInFolder(report.file_path)}
-                          className="px-2.5 py-1 text-xs border border-border rounded-lg
-                            hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                          className="px-2.5 py-1 text-success bg-success/20 rounded text-xs font-medium hover:bg-success/30 transition-colors cursor-pointer
+                          flex items-center gap-1.5 shrink-0"
                           title="Abrir pasta do relatório"
                         >
                           <i className="fa-solid fa-folder-open"></i>

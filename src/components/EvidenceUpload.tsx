@@ -349,7 +349,7 @@ export function EvidenceUpload({
                   e.stopPropagation()
                   handlePaste()
                 }}
-                className="text-sm px-3 py-1 border border-border rounded-md
+                className="cyber-neon-border text-sm px-3 py-1 border border-border rounded-md
                   hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
               >
                 <i className="fa-solid fa-paste mr-1"></i>

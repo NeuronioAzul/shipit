@@ -422,7 +422,7 @@ export function ActivityDetailPage() {
                         e.stopPropagation()
                         handlePaste()
                       }}
-                      className="text-sm px-3 py-1 border border-border rounded-md
+                      className="cyber-neon-border text-sm px-3 py-1 border border-border rounded-md
                         hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                     >
                       <i className="fa-solid fa-paste mr-1"></i>
@@ -524,14 +524,14 @@ export function ActivityDetailPage() {
               <button
                 onClick={() => setConfirmDelete(null)}
                 disabled={deleting}
-                className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDeleteEvidence(confirmDelete)}
                 disabled={deleting}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
                 {deleting ? (
                   <>
