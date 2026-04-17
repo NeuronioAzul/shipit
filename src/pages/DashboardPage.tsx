@@ -7,10 +7,10 @@ import { isActivityComplete } from '../utils/validation'
 import { SkeletonStats, Skeleton } from '../components/Skeleton'
 
 const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
+  'Em andamento': 'bg-primary/15 text-primary',
   'Concluído': 'bg-success/15 text-success',
   'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
+  'Pendente': 'bg-warning/15 text-warning',
 }
 
 const STATUS_ICONS: Record<string, string> = {
@@ -95,8 +95,8 @@ export function DashboardPage() {
   const summaryCards = [
     { label: 'Total', value: total, icon: 'fa-list-check', color: 'text-foreground', bg: 'bg-muted' },
     { label: 'Concluídas', value: concluidas, icon: 'fa-check-circle', color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Em Andamento', value: emAndamento, icon: 'fa-spinner', color: 'text-primary', bg: 'bg-brand-blue/10' },
-    { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-warning-foreground', bg: 'bg-warning/10' },
+    { label: 'Em Andamento', value: emAndamento, icon: 'fa-spinner', color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-warning', bg: 'bg-warning/10' },
     { label: 'Canceladas', value: canceladas, icon: 'fa-times-circle', color: 'text-destructive', bg: 'bg-destructive/10' },
   ]
 
