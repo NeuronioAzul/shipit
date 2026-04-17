@@ -93,11 +93,11 @@ export function DashboardPage() {
   const incompletas = activities.filter((a) => !isActivityComplete(a)).length
 
   const summaryCards = [
-    { label: 'Total', value: total, icon: 'fa-list-check', color: 'text-foreground', bg: 'bg-muted' },
-    { label: 'Concluídas', value: concluidas, icon: 'fa-check-circle', color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Em Andamento', value: emAndamento, icon: 'fa-spinner', color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-warning', bg: 'bg-warning/10' },
-    { label: 'Canceladas', value: canceladas, icon: 'fa-times-circle', color: 'text-destructive', bg: 'bg-destructive/10' },
+    { label: 'Total', value: total, icon: 'fa-list-check', color: 'text-chart-1', bg: 'bg-chart-1/10' },
+    { label: 'Concluídas', value: concluidas, icon: 'fa-check-circle', color: 'text-chart-2', bg: 'bg-chart-2/10' },
+    { label: 'Em Andamento', value: emAndamento, icon: 'fa-spinner', color: 'text-chart-3', bg: 'bg-chart-3/10' },
+    { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-chart-4', bg: 'bg-chart-4/10' },
+    { label: 'Canceladas', value: canceladas, icon: 'fa-times-circle', color: 'text-chart-5', bg: 'bg-chart-5/10' },
   ]
 
   // Gantt chart data
@@ -202,7 +202,7 @@ export function DashboardPage() {
 
           {/* Incomplete warning */}
           {incompletas > 0 && (
-            <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-warning-foreground flex items-center gap-2 text-sm">
+            <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-warning flex items-center gap-2 text-sm">
               <i className="fa-solid fa-triangle-exclamation"></i>
               <span>
                 {incompletas} atividade{incompletas > 1 ? 's' : ''} com campos obrigatórios não preenchidos.
@@ -236,12 +236,12 @@ export function DashboardPage() {
                 {activities.map((activity, idx) => {
                   const days = getActivityDays(activity)
                   const barColor = activity.status === 'Concluído'
-                    ? 'bg-success'
+                    ? 'bg-chart-2'
                     : activity.status === 'Cancelado'
-                      ? 'bg-destructive'
+                      ? 'bg-chart-5'
                       : activity.status === 'Em andamento'
-                        ? 'bg-primary'
-                        : 'bg-warning'
+                        ? 'bg-chart-3'
+                        : 'bg-chart-4'
 
                   return (
                     <div key={activity.id} className="flex items-center h-7 group">
@@ -299,7 +299,7 @@ export function DashboardPage() {
                         {idx + 1}
                         {!isActivityComplete(activity) && (
                           <i
-                            className="fa-solid fa-triangle-exclamation text-warning-foreground text-[10px] ml-1"
+                            className="fa-solid fa-triangle-exclamation text-warning text-[10px] ml-1"
                             title="Campos obrigatórios não preenchidos"
                           ></i>
                         )}
