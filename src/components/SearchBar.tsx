@@ -2,13 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ActivityData } from '../vite-env'
 import { localDb } from '../services/localDb'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
-}
+import { STATUS_COLORS } from '../utils/statusColors'
 
 export function SearchBar() {
   const navigate = useNavigate()

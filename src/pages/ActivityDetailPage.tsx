@@ -18,13 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
-}
+import { STATUS_COLORS } from '../utils/statusColors'
 
 function SortableEvidenceCard({ 
   evidence, 

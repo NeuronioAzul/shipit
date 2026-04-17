@@ -5,20 +5,7 @@ import type { ActivityData, ReportData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonStats, Skeleton } from '../components/Skeleton'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-primary/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning',
-}
-
-const STATUS_ICONS: Record<string, string> = {
-  'Em andamento': 'fa-spinner',
-  'Concluído': 'fa-check-circle',
-  'Cancelado': 'fa-times-circle',
-  'Pendente': 'fa-clock',
-}
+import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 
 export function DashboardPage() {
   const navigate = useNavigate()

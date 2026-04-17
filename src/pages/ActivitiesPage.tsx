@@ -22,20 +22,7 @@ import type { ActivityData, ActivityStatus, AttendanceType } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonActivityItem } from '../components/Skeleton'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
-}
-
-const STATUS_ICONS: Record<string, string> = {
-  'Em andamento': 'fa-spinner',
-  'Concluído': 'fa-check-circle',
-  'Cancelado': 'fa-times-circle',
-  'Pendente': 'fa-clock',
-}
+import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 
 function formatDateShort(d: string | null): string {
   if (!d) return '—'
@@ -89,7 +76,7 @@ function SortableActivityItem({
             </span>
             {!isActivityComplete(activity) && (
               <span
-                className="text-xs px-2 py-0.5 rounded-full font-medium bg-warning/15 text-warning-foreground inline-flex items-center gap-1"
+                className="text-xs px-2 py-0.5 rounded-full font-medium bg-chart-4/15 text-chart-4 inline-flex items-center gap-1"
                 title="Campos obrigatórios não preenchidos"
               >
                 <i className="fa-solid fa-triangle-exclamation text-[10px]"></i>
