@@ -19,13 +19,17 @@ import { CSS } from '@dnd-kit/utilities'
 import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
 import { STATUS_COLORS } from '../utils/statusColors'
+import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
+import { ActivityNav, type NavMode } from '../components/ActivityNav'
 
 function SortableEvidenceCard({ 
   evidence, 
-  onDelete 
+  onDelete,
+  onClick,
 }: { 
   evidence: EvidenceData
   onDelete: (id: string) => void
+  onClick?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
@@ -68,7 +72,10 @@ function SortableEvidenceCard({
       >
         <i className="fa-solid fa-trash text-xs" aria-hidden="true"></i>
       </button>
-      <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+      <div
+        className="aspect-video bg-muted flex items-center justify-center overflow-hidden cursor-pointer"
+        onClick={onClick}
+      >
         <img
           src={
             evidence.file_path.startsWith('data:')
@@ -102,6 +109,10 @@ export function ActivityDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [siblings, setSiblings] = useState<ActivityData[]>([])
+  const [navMode, setNavMode] = useState<NavMode>('month')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sensors = useSensors(
@@ -127,6 +138,47 @@ export function ActivityDetailPage() {
   useEffect(() => {
     loadActivity()
   }, [loadActivity])
+
+  // Fetch siblings for prev/next navigation
+  useEffect(() => {
+    if (!activity?.month_reference) return
+    let cancelled = false
+    async function fetchSiblings() {
+      let list: ActivityData[]
+      if (window.electronAPI) {
+        list = await window.electronAPI.getActivities(activity!.month_reference)
+      } else {
+        list = localDb.getActivities(activity!.month_reference)
+      }
+      if (!cancelled) setSiblings(list)
+    }
+    fetchSiblings()
+    return () => { cancelled = true }
+  }, [activity?.month_reference])
+
+  // Keyboard shortcuts: Alt+← / Alt+→
+  useEffect(() => {
+    if (!activity || siblings.length === 0) return
+    const scopeDisabled = !activity.project_scope
+    const effectiveMode = scopeDisabled && navMode === 'scope' ? 'month' : navMode
+    const filtered = effectiveMode === 'scope'
+      ? siblings.filter((a) => a.project_scope === activity.project_scope)
+      : siblings
+    const idx = filtered.findIndex((a) => a.id === activity.id)
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!e.altKey) return
+      if (e.key === 'ArrowLeft' && idx > 0) {
+        e.preventDefault()
+        navigate(`/activities/${filtered[idx - 1].id}`)
+      } else if (e.key === 'ArrowRight' && idx < filtered.length - 1) {
+        e.preventDefault()
+        navigate(`/activities/${filtered[idx + 1].id}`)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activity, siblings, navMode, navigate])
 
   async function handleEvidenceDragEnd(event: DragEndEvent) {
     if (!activity?.evidences) return
@@ -323,6 +375,19 @@ export function ActivityDetailPage() {
         </button>
       </div>
 
+      {/* Top navigation */}
+      {siblings.length > 1 && (
+        <div className="mb-4">
+          <ActivityNav
+            siblings={siblings}
+            currentId={activity.id}
+            currentProjectScope={activity.project_scope}
+            navMode={navMode}
+            onNavModeChange={setNavMode}
+          />
+        </div>
+      )}
+
       {/* Info card */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-5">
         {/* Status + Period */}
@@ -346,6 +411,12 @@ export function ActivityDetailPage() {
             <i className="fa-solid fa-calendar-days mr-1"></i>
             Ref: {activity.month_reference}
           </span>
+          {activity.project_scope && (
+            <span className="text-sm text-muted-foreground">
+              <i className="fa-solid fa-diagram-project mr-1"></i>
+              {activity.project_scope}
+            </span>
+          )}
         </div>
 
         {/* Description */}
@@ -437,11 +508,12 @@ export function ActivityDetailPage() {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEvidenceDragEnd}>
                 <SortableContext items={activity.evidences.map(e => e.id)} strategy={rectSortingStrategy}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {activity.evidences.map((ev) => (
+                    {activity.evidences.map((ev, idx) => (
                       <SortableEvidenceCard 
                         key={ev.id} 
                         evidence={ev} 
                         onDelete={(id) => setConfirmDelete(id)}
+                        onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
                       />
                     ))}
                   </div>
@@ -502,6 +574,19 @@ export function ActivityDetailPage() {
         </div>
       </div>
 
+      {/* Bottom navigation */}
+      {siblings.length > 1 && (
+        <div className="mt-4">
+          <ActivityNav
+            siblings={siblings}
+            currentId={activity.id}
+            currentProjectScope={activity.project_scope}
+            navMode={navMode}
+            onNavModeChange={setNavMode}
+          />
+        </div>
+      )}
+
       {/* Confirm delete modal */}
       {confirmDelete && (
         <div
@@ -545,6 +630,20 @@ export function ActivityDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {activity.evidences && activity.evidences.length > 0 && (
+        <EvidenceLightbox
+          open={lightboxOpen}
+          index={lightboxIndex}
+          slides={activity.evidences.map((ev): LightboxSlide => ({
+            src: ev.file_path.startsWith('data:')
+              ? ev.file_path
+              : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`,
+            description: ev.caption || undefined,
+          }))}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </div>
   )

@@ -16,6 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type { EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
+import { EvidenceLightbox, type LightboxSlide } from './EvidenceLightbox'
 
 interface EvidenceUploadProps {
   activityId: string
@@ -35,6 +36,7 @@ function SortableEvidenceCard({
   setCaptionValue,
   saveCaption,
   setEditingCaption,
+  onClick,
 }: {
   evidence: EvidenceData
   onDelete: (id: string) => void
@@ -44,6 +46,7 @@ function SortableEvidenceCard({
   setCaptionValue: (val: string) => void
   saveCaption: (id: string) => void
   setEditingCaption: (id: string | null) => void
+  onClick?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
@@ -72,7 +75,10 @@ function SortableEvidenceCard({
       className="cyber-neon-border p-2 bg-card border border-border rounded-lg overflow-hidden group"
     >
       {/* Image preview */}
-      <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden relative">
+      <div
+        className="aspect-video bg-muted flex items-center justify-center overflow-hidden relative cursor-pointer"
+        onClick={onClick}
+      >
         <img
           src={
             evidence.file_path.startsWith('data:')
@@ -168,6 +174,8 @@ export function EvidenceUpload({
   const [uploading, setUploading] = useState(false)
   const [editingCaption, setEditingCaption] = useState<string | null>(null)
   const [captionValue, setCaptionValue] = useState('')
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const dropRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -375,7 +383,7 @@ export function EvidenceUpload({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={evidences.map(e => e.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {evidences.map((evidence) => (
+              {evidences.map((evidence, idx) => (
                 <SortableEvidenceCard
                   key={evidence.id}
                   evidence={evidence}
@@ -386,11 +394,26 @@ export function EvidenceUpload({
                   setCaptionValue={setCaptionValue}
                   saveCaption={saveCaption}
                   setEditingCaption={setEditingCaption}
+                  onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {evidences.length > 0 && (
+        <EvidenceLightbox
+          open={lightboxOpen}
+          index={lightboxIndex}
+          slides={evidences.map((ev): LightboxSlide => ({
+            src: ev.file_path.startsWith('data:')
+              ? ev.file_path
+              : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`,
+            description: ev.caption || undefined,
+          }))}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </div>
   )

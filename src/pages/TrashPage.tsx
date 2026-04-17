@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { EvidenceData } from '../vite-env'
 import { SkeletonEvidenceGrid } from '../components/Skeleton'
+import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
 
 function formatDate(d: string | null): string {
   if (!d) return '—'
@@ -29,6 +30,8 @@ export function TrashPage() {
   const [emptyingTrash, setEmptyingTrash] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [confirmEmpty, setConfirmEmpty] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   const loadEvidences = useCallback(async () => {
     setLoading(true)
@@ -179,7 +182,7 @@ export function TrashPage() {
       {/* Evidences grid */}
       {!loading && evidences.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {evidences.map((ev) => {
+          {evidences.map((ev, idx) => {
             const daysLeft = getDaysUntilPermanentDelete(ev.deleted_at)
             const isExpiringSoon = daysLeft <= 7
 
@@ -189,7 +192,10 @@ export function TrashPage() {
                 className="bg-card border border-border rounded-lg overflow-hidden group p-2"
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video bg-muted">
+                <div
+                  className="relative aspect-video bg-muted cursor-pointer"
+                  onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                >
                   <img
                     src={`shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`}
                     alt={ev.caption || 'Evidência'}
@@ -327,6 +333,18 @@ export function TrashPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {evidences.length > 0 && (
+        <EvidenceLightbox
+          open={lightboxOpen}
+          index={lightboxIndex}
+          slides={evidences.map((ev): LightboxSlide => ({
+            src: `shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`,
+            description: ev.caption || undefined,
+          }))}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </div>
   )
