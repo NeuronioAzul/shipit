@@ -100,7 +100,8 @@
   }
   .dark ::selection,
   .futuristic ::selection,
-  .high-contrast-dark ::selection {
+  .high-contrast-dark ::selection,
+  .cyberpunk ::selection {
     background-color: color-mix(in srgb, var(--selection) 35%, transparent);
     color: var(--selection-foreground);
   }
