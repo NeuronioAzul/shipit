@@ -51,21 +51,9 @@
     - Sobre o ShipIt!
     - Verificar Atualizações
 
-## Tela Detalhes da Atividade
 
-- Na tela `Detalhes da Atividade` exibir todos os dados sobre a atividade.
 
-- Na tela `Detalhes da Atividade` incluir navegação para a próxima atividade do projeto clicando no link "Next Activity" ou "Próxima Atividade" e o link "Previous Activity" ou "Atividade Anterior", para facilitar a navegação entre as atividades do projeto e permitir que os usuários possam acessar facilmente as atividades relacionadas, e também para melhorar a experiência do usuário, tornando a navegação mais fluida e intuitiva, e também para incentivar os usuários a explorar mais o projeto e conhecer todas as atividades disponíveis.
-
-## Tela cadastro de Atividades
-
-- Na tela de cadastro de atividades, incluir um campo para cadastrar um texto como evidência,
-
-## Layout
-
-- Melhorar o layout do ShipIt!, mantendo uma consistência visual, que todas as páginas e telas do ShipIt! tenham a mesma largura da tela do dashboard, para criar uma experiência mais coesa e agradável para os usuários, e também para mostrar que o ShipIt! é um projeto bem estruturado e organizado, com um design consistente e profissional.
-
-- Ao clicar nas imagens de evidências, abrir as imagens em um lightbox com zoom, para que os usuários possam visualizar as evidências em um tamanho maior e com mais detalhes, sem precisar sair da página. Isso pode ser feito usando uma biblioteca de lightbox, como por exemplo o `react-image-lightbox` ou o `lightbox2`, para criar um efeito de zoom e navegação entre as imagens, permitindo que os usuários possam explorar as evidências de forma mais interativa e agradável, e também para melhorar a experiência do usuário, tornando a visualização das evidências mais fácil e agradável.
+------------------------------------------------------------------
 
 ```text
  _____     _   _   
@@ -109,6 +97,34 @@ Leve em conta que teremos outros Temas para que as pessoas com problemas de vis�
 4. Atualize o `.github/copilot-instructions.md`
 5. Atualize o `docs/ARCHITECTURE.md` para refletir as mudanças feitas na arquitetura do projeto, para mostrar como o projeto está estruturado e organizado, e para facilitar a compreensão do projeto por parte dos novos membros da equipe ou de outros desenvolvedores que possam se interessar pelo projeto, e também para mostrar as decisões de design e arquitetura tomadas durante o desenvolvimento do projeto.
 
+## Layout
+
+- Melhorar o layout do ShipIt!, mantendo uma consistência visual, que todas as páginas e telas do ShipIt! tenham a mesma largura da tela do dashboard, para criar uma experiência mais coesa e agradável para os usuários, e também para mostrar que o ShipIt! é um projeto bem estruturado e organizado, com um design consistente e profissional.
+
+- Ao clicar nas imagens de evidências, abrir as imagens em um lightbox com zoom, para que os usuários possam visualizar as evidências em um tamanho maior e com mais detalhes, sem precisar sair da página. Isso pode ser feito usando uma biblioteca de lightbox, como por exemplo o `react-image-lightbox` ou o `lightbox2`, para criar um efeito de zoom e navegação entre as imagens, permitindo que os usuários possam explorar as evidências de forma mais interativa e agradável, e também para melhorar a experiência do usuário, tornando a visualização das evidências mais fácil e agradável.
+
+## Tela Detalhes da Atividade
+
+- Na tela `Detalhes da Atividade` exibir todos os dados sobre a atividade.
+
+- Na tela `Detalhes da Atividade` incluir navegação para a próxima atividade do projeto clicando no link "Next Activity" ou "Próxima Atividade" e o link "Previous Activity" ou "Atividade Anterior", para facilitar a navegação entre as atividades do projeto e permitir que os usuários possam acessar facilmente as atividades relacionadas, e também para melhorar a experiência do usuário, tornando a navegação mais fluida e intuitiva, e também para incentivar os usuários a explorar mais o projeto e conhecer todas as atividades disponíveis.
+
 -----------------------------------------------------------
 
 ## Fazendo
+
+## feature: Tela cadastro de Atividades
+
+Na tela de cadastro de atividades, incluir um campo no formulário para inserir uma evidencia do tipo texto, permitindo que os usuários possam adicionar descrições detalhadas ou observações relacionadas à atividade. (Exemplo: "A atividade foi concluída com sucesso, mas houve um pequeno atraso devido a um problema técnico que foi resolvido posteriormente.")
+
+- Modelar a tabela no banco do sqlite para registrar as evidências do tipo texto, associando-as às atividades correspondentes, garantindo que cada evidência de texto esteja vinculada à atividade correta e possa ser facilmente recuperada e exibida na interface do usuário.
+
+- Regras de negócio para o campo de evidência do tipo texto, com vinculo com a atividade, a data do registro, soft delete, campo de texto simples com negrito, itálico, listas, etc, para permitir que os usuários possam formatar suas descrições de forma mais clara e organizada, facilitando a leitura e compreensão das informações fornecidas, e também para melhorar a experiência do usuário, tornando as descrições mais legíveis e atraentes visualmente.
+  - Fica disponível um botão "Adicionar Texto como Evidência" ou "Add Text as Evidence" que, ao ser clicado, exibe uma modal com um campo de textarea para o usuário inserir a descrição ou observação relacionada à atividade e dois botões: "Salvar" e "Cancelar".
+  - Ao clicar em "Salvar", a descrição inserida é salva como uma nova evidência do tipo texto associada à atividade, e a modal é fechada. A nova evidência de texto deve ser exibida na lista de evidências da atividade, com um ícone ou rótulo indicando que é uma evidência de texto.
+  - Ao clicar em "Cancelar", a modal é fechada sem salvar nenhuma informação.
+  - Ao clicar na evidência de texto na lista de evidências, a descrição completa deve ser exibida em um formato legível, como um modal para que os usuários possam ler facilmente o conteúdo da evidência de texto, especialmente se for uma descrição longa.
+  - O campo deve aceitar um número limitado de caracteres, por exemplo, até 2000 caracteres, para garantir que as descrições sejam concisas e relevantes.
+  - O campo deve ser opcional.
+  - O campo deve ser exibido em um formato de textarea, para facilitar a inserção de múltiplas linhas de texto e melhorar a legibilidade das descrições.
+  - O campo deve ser validado para evitar a inserção de conteúdo inadequado.
