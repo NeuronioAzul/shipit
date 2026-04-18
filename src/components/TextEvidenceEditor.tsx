@@ -95,7 +95,7 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
       )}
       <EditorContent
         editor={editor}
-        className="prose prose-sm max-w-none p-3 min-h-[150px] max-h-[400px] overflow-y-auto
+        className="cyber-input prose prose-sm max-w-none p-3 min-h-[150px] max-h-[400px] overflow-y-auto
           text-foreground [&_.tiptap]:outline-none [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted-foreground
           [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_p.is-editor-empty:first-child::before]:float-left
           [&_.tiptap_p.is-editor-empty:first-child::before]:h-0 [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none

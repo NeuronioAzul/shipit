@@ -107,7 +107,7 @@ export function TextEvidenceModal({
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Legenda da evidência..."
-                className="w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg
+                className="cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg
                   focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
               />
             </div>

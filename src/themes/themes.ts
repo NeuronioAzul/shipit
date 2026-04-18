@@ -188,7 +188,7 @@ export const THEMES: ThemeMetadata[] = [
       background: '#05050C',
       primary: '#F8EF02',
       accent: '#00FFD2',
-      foreground: '#F8EF02',
+      foreground: 'greenyellow'
     },
   },
 ]

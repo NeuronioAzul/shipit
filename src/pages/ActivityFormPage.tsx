@@ -527,7 +527,7 @@ export function ActivityFormPage() {
             type="button"
             onClick={() => navigate(`/activities?month=${form.month_reference}`)}
             className="px-6 py-2.5
-            bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer
+            bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer
               "
           >
             Cancelar
