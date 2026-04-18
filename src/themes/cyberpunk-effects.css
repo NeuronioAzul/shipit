@@ -659,3 +659,141 @@
   filter: drop-shadow(0 0 0.5px rgb(138 230 110 / 0.5))
     drop-shadow(0 0 0.5px rgb(138 230 110 / 0.3));
 }
+
+/* ===== Custom Cyberpunk Cursors ===== */
+/* Cursors from public/assets/cursors/ — active only in Cyberpunk theme */
+
+/* Default cursor */
+.cyberpunk,
+.cyberpunk * {
+  cursor: url('/assets/cursors/arrow.cur'), default !important;
+}
+
+/* Text inputs */
+.cyberpunk input:not([type="date"]):not([type="month"]):not([type="datetime-local"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.cyberpunk textarea,
+.cyberpunk [contenteditable="true"],
+.cyberpunk .ProseMirror {
+  cursor: url('/assets/cursors/beam.cur'), text !important;
+}
+
+/* Date/month inputs — the whole element is pointer (acts as a picker) */
+.cyberpunk input[type="date"],
+.cyberpunk input[type="month"],
+.cyberpunk input[type="datetime-local"] {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Date inputs: calendar picker icon (the small triangle/calendar button) */
+.cyberpunk input[type="date"]::-webkit-calendar-picker-indicator,
+.cyberpunk input[type="month"]::-webkit-calendar-picker-indicator,
+.cyberpunk input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Date inputs: internal editing fields */
+.cyberpunk input[type="date"]::-webkit-datetime-edit,
+.cyberpunk input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.cyberpunk input[type="date"]::-webkit-datetime-edit-text,
+.cyberpunk input[type="date"]::-webkit-datetime-edit-month-field,
+.cyberpunk input[type="date"]::-webkit-datetime-edit-day-field,
+.cyberpunk input[type="date"]::-webkit-datetime-edit-year-field,
+.cyberpunk input[type="month"]::-webkit-datetime-edit,
+.cyberpunk input[type="month"]::-webkit-datetime-edit-fields-wrapper,
+.cyberpunk input[type="month"]::-webkit-datetime-edit-text,
+.cyberpunk input[type="month"]::-webkit-datetime-edit-month-field,
+.cyberpunk input[type="month"]::-webkit-datetime-edit-year-field {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Clickable elements — pointer */
+.cyberpunk a,
+.cyberpunk button,
+.cyberpunk [role="button"],
+.cyberpunk label[for],
+.cyberpunk select,
+.cyberpunk input[type="checkbox"],
+.cyberpunk input[type="radio"],
+.cyberpunk input[type="file"],
+.cyberpunk summary,
+.cyberpunk [class*="cursor-pointer"] {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Select: element and options */
+.cyberpunk select option {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Drag handles — pin cursor */
+.cyberpunk [class*="cursor-grab"],
+.cyberpunk [data-dnd-kit-draggable] [aria-roledescription="sortable"] {
+  cursor: url('/assets/cursors/pin.cur'), grab !important;
+}
+
+/* Actively dragging */
+.cyberpunk [class*="cursor-grabbing"] {
+  cursor: url('/assets/cursors/move.cur'), grabbing !important;
+}
+
+/* Move / draggable */
+.cyberpunk [class*="cursor-move"] {
+  cursor: url('/assets/cursors/move.cur'), move !important;
+}
+
+/* Not allowed / disabled */
+.cyberpunk [disabled],
+.cyberpunk [aria-disabled="true"],
+.cyberpunk [class*="cursor-not-allowed"],
+.cyberpunk button:disabled {
+  cursor: url('/assets/cursors/no.cur'), not-allowed !important;
+}
+
+/* Help */
+.cyberpunk [class*="cursor-help"],
+.cyberpunk [title]:not(button):not(a):not(input) {
+  cursor: url('/assets/cursors/help.cur'), help !important;
+}
+
+/* Crosshair */
+.cyberpunk [class*="cursor-crosshair"] {
+  cursor: url('/assets/cursors/cross.cur'), crosshair !important;
+}
+
+/* Wait / loading spinners */
+.cyberpunk [class*="cursor-wait"],
+.cyberpunk [class*="animate-spin"] {
+  cursor: url('/assets/cursors/wait.ani'), wait !important;
+}
+
+/* Progress / busy */
+.cyberpunk [class*="cursor-progress"] {
+  cursor: url('/assets/cursors/busy.ani'), progress !important;
+}
+
+/* Resize — horizontal */
+.cyberpunk [class*="cursor-ew-resize"],
+.cyberpunk [class*="cursor-col-resize"] {
+  cursor: url('/assets/cursors/size3.cur'), ew-resize !important;
+}
+
+/* Resize — vertical */
+.cyberpunk [class*="cursor-ns-resize"],
+.cyberpunk [class*="cursor-row-resize"] {
+  cursor: url('/assets/cursors/size4.cur'), ns-resize !important;
+}
+
+/* Resize — diagonal ↘↗ */
+.cyberpunk [class*="cursor-nwse-resize"] {
+  cursor: url('/assets/cursors/size1.cur'), nwse-resize !important;
+}
+
+/* Resize — diagonal ↙↖ */
+.cyberpunk [class*="cursor-nesw-resize"] {
+  cursor: url('/assets/cursors/size2.cur'), nesw-resize !important;
+}
+
+/* Up arrow */
+.cyberpunk [class*="cursor-n-resize"] {
+  cursor: url('/assets/cursors/up.cur'), n-resize !important;
+}
