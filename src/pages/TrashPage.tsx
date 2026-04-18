@@ -133,7 +133,7 @@ export function TrashPage() {
             id="trash-btn-empty"
             onClick={() => setConfirmEmpty(true)}
             disabled={emptyingTrash}
-            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {emptyingTrash ? (
               <>
@@ -344,7 +344,7 @@ export function TrashPage() {
               </button>
               <button
                 onClick={handleEmptyTrash}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer"
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors cursor-pointer"
               >
                 Esvaziar lixeira
               </button>

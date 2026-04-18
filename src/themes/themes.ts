@@ -72,9 +72,9 @@ export const THEMES: ThemeMetadata[] = [
     base: 'light',
     preview: {
       background: '#FFFBF7',
-      primary: '#7C3AED',
-      accent: '#F43F5E',
-      foreground: '#1E1B4B',
+      primary: '#0E00D7',
+      accent: '#BC0000',
+      foreground: '#F59E0B',
     },
   },
   {
@@ -188,7 +188,7 @@ export const THEMES: ThemeMetadata[] = [
       background: '#05050C',
       primary: '#F8EF02',
       accent: '#00FFD2',
-      foreground: 'greenyellow'
+      foreground: '#ADFF2F' 
     },
   },
 ]

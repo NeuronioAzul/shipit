@@ -189,28 +189,28 @@
   --popover: rgb(255, 255, 255);
   --popover-foreground: rgb(30, 27, 75);
 
-  --primary: rgb(124, 58, 237);
+  --primary: rgb(88, 26, 223);
   --primary-foreground: rgb(255, 255, 255);
 
   --secondary: rgb(243, 232, 255);
-  --secondary-foreground: rgb(109, 40, 217);
+  --secondary-foreground: rgb(88, 40, 217);
 
   --muted: rgb(253, 244, 255);
   --muted-foreground: rgb(107, 114, 128);
 
-  --accent: rgb(244, 63, 94);
+  --accent: rgb(14, 0, 215);
   --accent-foreground: rgb(255, 255, 255);
 
-  --success: rgb(16, 185, 129);
+  --success: rgb(0, 164, 44);
   --success-foreground: rgb(255, 255, 255);
 
   --warning: rgb(245, 158, 11);
   --warning-foreground: rgb(30, 27, 75);
 
-  --destructive: rgb(239, 68, 68);
+  --destructive: rgb(188, 0, 0);
   --destructive-foreground: rgb(255, 255, 255);
 
-  --info: rgb(59, 130, 246);
+  --info: rgb(48, 127, 255);
   --info-foreground: rgb(255, 255, 255);
 
   --border: rgb(233, 213, 255);
@@ -246,11 +246,11 @@
   --overlay: rgb(30, 27, 75);
 
   /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
-  --chart-1: rgb(124, 58, 237);
-  --chart-2: rgb(16, 185, 129);
-  --chart-3: rgb(59, 130, 246);
-  --chart-4: rgb(245, 158, 11);
-  --chart-5: rgb(239, 68, 68);
+  --chart-1: rgb(93, 0, 255);
+  --chart-2: rgb(29, 192, 0);
+  --chart-3: rgb(0, 98, 255);
+  --chart-4: rgb(255, 153, 0);
+  --chart-5: rgb(255, 23, 23);
 
   --shadow-soft: 0 8px 24px -12px rgb(124 58 237 / 0.12);
   --shadow-card: 0 10px 30px -16px rgb(124 58 237 / 0.14);
