@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { UserProfileData } from '../vite-env'
 import { validateProfile, type ValidationError } from '../utils/validation'
+import { Select } from '../components/Select'
 
 const ROLES = [
   'ADMINISTRADOR DE DADOS',
@@ -203,19 +204,18 @@ export function ProfilePage() {
             <label htmlFor="role" className={labelClass}>
               Cargo <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="role"
               name="role"
-              required
               value={form.role}
-              onChange={handleChange}
-              className={fieldClass('role')}
-            >
-              <option value="">Selecione o cargo</option>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, role: v }))}
+              options={[
+                { value: '', label: 'Selecione o cargo' },
+                ...ROLES.map((r) => ({ value: r, label: r })),
+              ]}
+              placeholder="Selecione o cargo"
+              hasError={!!fieldError('role')}
+            />
             {fieldError('role') && (
               <p className="text-xs text-destructive mt-1">{fieldError('role')}</p>
             )}
@@ -225,19 +225,18 @@ export function ProfilePage() {
             <label htmlFor="seniority_level" className={labelClass}>
               Senioridade <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="seniority_level"
               name="seniority_level"
-              required
               value={form.seniority_level}
-              onChange={handleChange}
-              className={fieldClass('seniority_level')}
-            >
-              <option value="">Selecione a senioridade</option>
-              {SENIORITY_LEVELS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, seniority_level: v }))}
+              options={[
+                { value: '', label: 'Selecione a senioridade' },
+                ...SENIORITY_LEVELS.map((s) => ({ value: s, label: s })),
+              ]}
+              placeholder="Selecione a senioridade"
+              hasError={!!fieldError('seniority_level')}
+            />
             {fieldError('seniority_level') && (
               <p className="text-xs text-destructive mt-1">{fieldError('seniority_level')}</p>
             )}
@@ -270,19 +269,18 @@ export function ProfilePage() {
             <label htmlFor="profile_type" className={labelClass}>
               Tipo de Perfil <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="profile_type"
               name="profile_type"
-              required
               value={form.profile_type}
-              onChange={handleChange}
-              className={fieldClass('profile_type')}
-            >
-              <option value="">Selecione o perfil</option>
-              {PROFILE_TYPES.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, profile_type: v }))}
+              options={[
+                { value: '', label: 'Selecione o perfil' },
+                ...PROFILE_TYPES.map((p) => ({ value: p, label: p })),
+              ]}
+              placeholder="Selecione o perfil"
+              hasError={!!fieldError('profile_type')}
+            />
             {fieldError('profile_type') && (
               <p className="text-xs text-destructive mt-1">{fieldError('profile_type')}</p>
             )}
@@ -292,19 +290,18 @@ export function ProfilePage() {
             <label htmlFor="attendance_type" className={labelClass}>
               Tipo de Atendimento <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="attendance_type"
               name="attendance_type"
-              required
               value={form.attendance_type}
-              onChange={handleChange}
-              className={fieldClass('attendance_type')}
-            >
-              <option value="">Selecione</option>
-              {ATTENDANCE_TYPES.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, attendance_type: v }))}
+              options={[
+                { value: '', label: 'Selecione' },
+                ...ATTENDANCE_TYPES.map((a) => ({ value: a, label: a })),
+              ]}
+              placeholder="Selecione"
+              hasError={!!fieldError('attendance_type')}
+            />
             {fieldError('attendance_type') && (
               <p className="text-xs text-destructive mt-1">{fieldError('attendance_type')}</p>
             )}

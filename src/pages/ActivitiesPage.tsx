@@ -22,6 +22,7 @@ import type { ActivityData, ActivityStatus, AttendanceType } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonActivityItem } from '../components/Skeleton'
+import { Select } from '../components/Select'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 
 function formatDateShort(d: string | null): string {
@@ -325,30 +326,34 @@ export function ActivitiesPage() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
-              <select
+              <Select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as ActivityStatus | '')}
-                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              >
-                <option value="">Todos</option>
-                <option value="Em andamento">Em andamento</option>
-                <option value="Concluído">Concluído</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Cancelado">Cancelado</option>
-              </select>
+                onChange={(v) => setFilterStatus(v as ActivityStatus | '')}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'Em andamento', label: 'Em andamento' },
+                  { value: 'Concluído', label: 'Concluído' },
+                  { value: 'Pendente', label: 'Pendente' },
+                  { value: 'Cancelado', label: 'Cancelado' },
+                ]}
+                placeholder="Todos"
+                size="sm"
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Atendimento</label>
-              <select
+              <Select
                 value={filterAttendance}
-                onChange={(e) => setFilterAttendance(e.target.value as AttendanceType | '')}
-                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              >
-                <option value="">Todos</option>
-                <option value="Presencial">Presencial</option>
-                <option value="Remoto">Remoto</option>
-                <option value="Híbrido">Híbrido</option>
-              </select>
+                onChange={(v) => setFilterAttendance(v as AttendanceType | '')}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'Presencial', label: 'Presencial' },
+                  { value: 'Remoto', label: 'Remoto' },
+                  { value: 'Híbrido', label: 'Híbrido' },
+                ]}
+                placeholder="Todos"
+                size="sm"
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo: (Squad / Projeto / Aplicação)</label>

@@ -5,6 +5,8 @@ import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
 import { validateActivity, type ValidationError } from '../utils/validation'
+import { DatePicker } from '../components/DatePicker'
+import { Select } from '../components/Select'
 
 const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
@@ -353,13 +355,13 @@ export function ActivityFormPage() {
             <label htmlFor="date_start" className={labelClass}>
               Data de Início <span className="text-destructive">*</span>
             </label>
-            <input
+            <DatePicker
               id="date_start"
               name="date_start"
-              type="date"
               value={form.date_start}
-              onChange={handleChange}
-              className={fieldClass('date_start')}
+              onChange={(v) => { setForm((prev) => ({ ...prev, date_start: v })); setAutoSaveStatus('idle') }}
+              placeholder="dd/mm/aaaa"
+              hasError={!!fieldError('date_start')}
             />
             {fieldError('date_start') && (
               <p className="text-xs text-destructive mt-1">{fieldError('date_start')}</p>
@@ -369,13 +371,13 @@ export function ActivityFormPage() {
             <label htmlFor="date_end" className={labelClass}>
               Data de Término <span className="text-destructive">*</span>
             </label>
-            <input
+            <DatePicker
               id="date_end"
               name="date_end"
-              type="date"
               value={form.date_end}
-              onChange={handleChange}
-              className={fieldClass('date_end')}
+              onChange={(v) => { setForm((prev) => ({ ...prev, date_end: v })); setAutoSaveStatus('idle') }}
+              placeholder="dd/mm/aaaa"
+              hasError={!!fieldError('date_end')}
             />
             {fieldError('date_end') && (
               <p className="text-xs text-destructive mt-1">{fieldError('date_end')}</p>
@@ -389,37 +391,31 @@ export function ActivityFormPage() {
             <label htmlFor="status" className={labelClass}>
               Status
             </label>
-            <select
+            <Select
               id="status"
               name="status"
               value={form.status}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              onChange={(v) => { setForm((prev) => ({ ...prev, status: v })); setAutoSaveStatus('idle') }}
+              options={STATUSES.map((s) => ({ value: s, label: s }))}
+              placeholder="Selecione"
+            />
           </div>
 
           <div>
             <label htmlFor="attendance_type" className={labelClass}>
               Tipo de Atendimento
             </label>
-            <select
+            <Select
               id="attendance_type"
               name="attendance_type"
               value={form.attendance_type}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              <option value="">
-                {profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione'}
-              </option>
-              {ATTENDANCE_TYPES.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
+              onChange={(v) => { setForm((prev) => ({ ...prev, attendance_type: v })); setAutoSaveStatus('idle') }}
+              options={[
+                { value: '', label: profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione' },
+                ...ATTENDANCE_TYPES.map((a) => ({ value: a, label: a })),
+              ]}
+              placeholder={profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione'}
+            />
           </div>
 
           <div>

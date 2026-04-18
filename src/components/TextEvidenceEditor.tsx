@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import CharacterCount from '@tiptap/extension-character-count'
@@ -56,6 +57,13 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
       onChange(editor.getHTML())
     },
   })
+
+  // Sync content prop into editor when it changes (e.g. opening a different evidence)
+  useEffect(() => {
+    if (editor && content !== undefined && editor.getHTML() !== content) {
+      editor.commands.setContent(content)
+    }
+  }, [content, editor])
 
   if (!editor) return null
 

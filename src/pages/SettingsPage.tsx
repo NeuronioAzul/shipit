@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ThemeSelector } from '../components/ThemeSelector'
+import { Select } from '../components/Select'
+import { TimePicker } from '../components/TimePicker'
 import type { AppSettings, UpdateStatusData } from '../vite-env'
 
 export function SettingsPage() {
@@ -235,18 +237,18 @@ export function SettingsPage() {
             Escolha um som para os alertas de lembrete do relatório.
           </p>
           <div className="flex items-center gap-2 mb-3">
-            <select
-              value={selectedSound}
-              onChange={(e) => handleSelectSound(e.target.value)}
-              className="cyber-input flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg"
-            >
-              <option value="">Sem som</option>
-              {sounds.map((s) => (
-                <option key={s} value={s}>
-                  {s.replace('.mp3', '').replace(/-/g, ' ')}
-                </option>
-              ))}
-            </select>
+            <div className="flex-1">
+              <Select
+                value={selectedSound}
+                onChange={(v) => handleSelectSound(v)}
+                options={[
+                  { value: '', label: 'Sem som' },
+                  ...sounds.map((s) => ({ value: s, label: s.replace('.mp3', '').replace(/-/g, ' ') })),
+                ]}
+                placeholder="Sem som"
+                size="sm"
+              />
+            </div>
             {selectedSound && (
               <button
                 onClick={() => handlePlaySound(selectedSound)}
@@ -277,7 +279,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={autoLaunch}
               onChange={handleToggleAutoLaunch}
-              className="accent-accent w-4 h-4"
+              className="cyberpunk-input accent-accent w-4 h-4"
             />
             <div>
               <span className="text-sm">Iniciar com o sistema</span>
@@ -340,12 +342,10 @@ export function SettingsPage() {
               {/* Horário */}
               <div>
                 <label className="text-sm font-medium mb-1 block">Horário do alerta</label>
-                <input
+                <TimePicker
                   id="settings-alerts-time"
-                  type="time"
                   value={alertTime}
-                  onChange={(e) => setAlertTime(e.target.value)}
-                  className="cyber-input px-3 py-2 text-foreground text-sm border border-border rounded-lg"
+                  onChange={(v) => setAlertTime(v)}
                 />
               </div>
 
@@ -367,7 +367,7 @@ export function SettingsPage() {
                   type="checkbox"
                   checked={alertSoundEnabled}
                   onChange={(e) => setAlertSoundEnabled(e.target.checked)}
-                  className="accent-accent w-4 h-4"
+                  className="cyber-input accent-accent w-4 h-4"
                 />
                 <span className="text-sm">Tocar som ao alertar</span>
               </label>
