@@ -67,6 +67,7 @@ export function TextEvidenceModal({
 
   return (
     <div
+      id="text-evidence-modal"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
       role="dialog"
@@ -78,12 +79,13 @@ export function TextEvidenceModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div id="text-evidence-modal-header" className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 id="text-evidence-modal-title" className="text-lg font-semibold flex items-center gap-2">
             <i className="fa-solid fa-file-lines text-primary" aria-hidden="true"></i>
             {TITLES[mode]}
           </h2>
           <button
+            id="text-evidence-modal-btn-close"
             type="button"
             onClick={onClose}
             className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
@@ -94,7 +96,7 @@ export function TextEvidenceModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1">
+        <div id="text-evidence-modal-body" className="px-6 py-4 space-y-4 overflow-y-auto flex-1">
           {/* Caption */}
           {!isReadOnly ? (
             <div>
@@ -135,8 +137,9 @@ export function TextEvidenceModal({
 
         {/* Footer */}
         {!isReadOnly && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
+          <div id="text-evidence-modal-footer" className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
             <button
+              id="text-evidence-modal-btn-cancel"
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer"
@@ -144,6 +147,7 @@ export function TextEvidenceModal({
               Cancelar
             </button>
             <button
+              id="text-evidence-modal-btn-save"
               type="button"
               onClick={handleSave}
               disabled={!canSave}

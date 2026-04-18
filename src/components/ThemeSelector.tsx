@@ -52,13 +52,13 @@ export function ThemeSelector() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <div className="space-y-5">
+    <div id="theme-selector" className="space-y-5">
       {THEME_CATEGORIES.map((category) => {
         const themes = getThemesByCategory(category.id)
         return (
-          <div key={category.id}>
+          <div key={category.id} id={`theme-selector-category-${category.id}`}>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{category.label}</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div id={`theme-selector-grid-${category.id}`} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {themes.map((t) => (
                 <ThemeCard
                   key={t.id}

@@ -37,9 +37,10 @@ export function ActivityNav({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div id="activity-nav" className="flex items-center justify-between gap-3">
       {/* Previous */}
       <button
+        id="activity-nav-btn-prev"
         disabled={!prev}
         onClick={() => prev && navigate(`/activities/${prev.id}`)}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors
@@ -57,8 +58,9 @@ export function ActivityNav({
       </button>
 
       {/* Mode toggle */}
-      <div className="flex items-center gap-1 shrink-0 bg-muted rounded-lg p-0.5">
+      <div id="activity-nav-mode-toggle" className="flex items-center gap-1 shrink-0 bg-muted rounded-lg p-0.5">
         <button
+          id="activity-nav-btn-month"
           onClick={() => onNavModeChange('month')}
           className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
             effectiveMode === 'month'
@@ -72,6 +74,7 @@ export function ActivityNav({
           Mês
         </button>
         <button
+          id="activity-nav-btn-scope"
           onClick={() => !scopeDisabled && onNavModeChange('scope')}
           disabled={scopeDisabled}
           className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer
@@ -90,6 +93,7 @@ export function ActivityNav({
 
       {/* Next */}
       <button
+        id="activity-nav-btn-next"
         disabled={!next}
         onClick={() => next && navigate(`/activities/${next.id}`)}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors

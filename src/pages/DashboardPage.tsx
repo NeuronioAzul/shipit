@@ -107,10 +107,11 @@ export function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="dashboard-header" className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-3">
           <button
+            id="dashboard-btn-new"
             onClick={() => navigate(`/activities/new?month=${monthRef}`)}
             className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
               hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
@@ -123,19 +124,21 @@ export function DashboardPage() {
 
       {/* Month selector */}
 
-      <div className="relative flex items-center justify-center mb-6 select-none">
+      <div id="dashboard-month-selector" className="relative flex items-center justify-center mb-6 select-none">
         <div className="flex items-center gap-2">
           <button
+            id="dashboard-btn-prev-month"
             onClick={() => changeMonth(-1)}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="Mês anterior"
           >
             <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
           </button>
-          <span className="text-lg font-medium capitalize min-w-48 text-center">
+          <span id="dashboard-month-label" className="text-lg font-medium capitalize min-w-48 text-center">
             {monthName}
           </span>
           <button
+            id="dashboard-btn-next-month"
             onClick={() => changeMonth(1)}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="Próximo mês"
@@ -158,7 +161,7 @@ export function DashboardPage() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-6">
+        <div id="dashboard-loading" className="space-y-6">
           <SkeletonStats />
           <div className="bg-card border border-border rounded-lg p-4">
             <Skeleton className="h-5 w-40 mb-4" />
@@ -189,7 +192,7 @@ export function DashboardPage() {
 
           {/* Incomplete warning */}
           {incompletas > 0 && (
-            <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-warning flex items-center gap-2 text-sm">
+            <div id="dashboard-warning" className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-warning flex items-center gap-2 text-sm">
               <i className="fa-solid fa-triangle-exclamation"></i>
               <span>
                 {incompletas} atividade{incompletas > 1 ? 's' : ''} com campos obrigatórios não preenchidos.
@@ -200,7 +203,7 @@ export function DashboardPage() {
 
           {/* Gantt chart */}
           {activities.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-4 mb-6 overflow-x-auto">
+            <div id="dashboard-gantt" className="bg-card border border-border rounded-lg p-4 mb-6 overflow-x-auto">
               <h2 className="text-sm font-semibold text-muted-foreground mb-3">
                 <i className="fa-solid fa-chart-gantt mr-1"></i>
                 Linha do Tempo
@@ -349,7 +352,7 @@ export function DashboardPage() {
 
           {/* Generate report button */}
           {activities.length > 0 && (
-            <div className="flex flex-col items-center gap-3">
+            <div id="dashboard-report" className="flex flex-col items-center gap-3">
               {/* Report result feedback */}
               {reportResult && (
                 <div

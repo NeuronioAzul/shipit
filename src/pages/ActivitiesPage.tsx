@@ -264,7 +264,7 @@ export function ActivitiesPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="activities-header" className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/')}
@@ -308,7 +308,7 @@ export function ActivitiesPage() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="bg-card border border-border rounded-lg p-4 mb-4 space-y-3">
+        <div id="activities-filters" className="bg-card border border-border rounded-lg p-4 mb-4 space-y-3">
           <div>
             <h3>Filtros</h3>
           </div>
@@ -433,7 +433,7 @@ export function ActivitiesPage() {
 
       {/* Empty state */}
       {!loading && filteredActivities.length === 0 && (
-        <div className="text-center py-16">
+        <div id="activities-empty" className="text-center py-16">
           <i className={`fa-solid ${hasActiveFilters ? 'fa-filter-circle-xmark' : 'fa-clipboard-list'} text-5xl text-muted-foreground/30 mb-4`}></i>
           <p className="text-muted-foreground text-lg">
             {hasActiveFilters
@@ -465,7 +465,7 @@ export function ActivitiesPage() {
       {!loading && filteredActivities.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={filteredActivities.map(a => a.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
+            <div id="activities-list" className="space-y-3">
               {filteredActivities.map((activity, idx) => (
                 <SortableActivityItem
                   key={activity.id}
@@ -482,7 +482,7 @@ export function ActivitiesPage() {
 
       {/* Delete confirmation modal */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="alertdialog" aria-modal="true" aria-labelledby="delete-activity-title">
+        <div id="activities-delete-modal" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="alertdialog" aria-modal="true" aria-labelledby="delete-activity-title">
           <div className="bg-card border border-border rounded-lg p-6 max-w-sm mx-4 shadow-2xl animate-modal-in">
             <h3 id="delete-activity-title" className="text-lg font-semibold mb-2">Excluir Atividade</h3>
             <p className="text-muted-foreground mb-4">

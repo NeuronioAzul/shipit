@@ -107,7 +107,7 @@ export function TrashPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between gap-3 mb-6">
+      <div id="trash-header" className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -130,6 +130,7 @@ export function TrashPage() {
 
         {evidences.length > 0 && (
           <button
+            id="trash-btn-empty"
             onClick={() => setConfirmEmpty(true)}
             disabled={emptyingTrash}
             className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -181,7 +182,7 @@ export function TrashPage() {
 
       {/* Evidences grid */}
       {!loading && evidences.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="trash-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {evidences.map((ev) => {
             const daysLeft = getDaysUntilPermanentDelete(ev.deleted_at)
             const isExpiringSoon = daysLeft <= 7
@@ -280,6 +281,7 @@ export function TrashPage() {
       {/* Confirm permanent delete modal */}
       {confirmDelete && (
         <div
+          id="trash-delete-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmDelete(null)}
           role="alertdialog" aria-modal="true" aria-labelledby="trash-delete-title"
@@ -316,6 +318,7 @@ export function TrashPage() {
       {/* Confirm empty trash modal */}
       {confirmEmpty && (
         <div
+          id="trash-empty-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmEmpty(false)}
           role="alertdialog" aria-modal="true" aria-labelledby="trash-empty-title"

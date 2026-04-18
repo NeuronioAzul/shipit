@@ -371,11 +371,12 @@ export function ActivityDetailPage() {
   const links = parseLinks(activity.link_ref)
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div id="activity-detail" className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="activity-detail-header" className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
+            id="activity-detail-btn-back"
             onClick={() => navigate(`/activities?month=${activity.month_reference}`)}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
@@ -386,6 +387,7 @@ export function ActivityDetailPage() {
           <h1 className="text-2xl font-bold">Detalhes da Atividade</h1>
         </div>
         <button
+          id="activity-detail-btn-edit"
           onClick={() => navigate(`/activities/${activity.id}/edit`)}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-lg
             hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
@@ -397,7 +399,7 @@ export function ActivityDetailPage() {
 
       {/* Top navigation */}
       {siblings.length > 1 && (
-        <div className="mb-4">
+        <div id="activity-detail-nav" className="mb-4">
           <ActivityNav
             siblings={siblings}
             currentId={activity.id}
@@ -409,7 +411,7 @@ export function ActivityDetailPage() {
       )}
 
       {/* Info card */}
-      <div className="bg-card border border-border rounded-lg p-6 space-y-5">
+      <div id="activity-detail-info" className="bg-card border border-border rounded-lg p-6 space-y-5">
         {/* Status + Period */}
         <div className="flex flex-wrap items-center gap-4">
           <span
@@ -475,6 +477,7 @@ export function ActivityDetailPage() {
 
         {/* Evidences */}
         <div
+          id="activity-detail-evidence"
           onDragOver={(e) => { e.preventDefault(); setDropActive(true) }}
           onDragLeave={() => setDropActive(false)}
           onDrop={handleFileDrop}
@@ -527,7 +530,7 @@ export function ActivityDetailPage() {
             <>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEvidenceDragEnd}>
                 <SortableContext items={activity.evidences.map(e => e.id)} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div id="activity-detail-evidence-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {activity.evidences.map((ev) => {
                       const imageEvidences = activity.evidences!.filter(e => e.type !== 'text')
                       return (
@@ -623,6 +626,7 @@ export function ActivityDetailPage() {
       {/* Confirm delete modal */}
       {confirmDelete && (
         <div
+          id="activity-detail-delete-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmDelete(null)}
           role="alertdialog" aria-modal="true" aria-labelledby="detail-delete-title"

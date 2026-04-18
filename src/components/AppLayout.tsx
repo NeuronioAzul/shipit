@@ -6,7 +6,7 @@ export function AppLayout() {
   const location = useLocation()
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div id="app-layout" className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Title bar - fixed at top */}
       <TitleBar />
       
@@ -16,8 +16,10 @@ export function AppLayout() {
         <ActivityBar />
         
         {/* Scrollable content */}
-        <main key={location.pathname} className="flex-1 overflow-auto p-6 animate-page-in">
-          <Outlet />
+        <main id="app-main" key={location.pathname} className="flex-1 overflow-auto p-6 animate-page-in">
+          <div id="app-content">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

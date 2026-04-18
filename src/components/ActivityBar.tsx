@@ -6,6 +6,7 @@ interface NavItem {
   icon: string
   title: string
   badge?: number
+  id: string
 }
 
 export function ActivityBar() {
@@ -27,24 +28,25 @@ export function ActivityBar() {
   }, [loadTrashCount])
 
   const mainNav: NavItem[] = [
-    { to: '/', icon: 'fa-chart-line', title: 'Dashboard' },
-    { to: '/activities', icon: 'fa-list-check', title: 'Atividades' },
-    { to: '/profile', icon: 'fa-user', title: 'Perfil' },
+    { to: '/', icon: 'fa-chart-line', title: 'Dashboard', id: 'sidebar-link-dashboard' },
+    { to: '/activities', icon: 'fa-list-check', title: 'Atividades', id: 'sidebar-link-activities' },
+    { to: '/profile', icon: 'fa-user', title: 'Perfil', id: 'sidebar-link-profile' },
   ]
 
   const bottomNav: NavItem[] = [
-    { to: '/trash', icon: 'fa-trash-can', title: 'Lixeira', badge: trashCount },
-    { to: '/settings', icon: 'fa-gear', title: 'Configurações' },
+    { to: '/trash', icon: 'fa-trash-can', title: 'Lixeira', badge: trashCount, id: 'sidebar-link-trash' },
+    { to: '/settings', icon: 'fa-gear', title: 'Configurações', id: 'sidebar-link-settings' },
   ]
 
   return (
     <>
-      <aside className="w-12 bg-activitybar flex flex-col items-center py-2 shrink-0">
+      <aside id="sidebar" className="w-12 bg-activitybar flex flex-col items-center py-2 shrink-0">
         {/* Main navigation */}
-        <nav className="flex-1 flex flex-col items-center gap-1">
+        <nav id="sidebar-nav-main" className="flex-1 flex flex-col items-center gap-1">
           {mainNav.map((item) => (
             <NavLink
               key={item.to}
+              id={item.id}
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
@@ -68,10 +70,11 @@ export function ActivityBar() {
         </nav>
 
         {/* Bottom navigation */}
-        <nav className="flex flex-col items-center gap-1 pb-1">
+        <nav id="sidebar-nav-bottom" className="flex flex-col items-center gap-1 pb-1">
           {bottomNav.map((item) => (
             <NavLink
               key={item.to}
+              id={item.id}
               to={item.to}
               className={({ isActive }) =>
                 `w-12 h-12 flex items-center justify-center relative transition-colors ${
@@ -85,7 +88,7 @@ export function ActivityBar() {
             >
               <i className={`fa-solid ${item.icon} text-xl`} aria-hidden="true"></i>
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="absolute top-1.5 right-1.5 bg-accent text-accent-foreground text-[9px] font-bold min-w-3.5 h-3.5 flex items-center justify-center rounded-full px-0.5">
+                <span id={item.to === '/trash' ? 'sidebar-trash-badge' : undefined} className="absolute top-1.5 right-1.5 bg-accent text-accent-foreground text-[9px] font-bold min-w-3.5 h-3.5 flex items-center justify-center rounded-full px-0.5">
                   {item.badge > 99 ? '99+' : item.badge}
                 </span>
               )}
@@ -94,6 +97,7 @@ export function ActivityBar() {
           
           {/* About button */}
           <button
+            id="sidebar-btn-about"
             onClick={() => setShowAbout(true)}
             className="w-12 h-12 flex items-center justify-center text-activitybar-foreground hover:text-activitybar-foreground-active transition-colors cursor-pointer"
             title="Sobre o ShipIt!"
@@ -126,7 +130,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-sidebar">
+    <div id="sidebar-about-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-sidebar">
       <div
         className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-md w-full mx-4 animate-modal-in"
         onClick={(e) => e.stopPropagation()}

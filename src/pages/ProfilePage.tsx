@@ -147,8 +147,9 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
+      <div id="profile-header" className="flex items-center gap-3 mb-6">
         <button
+          id="profile-btn-edit"
           onClick={() => navigate('/')}
           className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           title="Voltar"
@@ -162,7 +163,7 @@ export function ProfilePage() {
       </div>
 
       {errors.length > 0 && (
-        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
+        <div id="profile-errors" className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
           <div className="flex items-center gap-2 font-medium mb-1">
             <i className="fa-solid fa-triangle-exclamation"></i>
             <span>Preencha os campos obrigatórios:</span>
@@ -175,7 +176,7 @@ export function ProfilePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="profile-form" onSubmit={handleSubmit} className="space-y-5">
         {/* Nome Completo */}
         <div>
           <label htmlFor="full_name" className={labelClass}>
@@ -359,6 +360,7 @@ export function ProfilePage() {
         {/* Submit */}
         <div className="flex gap-3 pt-2">
           <button
+            id="profile-btn-submit"
             type="submit"
             disabled={saving}
             className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
@@ -380,6 +382,7 @@ export function ProfilePage() {
           </button>
 
           <button
+            id="profile-btn-cancel"
             type="button"
             onClick={() => navigate('/')}
             className="px-6 py-2.5 border border-border text-foreground rounded-lg

@@ -63,9 +63,9 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
   const isNearLimit = charCount > MAX_CHARS * 0.9
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
+    <div id="text-evidence-editor" className="border border-border rounded-lg overflow-hidden bg-card">
       {!readOnly && (
-        <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/30">
+        <div id="text-evidence-editor-toolbar" className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/30">
           <ToolbarButton
             active={editor.isActive('bold')}
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -93,7 +93,8 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
           />
         </div>
       )}
-      <EditorContent
+      <div id="text-evidence-editor-content">
+        <EditorContent
         editor={editor}
         className="cyber-input prose prose-sm max-w-none p-3 min-h-[150px] max-h-[400px] overflow-y-auto
           text-foreground [&_.tiptap]:outline-none [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted-foreground
@@ -102,8 +103,9 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
           [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-6 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-6
           [&_.tiptap_li]:my-1 [&_.tiptap_p]:my-1 [&_.tiptap_strong]:font-bold [&_.tiptap_em]:italic"
       />
+      </div>
       {!readOnly && (
-        <div className={`px-3 py-1.5 border-t border-border text-xs text-right ${
+        <div id="text-evidence-editor-counter" className={`px-3 py-1.5 border-t border-border text-xs text-right ${
           isNearLimit ? 'text-destructive font-medium' : 'text-muted-foreground'
         }`}>
           {charCount} / {MAX_CHARS}

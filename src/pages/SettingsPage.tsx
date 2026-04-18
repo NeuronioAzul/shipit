@@ -158,7 +158,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div id="settings" className="max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/')}
@@ -173,7 +173,7 @@ export function SettingsPage() {
 
       <div className="space-y-6">
         {/* Aparência */}
-        <section className="bg-card border border-border rounded-lg p-5">
+        <section id="settings-theme-section" className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <i className="fa-solid fa-palette text-primary"></i>
             Aparência
@@ -182,7 +182,7 @@ export function SettingsPage() {
         </section>
 
         {/* Diretório de Relatórios */}
-        <section className="bg-card border border-border rounded-lg p-5">
+        <section id="settings-reports-section" className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <i className="fa-solid fa-folder-open text-primary"></i>
             Diretório de Relatórios
@@ -199,6 +199,7 @@ export function SettingsPage() {
               title={reportsDir}
             />
             <button
+              id="settings-reports-btn-select"
               onClick={handleSelectDir}
               className="cyber-button px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
             >
@@ -209,6 +210,7 @@ export function SettingsPage() {
           <div className="flex items-center gap-3">
             {reportsDir !== defaultDir && (
               <button
+                id="settings-reports-btn-reset"
                 onClick={handleResetDir}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer underline"
               >
@@ -224,7 +226,7 @@ export function SettingsPage() {
         </section>
 
         {/* Link para Perfil */}
-        <section className="bg-card border border-border rounded-lg p-5">
+        <section id="settings-sounds-section" className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <i className="fa-solid fa-volume-high text-primary"></i>
             Som de Notificação
@@ -264,13 +266,14 @@ export function SettingsPage() {
         </section>
 
         {/* Comportamento */}
-        <section className="bg-card border border-border rounded-lg p-5">
+        <section id="settings-autolaunch-section" className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <i className="fa-solid fa-sliders text-primary"></i>
             Comportamento
           </h2>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
+              id="settings-autolaunch-toggle"
               type="checkbox"
               checked={autoLaunch}
               onChange={handleToggleAutoLaunch}
@@ -286,7 +289,7 @@ export function SettingsPage() {
         </section>
 
         {/* Notificações */}
-        <section className="bg-card border border-border rounded-lg p-5">
+        <section id="settings-alerts-section" className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <i className="fa-solid fa-bell text-primary"></i>
             Notificações
@@ -295,6 +298,7 @@ export function SettingsPage() {
           {/* Toggle principal */}
           <label className="flex items-center gap-3 cursor-pointer mb-4">
             <input
+              id="settings-alerts-toggle"
               type="checkbox"
               checked={alertEnabled}
               onChange={(e) => setAlertEnabled(e.target.checked)}
@@ -311,7 +315,7 @@ export function SettingsPage() {
           {alertEnabled && (
             <div className="space-y-4 pl-1">
               {/* Dias de antecedência */}
-              <div>
+              <div id="settings-alerts-days">
                 <label className="text-sm font-medium mb-2 block">Dias antes do fim do mês</label>
                 <div className="flex flex-wrap gap-2">
                   {AVAILABLE_DAYS.map((day) => (
@@ -337,6 +341,7 @@ export function SettingsPage() {
               <div>
                 <label className="text-sm font-medium mb-1 block">Horário do alerta</label>
                 <input
+                  id="settings-alerts-time"
                   type="time"
                   value={alertTime}
                   onChange={(e) => setAlertTime(e.target.value)}
@@ -358,6 +363,7 @@ export function SettingsPage() {
               {/* Som habilitado */}
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
+                  id="settings-alerts-sound-toggle"
                   type="checkbox"
                   checked={alertSoundEnabled}
                   onChange={(e) => setAlertSoundEnabled(e.target.checked)}
@@ -369,6 +375,7 @@ export function SettingsPage() {
               {/* Botão salvar */}
               <div className="flex items-center gap-3">
                 <button
+                  id="settings-alerts-btn-save"
                   onClick={handleSaveAlert}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
                 >
@@ -404,7 +411,7 @@ export function SettingsPage() {
         </section>
 
         {/* Atualizações */}
-        <section className="bg-card border border-border rounded-lg p-5">
+        <section id="settings-update-section" className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <i className="fa-solid fa-download text-primary"></i>
             Atualizações
@@ -417,6 +424,7 @@ export function SettingsPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <button
+                  id="settings-update-btn-check"
                   onClick={handleCheckForUpdate}
                   disabled={updateStatus.status === 'checking' || updateStatus.status === 'available'}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -426,6 +434,7 @@ export function SettingsPage() {
                 </button>
                 {updateStatus.status === 'downloaded' && (
                   <button
+                    id="settings-update-btn-install"
                     onClick={handleInstallUpdate}
                     className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
                   >
@@ -472,7 +481,7 @@ export function SettingsPage() {
               gera o relatório pronto com um clique. Simples assim.
             </p>
             {version && (
-              <p>
+              <p id="settings-version">
                 <span className="text-foreground font-medium">Versão</span> {version}
               </p>
             )}

@@ -266,9 +266,10 @@ export function ActivityFormPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="activity-form-header" className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
+            id="activity-form-btn-back"
             onClick={() => navigate(`/activities?month=${form.month_reference}`)}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
@@ -283,7 +284,7 @@ export function ActivityFormPage() {
 
         {/* Auto-save indicator */}
         {autoSaveStatus === 'saving' && (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <span id="activity-form-autosave" className="text-xs text-muted-foreground flex items-center gap-1">
             <i className="fa-solid fa-spinner fa-spin text-[10px]"></i>
             Salvando...
           </span>
@@ -297,7 +298,7 @@ export function ActivityFormPage() {
       </div>
 
       {errors.length > 0 && (
-        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
+        <div id="activity-form-errors" className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
           <div className="flex items-center gap-2 font-medium mb-1">
             <i className="fa-solid fa-triangle-exclamation"></i>
             <span>Preencha os campos obrigatórios:</span>
@@ -310,7 +311,7 @@ export function ActivityFormPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="activity-form" onSubmit={handleSubmit} className="space-y-5">
         {/* Descrição */}
         <div>
           <label htmlFor="description" className={labelClass}>
@@ -481,7 +482,7 @@ export function ActivityFormPage() {
 
         {/* Evidências — só mostra se tiver activityId (precisa salvar a atividade primeiro) */}
         {activityId ? (
-          <div>
+          <div id="activity-form-evidence">
             <label className={labelClass}>Evidências (Prints)</label>
             <EvidenceUpload
               activityId={activityId}
@@ -504,6 +505,7 @@ export function ActivityFormPage() {
         {/* Submit */}
         <div className="flex gap-3 pt-2">
           <button
+            id="activity-form-btn-submit"
             type="submit"
             disabled={saving}
             className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg

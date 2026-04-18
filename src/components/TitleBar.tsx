@@ -19,11 +19,12 @@ export function TitleBar() {
 
   return (
     <div 
+      id="titlebar"
       className="h-13.25 bg-titlebar flex items-center justify-between select-none shrink-0"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* Left: Full Logo */}
-      <div className="flex items-center pl-3">
+      <div id="titlebar-logo" className="flex items-center pl-3">
         <img
           src="./assets/images/logo-composto-colorido.svg"
           alt="ShipIt!"
@@ -37,6 +38,7 @@ export function TitleBar() {
 
       {/* Center: Search Bar */}
       <div
+        id="titlebar-search"
         className="flex-1 flex justify-center"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
@@ -45,11 +47,13 @@ export function TitleBar() {
 
       {/* Right: Window Controls */}
       <div 
+        id="titlebar-controls"
         className="flex items-center h-full"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         {/* Minimize */}
         <button
+          id="titlebar-btn-minimize"
           onClick={handleMinimize}
           className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-white/10 transition-colors"
           title="Minimizar"
@@ -62,6 +66,7 @@ export function TitleBar() {
 
         {/* Maximize/Restore */}
         <button
+          id="titlebar-btn-maximize"
           onClick={handleMaximize}
           className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-white/10 transition-colors"
           title={isMaximized ? 'Restaurar' : 'Maximizar'}
@@ -83,6 +88,7 @@ export function TitleBar() {
 
         {/* Close */}
         <button
+          id="titlebar-btn-close"
           onClick={handleClose}
           className="h-full w-12 flex items-center justify-center text-titlebar-foreground/70 hover:bg-destructive hover:text-destructive-foreground transition-colors"
           title="Fechar"

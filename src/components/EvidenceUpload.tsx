@@ -421,9 +421,10 @@ export function EvidenceUpload({
   }
 
   return (
-    <div className="space-y-4">
+    <div id="evidence-upload" className="space-y-4">
       {/* Drop zone */}
       <div
+        id="evidence-upload-dropzone"
         ref={dropRef}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -467,6 +468,7 @@ export function EvidenceUpload({
 
       {/* Hidden file input (browser fallback) */}
       <input
+        id="evidence-upload-file-input"
         ref={fileInputRef}
         type="file"
         accept="image/*"
@@ -479,7 +481,7 @@ export function EvidenceUpload({
       {evidences.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={evidences.map(e => e.id)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div id="evidence-upload-grid" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {evidences.map((evidence) => (
                 <SortableEvidenceCard
                   key={evidence.id}

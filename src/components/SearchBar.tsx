@@ -124,10 +124,11 @@ export function SearchBar() {
   }
 
   return (
-    <div ref={containerRef} className="relative flex-1 max-w-md mx-4">
+    <div id="searchbar" ref={containerRef} className="relative flex-1 max-w-md mx-4">
       <div className="relative">
         <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs pointer-events-none"></i>
         <input
+          id="searchbar-input"
           ref={inputRef}
           type="text"
           value={query}
@@ -138,15 +139,15 @@ export function SearchBar() {
           className="w-full pl-8 pr-3 py-1.5 text-sm bg-titlebar-search text-titlebar-foreground placeholder:text-muted-foreground/50 border border-border/30 rounded-md focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
         />
         {loading && (
-          <i className="fa-solid fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs"></i>
+          <i id="searchbar-icon" className="fa-solid fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs"></i>
         )}
       </div>
 
       {/* Results dropdown */}
       {isOpen && (query.trim().length >= 2) && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto">
+        <div id="searchbar-results" className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto">
           {results.length === 0 && !loading && (
-            <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+            <div id="searchbar-empty" className="px-4 py-3 text-sm text-muted-foreground text-center">
               Nenhuma atividade encontrada.
             </div>
           )}
