@@ -256,6 +256,76 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;')
 }
 
+/**
+ * Convert TipTap HTML content to OpenXML paragraphs for text evidence pages.
+ */
+function htmlToWordXml(html: string): string {
+  if (!html) return ''
+  const paragraphs: string[] = []
+  // Split by block elements: <p>, <li>, <ul>, <ol>
+  // Simple conversion: strip tags, keep bold/italic inline formatting
+  const blocks = html.split(/<\/(?:p|li)>/).filter(b => b.trim())
+
+  for (const block of blocks) {
+    let cleaned = block.replace(/<(?:p|li|ul|ol)[^>]*>/g, '')
+    // Check if this is a list item (was preceded by <li>)
+    const isBullet = block.includes('<li')
+
+    const runs: string[] = []
+    // Process inline formatting
+    const parts = cleaned.split(/(<\/?(?:strong|b|em|i)>)/)
+    let bold = false
+    let italic = false
+
+    for (const part of parts) {
+      if (part === '<strong>' || part === '<b>') { bold = true; continue }
+      if (part === '</strong>' || part === '</b>') { bold = false; continue }
+      if (part === '<em>' || part === '<i>') { italic = true; continue }
+      if (part === '</em>' || part === '</i>') { italic = false; continue }
+      // Strip any remaining tags
+      const text = part.replace(/<[^>]*>/g, '').trim()
+      if (!text) continue
+      let rPr = '<w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/>'
+      if (bold) rPr += '<w:b/>'
+      if (italic) rPr += '<w:i/>'
+      rPr += '</w:rPr>'
+      runs.push(`<w:r>${rPr}<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`)
+    }
+
+    if (runs.length === 0) continue
+
+    const prefix = isBullet
+      ? `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">• </w:t></w:r>`
+      : ''
+
+    paragraphs.push(
+      `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:spacing w:after="60"/></w:pPr>${prefix}${runs.join('')}</w:p>`
+    )
+  }
+
+  return paragraphs.join('')
+}
+
+function buildTextEvidencePageXml(
+  bookmarkId: number,
+  bookmarkName: string,
+  htmlContent: string,
+  caption: string,
+  evidenceIdx: number
+): string {
+  const contentXml = htmlToWordXml(htmlContent)
+  // Page break + bookmark start + bordered text box + caption + bookmark end
+  return `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/></w:pPr><w:r><w:br w:type="page"/></w:r></w:p>` +
+    `<w:bookmarkStart xmlns:w="${W_NS}" w:id="${bookmarkId}" w:name="${bookmarkName}"/>` +
+    // Title paragraph
+    `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:spacing w:after="120"/></w:pPr>` +
+    `<w:r><w:rPr><w:b/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>` +
+    `<w:t xml:space="preserve">${escapeXml(caption)}</w:t></w:r></w:p>` +
+    // Text content paragraphs
+    contentXml +
+    `<w:bookmarkEnd xmlns:w="${W_NS}" w:id="${bookmarkId}"/>`
+}
+
 // ─── Main generator ───
 
 export async function generateDocxReport(payload: ReportPayload): Promise<{ filePath: string; reportName: string }> {
@@ -453,9 +523,24 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
         const evidences = (act.evidences || []).sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0))
         for (let i = 0; i < evidences.length; i++) {
           const ev = evidences[i]
+
+          const bmId = bookmarkIdCounter++
+          const bmName = `ev_${act.id.replace(/-/g, '')}_${i}`
+          const caption = ev.caption || `Evidência ${evidenceGlobalIdx + 1}`
+
+          // Text evidence — render as formatted text page
+          if (ev.type === 'text') {
+            evidenceFragments.push(
+              buildTextEvidencePageXml(bmId, bmName, ev.text_content || '', caption, evidenceGlobalIdx)
+            )
+            evidenceGlobalIdx++
+            continue
+          }
+
+          // Image evidence
           const filePath = ev.file_path
 
-          if (!fs.existsSync(filePath)) continue
+          if (!filePath || !fs.existsSync(filePath)) continue
 
           // Read image and add to zip
           const imgBuf = fs.readFileSync(filePath)
@@ -476,10 +561,6 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
           const { cx, cy } = dims ? fitToPage(dims.width, dims.height) : { cx: 5_000_000, cy: 3_500_000 }
 
           // Build evidence page
-          const bmId = bookmarkIdCounter++
-          const bmName = `ev_${act.id.replace(/-/g, '')}_${i}`
-          const caption = ev.caption || `Evidência ${evidenceGlobalIdx + 1}`
-
           evidenceFragments.push(
             buildEvidencePageXml(bmId, bmName, rId, cx, cy, caption, evidenceGlobalIdx)
           )

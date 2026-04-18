@@ -24,6 +24,8 @@ export interface ElectronAPI {
   permanentlyDeleteEvidence: (id: string) => Promise<boolean>
   getEvidenceFilePath: (id: string) => Promise<string | null>
   reorderEvidences: (items: { id: string; sort_index: number }[]) => Promise<void>
+  saveTextEvidence: (activityId: string, textContent: string, caption: string | null) => Promise<EvidenceData>
+  updateTextEvidence: (id: string, textContent: string) => Promise<EvidenceData | null>
 
   // Reports
   generateReport: (monthReference: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
@@ -98,6 +100,7 @@ export interface UserProfileData {
 
 export type ActivityStatus = 'Em andamento' | 'Concluído' | 'Cancelado' | 'Pendente'
 export type AttendanceType = 'Presencial' | 'Remoto' | 'Híbrido'
+export type EvidenceType = 'image' | 'text'
 
 export interface ActivityData {
   id: string
@@ -117,7 +120,9 @@ export interface ActivityData {
 export interface EvidenceData {
   id: string
   activity_id: string
-  file_path: string
+  type: EvidenceType
+  file_path: string | null
+  text_content: string | null
   caption: string | null
   sort_index: number
   date_added: string

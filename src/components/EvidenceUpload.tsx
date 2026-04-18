@@ -17,6 +17,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
 import { EvidenceLightbox, type LightboxSlide } from './EvidenceLightbox'
+import { TextEvidenceModal } from './TextEvidenceModal'
 
 interface EvidenceUploadProps {
   activityId: string
@@ -25,6 +26,8 @@ interface EvidenceUploadProps {
   onEvidenceDeleted: (id: string) => void
   onCaptionUpdated: (id: string, caption: string) => void
   onReorder?: (evidences: EvidenceData[]) => void
+  onTextEvidenceAdded?: (evidence: EvidenceData) => void
+  onTextEvidenceUpdated?: (id: string, textContent: string) => void
 }
 
 function SortableEvidenceCard({
@@ -37,6 +40,7 @@ function SortableEvidenceCard({
   saveCaption,
   setEditingCaption,
   onClick,
+  onEdit,
 }: {
   evidence: EvidenceData
   onDelete: (id: string) => void
@@ -47,6 +51,7 @@ function SortableEvidenceCard({
   saveCaption: (id: string) => void
   setEditingCaption: (id: string | null) => void
   onClick?: () => void
+  onEdit?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
@@ -59,6 +64,8 @@ function SortableEvidenceCard({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const isText = evidence.type === 'text'
+
   function handleImageDragStart(e: React.DragEvent) {
     e.preventDefault()
     if (handleRef.current) {
@@ -68,32 +75,46 @@ function SortableEvidenceCard({
     }
   }
 
+  function getTextPreview(html: string | null): string {
+    if (!html) return ''
+    return html.replace(/<[^>]*>/g, '').slice(0, 100)
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className="cyber-neon-border p-2 bg-card border border-border rounded-lg overflow-hidden group"
     >
-      {/* Image preview */}
+      {/* Preview area */}
       <div
         className="aspect-video bg-muted flex items-center justify-center overflow-hidden relative cursor-pointer"
         onClick={onClick}
       >
-        <img
-          src={
-            evidence.file_path.startsWith('data:')
-              ? evidence.file_path
-              : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path)}`
-          }
-          alt={evidence.caption || 'Evidência'}
-          className="w-full h-full object-contain"
-          draggable
-          onDragStart={handleImageDragStart}
-          onError={(e) => {
-            ;(e.target as HTMLImageElement).src = ''
-            ;(e.target as HTMLImageElement).style.display = 'none'
-          }}
-        />
+        {isText ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
+            <i className="fa-solid fa-file-lines text-3xl text-primary/60" aria-hidden="true"></i>
+            <p className="text-xs text-muted-foreground line-clamp-3 text-center px-2">
+              {getTextPreview(evidence.text_content) || 'Texto vazio'}
+            </p>
+          </div>
+        ) : (
+          <img
+            src={
+              evidence.file_path?.startsWith('data:')
+                ? evidence.file_path
+                : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path || '')}`
+            }
+            alt={evidence.caption || 'Evidência'}
+            className="w-full h-full object-contain"
+            draggable
+            onDragStart={handleImageDragStart}
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).src = ''
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
+          />
+        )}
         {/* Drag handle */}
         <button
           ref={handleRef}
@@ -107,6 +128,19 @@ function SortableEvidenceCard({
         >
           <i className="fa-solid fa-grip-vertical text-xs" aria-hidden="true"></i>
         </button>
+        {/* Edit button (text evidence only) */}
+        {isText && onEdit && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onEdit() }}
+            className="absolute top-2 right-10 p-1.5 bg-primary/80 text-primary-foreground rounded
+              opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-primary"
+            title="Editar evidência de texto"
+            aria-label="Editar evidência de texto"
+          >
+            <i className="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+          </button>
+        )}
         {/* Delete button */}
         <button
           type="button"
@@ -169,6 +203,8 @@ export function EvidenceUpload({
   onEvidenceDeleted,
   onCaptionUpdated,
   onReorder,
+  onTextEvidenceAdded,
+  onTextEvidenceUpdated,
 }: EvidenceUploadProps) {
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -176,6 +212,9 @@ export function EvidenceUpload({
   const [captionValue, setCaptionValue] = useState('')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [textModalOpen, setTextModalOpen] = useState(false)
+  const [textModalMode, setTextModalMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [textModalEvidence, setTextModalEvidence] = useState<EvidenceData | null>(null)
   const dropRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -323,6 +362,64 @@ export function EvidenceUpload({
     setCaptionValue('')
   }
 
+  // Text evidence modal helpers
+  function openTextModalCreate() {
+    setTextModalMode('create')
+    setTextModalEvidence(null)
+    setTextModalOpen(true)
+  }
+
+  function openTextModalView(evidence: EvidenceData) {
+    setTextModalMode('view')
+    setTextModalEvidence(evidence)
+    setTextModalOpen(true)
+  }
+
+  function openTextModalEdit(evidence: EvidenceData) {
+    setTextModalMode('edit')
+    setTextModalEvidence(evidence)
+    setTextModalOpen(true)
+  }
+
+  async function handleTextModalSave(textContent: string, caption: string | null) {
+    if (textModalMode === 'create') {
+      if (onTextEvidenceAdded) {
+        let evidence: EvidenceData
+        if (window.electronAPI) {
+          evidence = await window.electronAPI.saveTextEvidence(activityId, textContent, caption)
+        } else {
+          evidence = localDb.saveTextEvidence(activityId, textContent, caption)
+        }
+        onTextEvidenceAdded(evidence)
+      }
+    } else if (textModalMode === 'edit' && textModalEvidence && onTextEvidenceUpdated) {
+      if (window.electronAPI) {
+        await window.electronAPI.updateTextEvidence(textModalEvidence.id, textContent)
+      } else {
+        localDb.updateTextEvidence(textModalEvidence.id, textContent)
+      }
+      onTextEvidenceUpdated(textModalEvidence.id, textContent)
+      // Also update caption if changed
+      if (caption !== textModalEvidence.caption) {
+        onCaptionUpdated(textModalEvidence.id, caption || '')
+      }
+    }
+    setTextModalOpen(false)
+  }
+
+  // Lightbox: only image evidences
+  const imageEvidences = evidences.filter(e => e.type !== 'text')
+
+  function handleCardClick(evidence: EvidenceData) {
+    if (evidence.type === 'text') {
+      openTextModalView(evidence)
+    } else {
+      const imgIdx = imageEvidences.findIndex(e => e.id === evidence.id)
+      setLightboxIndex(imgIdx >= 0 ? imgIdx : 0)
+      setLightboxOpen(true)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Drop zone */}
@@ -383,7 +480,7 @@ export function EvidenceUpload({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={evidences.map(e => e.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {evidences.map((evidence, idx) => (
+              {evidences.map((evidence) => (
                 <SortableEvidenceCard
                   key={evidence.id}
                   evidence={evidence}
@@ -394,7 +491,8 @@ export function EvidenceUpload({
                   setCaptionValue={setCaptionValue}
                   saveCaption={saveCaption}
                   setEditingCaption={setEditingCaption}
-                  onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                  onClick={() => handleCardClick(evidence)}
+                  onEdit={evidence.type === 'text' ? () => openTextModalEdit(evidence) : undefined}
                 />
               ))}
             </div>
@@ -402,19 +500,39 @@ export function EvidenceUpload({
         </DndContext>
       )}
 
-      {evidences.length > 0 && (
+      {/* Add text evidence button */}
+      <button
+        type="button"
+        onClick={openTextModalCreate}
+        className="cyber-neon-border w-full border-2 border-dashed border-border rounded-lg p-4 text-center
+          hover:border-primary hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
+      >
+        <i className="fa-solid fa-file-circle-plus"></i>
+        Adicionar Texto como Evidência
+      </button>
+
+      {imageEvidences.length > 0 && (
         <EvidenceLightbox
           open={lightboxOpen}
           index={lightboxIndex}
-          slides={evidences.map((ev): LightboxSlide => ({
-            src: ev.file_path.startsWith('data:')
+          slides={imageEvidences.map((ev): LightboxSlide => ({
+            src: ev.file_path?.startsWith('data:')
               ? ev.file_path
-              : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`,
+              : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
             description: ev.caption || undefined,
           }))}
           onClose={() => setLightboxOpen(false)}
         />
       )}
+
+      <TextEvidenceModal
+        open={textModalOpen}
+        mode={textModalMode}
+        onClose={() => setTextModalOpen(false)}
+        onSave={handleTextModalSave}
+        initialContent={textModalEvidence?.text_content || ''}
+        initialCaption={textModalEvidence?.caption || ''}
+      />
     </div>
   )
 }

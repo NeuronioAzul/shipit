@@ -38,6 +38,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('db:getEvidenceFilePath', id),
   reorderEvidences: (items: { id: string; sort_index: number }[]) =>
     ipcRenderer.invoke('db:reorderEvidences', items),
+  saveTextEvidence: (activityId: string, textContent: string, caption: string | null) =>
+    ipcRenderer.invoke('db:saveTextEvidence', activityId, textContent, caption),
+  updateTextEvidence: (id: string, textContent: string) =>
+    ipcRenderer.invoke('db:updateTextEvidence', id, textContent),
 
   // Dialogs
   selectImages: () => ipcRenderer.invoke('app:selectImages'),

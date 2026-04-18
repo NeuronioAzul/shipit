@@ -227,15 +227,17 @@ export async function deleteEvidence(id: string): Promise<boolean> {
   if (!evidence) return false
 
   // Soft delete: move file to trash directory and mark deleted_at
-  const trashDir = path.join(app.getPath('userData'), 'trash')
-  if (!fs.existsSync(trashDir)) {
-    fs.mkdirSync(trashDir, { recursive: true })
-  }
+  if (evidence.type !== 'text' && evidence.file_path) {
+    const trashDir = path.join(app.getPath('userData'), 'trash')
+    if (!fs.existsSync(trashDir)) {
+      fs.mkdirSync(trashDir, { recursive: true })
+    }
 
-  if (fs.existsSync(evidence.file_path)) {
-    const trashPath = path.join(trashDir, path.basename(evidence.file_path))
-    fs.renameSync(evidence.file_path, trashPath)
-    evidence.file_path = trashPath
+    if (fs.existsSync(evidence.file_path)) {
+      const trashPath = path.join(trashDir, path.basename(evidence.file_path))
+      fs.renameSync(evidence.file_path, trashPath)
+      evidence.file_path = trashPath
+    }
   }
 
   evidence.deleted_at = new Date()
@@ -258,16 +260,18 @@ export async function restoreEvidence(id: string): Promise<boolean> {
   const evidence = await repo.findOne({ where: { id } })
   if (!evidence || !evidence.deleted_at) return false
 
-  // Move file back to evidences directory
-  const evidencesDir = path.join(app.getPath('userData'), 'evidences')
-  if (!fs.existsSync(evidencesDir)) {
-    fs.mkdirSync(evidencesDir, { recursive: true })
-  }
+  // Move file back to evidences directory (only for image evidences)
+  if (evidence.type !== 'text' && evidence.file_path) {
+    const evidencesDir = path.join(app.getPath('userData'), 'evidences')
+    if (!fs.existsSync(evidencesDir)) {
+      fs.mkdirSync(evidencesDir, { recursive: true })
+    }
 
-  if (fs.existsSync(evidence.file_path)) {
-    const restoredPath = path.join(evidencesDir, path.basename(evidence.file_path))
-    fs.renameSync(evidence.file_path, restoredPath)
-    evidence.file_path = restoredPath
+    if (fs.existsSync(evidence.file_path)) {
+      const restoredPath = path.join(evidencesDir, path.basename(evidence.file_path))
+      fs.renameSync(evidence.file_path, restoredPath)
+      evidence.file_path = restoredPath
+    }
   }
 
   evidence.deleted_at = null
@@ -281,7 +285,7 @@ export async function permanentlyDeleteEvidence(id: string): Promise<boolean> {
   const evidence = await repo.findOne({ where: { id } })
   if (!evidence) return false
 
-  if (fs.existsSync(evidence.file_path)) {
+  if (evidence.type !== 'text' && evidence.file_path && fs.existsSync(evidence.file_path)) {
     fs.unlinkSync(evidence.file_path)
   }
 
@@ -303,7 +307,7 @@ export async function cleanupTrash(): Promise<number> {
 
   let cleaned = 0
   for (const ev of old) {
-    if (fs.existsSync(ev.file_path)) {
+    if (ev.type !== 'text' && ev.file_path && fs.existsSync(ev.file_path)) {
       fs.unlinkSync(ev.file_path)
     }
     await repo.delete({ id: ev.id })
@@ -327,6 +331,39 @@ export async function reorderEvidences(
   for (const item of items) {
     await repo.update({ id: item.id }, { sort_index: item.sort_index })
   }
+}
+
+export async function saveTextEvidence(
+  activityId: string,
+  textContent: string,
+  caption: string | null
+): Promise<Evidence> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+
+  const id = uuidv7()
+  const evidence = repo.create({
+    id,
+    activity_id: activityId,
+    type: 'text',
+    file_path: null,
+    text_content: textContent,
+    caption,
+    date_added: new Date(),
+  })
+  return repo.save(evidence)
+}
+
+export async function updateTextEvidence(
+  id: string,
+  textContent: string
+): Promise<Evidence | null> {
+  const db = await getDb()
+  const repo = db.getRepository(Evidence)
+  const evidence = await repo.findOne({ where: { id } })
+  if (!evidence || evidence.type !== 'text') return null
+  evidence.text_content = textContent
+  return repo.save(evidence)
 }
 
 // ──── Reports ────

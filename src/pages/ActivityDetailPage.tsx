@@ -20,6 +20,7 @@ import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
 import { STATUS_COLORS } from '../utils/statusColors'
 import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
+import { TextEvidenceModal } from '../components/TextEvidenceModal'
 import { ActivityNav, type NavMode } from '../components/ActivityNav'
 
 function SortableEvidenceCard({ 
@@ -42,6 +43,8 @@ function SortableEvidenceCard({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const isText = evidence.type === 'text'
+
   function handleImageDragStart(e: React.DragEvent) {
     e.preventDefault()
     if (handleRef.current) {
@@ -50,6 +53,11 @@ function SortableEvidenceCard({
       void handleRef.current.offsetWidth
       handleRef.current.classList.add('animate-shake')
     }
+  }
+
+  function getTextPreview(html: string | null): string {
+    if (!html) return ''
+    return html.replace(/<[^>]*>/g, '').slice(0, 100)
   }
 
   return (
@@ -76,20 +84,29 @@ function SortableEvidenceCard({
         className="aspect-video bg-muted flex items-center justify-center overflow-hidden cursor-pointer"
         onClick={onClick}
       >
-        <img
-          src={
-            evidence.file_path.startsWith('data:')
-              ? evidence.file_path
-              : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path)}`
-          }
-          alt={evidence.caption || 'Evidência'}
-          className="w-full h-full object-contain"
-          draggable
-          onDragStart={handleImageDragStart}
-          onError={(e) => {
-            ;(e.target as HTMLImageElement).style.display = 'none'
-          }}
-        />
+        {isText ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
+            <i className="fa-solid fa-file-lines text-3xl text-primary/60" aria-hidden="true"></i>
+            <p className="text-xs text-muted-foreground line-clamp-3 text-center px-2">
+              {getTextPreview(evidence.text_content) || 'Texto vazio'}
+            </p>
+          </div>
+        ) : (
+          <img
+            src={
+              evidence.file_path?.startsWith('data:')
+                ? evidence.file_path
+                : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path || '')}`
+            }
+            alt={evidence.caption || 'Evidência'}
+            className="w-full h-full object-contain"
+            draggable
+            onDragStart={handleImageDragStart}
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
+          />
+        )}
       </div>
       {evidence.caption && (
         <p className="p-2 text-sm text-muted-foreground border-t border-border">
@@ -113,6 +130,9 @@ export function ActivityDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [siblings, setSiblings] = useState<ActivityData[]>([])
   const [navMode, setNavMode] = useState<NavMode>('month')
+  const [textModalOpen, setTextModalOpen] = useState(false)
+  const [textModalMode, setTextModalMode] = useState<'create' | 'edit' | 'view'>('view')
+  const [textModalEvidence, setTextModalEvidence] = useState<EvidenceData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sensors = useSensors(
@@ -508,14 +528,27 @@ export function ActivityDetailPage() {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEvidenceDragEnd}>
                 <SortableContext items={activity.evidences.map(e => e.id)} strategy={rectSortingStrategy}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {activity.evidences.map((ev, idx) => (
-                      <SortableEvidenceCard 
-                        key={ev.id} 
-                        evidence={ev} 
-                        onDelete={(id) => setConfirmDelete(id)}
-                        onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
-                      />
-                    ))}
+                    {activity.evidences.map((ev) => {
+                      const imageEvidences = activity.evidences!.filter(e => e.type !== 'text')
+                      return (
+                        <SortableEvidenceCard 
+                          key={ev.id} 
+                          evidence={ev} 
+                          onDelete={(id) => setConfirmDelete(id)}
+                          onClick={() => {
+                            if (ev.type === 'text') {
+                              setTextModalEvidence(ev)
+                              setTextModalMode('view')
+                              setTextModalOpen(true)
+                            } else {
+                              const imgIdx = imageEvidences.findIndex(e => e.id === ev.id)
+                              setLightboxIndex(imgIdx >= 0 ? imgIdx : 0)
+                              setLightboxOpen(true)
+                            }
+                          }}
+                        />
+                      )
+                    })}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -632,19 +665,30 @@ export function ActivityDetailPage() {
         </div>
       )}
 
-      {activity.evidences && activity.evidences.length > 0 && (
-        <EvidenceLightbox
-          open={lightboxOpen}
-          index={lightboxIndex}
-          slides={activity.evidences.map((ev): LightboxSlide => ({
-            src: ev.file_path.startsWith('data:')
-              ? ev.file_path
-              : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`,
-            description: ev.caption || undefined,
-          }))}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
+      {activity.evidences && activity.evidences.length > 0 && (() => {
+        const imageEvidences = activity.evidences!.filter(e => e.type !== 'text')
+        return imageEvidences.length > 0 ? (
+          <EvidenceLightbox
+            open={lightboxOpen}
+            index={lightboxIndex}
+            slides={imageEvidences.map((ev): LightboxSlide => ({
+              src: ev.file_path?.startsWith('data:')
+                ? ev.file_path
+                : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
+              description: ev.caption || undefined,
+            }))}
+            onClose={() => setLightboxOpen(false)}
+          />
+        ) : null
+      })()}
+
+      <TextEvidenceModal
+        open={textModalOpen}
+        mode={textModalMode}
+        onClose={() => setTextModalOpen(false)}
+        initialContent={textModalEvidence?.text_content || ''}
+        initialCaption={textModalEvidence?.caption || ''}
+      />
     </div>
   )
 }

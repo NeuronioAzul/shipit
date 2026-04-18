@@ -209,6 +209,14 @@ export function ActivityFormPage() {
     setEvidences((prev) => [...prev, evidence])
   }
 
+  function handleTextEvidenceAdded(evidence: EvidenceData) {
+    setEvidences((prev) => [...prev, evidence])
+  }
+
+  function handleTextEvidenceUpdated(id: string, textContent: string) {
+    setEvidences((prev) => prev.map((e) => e.id === id ? { ...e, text_content: textContent } : e))
+  }
+
   async function handleDeleteEvidence(evidenceId: string) {
     if (window.electronAPI) {
       await window.electronAPI.deleteEvidence(evidenceId)
@@ -482,6 +490,8 @@ export function ActivityFormPage() {
               onEvidenceDeleted={handleDeleteEvidence}
               onCaptionUpdated={handleUpdateCaption}
               onReorder={handleReorderEvidences}
+              onTextEvidenceAdded={handleTextEvidenceAdded}
+              onTextEvidenceUpdated={handleTextEvidenceUpdated}
             />
           </div>
         ) : (

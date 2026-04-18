@@ -8,6 +8,8 @@ import {
 } from 'typeorm'
 import { Activity } from './Activity'
 
+export type EvidenceType = 'image' | 'text'
+
 @Entity('evidences')
 export class Evidence {
   @PrimaryColumn({ type: 'text' })
@@ -16,8 +18,14 @@ export class Evidence {
   @Column({ type: 'text' })
   activity_id!: string
 
-  @Column({ type: 'text' })
-  file_path!: string
+  @Column({ type: 'text', default: 'image' })
+  type!: EvidenceType
+
+  @Column({ type: 'text', nullable: true })
+  file_path!: string | null
+
+  @Column({ type: 'text', nullable: true })
+  text_content!: string | null
 
   @Column({ type: 'text', nullable: true })
   caption!: string | null

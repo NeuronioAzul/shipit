@@ -356,6 +356,16 @@ ipcMain.handle('db:permanentlyDeleteEvidence', async (_event, id: string) => {
   return permanentlyDeleteEvidence(id)
 })
 
+ipcMain.handle('db:saveTextEvidence', async (_event, activityId: string, textContent: string, caption: string | null) => {
+  const { saveTextEvidence } = await import('./database')
+  return saveTextEvidence(activityId, textContent, caption)
+})
+
+ipcMain.handle('db:updateTextEvidence', async (_event, id: string, textContent: string) => {
+  const { updateTextEvidence } = await import('./database')
+  return updateTextEvidence(id, textContent)
+})
+
 // ──── Dialog IPC ────
 
 ipcMain.handle('app:selectImages', async () => {

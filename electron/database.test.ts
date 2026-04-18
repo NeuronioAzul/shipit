@@ -32,6 +32,9 @@ import {
   countActivities,
   countIncompleteActivities,
   getDb,
+  saveTextEvidence,
+  updateTextEvidence,
+  updateEvidenceCaption,
 } from './database'
 
 beforeEach(async () => {
@@ -270,7 +273,7 @@ describe('Evidence operations', () => {
     expect(ev.id).toBeTruthy()
     expect(ev.activity_id).toBe(activityId)
     expect(ev.caption).toBe('Screenshot de teste')
-    expect(fs.existsSync(ev.file_path)).toBe(true)
+    expect(ev.file_path && fs.existsSync(ev.file_path)).toBe(true)
   })
 
   it('soft-deletes evidence (sets deleted_at)', async () => {
@@ -331,6 +334,160 @@ describe('Evidence operations', () => {
   it('returns false when deleting non-existent evidence', async () => {
     const deleted = await deleteEvidence('nonexistent-id')
     expect(deleted).toBe(false)
+  })
+})
+
+describe('Text Evidence operations', () => {
+  let activityId: string
+
+  beforeEach(async () => {
+    const activity = await saveActivity({
+      description: 'Atividade com texto',
+      status: 'Em andamento',
+      month_reference: '03/2026',
+      order: 1,
+    })
+    activityId = activity.id
+  })
+
+  it('saves text evidence with content and caption', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Hello world</p>', 'Nota de teste')
+    expect(ev.id).toBeTruthy()
+    expect(ev.type).toBe('text')
+    expect(ev.text_content).toBe('<p>Hello world</p>')
+    expect(ev.caption).toBe('Nota de teste')
+    expect(ev.file_path).toBeNull()
+    expect(ev.activity_id).toBe(activityId)
+  })
+
+  it('saves text evidence with null caption', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>No caption</p>', null)
+    expect(ev.type).toBe('text')
+    expect(ev.text_content).toBe('<p>No caption</p>')
+    expect(ev.caption).toBeNull()
+  })
+
+  it('saved text evidence appears in activity evidences', async () => {
+    await saveTextEvidence(activityId, '<p>Visible text</p>', 'Legenda')
+    const activity = await getActivity(activityId)
+    expect(activity!.evidences.length).toBe(1)
+    expect(activity!.evidences[0].type).toBe('text')
+    expect(activity!.evidences[0].text_content).toBe('<p>Visible text</p>')
+    expect(activity!.evidences[0].caption).toBe('Legenda')
+  })
+
+  it('saves multiple text evidences for same activity', async () => {
+    await saveTextEvidence(activityId, '<p>First</p>', 'First')
+    await saveTextEvidence(activityId, '<p>Second</p>', 'Second')
+    const activity = await getActivity(activityId)
+    expect(activity!.evidences.length).toBe(2)
+  })
+
+  it('saves text evidence alongside image evidence', async () => {
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shipit-mixed-'))
+    const imgPath = path.join(testDir, 'test.png')
+    fs.writeFileSync(imgPath, Buffer.from([0x89, 0x50, 0x4E, 0x47]))
+
+    await saveEvidence(activityId, imgPath, 'Image caption')
+    await saveTextEvidence(activityId, '<p>Text content</p>', 'Text caption')
+
+    const activity = await getActivity(activityId)
+    expect(activity!.evidences.length).toBe(2)
+    const imageEv = activity!.evidences.find(e => e.type === 'image')
+    const textEv = activity!.evidences.find(e => e.type === 'text')
+    expect(imageEv).toBeTruthy()
+    expect(textEv).toBeTruthy()
+    expect(textEv!.file_path).toBeNull()
+    expect(imageEv!.file_path).toBeTruthy()
+
+    fs.rmSync(testDir, { recursive: true, force: true })
+  })
+
+  it('updates text evidence content', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Original</p>', null)
+    const updated = await updateTextEvidence(ev.id, '<p>Updated</p>')
+    expect(updated).not.toBeNull()
+    expect(updated!.text_content).toBe('<p>Updated</p>')
+  })
+
+  it('updates text evidence preserves other fields', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Original</p>', 'Keep this caption')
+    const updated = await updateTextEvidence(ev.id, '<p>New content</p>')
+    expect(updated!.caption).toBe('Keep this caption')
+    expect(updated!.type).toBe('text')
+    expect(updated!.activity_id).toBe(activityId)
+  })
+
+  it('updateTextEvidence returns null for non-existent id', async () => {
+    const result = await updateTextEvidence('non-existent-id', '<p>test</p>')
+    expect(result).toBeNull()
+  })
+
+  it('updateTextEvidence returns null for image evidence', async () => {
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shipit-notext-'))
+    const imgPath = path.join(testDir, 'test.png')
+    fs.writeFileSync(imgPath, Buffer.from([0x89, 0x50, 0x4E, 0x47]))
+
+    const imgEv = await saveEvidence(activityId, imgPath, 'Image')
+    const result = await updateTextEvidence(imgEv.id, '<p>Should not update</p>')
+    expect(result).toBeNull()
+
+    fs.rmSync(testDir, { recursive: true, force: true })
+  })
+
+  it('updates caption on text evidence via updateEvidenceCaption', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Content</p>', 'Old caption')
+    const updated = await updateEvidenceCaption(ev.id, 'New caption')
+    expect(updated).not.toBeNull()
+    expect(updated!.caption).toBe('New caption')
+    expect(updated!.text_content).toBe('<p>Content</p>')
+  })
+
+  it('soft-deletes text evidence without file operations', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Delete me</p>', null)
+    const deleted = await deleteEvidence(ev.id)
+    expect(deleted).toBe(true)
+
+    const deletedList = await getDeletedEvidences()
+    expect(deletedList.length).toBe(1)
+    expect(deletedList[0].type).toBe('text')
+  })
+
+  it('restores soft-deleted text evidence', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Restore me</p>', 'Restaurável')
+    await deleteEvidence(ev.id)
+
+    const restored = await restoreEvidence(ev.id)
+    expect(restored).toBe(true)
+
+    const deletedList = await getDeletedEvidences()
+    expect(deletedList.length).toBe(0)
+
+    // Verify content is preserved after restore
+    const activity = await getActivity(activityId)
+    expect(activity!.evidences.length).toBe(1)
+    expect(activity!.evidences[0].text_content).toBe('<p>Restore me</p>')
+    expect(activity!.evidences[0].caption).toBe('Restaurável')
+  })
+
+  it('permanently deletes text evidence', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Permanent delete</p>', null)
+    await deleteEvidence(ev.id)
+
+    const result = await permanentlyDeleteEvidence(ev.id)
+    expect(result).toBe(true)
+
+    const deletedList = await getDeletedEvidences()
+    expect(deletedList.length).toBe(0)
+  })
+
+  it('updated text evidence content reflects in activity query', async () => {
+    const ev = await saveTextEvidence(activityId, '<p>Before</p>', null)
+    await updateTextEvidence(ev.id, '<p>After</p>')
+
+    const activity = await getActivity(activityId)
+    const found = activity!.evidences.find(e => e.id === ev.id)
+    expect(found!.text_content).toBe('<p>After</p>')
   })
 })
 

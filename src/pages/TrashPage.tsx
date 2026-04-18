@@ -182,7 +182,7 @@ export function TrashPage() {
       {/* Evidences grid */}
       {!loading && evidences.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {evidences.map((ev, idx) => {
+          {evidences.map((ev) => {
             const daysLeft = getDaysUntilPermanentDelete(ev.deleted_at)
             const isExpiringSoon = daysLeft <= 7
 
@@ -194,16 +194,31 @@ export function TrashPage() {
                 {/* Thumbnail */}
                 <div
                   className="relative aspect-video bg-muted cursor-pointer"
-                  onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                  onClick={() => {
+                    if (ev.type !== 'text') {
+                      const imgIdx = evidences.filter(e => e.type !== 'text').findIndex(e => e.id === ev.id)
+                      setLightboxIndex(imgIdx >= 0 ? imgIdx : 0)
+                      setLightboxOpen(true)
+                    }
+                  }}
                 >
-                  <img
-                    src={`shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`}
-                    alt={ev.caption || 'Evidência'}
-                    className="w-full h-full object-cover opacity-60"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%239CA3AF" font-size="12">Sem preview</text></svg>'
-                    }}
-                  />
+                  {ev.type === 'text' ? (
+                    <div className="flex flex-col items-center justify-center gap-2 w-full h-full opacity-60">
+                      <i className="fa-solid fa-file-lines text-3xl text-primary/60" aria-hidden="true"></i>
+                      <p className="text-xs text-muted-foreground line-clamp-2 text-center px-2">
+                        {(ev.text_content || '').replace(/<[^>]*>/g, '').slice(0, 80) || 'Texto vazio'}
+                      </p>
+                    </div>
+                  ) : (
+                    <img
+                      src={`shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`}
+                      alt={ev.caption || 'Evidência'}
+                      className="w-full h-full object-cover opacity-60"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%239CA3AF" font-size="12">Sem preview</text></svg>'
+                      }}
+                    />
+                  )}
                   {/* Overlay with days left */}
                   <div className={`cyber-neon-border absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                     isExpiringSoon
@@ -335,17 +350,20 @@ export function TrashPage() {
         </div>
       )}
 
-      {evidences.length > 0 && (
-        <EvidenceLightbox
-          open={lightboxOpen}
-          index={lightboxIndex}
-          slides={evidences.map((ev): LightboxSlide => ({
-            src: `shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`,
-            description: ev.caption || undefined,
-          }))}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
+      {evidences.length > 0 && (() => {
+        const imageEvidences = evidences.filter(e => e.type !== 'text')
+        return imageEvidences.length > 0 ? (
+          <EvidenceLightbox
+            open={lightboxOpen}
+            index={lightboxIndex}
+            slides={imageEvidences.map((ev): LightboxSlide => ({
+              src: `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
+              description: ev.caption || undefined,
+            }))}
+            onClose={() => setLightboxOpen(false)}
+          />
+        ) : null
+      })()}
     </div>
   )
 }

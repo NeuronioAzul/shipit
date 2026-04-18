@@ -83,7 +83,9 @@ export const localDb = {
     const evidence: EvidenceData = {
       id: generateId(),
       activity_id: activityId,
+      type: 'image',
       file_path: fileDataUrl,
+      text_content: null,
       caption,
       sort_index: activity.evidences?.length ?? 0,
       date_added: new Date().toISOString(),
@@ -121,6 +123,42 @@ export const localDb = {
       }
     }
     return false
+  },
+
+  saveTextEvidence(activityId: string, textContent: string, caption: string | null): EvidenceData {
+    const all = getStoredActivities()
+    const activity = all.find((a) => a.id === activityId)
+    if (!activity) throw new Error('Activity not found')
+
+    const evidence: EvidenceData = {
+      id: generateId(),
+      activity_id: activityId,
+      type: 'text',
+      file_path: null,
+      text_content: textContent,
+      caption,
+      sort_index: activity.evidences?.length ?? 0,
+      date_added: new Date().toISOString(),
+      deleted_at: null,
+    }
+
+    if (!activity.evidences) activity.evidences = []
+    activity.evidences.push(evidence)
+    setStoredActivities(all)
+    return evidence
+  },
+
+  updateTextEvidence(id: string, textContent: string): EvidenceData | null {
+    const all = getStoredActivities()
+    for (const activity of all) {
+      const ev = activity.evidences?.find((e) => e.id === id)
+      if (ev && ev.type === 'text') {
+        ev.text_content = textContent
+        setStoredActivities(all)
+        return ev
+      }
+    }
+    return null
   },
 }
 
