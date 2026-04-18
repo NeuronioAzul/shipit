@@ -37,8 +37,10 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm test`         | Executa 55 testes unitários e de integração (Vitest) |
+| `npm test`         | Executa 70 testes unitários e de integração (Vitest)  |
+| `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
 | `npm run test:e2e` | Testes end-to-end com Playwright                     |
+| `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
 
 ---
 
@@ -102,6 +104,8 @@ Outros ícones:
 | Estilização | Tailwind CSS 4                 | `@theme inline` com variáveis CSS, dark/light mode              |
 | ORM         | TypeORM 0.3 + better-sqlite 3  | SQLite local em `userData/shipit.db`                            |
 | Relatórios  | jszip + @xmldom/xmldom + xpath | Geração de DOCX via manipulação OpenXML de template             |
+| Rich Text   | TipTap (React)                 | Editor rich-text para evidências de texto                       |
+| Lightbox    | yet-another-react-lightbox     | Visualização de imagens em tela cheia                           |
 | Build       | Vite 8                         | Bundler do frontend com HMR                                     |
 | Linguagem   | TypeScript 6                   | Tipagem estrita em todo o projeto                               |
 | Ícones      | Font Awesome 7                 | Self-hosted via npm, sem CDN                                    |
@@ -134,10 +138,19 @@ shipit/
 │   ├── index.css              # Tailwind v4 @theme inline
 │   ├── vite-env.d.ts          # Tipagens globais e interfaces IPC
 │   ├── components/            # Componentes reutilizáveis
-│   │   ├── AppLayout.tsx
-│   │   ├── Header.tsx
-│   │   ├── EmptyState.tsx
-│   │   └── EvidenceUpload.tsx
+│   │   ├─ ActivityBar.tsx
+│   │   ├─ ActivityNav.tsx
+│   │   ├─ AppLayout.tsx
+│   │   ├─ EmptyState.tsx
+│   │   ├─ EvidenceLightbox.tsx
+│   │   ├─ EvidenceUpload.tsx
+│   │   ├─ Header.tsx
+│   │   ├─ SearchBar.tsx
+│   │   ├─ Skeleton.tsx
+│   │   ├─ TextEvidenceEditor.tsx
+│   │   ├─ TextEvidenceModal.tsx
+│   │   ├─ ThemeSelector.tsx
+│   │   └─ TitleBar.tsx
 │   ├── pages/                 # Páginas/rotas
 │   │   ├── HomePage.tsx       # Router → Dashboard ou EmptyState
 │   │   ├── DashboardPage.tsx  # Resumo mensal + Gantt
@@ -209,7 +222,9 @@ erDiagram
     }
     Evidence {
         uuid id PK
+        string type
         string file_path
+        string text_content
         string caption
         int sort_index
         datetime date_added
@@ -290,7 +305,7 @@ Em builds empacotados (`app.isPackaged`), o app verifica atualizações automati
 
 - **Sem code signing**: macOS pede "Abrir mesmo assim" manualmente; Windows pode exibir SmartScreen
 - **Minutes do GitHub Actions**: macOS consome 10x mais minutos. Free tier = 2000 min/mês
-- **Testes como gate**: se os 55 testes falharem, o build não é publicado
+- **Testes como gate**: se os 70 testes falharem, o build não é publicado
 
 ---
 

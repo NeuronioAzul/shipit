@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Versão-1.2.2-blue" alt="Versão" />
+  <img src="https://img.shields.io/badge/Versão-1.2.1-blue" alt="Versão" />
   <img src="https://img.shields.io/badge/Plataforma-Windows%20|%20macOS%20|%20Linux-brightgreen" alt="Plataformas" />
   <img src="https://img.shields.io/badge/Offline-100%25-orange" alt="Offline" />
   <img src="https://img.shields.io/badge/license-ISC-green" alt="License" />
@@ -107,15 +107,16 @@ Acesse **Atividades** no menu lateral e clique em **"Nova Atividade"**:
 
 <!-- Screenshot: Formulário de nova atividade preenchido -->
 
-### 3. Adicione Evidências (Prints)
+### 3. Adicione Evidências (Prints e Texto)
 
-Na tela de detalhes da atividade, adicione capturas de tela como evidência. Você pode:
+Na tela de detalhes da atividade, adicione capturas de tela ou textos como evidência. Você pode:
 
 - **Arrastar e soltar** arquivos de imagem diretamente na área de upload
 - **Colar da área de transferência** — tire um print (PrintScreen) e cole com `Ctrl+V`
 - **Selecionar arquivos** — clique no botão de upload e escolha as imagens
+- **Criar evidência de texto** — use o editor rich-text para registrar logs, trechos ou anotações
 
-Cada evidência pode ter uma **legenda** descritiva que aparecerá no relatório final.
+Cada evidência pode ter uma **legenda** descritiva que aparecerá no relatório final. Clique em qualquer imagem para visualizá-la em tela cheia.
 
 <!-- Screenshot: Tela de detalhes da atividade com evidências e legendas -->
 
@@ -161,9 +162,11 @@ CRUD completo de atividades com campos para descrição, período, status, links
 
 <!-- Screenshot: Lista de atividades com drag & drop -->
 
-### Evidências com Prints
+### Evidências com Prints e Texto
 
-Múltiplas formas de adicionar evidências: upload de arquivos, arrastar e soltar, ou colar da área de transferência. Cada imagem aceita uma legenda descritiva. Suporta PNG, JPEG, GIF, BMP e WebP.
+Múltiplas formas de adicionar evidências: upload de arquivos, arrastar e soltar, ou colar da área de transferência. Cada imagem aceita uma legenda descritiva. Suporta PNG, JPEG, GIF, BMP e WebP. Clique em qualquer imagem para abri-la em **tela cheia** (lightbox) com navegação entre fotos.
+
+Além de imagens, você pode criar **evidências de texto** com editor rich-text (negrito, itálico, listas) para registrar logs, trechos de código ou anotações.
 
 <!-- Screenshot: Upload de evidências com área de drag & drop -->
 
@@ -336,7 +339,7 @@ Sim! O ShipIt! é software livre, distribuído sob a [Licença ISC](LICENSE).
 <details>
 <summary><strong>Quais formatos de imagem são aceitos como evidência?</strong></summary>
 
-PNG, JPEG, GIF, BMP e WebP.
+PNG, JPEG, GIF, BMP e WebP. Além de imagens, você também pode criar evidências de texto formatado.
 </details>
 
 ---

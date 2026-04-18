@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 17/04/2026 (v1.2.2)
+> Atualizado em: 18/04/2026 (v1.2.2-dev — não publicado)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -316,6 +316,27 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Atualizar `docs/TODO.md` com fases 17 e 18
 - [x] Atualizar `.github/copilot-instructions.md` (versão, stack, temas, file structure)
 - [x] Atualizar `docs/ARCHITECTURE.md` (arquitetura multi-tema, decisões técnicas)
+
+### Fase 19: Evidências de Texto ✅
+
+- [x] Editor rich-text com TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-character-count`)
+- [x] Componente `TextEvidenceEditor` para edição de evidências de texto formatado
+- [x] Componente `TextEvidenceModal` para visualização/edição em modal
+- [x] Campo `type` ('image' | 'text') e `text_content` na entidade Evidence
+- [x] IPC handlers `db:saveTextEvidence` e `db:updateTextEvidence`
+
+### Fase 20: Lightbox de Evidências e Navegação entre Atividades ✅
+
+- [x] Componente `EvidenceLightbox` para visualização em tela cheia de imagens (via `yet-another-react-lightbox`)
+- [x] Componente `ActivityNav` com navegação prev/next entre atividades na tela de detalhes
+
+### Fase 20.1: Sincronização da Documentação (Full Sync) ✅
+
+- [x] Sincronizar todos os 7 arquivos de documentação com o estado real do código
+- [x] Adicionar 4 componentes faltantes na documentação (`ActivityNav`, `EvidenceLightbox`, `TextEvidenceEditor`, `TextEvidenceModal`)
+- [x] Adicionar 19 dependências faltantes em DEPENDENCIES.md
+- [x] Atualizar entidade Evidence com campos `type` e `text_content` em todos os docs
+- [x] Atualizar contagem de testes (70) e componentes (13) em todos os docs
 
 ---
 

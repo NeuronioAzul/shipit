@@ -48,14 +48,15 @@ Responsável por:
 - **Janela principal**: `BrowserWindow` com `contextIsolation: true` e `nodeIntegration: false`
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
-- **IPC Handlers**: ~25 handlers organizados por prefixo
+- **IPC Handlers**: ~46 handlers organizados por prefixo
 
 #### Prefixos IPC
 
 | Prefixo | Escopo                 | Exemplos                                                   |
-|---------|------------------------|------------------------------------------------------------|
+|---------|------------------------|------------------------------------------------------------||
 | `db:`   | Banco de dados (CRUD)  | `db:getUserProfile`, `db:saveActivity`, `db:getReports`    |
 | `app:`  | Funcionalidades do app | `app:getVersion`, `app:generateReport`, `app:selectImages` |
+| `window:` | Controles da janela  | `window:minimize`, `window:maximize`, `window:close`       |
 
 #### Handlers registrados
 
@@ -66,7 +67,11 @@ db:saveActivity            db:deleteActivity
 db:reorderActivities       db:saveEvidence
 db:saveEvidenceFromBuffer  db:updateEvidenceCaption
 db:deleteEvidence          db:getEvidenceFilePath
+db:reorderEvidences        db:getDeletedEvidences
+db:restoreEvidence         db:permanentlyDeleteEvidence
+db:saveTextEvidence        db:updateTextEvidence
 db:getReports
+db:getAlert                db:saveAlert
 
 app:getVersion             app:selectImages
 app:setTrayStatus          app:generateReport
@@ -75,6 +80,10 @@ app:saveSettings           app:selectDirectory
 app:getDefaultReportsDir   app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
+app:checkForUpdate         app:installUpdate
+
+window:minimize            window:maximize
+window:close               window:isMaximized
 ```
 
 ### `database.ts` — Acesso a Dados
@@ -109,7 +118,7 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 | `UserProfile` | `user_profile` | Auto-increment | Perfil do usuário (cargo, contrato, etc.) |
 | `Alert` | `alerts` | Auto-increment | Configuração de alertas (1:1 com UserProfile) |
 | `Activity` | `activities` | UUID v7 | Atividade registrada com período e status |
-| `Evidence` | `evidences` | UUID v7 | Evidência (print) vinculada a uma atividade |
+| `Evidence` | `evidences` | UUID v7 | Evidência (imagem ou texto) vinculada a uma atividade |
 | `Report` | `reports` | UUID v7 | Relatório DOCX gerado |
 | `ActivityReport` | `activities_report` | UUID v7 | Junction table: atividade ↔ relatório |
 
@@ -152,6 +161,10 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | `SearchBar` | Barra de busca estilo Command Palette (`Ctrl+K`) com dropdown de resultados |
 | `EmptyState` | Tela inicial quando não há perfil cadastrado |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
+| `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
+| `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
+| `TextEvidenceModal` | Modal para visualização/edição de evidências de texto |
+| `ActivityNav` | Navegação prev/next entre atividades na tela de detalhes |
 | `ThemeSelector` | Seletor visual de temas em grid com cards por categoria e preview de cores |
 | `Skeleton` | Componentes de loading placeholder |
 

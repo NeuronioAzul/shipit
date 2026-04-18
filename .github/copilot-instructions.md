@@ -1,6 +1,6 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app (v1.2.2) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (v1.2.2-dev, last release: v1.2.1) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
@@ -16,9 +16,11 @@ Electron desktop app (v1.2.2) for software engineers to track activities, genera
 | Icons | Font Awesome 7 | Self-hosted via npm, imported in CSS |
 | Reports | JSZip + @xmldom/xmldom + xpath | DOCX generation from OpenXML template |
 | Drag & Drop | @dnd-kit (core + sortable) | Activity and evidence reorder |
+| Rich Text | TipTap 3 (React) | Text evidence editor with character count |
+| Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
 | Toasts | sonner 2 | Non-blocking notifications |
 | Auto-update | electron-updater 6 | GitHub Releases integration |
-| Testing | Vitest + Playwright | 54+ unit/integration tests, 4 E2E scenarios |
+| Testing | Vitest + Playwright | 70 unit/integration tests, 4 E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -59,7 +61,7 @@ Renderer (React/Vite)          Preload Bridge              Main (Electron/Node)
 |-------|--------|-------------|
 | Profile | `db:` | `getUserProfile`, `saveUserProfile` |
 | Activities | `db:` | `getActivities(month)`, `searchActivities(query)`, `getActivity`, `saveActivity`, `deleteActivity`, `reorderActivities` |
-| Evidence | `db:` | `saveEvidence`, `saveEvidenceFromBuffer` (clipboard), `updateEvidenceCaption`, `deleteEvidence` (soft), `reorderEvidences`, `getDeletedEvidences`, `restoreEvidence`, `permanentlyDeleteEvidence` |
+| Evidence | `db:` | `saveEvidence`, `saveEvidenceFromBuffer` (clipboard), `updateEvidenceCaption`, `deleteEvidence` (soft), `reorderEvidences`, `getDeletedEvidences`, `restoreEvidence`, `permanentlyDeleteEvidence`, `saveTextEvidence`, `updateTextEvidence` |
 | Reports | `app:` / `db:` | `generateReport(month)`, `openFileInFolder`, `getReports(month)` |
 | Settings | `app:` | `getSettings`, `saveSettings`, `getDefaultReportsDir` |
 | Dialogs | `app:` | `selectImages`, `selectDirectory` |
@@ -93,7 +95,7 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 |--------|----|-----------|-----------|
 | `UserProfile` | auto-inc | `full_name`, `role`, `seniority_level`, `attendance_type`, `project_scope` | 1:1 → Alert |
 | `Activity` | UUID v7 | `description`, `date_start/end`, `status`, `project_scope`, `link_ref`, `month_reference`, `order` | 1:N → Evidence, M:N → Report |
-| `Evidence` | UUID v7 | `file_path`, `caption`, `sort_index`, `date_added`, `deleted_at` (soft-delete) | N:1 → Activity |
+| `Evidence` | UUID v7 | `type` (enum: 'image'\|'text'), `file_path`, `text_content`, `caption`, `sort_index`, `date_added`, `deleted_at` (soft-delete) | N:1 → Activity |
 | `Report` | UUID v7 | `month_reference`, `file_path`, `report_name`, `date_generated`, `status` | M:N → Activity |
 | `ActivityReport` | — | Junction table (`activities_report`) | Activity ↔ Report |
 | `Alert` | auto-inc | `alert_enabled`, `alert_time`, `alert_days_before` (JSON), `alert_frequency`, `alert_sound_file`, `last_alert_sent` | N:1 → UserProfile |
@@ -145,7 +147,7 @@ electron/                   # Main process (CommonJS)
   entities/                 # TypeORM entity definitions (6 files)
 src/                        # Renderer (ESNext, Vite)
   pages/                    # 8 route pages
-  components/               # 9 reusable components (AppLayout, Header, TitleBar, SearchBar, EvidenceUpload, ActivityBar, EmptyState, Skeleton, ThemeSelector)
+  components/               # 13 reusable components (AppLayout, Header, TitleBar, SearchBar, EvidenceUpload, EvidenceLightbox, TextEvidenceEditor, TextEvidenceModal, ActivityBar, ActivityNav, EmptyState, Skeleton, ThemeSelector)
   contexts/                 # ThemeContext (multi-theme support)
   services/                 # localDb.ts (browser fallback)
   themes/                   # Theme system (themes.ts registry, themes.css palettes, cyberpunk-effects.css)
@@ -189,4 +191,4 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** (Phases 1–18): Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, Navigation & menus, UI/UX polish, CI/CD multiplatform builds, 54+ tests, WCAG AA audit, E2E tests, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), Documentation update. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments.
+All core phases are **complete** (Phases 1–20.1): Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, Navigation & menus, UI/UX polish, CI/CD multiplatform builds, 70 tests, WCAG AA audit, E2E tests, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), Documentation update, Text evidence (TipTap), Evidence lightbox, Activity navigation. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments.

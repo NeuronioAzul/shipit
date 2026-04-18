@@ -7,7 +7,19 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
-## [1.2.2] — 2026-04-17
+## [Unreleased]
+
+### Adicionado
+
+- **Evidências de texto** — novo tipo de evidência que permite registrar conteúdo textual formatado (além de imagens)
+  - Editor rich-text com TipTap (negrito, itálico, listas, etc.) e contagem de caracteres
+  - Componentes `TextEvidenceEditor` e `TextEvidenceModal`
+  - IPC handlers `db:saveTextEvidence` e `db:updateTextEvidence`
+  - Campo `type` ('image' | 'text') e `text_content` na entidade Evidence
+  - 4 dependências TipTap: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-character-count`
+- **Lightbox de evidências** — visualização em tela cheia de imagens de evidência com navegação entre fotos
+  - Componente `EvidenceLightbox` via `yet-another-react-lightbox`
+- **Navegação entre atividades** — componente `ActivityNav` com botões prev/next na tela de detalhes da atividade
 
 ### Adicionado (Fase 17 — Sistema Multi-Tema) 🎨
 
