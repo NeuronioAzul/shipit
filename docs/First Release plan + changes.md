@@ -1,6 +1,6 @@
 # First Release plan changes
 
-```text
+```txt
   _____ _     _       _   
  / ____| |   (_)     | |  
 | (___ | |__  _ _ __ | |_ 
@@ -19,7 +19,7 @@
 
 ### features
 
-- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar onde estava.
+- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.
 - Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar texto, abrir links no navegador.
 - Adicionar um menu ao lado do logo para acessar as funcionalidades
   - File
@@ -43,15 +43,13 @@
     - Zoom In - ctrl+plus
     - Zoom Out - ctrl+minus
     - Reset Zoom - ctrl+0
-  - Janela
+    - divisor ----
     - Minimizar - ctrl+m
     - Maximizar - ctrl+shift+m
     - Fechar - ctrl+q
   - Ajuda
     - Sobre o ShipIt!
     - Verificar Atualizações
-
-
 
 ------------------------------------------------------------------
 
@@ -109,10 +107,6 @@ Leve em conta que teremos outros Temas para que as pessoas com problemas de vis�
 
 - Na tela `Detalhes da Atividade` incluir navegação para a próxima atividade do projeto clicando no link "Next Activity" ou "Próxima Atividade" e o link "Previous Activity" ou "Atividade Anterior", para facilitar a navegação entre as atividades do projeto e permitir que os usuários possam acessar facilmente as atividades relacionadas, e também para melhorar a experiência do usuário, tornando a navegação mais fluida e intuitiva, e também para incentivar os usuários a explorar mais o projeto e conhecer todas as atividades disponíveis.
 
------------------------------------------------------------
-
-## Fazendo
-
 ## feature: Tela cadastro de Atividades
 
 Na tela de cadastro de atividades, incluir um campo no formulário para inserir uma evidencia do tipo texto, permitindo que os usuários possam adicionar descrições detalhadas ou observações relacionadas à atividade. (Exemplo: "A atividade foi concluída com sucesso, mas houve um pequeno atraso devido a um problema técnico que foi resolvido posteriormente.")
@@ -128,3 +122,7 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
   - O campo deve ser opcional.
   - O campo deve ser exibido em um formato de textarea, para facilitar a inserção de múltiplas linhas de texto e melhorar a legibilidade das descrições.
   - O campo deve ser validado para evitar a inserção de conteúdo inadequado.
+
+-----------------------------------------------------------
+
+## Fazendo

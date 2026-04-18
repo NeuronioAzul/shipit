@@ -265,6 +265,10 @@ export function ActivityFormPage() {
     return fieldError(field) ? inputErrorClass : inputClass
   }
 
+  function frameClass(field: string): string {
+    return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -319,31 +323,33 @@ export function ActivityFormPage() {
           <label htmlFor="description" className={labelClass}>
             Descrição <span className="text-destructive">*</span>
           </label>
-          <textarea
-            id="description"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            onPaste={(e) => {
-              const plain = e.clipboardData.getData('text/plain')
-              if (plain) {
-                e.preventDefault()
-                const target = e.currentTarget
-                const start = target.selectionStart
-                const end = target.selectionEnd
-                const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
-                setForm((prev) => ({ ...prev, description: newValue }))
-                setAutoSaveStatus('idle')
-                // Restore cursor position after React re-render
-                requestAnimationFrame(() => {
-                  target.selectionStart = target.selectionEnd = start + plain.length
-                })
-              }
-            }}
-            rows={5}
-            placeholder="Descreva a atividade realizada..."
-            className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
-          />
+          <div className={frameClass('description')}>
+            <textarea
+              id="description"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              onPaste={(e) => {
+                const plain = e.clipboardData.getData('text/plain')
+                if (plain) {
+                  e.preventDefault()
+                  const target = e.currentTarget
+                  const start = target.selectionStart
+                  const end = target.selectionEnd
+                  const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
+                  setForm((prev) => ({ ...prev, description: newValue }))
+                  setAutoSaveStatus('idle')
+                  // Restore cursor position after React re-render
+                  requestAnimationFrame(() => {
+                    target.selectionStart = target.selectionEnd = start + plain.length
+                  })
+                }
+              }}
+              rows={5}
+              placeholder="Descreva a atividade realizada..."
+              className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
+            />
+          </div>
           {fieldError('description') && (
             <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
           )}
@@ -422,16 +428,18 @@ export function ActivityFormPage() {
             <label htmlFor="month_reference" className={labelClass}>
               Mês de Referência <span className="text-destructive">*</span>
             </label>
-            <input
-              id="month_reference"
-              name="month_reference"
-              type="text"
-              value={form.month_reference}
-              onChange={handleChange}
-              placeholder="MM/YYYY"
-              pattern="\d{2}/\d{4}"
-              className={fieldClass('month_reference')}
-            />
+            <div className={frameClass('month_reference')}>
+              <input
+                id="month_reference"
+                name="month_reference"
+                type="text"
+                value={form.month_reference}
+                onChange={handleChange}
+                placeholder="MM/YYYY"
+                pattern="\d{2}/\d{4}"
+                className={fieldClass('month_reference')}
+              />
+            </div>
             {fieldError('month_reference') && (
               <p className="text-xs text-destructive mt-1">{fieldError('month_reference')}</p>
             )}
@@ -443,15 +451,17 @@ export function ActivityFormPage() {
           <label htmlFor="project_scope" className={labelClass}>
             Escopo: (Squad / Projeto / Aplicação)
           </label>
-          <input
-            id="project_scope"
-            name="project_scope"
-            type="text"
-            value={form.project_scope}
-            onChange={handleChange}
-            placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={inputClass}
-          />
+          <div className="cyber-input-frame">
+            <input
+              id="project_scope"
+              name="project_scope"
+              type="text"
+              value={form.project_scope}
+              onChange={handleChange}
+              placeholder="Ex: Squad SESU / Projeto PNAES"
+              className={inputClass}
+            />
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
             Agrupa atividades por projeto no relatório. Herdado do perfil, editável por atividade.
           </p>
@@ -462,15 +472,17 @@ export function ActivityFormPage() {
           <label htmlFor="link_ref" className={labelClass}>
             Links de Referência
           </label>
-          <textarea
-            id="link_ref"
-            name="link_ref"
-            value={form.link_ref}
-            onChange={handleChange}
-            rows={2}
-            placeholder="Cole os links aqui, um por linha (ex: https://gitlab.example.com/merge_request/123)"
-            className={inputClass + ' resize-y'}
-          />
+          <div className="cyber-input-frame">
+            <textarea
+              id="link_ref"
+              name="link_ref"
+              value={form.link_ref}
+              onChange={handleChange}
+              rows={2}
+              placeholder="Cole os links aqui, um por linha (ex: https://gitlab.example.com/merge_request/123)"
+              className={inputClass + ' resize-y'}
+            />
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
             Insira um link por linha. GitLab, Jira, etc.
           </p>

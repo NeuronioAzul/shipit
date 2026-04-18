@@ -193,13 +193,15 @@ export function SettingsPage() {
             Pasta onde os relatórios DOCX gerados serão salvos.
           </p>
           <div className="flex items-center gap-2 mb-3">
-            <input
-              type="text"
-              readOnly
-              value={reportsDir}
-              className="cyber-input flex-1 px-3 py-2 bg-muted text-foreground text-sm border border-border rounded-lg truncate"
-              title={reportsDir}
-            />
+            <div className="cyber-input-frame cyber-frame-muted flex-1">
+              <input
+                type="text"
+                readOnly
+                value={reportsDir}
+                className="cyber-input flex-1 px-3 py-2 bg-muted text-foreground text-sm w-full border border-border rounded-lg truncate"
+                title={reportsDir}
+              />
+            </div>
             <button
               id="settings-reports-btn-select"
               onClick={handleSelectDir}
@@ -346,18 +348,21 @@ export function SettingsPage() {
                   id="settings-alerts-time"
                   value={alertTime}
                   onChange={(v) => setAlertTime(v)}
+                  className="w-32"
                 />
               </div>
 
               {/* Mensagem */}
               <div>
                 <label className="text-sm font-medium mb-1 block">Mensagem do alerta</label>
-                <textarea
-                  value={alertMessage}
-                  onChange={(e) => setAlertMessage(e.target.value)}
-                  rows={2}
-                  className="cyber-input w-full px-3 py-2 text-foreground text-sm border border-border rounded-lg resize-none"
-                />
+                <div className="cyber-input-frame">
+                  <textarea
+                    value={alertMessage}
+                    onChange={(e) => setAlertMessage(e.target.value)}
+                    rows={2}
+                    className="cyber-input w-full px-3 py-2 text-foreground text-sm border border-border rounded-lg resize-none"
+                  />
+                </div>
               </div>
 
               {/* Som habilitado */}

@@ -146,6 +146,10 @@ export function ProfilePage() {
     return fieldError(field) ? inputErrorClass : inputClass
   }
 
+  function frameClass(field: string): string {
+    return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <div id="profile-header" className="flex items-center gap-3 mb-6">
@@ -183,16 +187,18 @@ export function ProfilePage() {
           <label htmlFor="full_name" className={labelClass}>
             Nome Completo <span className="text-destructive">*</span>
           </label>
-          <input
-            id="full_name"
-            name="full_name"
-            type="text"
-            required
-            value={form.full_name}
-            onChange={handleChange}
-            placeholder="Ex: MARIA SILVA DE SOUZA E SILVA"
-            className={`${fieldClass('full_name')} uppercase`}
-          />
+          <div className={frameClass('full_name')}>
+            <input
+              id="full_name"
+              name="full_name"
+              type="text"
+              required
+              value={form.full_name}
+              onChange={handleChange}
+              placeholder="Ex: MARIA SILVA DE SOUZA E SILVA"
+              className={`${fieldClass('full_name')} uppercase`}
+            />
+          </div>
           {fieldError('full_name') && (
             <p className="text-xs text-destructive mt-1">{fieldError('full_name')}</p>
           )}
@@ -248,16 +254,18 @@ export function ProfilePage() {
           <label htmlFor="contract_identifier" className={labelClass}>
             Identificador do Contrato <span className="text-destructive">*</span>
           </label>
-          <input
-            id="contract_identifier"
-            name="contract_identifier"
-            type="text"
-            required
-            value={form.contract_identifier}
-            onChange={handleChange}
-            placeholder="Ex: Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda"
-            className={fieldClass('contract_identifier')}
-          />
+          <div className={frameClass('contract_identifier')}>
+            <input
+              id="contract_identifier"
+              name="contract_identifier"
+              type="text"
+              required
+              value={form.contract_identifier}
+              onChange={handleChange}
+              placeholder="Ex: Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda"
+              className={fieldClass('contract_identifier')}
+            />
+          </div>
           {fieldError('contract_identifier') && (
             <p className="text-xs text-destructive mt-1">{fieldError('contract_identifier')}</p>
           )}
@@ -313,16 +321,18 @@ export function ProfilePage() {
           <label htmlFor="project_scope" className={labelClass}>
             Escopo: (Squad / Projeto / Aplicação) <span className="text-destructive">*</span>
           </label>
-          <input
-            id="project_scope"
-            name="project_scope"
-            type="text"
-            required
-            value={form.project_scope}
-            onChange={handleChange}
-            placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={fieldClass('project_scope')}
-          />
+          <div className={frameClass('project_scope')}>
+            <input
+              id="project_scope"
+              name="project_scope"
+              type="text"
+              required
+              value={form.project_scope}
+              onChange={handleChange}
+              placeholder="Ex: Squad SESU / Projeto PNAES"
+              className={fieldClass('project_scope')}
+            />
+          </div>
           {fieldError('project_scope') && (
             <p className="text-xs text-destructive mt-1">{fieldError('project_scope')}</p>
           )}
@@ -336,16 +346,18 @@ export function ProfilePage() {
           <label htmlFor="correlating_activities" className={labelClass}>
             Atividades Correlatas <span className="text-destructive">*</span>
           </label>
-          <textarea
-            id="correlating_activities"
-            name="correlating_activities"
-            required
-            value={form.correlating_activities}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Texto explicativo para correlacionar as atividades do mês com o perfil..."
-            className={fieldClass('correlating_activities') + ' resize-y'}
-          />
+          <div className={frameClass('correlating_activities')}>
+            <textarea
+              id="correlating_activities"
+              name="correlating_activities"
+              required
+              value={form.correlating_activities}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Texto explicativo para correlacionar as atividades do mês com o perfil..."
+              className={fieldClass('correlating_activities') + ' resize-y'}
+            />
+          </div>
           {fieldError('correlating_activities') && (
             <p className="text-xs text-destructive mt-1">{fieldError('correlating_activities')}</p>
           )}

@@ -316,13 +316,15 @@ export function ActivitiesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Texto livre</label>
-              <input
-                type="text"
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                placeholder="Buscar..."
-                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              />
+              <div className="cyber-input-frame cyber-frame-muted">
+                <input
+                  type="text"
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                  placeholder="Buscar..."
+                  className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                />
+              </div>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
@@ -357,13 +359,15 @@ export function ActivitiesPage() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo: (Squad / Projeto / Aplicação)</label>
-              <input
-                type="text"
-                value={filterScope}
-                onChange={(e) => setFilterScope(e.target.value)}
-                placeholder="Filtrar por escopo..."
-                className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              />
+              <div className="cyber-input-frame cyber-frame-muted">
+                <input
+                  type="text"
+                  value={filterScope}
+                  onChange={(e) => setFilterScope(e.target.value)}
+                  placeholder="Filtrar por escopo..."
+                  className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                />
+              </div>
             </div>
           </div>
           {/* Active filter pills */}
