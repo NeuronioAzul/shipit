@@ -773,7 +773,7 @@
 /* ===== Focus ring override — neon glow ===== */
 .cyberpunk *:focus-visible {
   /* outline: 1px solid rgb(51, 248, 2 / 0.6) !important; */
-  outline-offset: 12px;
+  /* outline-offset: 12px; */
   /* box-shadow: 0 0 8px rgb(248 239 2 / 0.3); */
 }
 
@@ -1294,16 +1294,16 @@
 }
 
 /* Clickable elements — pointer */
-.cyberpunk a,
-.cyberpunk button,
-.cyberpunk [role="button"],
-.cyberpunk label[for],
-.cyberpunk select,
-.cyberpunk input[type="checkbox"],
-.cyberpunk input[type="radio"],
-.cyberpunk input[type="file"],
-.cyberpunk summary,
-.cyberpunk [class*="cursor-pointer"] {
+.cyberpunk a, .cyberpunk a *,
+.cyberpunk button, .cyberpunk button *,
+.cyberpunk [role="button"], .cyberpunk [role="button"] *,
+.cyberpunk label[for], .cyberpunk label[for] *,
+.cyberpunk select, .cyberpunk select *,
+.cyberpunk input[type="checkbox"], .cyberpunk input[type="checkbox"] *,
+.cyberpunk input[type="radio"], .cyberpunk input[type="radio"] *,
+.cyberpunk input[type="file"], .cyberpunk input[type="file"] *,
+.cyberpunk summary, .cyberpunk summary *,
+.cyberpunk [class*="cursor-pointer"], .cyberpunk [class*="cursor-pointer"] * {
   cursor: url('/assets/cursors/link.cur'), pointer !important;
 }
 
@@ -1329,8 +1329,8 @@
 }
 
 /* Not allowed / disabled */
-.cyberpunk [disabled],
-.cyberpunk [aria-disabled="true"],
+/* .cyberpunk [disabled], */
+/* .cyberpunk [aria-disabled="true"], */
 .cyberpunk [class*="cursor-not-allowed"],
 .cyberpunk button:disabled {
   cursor: url('/assets/cursors/no.cur'), not-allowed !important;
