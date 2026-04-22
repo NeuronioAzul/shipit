@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification, shell, type MenuItemConstructorOptions } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
@@ -19,6 +19,52 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'shipit-evidence', privileges: { supportFetchAPI: true, stream: true } },
   { scheme: 'shipit-sfx', privileges: { supportFetchAPI: true, stream: true } },
 ])
+
+const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
+
+function parseUrlSafe(rawUrl: string): URL | null {
+  try {
+    return new URL(rawUrl)
+  } catch {
+    return null
+  }
+}
+
+function normalizeFilePathname(fileUrl: URL): string {
+  const decoded = decodeURIComponent(fileUrl.pathname)
+  const withDriveLetter = decoded.replace(/^\/([A-Za-z]:)/, '$1')
+  return path.normalize(withDriveLetter).toLowerCase()
+}
+
+function isInternalAppNavigation(targetUrl: string, currentUrl: string): boolean {
+  if (targetUrl === currentUrl) return true
+
+  const target = parseUrlSafe(targetUrl)
+  const current = parseUrlSafe(currentUrl)
+  if (!target || !current) return false
+
+  if (target.protocol === 'file:' && current.protocol === 'file:') {
+    return normalizeFilePathname(target) === normalizeFilePathname(current)
+  }
+
+  if (isDev && (target.protocol === 'http:' || target.protocol === 'https:')) {
+    return target.origin === current.origin
+  }
+
+  return false
+}
+
+async function openExternalSafely(rawUrl: string): Promise<void> {
+  const parsed = parseUrlSafe(rawUrl)
+  if (!parsed) return
+  if (!ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) return
+
+  try {
+    await shell.openExternal(parsed.toString())
+  } catch (error) {
+    console.error('Failed to open external URL:', parsed.toString(), error)
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -58,6 +104,56 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null
+  })
+
+  const { webContents } = mainWindow
+
+  webContents.setWindowOpenHandler(({ url }) => {
+    void openExternalSafely(url)
+    return { action: 'deny' }
+  })
+
+  webContents.on('will-navigate', (event, url) => {
+    const currentUrl = webContents.getURL()
+    if (isInternalAppNavigation(url, currentUrl)) {
+      return
+    }
+
+    event.preventDefault()
+    void openExternalSafely(url)
+  })
+
+  webContents.on('context-menu', (_event, params) => {
+    const template: MenuItemConstructorOptions[] = []
+    const { editFlags, isEditable, selectionText } = params
+    let hasEnabledAction = false
+
+    const pushAction = (item: MenuItemConstructorOptions) => {
+      template.push(item)
+      if (item.type !== 'separator' && item.enabled !== false) {
+        hasEnabledAction = true
+      }
+    }
+
+    if (isEditable) {
+      pushAction({ role: 'undo', enabled: editFlags.canUndo })
+      pushAction({ role: 'redo', enabled: editFlags.canRedo })
+      template.push({ type: 'separator' })
+      pushAction({ role: 'cut', enabled: editFlags.canCut })
+      pushAction({ role: 'copy', enabled: editFlags.canCopy })
+      pushAction({ role: 'paste', enabled: editFlags.canPaste })
+      template.push({ type: 'separator' })
+      pushAction({ role: 'selectAll', enabled: editFlags.canSelectAll })
+    } else if (selectionText.trim().length > 0) {
+      pushAction({ role: 'copy', enabled: editFlags.canCopy })
+    }
+
+    if (!hasEnabledAction) {
+      return
+    }
+
+    const contextMenu = Menu.buildFromTemplate(template)
+    contextMenu.popup({ window: mainWindow ?? undefined })
   })
 
   // Notify renderer of maximize/unmaximize changes

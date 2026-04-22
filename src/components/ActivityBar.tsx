@@ -163,7 +163,12 @@ function AboutModal({ onClose }: { onClose: () => void }) {
           {version && <p><span className="text-foreground font-medium">Versão</span> {version}</p>}
           <div className="pt-2 border-t border-border/50">
             <p className="text-foreground font-medium">Mauro Rocha Tavares</p>
-            <a href="mailto:mauro.rocha.t@gmail.com" className="text-primary hover:underline text-xs">
+            <a
+              href="mailto:mauro.rocha.t@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-xs"
+            >
               mauro.rocha.t@gmail.com
             </a>
           </div>

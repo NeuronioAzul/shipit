@@ -494,6 +494,8 @@ export function SettingsPage() {
               <p className="text-foreground font-medium">Mauro Rocha Tavares</p>
               <a
                 href="mailto:mauro.rocha.t@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
                 mauro.rocha.t@gmail.com

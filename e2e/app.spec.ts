@@ -94,6 +94,64 @@ test('shows EmptyState on fresh DB and navigates to all screens', async () => {
   await expect(page.locator('text=Bem-vindo')).toBeVisible({ timeout: 5_000 })
 })
 
+test('opens external links outside the app without changing current route', async () => {
+  await app.evaluate(({ shell }) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitOpenExternalCalls?: string[]
+      __shipitRestoreOpenExternal?: () => void
+    }
+
+    const calls: string[] = []
+    const originalOpenExternal = shell.openExternal
+
+    shell.openExternal = async (url: string) => {
+      calls.push(url)
+    }
+
+    globalState.__shipitOpenExternalCalls = calls
+    globalState.__shipitRestoreOpenExternal = () => {
+      shell.openExternal = originalOpenExternal
+    }
+  })
+
+  try {
+    await page.click('[title="Configurações"]')
+    await page.waitForURL(/#\/settings/)
+    const currentUrl = page.url()
+
+    await page.locator('a[href^="mailto:"]').first().click()
+
+    await expect(page).toHaveURL(currentUrl)
+    await expect.poll(async () => {
+      return app.evaluate(() => {
+        const globalState = globalThis as typeof globalThis & {
+          __shipitOpenExternalCalls?: string[]
+        }
+        return globalState.__shipitOpenExternalCalls?.length ?? 0
+      })
+    }).toBeGreaterThan(0)
+
+    const openExternalCalls = await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitOpenExternalCalls?: string[]
+      }
+      return globalState.__shipitOpenExternalCalls ?? []
+    })
+
+    expect(openExternalCalls).toContain('mailto:mauro.rocha.t@gmail.com')
+  } finally {
+    await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitOpenExternalCalls?: string[]
+        __shipitRestoreOpenExternal?: () => void
+      }
+      globalState.__shipitRestoreOpenExternal?.()
+      delete globalState.__shipitRestoreOpenExternal
+      delete globalState.__shipitOpenExternalCalls
+    })
+  }
+})
+
 test('navigates global history with titlebar buttons preserving query string', async () => {
   await page.evaluate(() => {
     window.location.hash = '#/profile'
