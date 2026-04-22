@@ -203,7 +203,7 @@ export function AppTopMenu({ onCommand, isCommandDisabled }: AppTopMenuProps) {
                 id={`titlebar-menu-panel-${section.id}`}
                 role="menu"
                 aria-label={`Menu ${section.label}`}
-                className="absolute left-0 top-full z-50 mt-1 min-w-64 rounded-lg border border-border bg-card p-1 shadow-2xl"
+                className="absolute left-0 top-full z-50 mt-1 min-w-64 rounded-md border border-border bg-popover p-1 shadow-2xl"
               >
                 {commands.map((command, index) => {
                   const showDivider = index > 0 && commands[index - 1]?.group !== command.group

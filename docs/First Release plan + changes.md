@@ -10,38 +10,14 @@
                 | |       
                 |_|       
 ```
+## Atividades
 
+### features
 
-- Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar texto, abrir links no navegador.
-- Adicionar um menu ao lado do logo para acessar as funcionalidades
-  - File
-    - Nova Atividade - ctrl+n
-    - divisor ----
-    - Abrir Pasta dos Relatórios - ctrl+o
-    - Abrir Pasta das Evidências - ctrl+e
-    - divisor ----
-    - Salvar - ctrl+s
-    - divisor ----
-    - Configurações - ctrl+, (vírgula)
-    - divisor ----
-    - Sair - ctrl+q
-  - Edit
-    - Copiar - ctrl+c
-    - Recortar - ctrl+x
-    - Colar - ctrl+v
-    - divisor ----
-    - Buscar - ctrl+f -> define o foco no campo de busca para buscar atividades, projetos, evidências, etc
-  - View
-    - Zoom In - ctrl+plus
-    - Zoom Out - ctrl+minus
-    - Reset Zoom - ctrl+0
-    - divisor ----
-    - Minimizar - ctrl+m
-    - Maximizar - ctrl+shift+m
-    - Fechar - ctrl+q
-  - Ajuda
-    - Sobre o ShipIt!
-    - Verificar Atualizações
+- Botão excluir na tela de detalhes da atividade, para excluir a atividade, com confirmação modal para evitar exclusão acidental, e também para melhorar a experiência do usuário.
+- Seletor de meses na tela de listagem de atividades, para facilitar a navegação entre os meses e permitir que os usuários possam acessar facilmente as atividades de meses anteriores.
+- 
+
 
 ------------------------------------------------------------------
 
@@ -124,10 +100,13 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
   - O ícone de busca não está sendo exibido.
   - Os resultados da busca também estão quebrando e movendo de lugar para baixo.
 
+## Janela do aplicativo
 
+### features
 
-
-
+- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.
+- Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar, - links devem abrir no navegador padrão do usuário fora do app
+- 
 -----------------------------------------------------------
 
 ## Fazendo
@@ -136,4 +115,37 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
 
 ### features
 
-- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.
+- Adicionar um menu ao lado do logo para acessar as funcionalidades sugira outros que possam ser úteis para o usuário, além dos que já estão listados:
+  - File
+    - Nova Atividade - ctrl+n
+    - divisor ----
+    - Abrir Pasta dos Relatórios - ctrl+o
+    - Abrir Pasta das Evidências - ctrl+e
+    - divisor ----
+    - Salvar - ctrl+s
+    - divisor ----
+    - Configurações - ctrl+, (vírgula)
+    - divisor ----
+    - Sair - ctrl+q
+  - Edit
+    - Copiar - ctrl+c
+    - Recortar - ctrl+x
+    - Colar - ctrl+v
+    - Selecionar Tudo - ctrl+a
+    - Desfazer - ctrl+z
+    - Refazer - ctrl+y
+    - divisor ----
+    - Buscar - ctrl+f -> define o foco no campo de busca para buscar atividades, projetos, evidências, etc
+  - View
+    - Zoom In - ctrl+plus
+    - Zoom Out - ctrl+minus
+    - Reset Zoom - ctrl+0
+    - divisor ----
+    - Minimizar - ctrl+m
+    - Maximizar - ctrl+shift+m
+    - Fechar - ctrl+q
+  - Ajuda
+    - Sobre o ShipIt!
+    - Verificar Atualizações / atualizar
+    - Manual do Usuário - criar tela com as instruções de uso do ShipIt!. Depois será melhorado e atualizado com imagens, gifs, vídeos, etc, para deixar a documentação mais atrativa e fácil de entender, e também para mostrar exemplos de uso do ShipIt! em diferentes cenários.
+    - Reportar um Problema - link para o usuário abrir uma issue no GitHub para reportar um problema, bug, sugestão, etc, para ajudar a melhorar o ShipIt! e para mostrar que o projeto é aberto a contribuições e feedbacks da comunidade.

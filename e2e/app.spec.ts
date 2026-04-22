@@ -334,6 +334,40 @@ test('supports app menu keyboard shortcuts for search focus and new activity', a
   await expect(page.locator('h1:has-text("Nova Atividade")')).toBeVisible({ timeout: 5_000 })
 })
 
+test('keeps top menu dropdown anchored in cyberpunk theme', async () => {
+  await page.click('[title="Configurações"]')
+  await page.waitForURL(/#\/settings/)
+  await page.click('button[aria-label="Tema Cyberpunk"]')
+
+  const html = page.locator('html')
+  await expect(html).toHaveClass(/(?:^|\s)cyberpunk(?:\s|$)/)
+
+  await page.click('#titlebar-menu-btn-file')
+  await expect(page.locator('#titlebar-menu-panel-file')).toBeVisible({ timeout: 5_000 })
+
+  const metrics = await page.evaluate(() => {
+    const trigger = document.getElementById('titlebar-menu-btn-file')
+    const panel = document.getElementById('titlebar-menu-panel-file')
+
+    if (!trigger || !panel) return null
+
+    const triggerRect = trigger.getBoundingClientRect()
+    const panelRect = panel.getBoundingClientRect()
+    const style = getComputedStyle(panel)
+
+    return {
+      position: style.position,
+      panelTop: panelRect.top,
+      gapFromTrigger: panelRect.top - triggerRect.bottom,
+    }
+  })
+
+  expect(metrics).not.toBeNull()
+  expect(metrics!.position).toBe('absolute')
+  expect(metrics!.panelTop).toBeGreaterThanOrEqual(0)
+  expect(metrics!.gapFromTrigger).toBeGreaterThanOrEqual(0)
+})
+
 // ──── Theme Toggle ────
 
 test('toggles dark/light theme', async () => {
