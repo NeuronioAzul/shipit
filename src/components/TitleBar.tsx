@@ -39,8 +39,7 @@ export function TitleBar() {
       {/* Center: Search Bar */}
       <div
         id="titlebar-search"
-        className="flex-1 flex justify-center"
-        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        className="flex-1 min-w-0 flex justify-center"
       >
         <SearchBar />
       </div>

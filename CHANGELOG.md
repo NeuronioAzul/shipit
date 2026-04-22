@@ -53,6 +53,21 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - **Persistência de tema** atualizada: `localStorage.shipit-theme` agora armazena o ID do tema (ex: `"cyberpunk"`, `"ocean"`) em vez de `"dark"`/`"light"`
 - **Transições de tema** suaves com 200ms de duração ao trocar entre temas
 
+### Corrigido (Fase 16.2 — Busca na TitleBar e Cyberpunk)
+
+- **Contrato drag/no-drag da TitleBar**
+  - Área central da titlebar voltou a ser arrastável (drag)
+  - `no-drag` ficou restrito às áreas realmente interativas (`SearchBar` e controles da janela)
+- **SearchBar responsiva na menubar**
+  - Largura máxima ajustada por breakpoints: **320 / 420 / 520 px**
+  - Contêiner da busca estabilizado para evitar ocupação excessiva da titlebar
+- **Tema Cyberpunk: dropdown da busca estabilizado**
+  - `#searchbar-results` excluído das regras globais agressivas de cards (`clip-path`/pseudo-elementos/scanline)
+  - Regra dedicada para manter dropdown ancorado abaixo do input, sem deslocamento vertical e sem sumiço de conteúdo
+- **Regressão automatizada (Playwright/Electron)**
+  - Novo cenário E2E para busca no tema cyberpunk (foco via `Ctrl+K`, input/ícone visíveis, dropdown ancorado e limite de largura)
+  - Nova assertiva estrutural E2E para o contrato drag/no-drag na titlebar/searchbar
+
 ---
 
 ## [1.2.1] — 2026-04-13

@@ -124,9 +124,17 @@ export function SearchBar() {
   }
 
   return (
-    <div id="searchbar" ref={containerRef} className="relative flex-1 max-w-md mx-4">
+    <div
+      id="searchbar"
+      ref={containerRef}
+      className="relative w-full min-w-0 max-w-80 sm:max-w-105 lg:max-w-130"
+      style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+    >
       <div className="relative">
-        <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs pointer-events-none"></i>
+        <i
+          id="searchbar-magnifier"
+          className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs pointer-events-none"
+        ></i>
         <input
           id="searchbar-input"
           ref={inputRef}

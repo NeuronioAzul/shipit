@@ -76,12 +76,55 @@ test('toggles dark/light theme', async () => {
   const html = page.locator('html')
 
   // Switch to light mode
-  await page.click('input[value="light"]')
-  await expect(html).not.toHaveClass(/dark/)
+  await page.click('button[aria-label="Tema Claro"]')
+  await expect(html).toHaveClass(/(?:^|\s)light(?:\s|$)/)
 
   // Switch back to dark mode
-  await page.click('input[value="dark"]')
-  await expect(html).toHaveClass(/dark/)
+  await page.click('button[aria-label="Tema Escuro"]')
+  await expect(html).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
+})
+
+// ──── Titlebar Drag Contract ────
+
+test('maintains drag/no-drag contract in titlebar search area', async () => {
+  const regions = await page.evaluate(() => {
+    function readRegion(id: string) {
+      const el = document.getElementById(id) as HTMLElement | null
+      const computed = el ? getComputedStyle(el) : null
+      return {
+        styleAttr: el?.getAttribute('style') ?? '',
+        inline: el?.style.getPropertyValue('-webkit-app-region') ?? '',
+        computed: computed?.getPropertyValue('-webkit-app-region') ?? '',
+      }
+    }
+
+    return {
+      titlebar: readRegion('titlebar'),
+      titlebarSearch: readRegion('titlebar-search'),
+      searchbar: readRegion('searchbar'),
+      titlebarControls: readRegion('titlebar-controls'),
+    }
+  })
+
+  expect(regions.titlebar.styleAttr).toMatch(/(?:-webkit-)?app-region:\s*drag/)
+  expect(regions.titlebar.inline).toBe('drag')
+
+  // Central wrapper should not block drag globally.
+  expect(regions.titlebarSearch.styleAttr).not.toContain('-webkit-app-region')
+
+  // Interactive areas must explicitly opt out of drag.
+  expect(regions.searchbar.styleAttr).toMatch(/(?:-webkit-)?app-region:\s*no-drag/)
+  expect(regions.searchbar.inline).toBe('no-drag')
+  expect(regions.titlebarControls.styleAttr).toMatch(/(?:-webkit-)?app-region:\s*no-drag/)
+  expect(regions.titlebarControls.inline).toBe('no-drag')
+
+  // Some environments may not expose this computed property; if exposed, it must match.
+  if (regions.titlebar.computed) {
+    expect(regions.titlebar.computed).toBe('drag')
+  }
+  if (regions.searchbar.computed) {
+    expect(regions.searchbar.computed).toBe('no-drag')
+  }
 })
 
 // ──── Activity Creation ────
@@ -106,4 +149,71 @@ test('creates an activity', async () => {
 
   // Verify the created activity appears
   await expect(page.locator('text=Atividade E2E Playwright').first()).toBeVisible({ timeout: 5_000 })
+})
+
+// ──── Cyberpunk Search Regression ────
+
+test('keeps searchbar stable and anchored in cyberpunk theme', async () => {
+  await page.click('[title="Configurações"]')
+  await page.waitForURL(/#\/settings/)
+  await page.click('button[aria-label="Tema Cyberpunk"]')
+
+  const html = page.locator('html')
+  await expect(html).toHaveClass(/(?:^|\s)cyberpunk(?:\s|$)/)
+
+  await page.click('[title="Atividades"]')
+  await page.waitForURL(/#\/activities/)
+
+  const input = page.locator('#searchbar-input, #searchbar input[type="text"]')
+  await expect(input.first()).toBeVisible({ timeout: 5_000 })
+
+  await page.keyboard.press('Control+k')
+  await expect(input.first()).toBeFocused()
+
+  const magnifier = page.locator('#searchbar-magnifier, #searchbar .fa-magnifying-glass')
+  await expect(magnifier).toBeVisible()
+
+  await input.first().fill('E2')
+  const dropdown = page.locator('#searchbar-results')
+  await expect(dropdown).toBeVisible({ timeout: 5_000 })
+  await expect(dropdown).toContainText('Atividade E2E Playwright')
+
+  const metrics = await page.evaluate(() => {
+    const searchbar = document.getElementById('searchbar')
+    const inputEl = document.getElementById('searchbar-input')
+    const dropdownEl = document.getElementById('searchbar-results')
+
+    if (!searchbar || !inputEl || !dropdownEl) return null
+
+    const searchbarRect = searchbar.getBoundingClientRect()
+    const inputRect = inputEl.getBoundingClientRect()
+    const dropdownRect = dropdownEl.getBoundingClientRect()
+    const dropdownStyle = getComputedStyle(dropdownEl)
+
+    const expectedMaxWidth = window.matchMedia('(min-width: 1024px)').matches
+      ? 520
+      : window.matchMedia('(min-width: 640px)').matches
+        ? 420
+        : 320
+
+    return {
+      expectedMaxWidth,
+      searchbarWidth: searchbarRect.width,
+      dropdownWidth: dropdownRect.width,
+      inputBottom: inputRect.bottom,
+      dropdownTop: dropdownRect.top,
+      leftDelta: Math.abs(dropdownRect.left - inputRect.left),
+      position: dropdownStyle.position,
+      transform: dropdownStyle.transform,
+    }
+  })
+
+  expect(metrics).not.toBeNull()
+  expect(metrics!.position).toBe('absolute')
+  expect(metrics!.transform).toBe('none')
+  expect(metrics!.dropdownTop).toBeGreaterThanOrEqual(metrics!.inputBottom - 1)
+  expect(metrics!.dropdownTop).toBeLessThanOrEqual(metrics!.inputBottom + 12)
+  expect(metrics!.leftDelta).toBeLessThanOrEqual(1)
+  expect(metrics!.searchbarWidth).toBeLessThanOrEqual(metrics!.expectedMaxWidth + 1)
+  expect(metrics!.dropdownWidth).toBeLessThanOrEqual(metrics!.expectedMaxWidth + 1)
 })

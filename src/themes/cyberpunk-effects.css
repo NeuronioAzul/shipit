@@ -118,8 +118,8 @@
 }
 
 /* Card elements — neon border via double-polygon (exclude form fields) */
-.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea),
-.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea) {
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results),
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results) {
   position: relative;
   isolation: isolate;
   border-radius: 0 !important;
@@ -136,8 +136,8 @@
 }
 
 /* Inner fill — creates 1px neon border at all edges including diagonal cuts */
-.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea)::before,
-.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea)::before {
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results)::before,
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results)::before {
   content: '';
   position: absolute;
   inset: 1px;
@@ -155,8 +155,8 @@
 }
 
 /* Hover: brighter border */
-.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):hover,
-.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):hover {
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results):hover,
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results):hover {
   background-color: rgb(57 255 20 / 0.65) !important;
 }
 
@@ -653,11 +653,11 @@
 }
 
 /* ===== Card / container scan line (from scannedh) ===== */
-.cyberpunk [class*="bg-card"][class*="border"] {
+.cyberpunk [class*="bg-card"][class*="border"]:not(#searchbar-results) {
   position: relative;
 }
 
-.cyberpunk [class*="bg-card"][class*="border"]::after {
+.cyberpunk [class*="bg-card"][class*="border"]:not(#searchbar-results)::after {
   content: '';
   position: absolute;
   top: -2px;
@@ -671,9 +671,26 @@
   z-index: 1;
 }
 
-.cyberpunk [class*="bg-card"][class*="border"]:hover::after {
+.cyberpunk [class*="bg-card"][class*="border"]:not(#searchbar-results):hover::after {
   opacity: 1;
   animation: cyber-card-scan var(--glitched-long-duration) linear infinite alternate;
+}
+
+/* SearchBar dropdown: keep stable in cyberpunk without inheriting global card effects */
+.cyberpunk #searchbar-results {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  margin-top: 0 !important;
+  clip-path: none !important;
+  transform: none !important;
+  isolation: auto;
+}
+
+.cyberpunk #searchbar-results::before,
+.cyberpunk #searchbar-results::after {
+  content: none !important;
 }
 
 @keyframes cyber-card-scan {
