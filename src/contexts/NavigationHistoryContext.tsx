@@ -20,6 +20,7 @@ interface RouteSnapshot {
   hash: string
 }
 
+// Keep a deep enough stack for practical navigation flows.
 const MAX_HISTORY_ENTRIES = 100
 
 const NavigationHistoryContext = createContext<NavigationHistoryContextType | undefined>(undefined)
@@ -43,39 +44,56 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
     const nextEntry = toHistoryEntry(location)
 
     setHistoryState((prev) => {
-      let nextState = prev
       const pendingIndex = pendingTimeTravelIndexRef.current
 
       if (pendingIndex !== null) {
         pendingTimeTravelIndexRef.current = null
 
-        if (prev.entries[pendingIndex] === nextEntry) {
-          if (prev.index !== pendingIndex) {
-            nextState = { ...prev, index: pendingIndex }
+        if (pendingIndex >= 0 && pendingIndex < prev.entries.length && prev.entries[pendingIndex] === nextEntry) {
+          if (prev.index === pendingIndex) {
+            stateRef.current = prev
+            return prev
           }
-        } else {
-          const replaced = [...prev.entries]
-          replaced[pendingIndex] = nextEntry
-          nextState = { entries: replaced, index: pendingIndex }
+
+          const aligned = { ...prev, index: pendingIndex }
+          stateRef.current = aligned
+          return aligned
         }
-      } else {
-        const currentEntry = prev.entries[prev.index]
-        if (currentEntry !== nextEntry) {
-          const truncated = prev.entries.slice(0, prev.index + 1)
-          if (truncated[truncated.length - 1] === nextEntry) {
-            nextState = { entries: truncated, index: truncated.length - 1 }
-          } else {
-            const appended = [...truncated, nextEntry]
-            if (appended.length <= MAX_HISTORY_ENTRIES) {
-              nextState = { entries: appended, index: appended.length - 1 }
-            } else {
-              const trimmed = appended.slice(appended.length - MAX_HISTORY_ENTRIES)
-              nextState = { entries: trimmed, index: trimmed.length - 1 }
-            }
-          }
+
+        // If navigation landed in a different route than expected, rebuild from the target
+        // index instead of replacing an existing entry, which keeps history depth intact.
+        const baseIndex = pendingIndex >= 0 && pendingIndex < prev.entries.length
+          ? pendingIndex
+          : prev.index
+
+        const baseEntries = prev.entries.slice(0, baseIndex + 1)
+        let rebuiltEntries = baseEntries
+
+        if (baseEntries[baseEntries.length - 1] !== nextEntry) {
+          rebuiltEntries = [...baseEntries, nextEntry]
         }
+
+        if (rebuiltEntries.length > MAX_HISTORY_ENTRIES) {
+          rebuiltEntries = rebuiltEntries.slice(rebuiltEntries.length - MAX_HISTORY_ENTRIES)
+        }
+
+        const rebuilt = { entries: rebuiltEntries, index: rebuiltEntries.length - 1 }
+        stateRef.current = rebuilt
+        return rebuilt
       }
 
+      const currentEntry = prev.entries[prev.index]
+      if (currentEntry === nextEntry) {
+        stateRef.current = prev
+        return prev
+      }
+
+      let appended = [...prev.entries.slice(0, prev.index + 1), nextEntry]
+      if (appended.length > MAX_HISTORY_ENTRIES) {
+        appended = appended.slice(appended.length - MAX_HISTORY_ENTRIES)
+      }
+
+      const nextState = { entries: appended, index: appended.length - 1 }
       stateRef.current = nextState
       return nextState
     })
@@ -86,8 +104,11 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
     if (index <= 0) return
 
     const targetIndex = index - 1
+    const targetEntry = entries[targetIndex]
+    if (!targetEntry) return
+
     pendingTimeTravelIndexRef.current = targetIndex
-    navigate(entries[targetIndex])
+    navigate(targetEntry)
   }, [navigate])
 
   const goForward = useCallback(() => {
@@ -95,8 +116,11 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
     if (index >= entries.length - 1) return
 
     const targetIndex = index + 1
+    const targetEntry = entries[targetIndex]
+    if (!targetEntry) return
+
     pendingTimeTravelIndexRef.current = targetIndex
-    navigate(entries[targetIndex])
+    navigate(targetEntry)
   }, [navigate])
 
   useEffect(() => {

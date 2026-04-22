@@ -131,6 +131,33 @@ test('navigates global history with titlebar buttons preserving query string', a
   await page.waitForURL(searchUrl)
 })
 
+test('keeps at least 10 entries in titlebar history stack', async () => {
+  // Reset app state so this test validates history depth from a clean stack.
+  await page.evaluate(() => {
+    window.location.hash = '#/'
+    window.location.reload()
+  })
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForTimeout(900)
+
+  for (let i = 0; i < 12; i++) {
+    await page.evaluate((idx) => {
+      window.location.hash = `#/activities?search=hist-depth-${idx}`
+    }, i)
+    await page.waitForURL(new RegExp(`#/activities\\?search=hist-depth-${i}$`))
+  }
+
+  const backButton = page.locator('#titlebar-btn-back')
+
+  for (let step = 0; step < 10; step++) {
+    await expect(backButton).toBeEnabled()
+    await backButton.click()
+    await page.waitForTimeout(150)
+  }
+
+  await expect(page).toHaveURL(/#\/activities\?search=hist-depth-1$/)
+})
+
 test('supports global Alt+arrow shortcuts and respects typing focus guard', async () => {
   await page.evaluate(() => {
     window.location.hash = '#/profile'

@@ -191,11 +191,12 @@ export function ActivityDetailPage() {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
       if (isTypingTarget(e.target)) return
 
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      e.preventDefault()
+
       if (e.key === 'ArrowLeft' && idx > 0) {
-        e.preventDefault()
         navigate(`/activities/${filtered[idx - 1].id}`)
       } else if (e.key === 'ArrowRight' && idx < filtered.length - 1) {
-        e.preventDefault()
         navigate(`/activities/${filtered[idx + 1].id}`)
       }
     }
