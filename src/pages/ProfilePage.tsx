@@ -1,9 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { UserProfileData } from '../vite-env'
 import { validateProfile, type ValidationError } from '../utils/validation'
 import { Select } from '../components/Select'
+import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
 
 const ROLES = [
   'ADMINISTRADOR DE DADOS',
@@ -64,6 +65,29 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const savedFingerprintRef = useRef('')
+
+  const buildProfileFingerprint = useCallback((nextForm: ProfileForm): string => {
+    return JSON.stringify({
+      full_name: nextForm.full_name.trim(),
+      role: nextForm.role,
+      seniority_level: nextForm.seniority_level,
+      contract_identifier: nextForm.contract_identifier.trim(),
+      profile_type: nextForm.profile_type,
+      correlating_activities: nextForm.correlating_activities.trim(),
+      attendance_type: nextForm.attendance_type,
+      project_scope: nextForm.project_scope.trim(),
+    })
+  }, [])
+
+  const persistProfile = useCallback(async (nextForm: ProfileForm) => {
+    if (window.electronAPI) {
+      await window.electronAPI.saveUserProfile(nextForm)
+    } else {
+      localStorage.setItem('shipit-profile', JSON.stringify(nextForm))
+    }
+    savedFingerprintRef.current = buildProfileFingerprint(nextForm)
+  }, [buildProfileFingerprint])
 
   useEffect(() => {
     async function loadProfile() {
@@ -76,7 +100,7 @@ export function ProfilePage() {
       }
 
       if (profile?.full_name) {
-        setForm({
+        const loadedForm: ProfileForm = {
           full_name: (profile.full_name || '').toUpperCase(),
           role: profile.role || '',
           seniority_level: profile.seniority_level || '',
@@ -85,12 +109,64 @@ export function ProfilePage() {
           correlating_activities: profile.correlating_activities || '',
           attendance_type: profile.attendance_type || '',
           project_scope: profile.project_scope || '',
-        })
+        }
+        setForm(loadedForm)
+        savedFingerprintRef.current = buildProfileFingerprint(loadedForm)
         setIsEditing(true)
+      } else {
+        savedFingerprintRef.current = buildProfileFingerprint(initialForm)
       }
     }
     loadProfile()
-  }, [])
+  }, [buildProfileFingerprint])
+
+  const handleContextSave = useCallback(async (): Promise<SaveContextResult> => {
+    if (saving) {
+      return {
+        status: 'unavailable',
+        message: 'O salvamento já está em andamento.',
+      }
+    }
+
+    const currentFingerprint = buildProfileFingerprint(form)
+    if (currentFingerprint === savedFingerprintRef.current) {
+      return {
+        status: 'no-changes',
+        message: 'Nenhuma alteração para salvar no perfil.',
+      }
+    }
+
+    const validationErrors = validateProfile(form)
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return {
+        status: 'unavailable',
+        message: 'Preencha os campos obrigatórios do perfil.',
+      }
+    }
+
+    setErrors([])
+    setSaving(true)
+
+    try {
+      await persistProfile(form)
+      return {
+        status: 'saved',
+        message: 'Perfil salvo com sucesso.',
+      }
+    } catch {
+      return {
+        status: 'error',
+        message: 'Erro ao salvar perfil.',
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [saving, buildProfileFingerprint, form, persistProfile])
+
+  useEffect(() => {
+    return registerSaveContextHandler(handleContextSave)
+  }, [handleContextSave])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -113,16 +189,12 @@ export function ProfilePage() {
     setSaving(true)
 
     try {
-      if (window.electronAPI) {
-        await window.electronAPI.saveUserProfile(form)
-      } else {
-        localStorage.setItem('shipit-profile', JSON.stringify(form))
-      }
+      await persistProfile(form)
       toast.success('Perfil salvo com sucesso!')
       setTimeout(() => {
         navigate('/')
       }, 800)
-    } catch (err) {
+    } catch {
       toast.error('Erro ao salvar perfil')
     } finally {
       setSaving(false)

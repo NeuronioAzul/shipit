@@ -64,6 +64,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('app:saveSettings', partial),
   selectDirectory: () => ipcRenderer.invoke('app:selectDirectory'),
   getDefaultReportsDir: () => ipcRenderer.invoke('app:getDefaultReportsDir'),
+  openReportsDirectory: () => ipcRenderer.invoke('app:openReportsDirectory'),
+  openEvidencesDirectory: () => ipcRenderer.invoke('app:openEvidencesDirectory'),
+  quitApp: () => ipcRenderer.invoke('app:quit'),
+
+  // Menu Edit Actions
+  editUndo: () => ipcRenderer.invoke('app:editUndo'),
+  editRedo: () => ipcRenderer.invoke('app:editRedo'),
+  editCut: () => ipcRenderer.invoke('app:editCut'),
+  editCopy: () => ipcRenderer.invoke('app:editCopy'),
+  editPaste: () => ipcRenderer.invoke('app:editPaste'),
+  editSelectAll: () => ipcRenderer.invoke('app:editSelectAll'),
+
+  // Menu View Actions
+  zoomIn: () => ipcRenderer.invoke('app:zoomIn'),
+  zoomOut: () => ipcRenderer.invoke('app:zoomOut'),
+  zoomReset: () => ipcRenderer.invoke('app:zoomReset'),
 
   // Sounds
   listSounds: () => ipcRenderer.invoke('app:listSounds'),

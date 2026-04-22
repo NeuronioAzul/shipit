@@ -244,6 +244,96 @@ test('supports global Alt+arrow shortcuts and respects typing focus guard', asyn
   await page.waitForURL(settingsUrl)
 })
 
+test('opens and closes app menu sections with mouse and Escape', async () => {
+  const fileMenuButton = page.locator('#titlebar-menu-btn-file')
+  const fileMenuPanel = page.locator('#titlebar-menu-panel-file')
+
+  await fileMenuButton.click()
+  await expect(fileMenuPanel).toBeVisible({ timeout: 5_000 })
+
+  await page.keyboard.press('Escape')
+  await expect(fileMenuPanel).toBeHidden({ timeout: 5_000 })
+
+  await fileMenuButton.click()
+  await expect(fileMenuPanel).toBeVisible({ timeout: 5_000 })
+
+  await page.locator('#app-main').click()
+  await expect(fileMenuPanel).toBeHidden({ timeout: 5_000 })
+})
+
+test('runs help menu actions for manual and report issue', async () => {
+  await app.evaluate(({ shell }) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitOpenExternalCalls?: string[]
+      __shipitRestoreOpenExternal?: () => void
+    }
+
+    const calls: string[] = []
+    const originalOpenExternal = shell.openExternal
+
+    shell.openExternal = async (url: string) => {
+      calls.push(url)
+    }
+
+    globalState.__shipitOpenExternalCalls = calls
+    globalState.__shipitRestoreOpenExternal = () => {
+      shell.openExternal = originalOpenExternal
+    }
+  })
+
+  try {
+    await page.click('#titlebar-menu-btn-help')
+    await page.click('#titlebar-menu-item-help-user-manual')
+    await page.waitForURL(/#\/manual$/)
+
+    const manualUrl = page.url()
+
+    await page.click('#titlebar-menu-btn-help')
+    await page.click('#titlebar-menu-item-help-report-issue')
+
+    await expect(page).toHaveURL(manualUrl)
+
+    await expect.poll(async () => {
+      return app.evaluate(() => {
+        const globalState = globalThis as typeof globalThis & {
+          __shipitOpenExternalCalls?: string[]
+        }
+        return globalState.__shipitOpenExternalCalls?.length ?? 0
+      })
+    }).toBeGreaterThan(0)
+
+    const openExternalCalls = await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitOpenExternalCalls?: string[]
+      }
+      return globalState.__shipitOpenExternalCalls ?? []
+    })
+
+    expect(openExternalCalls).toContain('https://github.com/NeuronioAzul/shipit/issues/new')
+  } finally {
+    await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitOpenExternalCalls?: string[]
+        __shipitRestoreOpenExternal?: () => void
+      }
+      globalState.__shipitRestoreOpenExternal?.()
+      delete globalState.__shipitRestoreOpenExternal
+      delete globalState.__shipitOpenExternalCalls
+    })
+  }
+})
+
+test('supports app menu keyboard shortcuts for search focus and new activity', async () => {
+  await page.locator('#app-main').click()
+  await page.keyboard.press('Control+f')
+  await expect(page.locator('#searchbar-input')).toBeFocused()
+
+  await page.locator('#app-main').click()
+  await page.keyboard.press('Control+n')
+  await page.waitForURL(/#\/activities\/new$/)
+  await expect(page.locator('h1:has-text("Nova Atividade")')).toBeVisible({ timeout: 5_000 })
+})
+
 // ──── Theme Toggle ────
 
 test('toggles dark/light theme', async () => {

@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification, shell, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification, shell, type MenuItemConstructorOptions, type WebContents } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
@@ -500,6 +500,73 @@ function saveSettingsFile(data: Record<string, unknown>): void {
   fs.writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2), 'utf-8')
 }
 
+function ensureDirectoryExists(targetDir: string): string {
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true })
+  }
+  return targetDir
+}
+
+function getConfiguredReportsDir(): string {
+  const configuredPath = loadSettings().reportsDirectory
+  if (typeof configuredPath === 'string' && configuredPath.trim().length > 0) {
+    return configuredPath
+  }
+  return path.join(app.getPath('userData'), 'reports')
+}
+
+function getEvidencesDirPath(): string {
+  return path.join(app.getPath('userData'), 'evidences')
+}
+
+function getActiveWebContents(): WebContents | null {
+  return BrowserWindow.getFocusedWindow()?.webContents ?? mainWindow?.webContents ?? null
+}
+
+function runEditCommand(command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll'): boolean {
+  const webContents = getActiveWebContents()
+  if (!webContents) return false
+
+  switch (command) {
+    case 'undo':
+      webContents.undo()
+      return true
+    case 'redo':
+      webContents.redo()
+      return true
+    case 'cut':
+      webContents.cut()
+      return true
+    case 'copy':
+      webContents.copy()
+      return true
+    case 'paste':
+      webContents.paste()
+      return true
+    case 'selectAll':
+      webContents.selectAll()
+      return true
+    default:
+      return false
+  }
+}
+
+function runZoomCommand(command: 'in' | 'out' | 'reset'): boolean {
+  const webContents = getActiveWebContents()
+  if (!webContents) return false
+
+  const currentLevel = webContents.getZoomLevel()
+  if (command === 'reset') {
+    webContents.setZoomLevel(0)
+    return true
+  }
+
+  const delta = command === 'in' ? 0.5 : -0.5
+  const nextLevel = Math.max(-8, Math.min(8, currentLevel + delta))
+  webContents.setZoomLevel(nextLevel)
+  return true
+}
+
 ipcMain.handle('app:getSettings', () => {
   return loadSettings()
 })
@@ -523,6 +590,35 @@ ipcMain.handle('app:selectDirectory', async () => {
 ipcMain.handle('app:getDefaultReportsDir', () => {
   return path.join(app.getPath('userData'), 'reports')
 })
+
+ipcMain.handle('app:openReportsDirectory', async () => {
+  const reportsDir = ensureDirectoryExists(getConfiguredReportsDir())
+  const error = await shell.openPath(reportsDir)
+  return error.length === 0
+})
+
+ipcMain.handle('app:openEvidencesDirectory', async () => {
+  const evidencesDir = ensureDirectoryExists(getEvidencesDirPath())
+  const error = await shell.openPath(evidencesDir)
+  return error.length === 0
+})
+
+ipcMain.handle('app:quit', () => {
+  tray?.destroy()
+  tray = null
+  app.quit()
+})
+
+ipcMain.handle('app:editUndo', () => runEditCommand('undo'))
+ipcMain.handle('app:editRedo', () => runEditCommand('redo'))
+ipcMain.handle('app:editCut', () => runEditCommand('cut'))
+ipcMain.handle('app:editCopy', () => runEditCommand('copy'))
+ipcMain.handle('app:editPaste', () => runEditCommand('paste'))
+ipcMain.handle('app:editSelectAll', () => runEditCommand('selectAll'))
+
+ipcMain.handle('app:zoomIn', () => runZoomCommand('in'))
+ipcMain.handle('app:zoomOut', () => runZoomCommand('out'))
+ipcMain.handle('app:zoomReset', () => runZoomCommand('reset'))
 
 // ──── Sound Playback IPC ────
 

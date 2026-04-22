@@ -1,8 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { SearchBar } from './SearchBar'
+import { AppTopMenu } from './AppTopMenu'
 import { useNavigationHistory } from '../contexts/NavigationHistoryContext'
+import { type AppMenuCommand, type AppMenuCommandId, findCommandByShortcut } from '../menu/appMenuCatalog'
+import { runSaveContext } from '../menu/saveContextRegistry'
+import { isTypingTarget } from '../utils/keyboardGuards'
+
+const REPORT_ISSUE_URL = 'https://github.com/NeuronioAzul/shipit/issues/new'
+
+function focusSearchInput() {
+  const searchInput = document.getElementById('searchbar-input') as HTMLInputElement | null
+  searchInput?.focus()
+  searchInput?.select()
+}
 
 export function TitleBar() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [isMaximized, setIsMaximized] = useState(false)
   const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()
 
@@ -15,11 +31,136 @@ export function TitleBar() {
     return () => unsub?.()
   }, [])
 
-  const handleMinimize = () => window.electronAPI?.windowMinimize()
-  const handleMaximize = () => window.electronAPI?.windowMaximize()
-  const handleClose = () => window.electronAPI?.windowClose()
-  const handleGoBack = () => goBack()
-  const handleGoForward = () => goForward()
+  const handleMinimize = useCallback(() => window.electronAPI?.windowMinimize(), [])
+  const handleMaximize = useCallback(() => window.electronAPI?.windowMaximize(), [])
+  const handleClose = useCallback(() => window.electronAPI?.windowClose(), [])
+  const handleGoBack = useCallback(() => goBack(), [goBack])
+  const handleGoForward = useCallback(() => goForward(), [goForward])
+
+  const executeMenuCommand = useCallback(async (commandId: AppMenuCommandId) => {
+    switch (commandId) {
+      case 'file.new-activity':
+        navigate('/activities/new')
+        return
+      case 'file.open-reports-folder': {
+        const opened = await window.electronAPI?.openReportsDirectory?.()
+        if (opened === false) {
+          toast.error('Não foi possível abrir a pasta de relatórios.')
+        }
+        return
+      }
+      case 'file.open-evidences-folder': {
+        const opened = await window.electronAPI?.openEvidencesDirectory?.()
+        if (opened === false) {
+          toast.error('Não foi possível abrir a pasta de evidências.')
+        }
+        return
+      }
+      case 'file.save-context': {
+        const result = await runSaveContext()
+        if (result.status === 'saved') {
+          toast.success(result.message || 'Dados salvos com sucesso.')
+        } else if (result.status === 'no-changes') {
+          toast.info(result.message || 'Nenhuma alteração pendente.')
+        } else if (result.status === 'unavailable') {
+          toast.warning(result.message || 'Esta tela não possui conteúdo para salvar.')
+        } else {
+          toast.error(result.message || 'Erro ao salvar dados da tela atual.')
+        }
+        return
+      }
+      case 'file.settings':
+        navigate('/settings')
+        return
+      case 'file.quit':
+        await window.electronAPI?.quitApp?.()
+        return
+
+      case 'edit.undo':
+        await window.electronAPI?.editUndo?.()
+        return
+      case 'edit.redo':
+        await window.electronAPI?.editRedo?.()
+        return
+      case 'edit.cut':
+        await window.electronAPI?.editCut?.()
+        return
+      case 'edit.copy':
+        await window.electronAPI?.editCopy?.()
+        return
+      case 'edit.paste':
+        await window.electronAPI?.editPaste?.()
+        return
+      case 'edit.select-all':
+        await window.electronAPI?.editSelectAll?.()
+        return
+      case 'edit.focus-search':
+        focusSearchInput()
+        return
+
+      case 'view.zoom-in':
+        await window.electronAPI?.zoomIn?.()
+        return
+      case 'view.zoom-out':
+        await window.electronAPI?.zoomOut?.()
+        return
+      case 'view.zoom-reset':
+        await window.electronAPI?.zoomReset?.()
+        return
+      case 'view.window-minimize':
+        handleMinimize()
+        return
+      case 'view.window-maximize':
+        handleMaximize()
+        return
+      case 'view.window-close':
+        handleClose()
+        return
+
+      case 'help.about':
+        window.dispatchEvent(new Event('shipit:open-about'))
+        return
+      case 'help.check-updates':
+        if (location.pathname !== '/settings') {
+          navigate('/settings')
+        }
+        window.setTimeout(() => {
+          window.dispatchEvent(new Event('shipit:menu-check-updates'))
+        }, 120)
+        return
+      case 'help.user-manual':
+        navigate('/manual')
+        return
+      case 'help.report-issue':
+        window.open(REPORT_ISSUE_URL, '_blank', 'noopener,noreferrer')
+        return
+
+      default:
+        return
+    }
+  }, [handleClose, handleMaximize, handleMinimize, location.pathname, navigate])
+
+  const isMenuCommandDisabled = useCallback((command: AppMenuCommand) => {
+    return Boolean(command.requiresElectron && !window.electronAPI)
+  }, [])
+
+  useEffect(() => {
+    function handleGlobalShortcuts(event: KeyboardEvent) {
+      if (event.defaultPrevented) return
+
+      const matchedCommand = findCommandByShortcut(event)
+      if (!matchedCommand || !matchedCommand.globalShortcut) return
+      if (isTypingTarget(event.target)) return
+
+      event.preventDefault()
+      void executeMenuCommand(matchedCommand.id)
+    }
+
+    window.addEventListener('keydown', handleGlobalShortcuts)
+    return () => {
+      window.removeEventListener('keydown', handleGlobalShortcuts)
+    }
+  }, [executeMenuCommand])
 
   return (
     <div 
@@ -27,17 +168,24 @@ export function TitleBar() {
       className="h-13.25 bg-titlebar flex items-center justify-between select-none shrink-0"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Left: Full Logo */}
-      <div id="titlebar-logo" className="flex items-center pl-3">
-        <img
-          src="./assets/images/logo-composto-colorido.svg"
-          alt="ShipIt!"
-          className="h-7 bg-white/90 rounded px-1"
-          onError={(e) => {
-            // Fallback to PNG if SVG not found
-            (e.target as HTMLImageElement).src = './assets/images/icons/favicon-32x32.png'
-          }}
-        />
+      {/* Left: Logo + menu */}
+      <div
+        id="titlebar-left"
+        className="flex items-center gap-2 pl-3"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
+        <div id="titlebar-logo" className="flex items-center">
+          <img
+            src="./assets/images/logo-composto-colorido.svg"
+            alt="ShipIt!"
+            className="h-7 bg-white/90 rounded px-1"
+            onError={(e) => {
+              // Fallback to PNG if SVG not found
+              (e.target as HTMLImageElement).src = './assets/images/icons/favicon-32x32.png'
+            }}
+          />
+        </div>
+        <AppTopMenu onCommand={executeMenuCommand} isCommandDisabled={isMenuCommandDisabled} />
       </div>
 
       {/* Center: Search Bar */}

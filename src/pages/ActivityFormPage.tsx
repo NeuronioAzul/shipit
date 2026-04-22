@@ -7,6 +7,7 @@ import { EvidenceUpload } from '../components/EvidenceUpload'
 import { validateActivity, type ValidationError } from '../utils/validation'
 import { DatePicker } from '../components/DatePicker'
 import { Select } from '../components/Select'
+import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
 
 const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
@@ -48,6 +49,39 @@ export function ActivityFormPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialLoadDone = useRef(false)
+  const savedFingerprintRef = useRef('')
+
+  const buildActivityPayload = useCallback((nextForm: ActivityForm, currentActivityId: string | null): Partial<ActivityData> => {
+    const payload: Partial<ActivityData> = {
+      description: nextForm.description,
+      date_start: nextForm.date_start || null,
+      date_end: nextForm.date_end || null,
+      status: nextForm.status as ActivityData['status'],
+      link_ref: nextForm.link_ref || null,
+      attendance_type: (nextForm.attendance_type as ActivityData['attendance_type']) || null,
+      month_reference: nextForm.month_reference,
+      project_scope: nextForm.project_scope || null,
+    }
+
+    if (currentActivityId) {
+      payload.id = currentActivityId
+    }
+
+    return payload
+  }, [])
+
+  const buildFormFingerprint = useCallback((nextForm: ActivityForm): string => {
+    return JSON.stringify({
+      description: nextForm.description.trim(),
+      date_start: nextForm.date_start || null,
+      date_end: nextForm.date_end || null,
+      status: nextForm.status,
+      link_ref: nextForm.link_ref.trim(),
+      attendance_type: nextForm.attendance_type,
+      month_reference: nextForm.month_reference,
+      project_scope: nextForm.project_scope.trim(),
+    })
+  }, [])
 
   // Load profile attendance and project_scope for defaults
   useEffect(() => {
@@ -83,7 +117,7 @@ export function ActivityFormPage() {
       activity = localDb.getActivity(id)
     }
     if (activity) {
-      setForm({
+      const loadedForm: ActivityForm = {
         description: activity.description || '',
         date_start: activity.date_start || '',
         date_end: activity.date_end || '',
@@ -92,11 +126,14 @@ export function ActivityFormPage() {
         attendance_type: activity.attendance_type || '',
         month_reference: activity.month_reference,
         project_scope: activity.project_scope || '',
-      })
+      }
+
+      setForm(loadedForm)
       setEvidences(activity.evidences || [])
       setActivityId(activity.id)
+      savedFingerprintRef.current = buildFormFingerprint(loadedForm)
     }
-  }, [id])
+  }, [id, buildFormFingerprint])
 
   useEffect(() => {
     loadActivity().then(() => {
@@ -126,17 +163,7 @@ export function ActivityFormPage() {
 
       setAutoSaveStatus('saving')
       try {
-        const data: Partial<ActivityData> = {
-          description: form.description,
-          date_start: form.date_start || null,
-          date_end: form.date_end || null,
-          status: form.status as ActivityData['status'],
-          link_ref: form.link_ref || null,
-          attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
-          month_reference: form.month_reference,
-          project_scope: form.project_scope || null,
-        }
-        if (activityId) data.id = activityId
+        const data = buildActivityPayload(form, activityId)
 
         let result: ActivityData
         if (window.electronAPI) {
@@ -145,6 +172,7 @@ export function ActivityFormPage() {
           result = localDb.saveActivity(data)
         }
         if (!activityId) setActivityId(result.id)
+        savedFingerprintRef.current = buildFormFingerprint(form)
         setAutoSaveStatus('saved')
       } catch {
         setAutoSaveStatus('idle')
@@ -155,7 +183,77 @@ export function ActivityFormPage() {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form])
+  }, [form, saving, activityId, buildActivityPayload, buildFormFingerprint])
+
+  const handleContextSave = useCallback(async (): Promise<SaveContextResult> => {
+    if (saving) {
+      return {
+        status: 'unavailable',
+        message: 'O salvamento já está em andamento.',
+      }
+    }
+
+    const currentFingerprint = buildFormFingerprint(form)
+    if (currentFingerprint === savedFingerprintRef.current) {
+      return {
+        status: 'no-changes',
+        message: 'Nenhuma alteração para salvar nesta atividade.',
+      }
+    }
+
+    const validationErrors = validateActivity({
+      description: form.description,
+      date_start: form.date_start || null,
+      date_end: form.date_end || null,
+      status: form.status as ActivityData['status'],
+      month_reference: form.month_reference,
+    } as Partial<ActivityData>)
+
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return {
+        status: 'unavailable',
+        message: 'Preencha os campos obrigatórios antes de salvar.',
+      }
+    }
+
+    setErrors([])
+    setSaving(true)
+
+    try {
+      const data = buildActivityPayload(form, activityId)
+      let savedActivity: ActivityData
+
+      if (window.electronAPI) {
+        savedActivity = await window.electronAPI.saveActivity(data)
+      } else {
+        savedActivity = localDb.saveActivity(data)
+      }
+
+      if (!activityId) {
+        setActivityId(savedActivity.id)
+      }
+
+      savedFingerprintRef.current = currentFingerprint
+      setAutoSaveStatus('saved')
+
+      return {
+        status: 'saved',
+        message: 'Atividade salva com sucesso.',
+      }
+    } catch {
+      return {
+        status: 'error',
+        message: 'Erro ao salvar atividade.',
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [saving, buildFormFingerprint, form, buildActivityPayload, activityId])
+
+  useEffect(() => {
+    return registerSaveContextHandler(handleContextSave)
+  }, [handleContextSave])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -176,18 +274,7 @@ export function ActivityFormPage() {
     setSaving(true)
 
     try {
-      const data: Partial<ActivityData> = {
-        description: form.description,
-        date_start: form.date_start || null,
-        date_end: form.date_end || null,
-        status: form.status as ActivityData['status'],
-        link_ref: form.link_ref || null,
-        attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
-        month_reference: form.month_reference,
-        project_scope: form.project_scope || null,
-      }
-
-      if (activityId) data.id = activityId
+      const data = buildActivityPayload(form, activityId)
 
       let savedActivity: ActivityData
       if (window.electronAPI) {
@@ -196,6 +283,7 @@ export function ActivityFormPage() {
         savedActivity = localDb.saveActivity(data)
       }
       setActivityId(savedActivity.id)
+      savedFingerprintRef.current = buildFormFingerprint(form)
       toast.success('Atividade salva com sucesso!')
       setTimeout(() => {
         navigate(`/activities?month=${form.month_reference}`)

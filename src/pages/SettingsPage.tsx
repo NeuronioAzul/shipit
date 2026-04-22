@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ThemeSelector } from '../components/ThemeSelector'
 import { Select } from '../components/Select'
 import { TimePicker } from '../components/TimePicker'
 import type { AppSettings, UpdateStatusData } from '../vite-env'
+import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
 
 export function SettingsPage() {
   const navigate = useNavigate()
@@ -24,10 +25,41 @@ export function SettingsPage() {
   const [alertMessage, setAlertMessage] = useState('Lembrete: Preencha os campos obrigatórios para gerar o relatório mensal!')
   const [alertSoundEnabled, setAlertSoundEnabled] = useState(true)
   const [alertSaved, setAlertSaved] = useState(false)
+  const [savedAlertFingerprint, setSavedAlertFingerprint] = useState('')
 
   // Update state
   const [updateStatus, setUpdateStatus] = useState<UpdateStatusData>({ status: 'not-available' })
   const [isElectron] = useState(() => !!window.electronAPI)
+
+  const buildAlertFingerprint = useCallback((input: {
+    alertEnabled: boolean
+    alertDaysBefore: number[]
+    alertTime: string
+    alertMessage: string
+    alertSoundEnabled: boolean
+  }): string => {
+    return JSON.stringify({
+      alertEnabled: input.alertEnabled,
+      alertDaysBefore: [...input.alertDaysBefore].sort((a, b) => b - a),
+      alertTime: input.alertTime,
+      alertMessage: input.alertMessage.trim(),
+      alertSoundEnabled: input.alertSoundEnabled,
+    })
+  }, [])
+
+  const handleCheckForUpdate = useCallback(async () => {
+    if (!window.electronAPI) return
+    setUpdateStatus({ status: 'checking' })
+    const result = await window.electronAPI.checkForUpdate()
+    if (result.status === 'dev') {
+      setUpdateStatus({ status: 'dev' })
+    }
+  }, [])
+
+  const handleInstallUpdate = useCallback(async () => {
+    if (!window.electronAPI) return
+    await window.electronAPI.installUpdate()
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -47,13 +79,36 @@ export function SettingsPage() {
       setSelectedSound((settings as AppSettings).alertSound || '')
       setAutoLaunch(isAutoLaunch)
 
+      let nextAlertEnabled = true
+      let nextAlertDaysBefore = [5, 3, 2, 1, 0]
+      let nextAlertTime = '09:00'
+      let nextAlertMessage = 'Lembrete: Preencha os campos obrigatórios para gerar o relatório mensal!'
+      let nextAlertSoundEnabled = true
+
       if (alertData) {
-        setAlertEnabled(alertData.alert_enabled)
-        try { setAlertDaysBefore(JSON.parse(alertData.alert_days_before)) } catch { /* keep default */ }
-        setAlertTime(alertData.alert_time || '09:00')
-        setAlertMessage(alertData.alert_message || '')
-        setAlertSoundEnabled(alertData.alert_sound_enabled)
+        nextAlertEnabled = alertData.alert_enabled
+        try {
+          nextAlertDaysBefore = JSON.parse(alertData.alert_days_before)
+        } catch {
+          // Keep defaults when persisted format is invalid.
+        }
+        nextAlertTime = alertData.alert_time || '09:00'
+        nextAlertMessage = alertData.alert_message || ''
+        nextAlertSoundEnabled = alertData.alert_sound_enabled
       }
+
+      setAlertEnabled(nextAlertEnabled)
+      setAlertDaysBefore(nextAlertDaysBefore)
+      setAlertTime(nextAlertTime)
+      setAlertMessage(nextAlertMessage)
+      setAlertSoundEnabled(nextAlertSoundEnabled)
+      setSavedAlertFingerprint(buildAlertFingerprint({
+        alertEnabled: nextAlertEnabled,
+        alertDaysBefore: nextAlertDaysBefore,
+        alertTime: nextAlertTime,
+        alertMessage: nextAlertMessage,
+        alertSoundEnabled: nextAlertSoundEnabled,
+      }))
     }
     load()
 
@@ -82,7 +137,7 @@ export function SettingsPage() {
         audioRef.current = null
       }
     }
-  }, [])
+  }, [buildAlertFingerprint])
 
   async function handleSelectDir() {
     if (!window.electronAPI) return
@@ -132,8 +187,9 @@ export function SettingsPage() {
     )
   }
 
-  async function handleSaveAlert() {
-    if (!window.electronAPI) return
+  const persistAlertSettings = useCallback(async (): Promise<boolean> => {
+    if (!window.electronAPI) return false
+
     await window.electronAPI.saveAlert({
       alert_enabled: alertEnabled,
       alert_days_before: JSON.stringify(alertDaysBefore),
@@ -141,23 +197,91 @@ export function SettingsPage() {
       alert_message: alertMessage,
       alert_sound_enabled: alertSoundEnabled,
     })
+
+    setSavedAlertFingerprint(buildAlertFingerprint({
+      alertEnabled,
+      alertDaysBefore,
+      alertTime,
+      alertMessage,
+      alertSoundEnabled,
+    }))
+
     setAlertSaved(true)
     setTimeout(() => setAlertSaved(false), 2000)
+    return true
+  }, [
+    alertEnabled,
+    alertDaysBefore,
+    alertTime,
+    alertMessage,
+    alertSoundEnabled,
+    buildAlertFingerprint,
+  ])
+
+  async function handleSaveAlert() {
+    await persistAlertSettings()
   }
 
-  async function handleCheckForUpdate() {
-    if (!window.electronAPI) return
-    setUpdateStatus({ status: 'checking' })
-    const result = await window.electronAPI.checkForUpdate()
-    if (result.status === 'dev') {
-      setUpdateStatus({ status: 'dev' })
+  const handleContextSave = useCallback(async (): Promise<SaveContextResult> => {
+    if (!window.electronAPI) {
+      return {
+        status: 'unavailable',
+        message: 'Este comando está disponível apenas no aplicativo desktop.',
+      }
     }
-  }
 
-  async function handleInstallUpdate() {
-    if (!window.electronAPI) return
-    await window.electronAPI.installUpdate()
-  }
+    const currentFingerprint = buildAlertFingerprint({
+      alertEnabled,
+      alertDaysBefore,
+      alertTime,
+      alertMessage,
+      alertSoundEnabled,
+    })
+
+    if (currentFingerprint === savedAlertFingerprint) {
+      return {
+        status: 'no-changes',
+        message: 'Nenhuma alteração pendente nas notificações.',
+      }
+    }
+
+    try {
+      await persistAlertSettings()
+      return {
+        status: 'saved',
+        message: 'Configurações de notificação salvas.',
+      }
+    } catch {
+      return {
+        status: 'error',
+        message: 'Erro ao salvar as notificações.',
+      }
+    }
+  }, [
+    alertEnabled,
+    alertDaysBefore,
+    alertTime,
+    alertMessage,
+    alertSoundEnabled,
+    savedAlertFingerprint,
+    buildAlertFingerprint,
+    persistAlertSettings,
+  ])
+
+  useEffect(() => {
+    return registerSaveContextHandler(handleContextSave)
+  }, [handleContextSave])
+
+  useEffect(() => {
+    function handleMenuCheckUpdates() {
+      void handleCheckForUpdate()
+    }
+
+    window.addEventListener('shipit:menu-check-updates', handleMenuCheckUpdates)
+    return () => {
+      window.removeEventListener('shipit:menu-check-updates', handleMenuCheckUpdates)
+    }
+  }, [handleCheckForUpdate])
 
   return (
     <div id="settings" className="max-w-4xl mx-auto">

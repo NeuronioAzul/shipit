@@ -27,6 +27,15 @@ export function ActivityBar() {
     return () => window.removeEventListener('shipit:trash-changed', handleTrashChange)
   }, [loadTrashCount])
 
+  useEffect(() => {
+    const handleOpenAbout = () => setShowAbout(true)
+    window.addEventListener('shipit:open-about', handleOpenAbout)
+
+    return () => {
+      window.removeEventListener('shipit:open-about', handleOpenAbout)
+    }
+  }, [])
+
   const mainNav: NavItem[] = [
     { to: '/', icon: 'fa-chart-line', title: 'Dashboard', id: 'sidebar-link-dashboard' },
     { to: '/activities', icon: 'fa-list-check', title: 'Atividades', id: 'sidebar-link-activities' },

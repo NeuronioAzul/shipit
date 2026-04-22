@@ -43,6 +43,22 @@ export interface ElectronAPI {
   saveSettings: (partial: Partial<AppSettings>) => Promise<AppSettings>
   selectDirectory: () => Promise<string | null>
   getDefaultReportsDir: () => Promise<string>
+  openReportsDirectory: () => Promise<boolean>
+  openEvidencesDirectory: () => Promise<boolean>
+  quitApp: () => Promise<void>
+
+  // Menu Edit Actions
+  editUndo: () => Promise<boolean>
+  editRedo: () => Promise<boolean>
+  editCut: () => Promise<boolean>
+  editCopy: () => Promise<boolean>
+  editPaste: () => Promise<boolean>
+  editSelectAll: () => Promise<boolean>
+
+  // Menu View Actions
+  zoomIn: () => Promise<boolean>
+  zoomOut: () => Promise<boolean>
+  zoomReset: () => Promise<boolean>
 
   // Sounds
   listSounds: () => Promise<string[]>
