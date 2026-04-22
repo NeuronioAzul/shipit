@@ -359,7 +359,7 @@ export function ActivityFormPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="date_start" className={labelClass}>
-              Data de Início <span className="text-destructive">*</span>
+              Data de Início <span className="text-warning">*</span>
             </label>
             <DatePicker
               id="date_start"
@@ -375,7 +375,7 @@ export function ActivityFormPage() {
           </div>
           <div>
             <label htmlFor="date_end" className={labelClass}>
-              Data de Término <span className="text-destructive">*</span>
+              Data de Término <span className="text-warning">*</span>
             </label>
             <DatePicker
               id="date_end"
@@ -426,7 +426,7 @@ export function ActivityFormPage() {
 
           <div>
             <label htmlFor="month_reference" className={labelClass}>
-              Mês de Referência <span className="text-destructive">*</span>
+              Mês de Referência <span className="text-warning">*</span>
             </label>
             <div className={frameClass('month_reference')}>
               <input
