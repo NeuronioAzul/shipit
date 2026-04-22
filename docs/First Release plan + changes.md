@@ -13,9 +13,6 @@
 
 ## Janela do aplicativo
 
-### fix
-
-- Fix: o campo de busca esta ocupando todo o espaço da menubar, ficando sem espaço para clicar e mover a janela, para resolver isso, o campo de busca deve ter um tamanho máximo definido, para que ele não ocupe todo o espaço da menubar, e para que os usuários possam clicar e arrastar a janela normalmente, sem precisar clicar no campo de busca, e também para melhorar a experiência do usuário.
 
 ### features
 
@@ -126,3 +123,12 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
 -----------------------------------------------------------
 
 ## Fazendo
+
+### fix
+
+- Fix: o campo de busca esta ocupando todo o espaço da menubar, ficando sem espaço para clicar e mover a janela, para resolver isso, o campo de busca deve ter um tamanho máximo definido, para que ele não ocupe todo o espaço da menubar, e para que os usuários possam clicar e arrastar a janela normalmente, sem precisar clicar no campo de busca, e também para melhorar a experiência do usuário.
+
+- Fix: Tema cyberpunk com tema quebrando o campo de busca do menubar
+  - tema cyberpunk, que é um tema separado do padrão, o campo de busca está quebrando e sumindo quando eu digito algo no campo de busca.
+  - O ícone de busca não está sendo exibido.
+  - Os resultados da busca também estão quebrando e movendo de lugar para baixo.
