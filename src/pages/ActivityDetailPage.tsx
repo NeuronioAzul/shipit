@@ -22,6 +22,7 @@ import { STATUS_COLORS } from '../utils/statusColors'
 import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
 import { TextEvidenceModal } from '../components/TextEvidenceModal'
 import { ActivityNav, type NavMode } from '../components/ActivityNav'
+import { isTypingTarget } from '../utils/keyboardGuards'
 
 function SortableEvidenceCard({ 
   evidence, 
@@ -176,7 +177,7 @@ export function ActivityDetailPage() {
     return () => { cancelled = true }
   }, [activity?.month_reference])
 
-  // Keyboard shortcuts: Alt+← / Alt+→
+  // Keyboard shortcuts: ← / → (local navigation in detail page)
   useEffect(() => {
     if (!activity || siblings.length === 0) return
     const scopeDisabled = !activity.project_scope
@@ -187,7 +188,9 @@ export function ActivityDetailPage() {
     const idx = filtered.findIndex((a) => a.id === activity.id)
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (!e.altKey) return
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (isTypingTarget(e.target)) return
+
       if (e.key === 'ArrowLeft' && idx > 0) {
         e.preventDefault()
         navigate(`/activities/${filtered[idx - 1].id}`)

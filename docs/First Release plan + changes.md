@@ -11,12 +11,7 @@
                 |_|       
 ```
 
-## Janela do aplicativo
 
-
-### features
-
-- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.
 - Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar texto, abrir links no navegador.
 - Adicionar um menu ao lado do logo para acessar as funcionalidades
   - File
@@ -120,10 +115,6 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
   - O campo deve ser exibido em um formato de textarea, para facilitar a inserção de múltiplas linhas de texto e melhorar a legibilidade das descrições.
   - O campo deve ser validado para evitar a inserção de conteúdo inadequado.
 
------------------------------------------------------------
-
-## Fazendo
-
 ### fix
 
 - Fix: o campo de busca esta ocupando todo o espaço da menubar, ficando sem espaço para clicar e mover a janela, para resolver isso, o campo de busca deve ter um tamanho máximo definido, para que ele não ocupe todo o espaço da menubar, e para que os usuários possam clicar e arrastar a janela normalmente, sem precisar clicar no campo de busca, e também para melhorar a experiência do usuário.
@@ -132,3 +123,17 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
   - tema cyberpunk, que é um tema separado do padrão, o campo de busca está quebrando e sumindo quando eu digito algo no campo de busca.
   - O ícone de busca não está sendo exibido.
   - Os resultados da busca também estão quebrando e movendo de lugar para baixo.
+
+
+
+
+
+-----------------------------------------------------------
+
+## Fazendo
+
+## Janela do aplicativo
+
+### features
+
+- Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.

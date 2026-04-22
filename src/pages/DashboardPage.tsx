@@ -6,6 +6,7 @@ import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonStats, Skeleton } from '../components/Skeleton'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
+import { isTypingTarget } from '../utils/keyboardGuards'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -53,12 +54,12 @@ export function DashboardPage() {
     loadActivities()
   }, [loadActivities])
 
-  function changeMonth(delta: number) {
+  const changeMonth = useCallback((delta: number) => {
     const [mm, yyyy] = monthRef.split('/')
     const d = new Date(parseInt(yyyy), parseInt(mm) - 1 + delta, 1)
     const newMonth = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
     setSearchParams({ month: newMonth })
-  }
+  }, [monthRef, setSearchParams])
 
   function formatDate(d: string | null): string {
     if (!d) return '—'
@@ -70,6 +71,24 @@ export function DashboardPage() {
     'pt-BR',
     { month: 'long', year: 'numeric' }
   )
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (isTypingTarget(e.target)) return
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        changeMonth(-1)
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        changeMonth(1)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [changeMonth])
 
   // Summary stats
   const total = activities.length
@@ -208,7 +227,7 @@ export function DashboardPage() {
                 <i className="fa-solid fa-chart-gantt mr-1"></i>
                 Linha do Tempo
               </h2>
-              <div className="min-w-[600px]">
+              <div className="min-w-150">
                 {/* Day headers */}
                 <div className="flex items-center mb-1" style={{ paddingLeft: '140px' }}>
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
@@ -236,7 +255,7 @@ export function DashboardPage() {
                   return (
                     <div key={activity.id} className="flex items-center h-7 group">
                       <div
-                        className="w-[140px] shrink-0 text-xs text-foreground truncate pr-2 cursor-pointer hover:text-primary"
+                        className="w-35 shrink-0 text-xs text-foreground truncate pr-2 cursor-pointer hover:text-primary"
                         title={activity.description}
                         onClick={() => navigate(`/activities/${activity.id}`)}
                       >

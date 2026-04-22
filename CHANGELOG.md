@@ -20,6 +20,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - **Lightbox de evidências** — visualização em tela cheia de imagens de evidência com navegação entre fotos
   - Componente `EvidenceLightbox` via `yet-another-react-lightbox`
 - **Navegação entre atividades** — componente `ActivityNav` com botões prev/next na tela de detalhes da atividade
+- **Navegação global na TitleBar** — histórico de navegação no estilo IDE com botões Voltar/Avançar ao lado esquerdo da busca
+  - Novo provider `NavigationHistoryContext` com API `canGoBack`, `canGoForward`, `goBack` e `goForward`
+  - Histórico global com `pathname + search + hash`, deduplicação consecutiva, limpeza da forward stack e limite de 100 entradas
+  - Atalhos globais `Alt+←` / `Alt+→` com guardas para `input`, `textarea`, `select` e `contenteditable`
 
 ### Adicionado (Fase 17 — Sistema Multi-Tema) 🎨
 
@@ -52,6 +56,9 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   - Classes CSS removidas e reaplicadas dinamicamente ao trocar tema
 - **Persistência de tema** atualizada: `localStorage.shipit-theme` agora armazena o ID do tema (ex: `"cyberpunk"`, `"ocean"`) em vez de `"dark"`/`"light"`
 - **Transições de tema** suaves com 200ms de duração ao trocar entre temas
+- **Navegação local por teclado**
+  - Tela de detalhes da atividade passou a usar apenas `←` / `→` para navegação local entre atividades
+  - Dashboard passou a suportar `←` / `→` para alternar mês localmente
 
 ### Corrigido (Fase 16.2 — Busca na TitleBar e Cyberpunk)
 

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { SearchBar } from './SearchBar'
+import { useNavigationHistory } from '../contexts/NavigationHistoryContext'
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
+  const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()
 
   useEffect(() => {
     // Get initial maximized state
@@ -16,6 +18,8 @@ export function TitleBar() {
   const handleMinimize = () => window.electronAPI?.windowMinimize()
   const handleMaximize = () => window.electronAPI?.windowMaximize()
   const handleClose = () => window.electronAPI?.windowClose()
+  const handleGoBack = () => goBack()
+  const handleGoForward = () => goForward()
 
   return (
     <div 
@@ -39,8 +43,36 @@ export function TitleBar() {
       {/* Center: Search Bar */}
       <div
         id="titlebar-search"
-        className="flex-1 min-w-0 flex justify-center"
+        className="flex-1 min-w-0 flex items-center justify-center gap-2 px-2"
       >
+        <div
+          id="titlebar-nav"
+          className="flex items-center gap-1 shrink-0"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
+          <button
+            id="titlebar-btn-back"
+            type="button"
+            onClick={handleGoBack}
+            disabled={!canGoBack}
+            className="h-8 w-8 rounded-md flex items-center justify-center text-titlebar-foreground/70 hover:text-titlebar-foreground hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+            title="Voltar"
+            aria-label="Voltar no histórico"
+          >
+            <i className="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i>
+          </button>
+          <button
+            id="titlebar-btn-forward"
+            type="button"
+            onClick={handleGoForward}
+            disabled={!canGoForward}
+            className="h-8 w-8 rounded-md flex items-center justify-center text-titlebar-foreground/70 hover:text-titlebar-foreground hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+            title="Avançar"
+            aria-label="Avançar no histórico"
+          >
+            <i className="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i>
+          </button>
+        </div>
         <SearchBar />
       </div>
 

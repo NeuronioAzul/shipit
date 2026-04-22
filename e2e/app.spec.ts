@@ -26,6 +26,20 @@ test.afterAll(async () => {
   })
 })
 
+async function createActivity(description: string) {
+  await page.click('[title="Atividades"]')
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+
+  await page.click('button:has-text("Nova Atividade")')
+
+  const descInput = page.locator('textarea#description')
+  await descInput.waitFor({ timeout: 5_000 })
+  await descInput.fill(description)
+
+  await page.click('button[type="submit"]')
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+}
+
 // ──── Window ────
 
 test('window starts visible', async () => {
@@ -34,6 +48,19 @@ test('window starts visible', async () => {
     return win?.isVisible() ?? false
   })
   expect(isVisible).toBe(true)
+})
+
+test('shows titlebar navigation buttons disabled by default', async () => {
+  await page.click('[title="Dashboard"]')
+  await page.waitForURL(/#\/$/)
+
+  const backButton = page.locator('#titlebar-btn-back')
+  const forwardButton = page.locator('#titlebar-btn-forward')
+
+  await expect(backButton).toBeVisible({ timeout: 5_000 })
+  await expect(forwardButton).toBeVisible({ timeout: 5_000 })
+  await expect(backButton).toBeDisabled()
+  await expect(forwardButton).toBeDisabled()
 })
 
 // ──── Navigation ────
@@ -65,6 +92,71 @@ test('shows EmptyState on fresh DB and navigates to all screens', async () => {
   await page.click('[title="Dashboard"]')
   await page.waitForURL(/#\/$/)
   await expect(page.locator('text=Bem-vindo')).toBeVisible({ timeout: 5_000 })
+})
+
+test('navigates global history with titlebar buttons preserving query string', async () => {
+  await page.evaluate(() => {
+    window.location.hash = '#/profile'
+  })
+  await page.waitForURL(/#\/profile$/)
+  const startUrl = page.url()
+
+  await page.evaluate(() => {
+    window.location.hash = '#/activities'
+  })
+  await page.waitForURL(/#\/activities$/)
+  const activitiesUrl = page.url()
+
+  await page.evaluate(() => {
+    window.location.hash = '#/activities?search=historico-global-e2e'
+  })
+  await page.waitForURL(/#\/activities\?search=historico-global-e2e$/)
+  const searchUrl = page.url()
+
+  const backButton = page.locator('#titlebar-btn-back')
+  const forwardButton = page.locator('#titlebar-btn-forward')
+
+  await expect(backButton).toBeEnabled()
+
+  await backButton.click()
+  await page.waitForURL(activitiesUrl)
+
+  await backButton.click()
+  await page.waitForURL(startUrl)
+
+  await forwardButton.click()
+  await page.waitForURL(activitiesUrl)
+
+  await forwardButton.click()
+  await page.waitForURL(searchUrl)
+})
+
+test('supports global Alt+arrow shortcuts and respects typing focus guard', async () => {
+  await page.evaluate(() => {
+    window.location.hash = '#/profile'
+  })
+  await page.waitForURL(/#\/profile$/)
+  const profileUrl = page.url()
+
+  await page.evaluate(() => {
+    window.location.hash = '#/settings'
+  })
+  await page.waitForURL(/#\/settings$/)
+  const settingsUrl = page.url()
+
+  const searchInput = page.locator('#searchbar-input')
+  await searchInput.focus()
+  await page.keyboard.press('Alt+ArrowLeft')
+  await page.waitForTimeout(150)
+  await expect(page).toHaveURL(settingsUrl)
+
+  await page.locator('h1:has-text("Configurações")').click()
+  await page.keyboard.press('Alt+ArrowLeft')
+  await page.waitForURL(profileUrl)
+
+  await page.locator('#app-main').click()
+  await page.keyboard.press('Alt+ArrowRight')
+  await page.waitForURL(settingsUrl)
 })
 
 // ──── Theme Toggle ────
@@ -101,6 +193,7 @@ test('maintains drag/no-drag contract in titlebar search area', async () => {
     return {
       titlebar: readRegion('titlebar'),
       titlebarSearch: readRegion('titlebar-search'),
+      titlebarNav: readRegion('titlebar-nav'),
       searchbar: readRegion('searchbar'),
       titlebarControls: readRegion('titlebar-controls'),
     }
@@ -113,6 +206,8 @@ test('maintains drag/no-drag contract in titlebar search area', async () => {
   expect(regions.titlebarSearch.styleAttr).not.toContain('-webkit-app-region')
 
   // Interactive areas must explicitly opt out of drag.
+  expect(regions.titlebarNav.styleAttr).toMatch(/(?:-webkit-)?app-region:\s*no-drag/)
+  expect(regions.titlebarNav.inline).toBe('no-drag')
   expect(regions.searchbar.styleAttr).toMatch(/(?:-webkit-)?app-region:\s*no-drag/)
   expect(regions.searchbar.inline).toBe('no-drag')
   expect(regions.titlebarControls.styleAttr).toMatch(/(?:-webkit-)?app-region:\s*no-drag/)
@@ -130,25 +225,56 @@ test('maintains drag/no-drag contract in titlebar search area', async () => {
 // ──── Activity Creation ────
 
 test('creates an activity', async () => {
-  await page.click('[title="Atividades"]')
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
-
-  // Click "Nova Atividade"
-  await page.click('button:has-text("Nova Atividade")')
-
-  // Fill the description (required field)
-  const descInput = page.locator('textarea#description')
-  await descInput.waitFor({ timeout: 5_000 })
-  await descInput.fill('Atividade E2E Playwright')
-
-  // Submit the form
-  await page.click('button[type="submit"]')
-
-  // Should navigate back to activities list
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+  await createActivity('Atividade E2E Playwright')
 
   // Verify the created activity appears
   await expect(page.locator('text=Atividade E2E Playwright').first()).toBeVisible({ timeout: 5_000 })
+})
+
+test('uses local ArrowLeft/ArrowRight navigation on activity detail page', async () => {
+  const runId = Date.now()
+  const activityA = `Atividade Navegação Local ${runId} A`
+  const activityB = `Atividade Navegação Local ${runId} B`
+
+  await createActivity(activityA)
+  await createActivity(activityB)
+
+  await page.evaluate(() => {
+    window.location.hash = '#/activities'
+  })
+  await page.waitForURL(/#\/activities$/)
+
+  await page.locator('.flex-1.cursor-pointer', { hasText: activityA }).first().click()
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+
+  const firstDetailUrl = page.url()
+  const prevEnabled = await page.locator('#activity-nav-btn-prev').first().isEnabled()
+  const nextEnabled = await page.locator('#activity-nav-btn-next').first().isEnabled()
+  const forwardDirection = nextEnabled ? 'ArrowRight' : prevEnabled ? 'ArrowLeft' : null
+
+  expect(forwardDirection).not.toBeNull()
+
+  const searchInput = page.locator('#searchbar-input')
+  await searchInput.focus()
+  await page.keyboard.press(forwardDirection!)
+  await expect(page).toHaveURL(firstDetailUrl)
+
+  await page.locator('#app-main').click()
+
+  await page.keyboard.press(forwardDirection!)
+  await page.waitForURL((url) => url.toString() !== firstDetailUrl)
+  const secondDetailUrl = page.url()
+
+  expect(secondDetailUrl).not.toBe(firstDetailUrl)
+
+  const backwardDirection = forwardDirection === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight'
+  const backwardButton = backwardDirection === 'ArrowLeft'
+    ? page.locator('#activity-nav-btn-prev').first()
+    : page.locator('#activity-nav-btn-next').first()
+
+  await expect(backwardButton).toBeEnabled({ timeout: 5_000 })
+  await page.keyboard.press(backwardDirection)
+  await page.waitForURL(firstDetailUrl)
 })
 
 // ──── Cyberpunk Search Regression ────
