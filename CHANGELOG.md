@@ -9,21 +9,64 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-### Adicionado
+### Adicionado (Fase 19 — Menu do App ao lado do Logo)
 
-- **Evidências de texto** — novo tipo de evidência que permite registrar conteúdo textual formatado (além de imagens)
-  - Editor rich-text com TipTap (negrito, itálico, listas, etc.) e contagem de caracteres
-  - Componentes `TextEvidenceEditor` e `TextEvidenceModal`
-  - IPC handlers `db:saveTextEvidence` e `db:updateTextEvidence`
-  - Campo `type` ('image' | 'text') e `text_content` na entidade Evidence
-  - 4 dependências TipTap: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-character-count`
-- **Lightbox de evidências** — visualização em tela cheia de imagens de evidência com navegação entre fotos
-  - Componente `EvidenceLightbox` via `yet-another-react-lightbox`
-- **Navegação entre atividades** — componente `ActivityNav` com botões prev/next na tela de detalhes da atividade
-- **Navegação global na TitleBar** — histórico de navegação no estilo IDE com botões Voltar/Avançar ao lado esquerdo da busca
-  - Novo provider `NavigationHistoryContext` com API `canGoBack`, `canGoForward`, `goBack` e `goForward`
-  - Histórico global com `pathname + search + hash`, deduplicação consecutiva, limpeza da forward stack e limite de 100 entradas
-  - Atalhos globais `Alt+←` / `Alt+→` com guardas para `input`, `textarea`, `select` e `contenteditable`
+- **Menu customizado na barra superior (TitleBar)**
+  - Novo componente `AppTopMenu` com seções **File / Edit / View / Help** ao lado do logo
+  - Abertura/fechamento por mouse, navegação por teclado entre seções/itens e fechamento com `Esc`/clique fora
+- **Catálogo central de comandos de menu**
+  - Novo módulo `appMenuCatalog` com IDs, rótulos, grupos, atalhos e variações cross-platform (`Mod`)
+  - Mapeamento de atalhos globais com guardas para não interferir em digitação (`input`, `textarea`, `select`, `contenteditable`)
+- **Ações de menu integradas ao Electron (IPC)**
+  - Novos handlers para abrir pasta de relatórios/evidências, sair do app, ações de edição (`undo/redo/cut/copy/paste/selectAll`) e zoom (`in/out/reset`)
+  - Bridge expandida em `preload` + tipagem atualizada da `electronAPI` no renderer
+- **Salvar contextual por tela (`Ctrl+S`)**
+  - Novo registro central de save-context com retorno padronizado (`saved`, `no-changes`, `unavailable`, `error`)
+  - Integração nas telas `ActivityFormPage`, `ProfilePage` e `SettingsPage` com detecção de alterações pendentes
+- **Help aprimorado**
+  - Nova rota `/manual` com página `UserManualPage` (conteúdo inicial + FAQ + atalhos)
+  - Ação “Sobre o ShipIt!” integrada via evento global para abrir o modal existente
+  - Ação “Reportar um Problema” direcionando para `https://github.com/NeuronioAzul/shipit/issues/new`
+- **Cobertura de testes ampliada**
+  - Testes unitários para helpers de atalhos (`appMenuCatalog`) e registro de save-context
+  - Novos cenários E2E para abrir/fechar menu, ações de Help e atalhos principais
+
+### Corrigido (Fase 19.1 — Menu da TitleBar no tema Cyberpunk)
+
+- **Dropdown do menu da barra superior estabilizado no tema cyberpunk**
+  - Corrigida colisão de seletor global do tema que forçava `position: relative` no painel do menu
+  - Adicionada exceção específica para painéis `titlebar-menu-panel-*` e override dedicado de ancoragem
+  - Dropdown volta a abrir corretamente abaixo do botão da seção, sem subir/metade fora da tela
+- **Regressão automatizada (Playwright/Electron)**
+  - Novo cenário E2E para validar ancoragem do menu da titlebar no tema cyberpunk
+
+### Adicionado (Fase 18 — Menu de Contexto e Links Externos)
+
+- **Política de links externos no processo principal**
+  - Helper centralizado para abertura externa segura com `shell.openExternal`
+  - Allowlist de protocolos (`http`, `https`, `mailto`) com rejeição silenciosa de protocolos não permitidos
+- **Interceptação de navegação externa no BrowserWindow**
+  - `setWindowOpenHandler` para capturar `target="_blank"`, abrir externamente quando permitido e sempre negar nova janela interna
+  - `will-navigate` para bloquear saídas externas da janela principal e preservar navegação interna do app (HashRouter)
+- **Menu de contexto nativo por contexto de edição**
+  - Campo editável: `undo`, `redo`, `cut`, `copy`, `paste`, `selectAll`
+  - Texto selecionado não editável: `copy`
+  - Respeito aos `editFlags` para habilitar/desabilitar ações disponíveis
+- **Consistência de links externos no renderer**
+  - Padronização de links `mailto` em telas de Sobre com atributos de segurança (`target`/`rel`)
+- **Regressão automatizada (Playwright/Electron)**
+  - Novo cenário E2E validando que clique em link externo não altera a rota atual da janela principal
+  - Verificação de chamada de abertura externa sem depender de navegador real
+
+### Corrigido (Fase 17.1 — Robustez da Navegação Global)
+
+- **Histórico da TitleBar estabilizado para pilha profunda**
+  - Ajuste no `NavigationHistoryContext` para reconstruir a pilha corretamente em cenários de time-travel inesperado, evitando truncamento prematuro do histórico
+  - Navegação Voltar/Avançar passa a manter múltiplas entradas de forma consistente (limite configurado em 100)
+- **Navegação local por setas na tela de detalhe**
+  - Teclas `←` / `→` agora impedem o comportamento padrão do navegador antes da navegação local, evitando saltos de rota indesejados
+- **Regressão automatizada (Playwright/Electron)**
+  - Novo cenário E2E validando profundidade mínima de histórico (10 entradas) para os botões de navegação da TitleBar
 
 ### Adicionado (Fase 17 — Sistema Multi-Tema) 🎨
 
@@ -48,18 +91,6 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   - Barras Gantt com cantos angulares e glow
 - **Integração no SettingsPage** — seção "Aparência" com `ThemeSelector` no topo das configurações
 
-### Alterado
-
-- **ThemeContext** refatorado de toggle dark/light para suporte multi-tema completo
-  - Estado `theme` armazena `ThemeId` (union de 11 IDs)
-  - `isDark` computado automaticamente a partir da propriedade `base` do tema
-  - Classes CSS removidas e reaplicadas dinamicamente ao trocar tema
-- **Persistência de tema** atualizada: `localStorage.shipit-theme` agora armazena o ID do tema (ex: `"cyberpunk"`, `"ocean"`) em vez de `"dark"`/`"light"`
-- **Transições de tema** suaves com 200ms de duração ao trocar entre temas
-- **Navegação local por teclado**
-  - Tela de detalhes da atividade passou a usar apenas `←` / `→` para navegação local entre atividades
-  - Dashboard passou a suportar `←` / `→` para alternar mês localmente
-
 ### Corrigido (Fase 16.2 — Busca na TitleBar e Cyberpunk)
 
 - **Contrato drag/no-drag da TitleBar**
@@ -74,6 +105,34 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - **Regressão automatizada (Playwright/Electron)**
   - Novo cenário E2E para busca no tema cyberpunk (foco via `Ctrl+K`, input/ícone visíveis, dropdown ancorado e limite de largura)
   - Nova assertiva estrutural E2E para o contrato drag/no-drag na titlebar/searchbar
+
+### Adicionado
+
+- **Evidências de texto** — novo tipo de evidência que permite registrar conteúdo textual formatado (além de imagens)
+  - Editor rich-text com TipTap (negrito, itálico, listas, etc.) e contagem de caracteres
+  - Componentes `TextEvidenceEditor` e `TextEvidenceModal`
+  - IPC handlers `db:saveTextEvidence` e `db:updateTextEvidence`
+  - Campo `type` ('image' | 'text') e `text_content` na entidade Evidence
+  - 4 dependências TipTap: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-character-count`
+- **Lightbox de evidências** — visualização em tela cheia de imagens de evidência com navegação entre fotos
+  - Componente `EvidenceLightbox` via `yet-another-react-lightbox`
+- **Navegação entre atividades** — componente `ActivityNav` com botões prev/next na tela de detalhes da atividade
+- **Navegação global na TitleBar** — histórico de navegação no estilo IDE com botões Voltar/Avançar ao lado esquerdo da busca
+  - Novo provider `NavigationHistoryContext` com API `canGoBack`, `canGoForward`, `goBack` e `goForward`
+  - Histórico global com `pathname + search + hash`, deduplicação consecutiva, limpeza da forward stack e limite de 100 entradas
+  - Atalhos globais `Alt+←` / `Alt+→` com guardas para `input`, `textarea`, `select` e `contenteditable`
+
+### Alterado
+
+- **ThemeContext** refatorado de toggle dark/light para suporte multi-tema completo
+  - Estado `theme` armazena `ThemeId` (union de 11 IDs)
+  - `isDark` computado automaticamente a partir da propriedade `base` do tema
+  - Classes CSS removidas e reaplicadas dinamicamente ao trocar tema
+- **Persistência de tema** atualizada: `localStorage.shipit-theme` agora armazena o ID do tema (ex: `"cyberpunk"`, `"ocean"`) em vez de `"dark"`/`"light"`
+- **Transições de tema** suaves com 200ms de duração ao trocar entre temas
+- **Navegação local por teclado**
+  - Tela de detalhes da atividade passou a usar apenas `←` / `→` para navegação local entre atividades
+  - Dashboard passou a suportar `←` / `→` para alternar mês localmente
 
 ---
 
