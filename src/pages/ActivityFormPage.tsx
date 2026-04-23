@@ -360,7 +360,7 @@ export function ActivityFormPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div id="activity-form-header" className="flex items-center justify-between mb-6">
+      <div id="activity-form-header" className="flex items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
           <button
             id="activity-form-btn-back"
@@ -376,19 +376,54 @@ export function ActivityFormPage() {
           </h1>
         </div>
 
-        {/* Auto-save indicator */}
-        {autoSaveStatus === 'saving' && (
-          <span id="activity-form-autosave" className="text-xs text-muted-foreground flex items-center gap-1">
-            <i className="fa-solid fa-spinner fa-spin text-[10px]"></i>
-            Salvando...
+        <div className="flex items-center gap-2">
+          {/* Auto-save indicator */}
+          <span id="activity-form-autosave" className="text-xs min-w-36 text-right">
+            {autoSaveStatus === 'saving' && (
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                <i className="fa-solid fa-spinner fa-spin text-[10px]"></i>
+                Salvando...
+              </span>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <span className="text-success inline-flex items-center gap-1">
+                <i className="fa-solid fa-check text-[10px]"></i>
+                Salvo automaticamente
+              </span>
+            )}
           </span>
-        )}
-        {autoSaveStatus === 'saved' && (
-          <span className="text-xs text-success flex items-center gap-1">
-            <i className="fa-solid fa-check text-[10px]"></i>
-            Salvo automaticamente
-          </span>
-        )}
+
+          <button
+            id="activity-form-btn-cancel"
+            type="button"
+            onClick={() => navigate(`/activities?month=${form.month_reference}`)}
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+
+          <button
+            id="activity-form-btn-submit"
+            type="submit"
+            form="activity-form"
+            disabled={saving}
+            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
+              hover:opacity-90 transition-all cursor-pointer shadow-md
+              disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {saving ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin"></i>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-floppy-disk"></i>
+                {isEditing ? 'Salvar Alterações' : 'Criar Atividade'}
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {errors.length > 0 && (
@@ -598,39 +633,6 @@ export function ActivityFormPage() {
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex gap-3 pt-2">
-          <button
-            id="activity-form-btn-submit"
-            type="submit"
-            disabled={saving}
-            className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
-              hover:opacity-90 transition-all cursor-pointer shadow-md
-              disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {saving ? (
-              <>
-                <i className="fa-solid fa-spinner fa-spin"></i>
-                Salvando...
-              </>
-            ) : (
-              <>
-                <i className="fa-solid fa-floppy-disk"></i>
-                {isEditing ? 'Salvar Alterações' : 'Criar Atividade'}
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate(`/activities?month=${form.month_reference}`)}
-            className="px-6 py-2.5
-            bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer
-              "
-          >
-            Cancelar
-          </button>
-        </div>
       </form>
     </div>
   )
