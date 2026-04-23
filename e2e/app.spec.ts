@@ -26,9 +26,23 @@ test.afterAll(async () => {
   })
 })
 
+function getCurrentMonthRef(): string {
+  const now = new Date()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const yyyy = now.getFullYear()
+  return `${mm}/${yyyy}`
+}
+
 async function createActivity(description: string, monthReference?: string) {
+  const targetMonth = monthReference || getCurrentMonthRef()
+
   await page.click('[title="Atividades"]')
   await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, targetMonth)
+  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${targetMonth}`))
 
   await page.click('button:has-text("Nova Atividade")')
 
@@ -36,13 +50,12 @@ async function createActivity(description: string, monthReference?: string) {
   await descInput.waitFor({ timeout: 5_000 })
   await descInput.fill(description)
 
-  if (monthReference) {
-    const monthInput = page.locator('input#month_reference')
-    await monthInput.fill(monthReference)
-  }
+  const monthInput = page.locator('input#month_reference')
+  await monthInput.fill(targetMonth)
 
   await page.click('button[type="submit"]')
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+  await page.waitForURL(/#\/activities(?:\?.*)?$/, { timeout: 10_000 })
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 10_000 })
 }
 
 // ──── Window ────
@@ -496,11 +509,18 @@ test('replaces nav mode toggle with month selector and updates detail navigation
   const runId = Date.now()
   const monthA = '10/2036'
   const monthB = '11/2036'
+  const monthC = '12/2036'
   const activityA = `Atividade Detalhe Mês ${runId} A`
   const activityB = `Atividade Detalhe Mês ${runId} B`
 
   await createActivity(activityA, monthA)
   await createActivity(activityB, monthB)
+
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthB)
+  await page.waitForURL(/#\/activities\?month=11\/2036$/)
+  await expect(page.locator('.flex-1.cursor-pointer', { hasText: activityB }).first()).toBeVisible({ timeout: 5_000 })
 
   await page.evaluate((month) => {
     window.location.hash = `#/activities?month=${month}`
@@ -517,13 +537,15 @@ test('replaces nav mode toggle with month selector and updates detail navigation
 
   await page.locator('#activity-nav-btn-next-month').first().click()
   await expect(monthLabel).toHaveText(monthB)
-
-  const detailUrlBeforeArrow = page.url()
-  await page.locator('#app-main').click()
-  await page.keyboard.press('ArrowRight')
-  await page.waitForURL((url) => url.toString() !== detailUrlBeforeArrow)
-
   await expect(page.locator('#activity-detail-info')).toContainText(activityB)
+
+  await page.locator('#activity-nav-btn-next-month').first().click()
+  await expect(monthLabel).toHaveText(monthC)
+
+  const emptyMonthState = page.locator('#activity-detail-empty-month')
+  await expect(emptyMonthState).toBeVisible({ timeout: 5_000 })
+  await expect(emptyMonthState).toContainText('Mês sem atividades cadastradas')
+  await expect(emptyMonthState).toContainText(monthC)
 })
 
 test('opens, cancels and confirms activity deletion on detail page', async () => {

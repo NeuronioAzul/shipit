@@ -133,7 +133,10 @@ export function ActivityDetailPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [siblings, setSiblings] = useState<ActivityData[]>([])
+  const [siblingsLoading, setSiblingsLoading] = useState(false)
+  const [siblingsMonthReference, setSiblingsMonthReference] = useState('')
   const [selectedMonth, setSelectedMonth] = useState('')
+  const [monthWithoutActivities, setMonthWithoutActivities] = useState<string | null>(null)
   const [textModalOpen, setTextModalOpen] = useState(false)
   const [textModalMode, setTextModalMode] = useState<'create' | 'edit' | 'view'>('view')
   const [textModalEvidence, setTextModalEvidence] = useState<EvidenceData | null>(null)
@@ -163,8 +166,18 @@ export function ActivityDetailPage() {
     loadActivity()
   }, [loadActivity])
 
+  const fetchSiblingsByMonth = useCallback(async (monthReference: string) => {
+    if (window.electronAPI) {
+      return window.electronAPI.getActivities(monthReference)
+    }
+
+    return localDb.getActivities(monthReference)
+  }, [])
+
   useEffect(() => {
     setSelectedMonth('')
+    setSiblingsMonthReference('')
+    setMonthWithoutActivities(null)
   }, [id])
 
   useEffect(() => {
@@ -182,23 +195,46 @@ export function ActivityDetailPage() {
   useEffect(() => {
     if (!selectedMonth) return
     let cancelled = false
+    setSiblingsLoading(true)
 
     async function fetchSiblings() {
-      let list: ActivityData[]
-      if (window.electronAPI) {
-        list = await window.electronAPI.getActivities(selectedMonth)
-      } else {
-        list = localDb.getActivities(selectedMonth)
-      }
+      try {
+        const list = await fetchSiblingsByMonth(selectedMonth)
 
-      if (!cancelled) setSiblings(list)
+        if (!cancelled) {
+          setSiblings(list)
+          setSiblingsMonthReference(selectedMonth)
+        }
+      } finally {
+        if (!cancelled) setSiblingsLoading(false)
+      }
     }
 
     fetchSiblings()
     return () => {
       cancelled = true
     }
-  }, [selectedMonth])
+  }, [selectedMonth, fetchSiblingsByMonth])
+
+  useEffect(() => {
+    if (!selectedMonth || siblingsLoading) return
+    if (siblingsMonthReference !== selectedMonth) return
+
+    if (activity?.month_reference === selectedMonth) {
+      setMonthWithoutActivities(null)
+      return
+    }
+
+    if (siblings.length > 0) {
+      setMonthWithoutActivities(null)
+      if (id !== siblings[0].id) {
+        navigate(`/activities/${siblings[0].id}`)
+      }
+      return
+    }
+
+    setMonthWithoutActivities(selectedMonth)
+  }, [selectedMonth, siblingsLoading, siblingsMonthReference, siblings, activity?.month_reference, id, navigate])
 
   // Keyboard shortcuts: ← / → (local navigation in detail page)
   useEffect(() => {
@@ -318,10 +354,11 @@ export function ActivityDetailPage() {
   }
 
   function handleChangeMonth(delta: number) {
-    setSelectedMonth((current) => {
-      const baseMonth = current || activity?.month_reference || getCurrentMonthRef()
-      return shiftMonthReference(baseMonth, delta)
-    })
+    const baseMonth = selectedMonth || activity?.month_reference || getCurrentMonthRef()
+    const nextMonth = shiftMonthReference(baseMonth, delta)
+
+    setMonthWithoutActivities(null)
+    setSelectedMonth(nextMonth)
   }
 
   async function handleDeleteActivity() {
@@ -460,6 +497,8 @@ export function ActivityDetailPage() {
 
   const links = parseLinks(activity.link_ref)
   const activeMonthReference = selectedMonth || activity.month_reference
+  const showEmptyMonthState = monthWithoutActivities === activeMonthReference
+  const showMonthLoadingState = siblingsLoading && activeMonthReference !== activity.month_reference
 
   return (
     <div id="activity-detail" className="max-w-6xl mx-auto">
@@ -511,6 +550,27 @@ export function ActivityDetailPage() {
       </div>
 
       {/* Info card */}
+      {showMonthLoadingState ? (
+        <div className="bg-card border border-border rounded-lg p-8 text-center space-y-3">
+          <i className="fa-solid fa-spinner fa-spin text-2xl text-muted-foreground" aria-hidden="true"></i>
+          <p className="text-sm text-muted-foreground">
+            Carregando atividades de {activeMonthReference}...
+          </p>
+        </div>
+      ) : showEmptyMonthState ? (
+        <div
+          id="activity-detail-empty-month"
+          className="bg-card border border-border rounded-lg p-8 text-center space-y-3"
+          role="status"
+          aria-live="polite"
+        >
+          <i className="fa-regular fa-calendar-xmark text-3xl text-muted-foreground" aria-hidden="true"></i>
+          <h2 className="text-lg font-semibold">Mês sem atividades cadastradas</h2>
+          <p className="text-sm text-muted-foreground">
+            Não há atividades cadastradas para {activeMonthReference}.
+          </p>
+        </div>
+      ) : (
       <div id="activity-detail-info" className="bg-card border border-border rounded-lg p-6 space-y-5">
         {/* Status + Period */}
         <div className="flex flex-wrap items-center gap-4">
@@ -709,6 +769,7 @@ export function ActivityDetailPage() {
           Última atualização: {new Date(activity.last_updated).toLocaleString('pt-BR')}
         </div>
       </div>
+      )}
 
       {/* Bottom navigation */}
       <div className="mt-4">
