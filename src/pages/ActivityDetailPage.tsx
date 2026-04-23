@@ -17,12 +17,13 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ActivityData, EvidenceData } from '../vite-env'
-import { localDb } from '../services/localDb'
+import { getCurrentMonthRef, localDb } from '../services/localDb'
 import { STATUS_COLORS } from '../utils/statusColors'
 import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
 import { TextEvidenceModal } from '../components/TextEvidenceModal'
-import { ActivityNav, type NavMode } from '../components/ActivityNav'
+import { ActivityNav } from '../components/ActivityNav'
 import { isTypingTarget } from '../utils/keyboardGuards'
+import { shiftMonthReference } from '../utils/monthReference'
 
 function SortableEvidenceCard({ 
   evidence, 
@@ -124,13 +125,15 @@ export function ActivityDetailPage() {
   const [activity, setActivity] = useState<ActivityData | null>(null)
   const [loading, setLoading] = useState(true)
   const [dropActive, setDropActive] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [confirmEvidenceDelete, setConfirmEvidenceDelete] = useState<string | null>(null)
+  const [deletingEvidence, setDeletingEvidence] = useState(false)
+  const [confirmActivityDelete, setConfirmActivityDelete] = useState(false)
+  const [deletingActivity, setDeletingActivity] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [siblings, setSiblings] = useState<ActivityData[]>([])
-  const [navMode, setNavMode] = useState<NavMode>('month')
+  const [selectedMonth, setSelectedMonth] = useState('')
   const [textModalOpen, setTextModalOpen] = useState(false)
   const [textModalMode, setTextModalMode] = useState<'create' | 'edit' | 'view'>('view')
   const [textModalEvidence, setTextModalEvidence] = useState<EvidenceData | null>(null)
@@ -160,49 +163,97 @@ export function ActivityDetailPage() {
     loadActivity()
   }, [loadActivity])
 
-  // Fetch siblings for prev/next navigation
   useEffect(() => {
-    if (!activity?.month_reference) return
+    setSelectedMonth('')
+  }, [id])
+
+  useEffect(() => {
+    if (activity?.month_reference && !selectedMonth) {
+      setSelectedMonth(activity.month_reference)
+    }
+  }, [activity?.month_reference, selectedMonth])
+
+  useEffect(() => {
+    if (!selectedMonth) return
+    sessionStorage.setItem('shipit-selected-month', selectedMonth)
+  }, [selectedMonth])
+
+  // Fetch siblings for prev/next navigation based on selected month
+  useEffect(() => {
+    if (!selectedMonth) return
     let cancelled = false
+
     async function fetchSiblings() {
       let list: ActivityData[]
       if (window.electronAPI) {
-        list = await window.electronAPI.getActivities(activity!.month_reference)
+        list = await window.electronAPI.getActivities(selectedMonth)
       } else {
-        list = localDb.getActivities(activity!.month_reference)
+        list = localDb.getActivities(selectedMonth)
       }
+
       if (!cancelled) setSiblings(list)
     }
+
     fetchSiblings()
-    return () => { cancelled = true }
-  }, [activity?.month_reference])
+    return () => {
+      cancelled = true
+    }
+  }, [selectedMonth])
 
   // Keyboard shortcuts: ← / → (local navigation in detail page)
   useEffect(() => {
     if (!activity || siblings.length === 0) return
-    const scopeDisabled = !activity.project_scope
-    const effectiveMode = scopeDisabled && navMode === 'scope' ? 'month' : navMode
-    const filtered = effectiveMode === 'scope'
-      ? siblings.filter((a) => a.project_scope === activity.project_scope)
-      : siblings
-    const idx = filtered.findIndex((a) => a.id === activity.id)
+
+    const currentIndex = siblings.findIndex((a) => a.id === activity.id)
+
+    function getNavigationTarget(key: 'ArrowLeft' | 'ArrowRight'): ActivityData | null {
+      if (currentIndex === -1) {
+        if (key === 'ArrowLeft') {
+          return siblings[siblings.length - 1] ?? null
+        }
+
+        return siblings[0] ?? null
+      }
+
+      if (key === 'ArrowLeft' && currentIndex > 0) {
+        return siblings[currentIndex - 1]
+      }
+
+      if (key === 'ArrowRight' && currentIndex < siblings.length - 1) {
+        return siblings[currentIndex + 1]
+      }
+
+      return null
+    }
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
       if (isTypingTarget(e.target)) return
 
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
-      e.preventDefault()
+      const target = getNavigationTarget(e.key)
+      if (!target) return
 
-      if (e.key === 'ArrowLeft' && idx > 0) {
-        navigate(`/activities/${filtered[idx - 1].id}`)
-      } else if (e.key === 'ArrowRight' && idx < filtered.length - 1) {
-        navigate(`/activities/${filtered[idx + 1].id}`)
-      }
+      e.preventDefault()
+      navigate(`/activities/${target.id}`)
     }
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activity, siblings, navMode, navigate])
+  }, [activity, siblings, navigate])
+
+  useEffect(() => {
+    if (!confirmActivityDelete) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape' || deletingActivity) return
+      e.preventDefault()
+      setConfirmActivityDelete(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [confirmActivityDelete, deletingActivity])
 
   async function handleEvidenceDragEnd(event: DragEndEvent) {
     if (!activity?.evidences) return
@@ -244,10 +295,12 @@ export function ActivityDetailPage() {
   }
 
   async function handleDeleteEvidence(evidenceId: string) {
-    if (!window.electronAPI) return
-    setDeleting(true)
+    setDeletingEvidence(true)
     try {
-      const success = await window.electronAPI.deleteEvidence(evidenceId)
+      const success = window.electronAPI
+        ? await window.electronAPI.deleteEvidence(evidenceId)
+        : localDb.deleteEvidence(evidenceId)
+
       if (success && activity) {
         setActivity({
           ...activity,
@@ -259,8 +312,41 @@ export function ActivityDetailPage() {
     } catch {
       toast.error('Erro ao excluir evidência')
     } finally {
-      setDeleting(false)
-      setConfirmDelete(null)
+      setDeletingEvidence(false)
+      setConfirmEvidenceDelete(null)
+    }
+  }
+
+  function handleChangeMonth(delta: number) {
+    setSelectedMonth((current) => {
+      const baseMonth = current || activity?.month_reference || getCurrentMonthRef()
+      return shiftMonthReference(baseMonth, delta)
+    })
+  }
+
+  async function handleDeleteActivity() {
+    if (!activity) return
+
+    const monthToRedirect = selectedMonth || activity.month_reference
+    setDeletingActivity(true)
+
+    try {
+      const success = window.electronAPI
+        ? await window.electronAPI.deleteActivity(activity.id)
+        : localDb.deleteActivity(activity.id)
+
+      if (!success) {
+        toast.error('Erro ao excluir atividade')
+        return
+      }
+
+      toast.success('Atividade excluída')
+      navigate(`/activities?month=${monthToRedirect}`)
+    } catch {
+      toast.error('Erro ao excluir atividade')
+    } finally {
+      setDeletingActivity(false)
+      setConfirmActivityDelete(false)
     }
   }
 
@@ -373,6 +459,7 @@ export function ActivityDetailPage() {
   }
 
   const links = parseLinks(activity.link_ref)
+  const activeMonthReference = selectedMonth || activity.month_reference
 
   return (
     <div id="activity-detail" className="max-w-6xl mx-auto">
@@ -381,7 +468,7 @@ export function ActivityDetailPage() {
         <div className="flex items-center gap-3">
           <button
             id="activity-detail-btn-back"
-            onClick={() => navigate(`/activities?month=${activity.month_reference}`)}
+            onClick={() => navigate(`/activities?month=${activeMonthReference}`)}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
             aria-label="Voltar para lista de atividades"
@@ -390,29 +477,38 @@ export function ActivityDetailPage() {
           </button>
           <h1 className="text-2xl font-bold">Detalhes da Atividade</h1>
         </div>
-        <button
-          id="activity-detail-btn-edit"
-          onClick={() => navigate(`/activities/${activity.id}/edit`)}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg
-            hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
-        >
-          <i className="fa-solid fa-pen-to-square"></i>
-          Editar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            id="activity-detail-btn-edit"
+            onClick={() => navigate(`/activities/${activity.id}/edit`)}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg
+              hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
+          >
+            <i className="fa-solid fa-pen-to-square"></i>
+            Editar
+          </button>
+          <button
+            id="activity-detail-btn-delete"
+            onClick={() => setConfirmActivityDelete(true)}
+            className="px-4 py-2 border border-destructive/40 text-destructive rounded-lg
+              hover:bg-destructive/10 transition-colors cursor-pointer flex items-center gap-2"
+            aria-label="Excluir atividade"
+          >
+            <i className="fa-solid fa-trash-can" aria-hidden="true"></i>
+            Excluir
+          </button>
+        </div>
       </div>
 
       {/* Top navigation */}
-      {siblings.length > 1 && (
-        <div id="activity-detail-nav" className="mb-4">
-          <ActivityNav
-            siblings={siblings}
-            currentId={activity.id}
-            currentProjectScope={activity.project_scope}
-            navMode={navMode}
-            onNavModeChange={setNavMode}
-          />
-        </div>
-      )}
+      <div id="activity-detail-nav" className="mb-4">
+        <ActivityNav
+          siblings={siblings}
+          currentId={activity.id}
+          selectedMonth={activeMonthReference}
+          onChangeMonth={handleChangeMonth}
+        />
+      </div>
 
       {/* Info card */}
       <div id="activity-detail-info" className="bg-card border border-border rounded-lg p-6 space-y-5">
@@ -541,7 +637,7 @@ export function ActivityDetailPage() {
                         <SortableEvidenceCard 
                           key={ev.id} 
                           evidence={ev} 
-                          onDelete={(id) => setConfirmDelete(id)}
+                          onDelete={(id) => setConfirmEvidenceDelete(id)}
                           onClick={() => {
                             if (ev.type === 'text') {
                               setTextModalEvidence(ev)
@@ -615,24 +711,70 @@ export function ActivityDetailPage() {
       </div>
 
       {/* Bottom navigation */}
-      {siblings.length > 1 && (
-        <div className="mt-4">
-          <ActivityNav
-            siblings={siblings}
-            currentId={activity.id}
-            currentProjectScope={activity.project_scope}
-            navMode={navMode}
-            onNavModeChange={setNavMode}
-          />
-        </div>
-      )}
+      <div className="mt-4">
+        <ActivityNav
+          siblings={siblings}
+          currentId={activity.id}
+          selectedMonth={activeMonthReference}
+          onChangeMonth={handleChangeMonth}
+        />
+      </div>
 
-      {/* Confirm delete modal */}
-      {confirmDelete && (
+      {/* Confirm activity delete modal */}
+      {confirmActivityDelete && (
         <div
           id="activity-detail-delete-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setConfirmDelete(null)}
+          onClick={() => !deletingActivity && setConfirmActivityDelete(false)}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="activity-detail-delete-title"
+        >
+          <div
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4 text-destructive">
+              <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+              <h2 id="activity-detail-delete-title" className="text-lg font-semibold">Excluir atividade?</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Esta ação removerá a atividade e suas evidências de forma permanente.
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setConfirmActivityDelete(false)}
+                disabled={deletingActivity}
+                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                id="activity-detail-confirm-delete"
+                onClick={handleDeleteActivity}
+                disabled={deletingActivity}
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {deletingActivity ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    Excluindo...
+                  </>
+                ) : (
+                  'Excluir'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm evidence delete modal */}
+      {confirmEvidenceDelete && (
+        <div
+          id="activity-detail-evidence-delete-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setConfirmEvidenceDelete(null)}
           role="alertdialog" aria-modal="true" aria-labelledby="detail-delete-title"
         >
           <div
@@ -648,18 +790,18 @@ export function ActivityDetailPage() {
             </p>
             <div className="flex items-center gap-3 justify-end">
               <button
-                onClick={() => setConfirmDelete(null)}
-                disabled={deleting}
+                onClick={() => setConfirmEvidenceDelete(null)}
+                disabled={deletingEvidence}
                 className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
-                onClick={() => handleDeleteEvidence(confirmDelete)}
-                disabled={deleting}
+                onClick={() => handleDeleteEvidence(confirmEvidenceDelete)}
+                disabled={deletingEvidence}
                 className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
-                {deleting ? (
+                {deletingEvidence ? (
                   <>
                     <i className="fa-solid fa-spinner fa-spin"></i>
                     Excluindo...

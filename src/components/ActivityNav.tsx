@@ -1,36 +1,34 @@
 import { useNavigate } from 'react-router-dom'
 import type { ActivityData } from '../vite-env'
 
-export type NavMode = 'month' | 'scope'
-
 interface ActivityNavProps {
   siblings: ActivityData[]
   currentId: string
-  currentProjectScope: string | null
-  navMode: NavMode
-  onNavModeChange: (mode: NavMode) => void
+  selectedMonth: string
+  onChangeMonth: (delta: number) => void
 }
 
 export function ActivityNav({
   siblings,
   currentId,
-  currentProjectScope,
-  navMode,
-  onNavModeChange,
+  selectedMonth,
+  onChangeMonth,
 }: ActivityNavProps) {
   const navigate = useNavigate()
 
-  const scopeDisabled = !currentProjectScope
-  const effectiveMode = scopeDisabled && navMode === 'scope' ? 'month' : navMode
-
-  const filtered =
-    effectiveMode === 'scope'
-      ? siblings.filter((a) => a.project_scope === currentProjectScope)
-      : siblings
-
-  const currentIndex = filtered.findIndex((a) => a.id === currentId)
-  const prev = currentIndex > 0 ? filtered[currentIndex - 1] : null
-  const next = currentIndex < filtered.length - 1 ? filtered[currentIndex + 1] : null
+  const currentIndex = siblings.findIndex((a) => a.id === currentId)
+  const prev =
+    currentIndex > 0
+      ? siblings[currentIndex - 1]
+      : currentIndex === -1
+        ? siblings[siblings.length - 1] ?? null
+        : null
+  const next =
+    currentIndex >= 0 && currentIndex < siblings.length - 1
+      ? siblings[currentIndex + 1]
+      : currentIndex === -1
+        ? siblings[0] ?? null
+        : null
 
   function truncate(text: string, max = 50) {
     return text.length > max ? text.slice(0, max) + '…' : text
@@ -57,37 +55,32 @@ export function ActivityNav({
         </span>
       </button>
 
-      {/* Mode toggle */}
-      <div id="activity-nav-mode-toggle" className="flex items-center gap-1 shrink-0 bg-muted rounded-lg p-0.5">
+      {/* Month selector */}
+      <div id="activity-nav-month-selector" className="flex items-center gap-1.5 shrink-0 bg-muted rounded-lg p-0.5">
         <button
-          id="activity-nav-btn-month"
-          onClick={() => onNavModeChange('month')}
-          className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-            effectiveMode === 'month'
-              ? 'bg-primary text-primary-foreground font-medium'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          title="Navegar por mês"
-          aria-label="Navegar por mês"
+          id="activity-nav-btn-prev-month"
+          onClick={() => onChangeMonth(-1)}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          title="Mês anterior"
+          aria-label="Mês anterior"
         >
-          <i className="fa-solid fa-calendar-days mr-1" aria-hidden="true"></i>
-          Mês
+          <i className="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i>
         </button>
-        <button
-          id="activity-nav-btn-scope"
-          onClick={() => !scopeDisabled && onNavModeChange('scope')}
-          disabled={scopeDisabled}
-          className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer
-            disabled:opacity-40 disabled:cursor-not-allowed ${
-            effectiveMode === 'scope'
-              ? 'bg-primary text-primary-foreground font-medium'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          title={scopeDisabled ? 'Atividade sem projeto definido' : 'Navegar por projeto'}
-          aria-label={scopeDisabled ? 'Atividade sem projeto definido' : 'Navegar por projeto'}
+        <span
+          id="activity-nav-month-label"
+          className="px-2 py-1 min-w-24 text-center text-xs font-semibold tracking-wide tabular-nums"
+          aria-live="polite"
         >
-          <i className="fa-solid fa-diagram-project mr-1" aria-hidden="true"></i>
-          Projeto
+          {selectedMonth}
+        </span>
+        <button
+          id="activity-nav-btn-next-month"
+          onClick={() => onChangeMonth(1)}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          title="Próximo mês"
+          aria-label="Próximo mês"
+        >
+          <i className="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i>
         </button>
       </div>
 

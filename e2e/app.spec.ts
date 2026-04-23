@@ -26,7 +26,7 @@ test.afterAll(async () => {
   })
 })
 
-async function createActivity(description: string) {
+async function createActivity(description: string, monthReference?: string) {
   await page.click('[title="Atividades"]')
   await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
 
@@ -35,6 +35,11 @@ async function createActivity(description: string) {
   const descInput = page.locator('textarea#description')
   await descInput.waitFor({ timeout: 5_000 })
   await descInput.fill(description)
+
+  if (monthReference) {
+    const monthInput = page.locator('input#month_reference')
+    await monthInput.fill(monthReference)
+  }
 
   await page.click('button[type="submit"]')
   await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
@@ -482,8 +487,81 @@ test('uses local ArrowLeft/ArrowRight navigation on activity detail page', async
     : page.locator('#activity-nav-btn-next').first()
 
   await expect(backwardButton).toBeEnabled({ timeout: 5_000 })
+  await page.locator('#app-main').click()
   await page.keyboard.press(backwardDirection)
   await page.waitForURL(firstDetailUrl)
+})
+
+test('replaces nav mode toggle with month selector and updates detail navigation context', async () => {
+  const runId = Date.now()
+  const monthA = '10/2036'
+  const monthB = '11/2036'
+  const activityA = `Atividade Detalhe Mês ${runId} A`
+  const activityB = `Atividade Detalhe Mês ${runId} B`
+
+  await createActivity(activityA, monthA)
+  await createActivity(activityB, monthB)
+
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthA)
+  await page.waitForURL(/#\/activities\?month=10\/2036$/)
+
+  await page.locator('.flex-1.cursor-pointer', { hasText: activityA }).first().click()
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+
+  await expect(page.locator('#activity-nav-mode-toggle')).toHaveCount(0)
+
+  const monthLabel = page.locator('#activity-nav-month-label').first()
+  await expect(monthLabel).toHaveText(monthA)
+
+  await page.locator('#activity-nav-btn-next-month').first().click()
+  await expect(monthLabel).toHaveText(monthB)
+
+  const detailUrlBeforeArrow = page.url()
+  await page.locator('#app-main').click()
+  await page.keyboard.press('ArrowRight')
+  await page.waitForURL((url) => url.toString() !== detailUrlBeforeArrow)
+
+  await expect(page.locator('#activity-detail-info')).toContainText(activityB)
+})
+
+test('opens, cancels and confirms activity deletion on detail page', async () => {
+  const runId = Date.now()
+  const monthRef = '12/2036'
+  const description = `Atividade Excluir Detalhe ${runId}`
+
+  await createActivity(description, monthRef)
+
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthRef)
+  await page.waitForURL(/#\/activities\?month=12\/2036$/)
+
+  await page.locator('.flex-1.cursor-pointer', { hasText: description }).first().click()
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+
+  const detailUrl = page.url()
+  const deleteButton = page.locator('#activity-detail-btn-delete')
+  const deleteModal = page.locator('#activity-detail-delete-modal')
+
+  await deleteButton.click()
+  await expect(deleteModal).toBeVisible({ timeout: 5_000 })
+  await page.keyboard.press('Escape')
+  await expect(deleteModal).toHaveCount(0)
+
+  await deleteButton.click()
+  await expect(deleteModal).toBeVisible({ timeout: 5_000 })
+  await deleteModal.locator('button:has-text("Cancelar")').click()
+  await expect(deleteModal).toHaveCount(0)
+  await expect(page).toHaveURL(detailUrl)
+
+  await deleteButton.click()
+  await expect(deleteModal).toBeVisible({ timeout: 5_000 })
+  await deleteModal.locator('#activity-detail-confirm-delete').click()
+
+  await page.waitForURL(/#\/activities\?month=12\/2036$/)
+  await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(0)
 })
 
 // ──── Cyberpunk Search Regression ────
