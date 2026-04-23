@@ -24,6 +24,10 @@ import { TextEvidenceModal } from '../components/TextEvidenceModal'
 import { ActivityNav } from '../components/ActivityNav'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { shiftMonthReference } from '../utils/monthReference'
+import {
+  resolveMonthNavigation,
+  shouldSyncSelectedMonthToActivity,
+} from '../utils/activityMonthNavigation'
 
 function SortableEvidenceCard({ 
   evidence, 
@@ -176,15 +180,22 @@ export function ActivityDetailPage() {
 
   useEffect(() => {
     setSelectedMonth('')
+    setSiblings([])
     setSiblingsMonthReference('')
     setMonthWithoutActivities(null)
   }, [id])
 
   useEffect(() => {
-    if (activity?.month_reference && !selectedMonth) {
-      setSelectedMonth(activity.month_reference)
+    if (
+      shouldSyncSelectedMonthToActivity({
+        currentId: id,
+        activity,
+        selectedMonth,
+      })
+    ) {
+      setSelectedMonth(activity!.month_reference)
     }
-  }, [activity?.month_reference, selectedMonth])
+  }, [activity, id, selectedMonth])
 
   useEffect(() => {
     if (!selectedMonth) return
@@ -217,24 +228,31 @@ export function ActivityDetailPage() {
   }, [selectedMonth, fetchSiblingsByMonth])
 
   useEffect(() => {
-    if (!selectedMonth || siblingsLoading) return
-    if (siblingsMonthReference !== selectedMonth) return
+    const decision = resolveMonthNavigation({
+      currentId: id,
+      activity,
+      selectedMonth,
+      siblings,
+      siblingsMonthReference,
+      siblingsLoading,
+    })
 
-    if (activity?.month_reference === selectedMonth) {
-      setMonthWithoutActivities(null)
-      return
+    switch (decision.type) {
+      case 'navigate':
+        setMonthWithoutActivities(null)
+        navigate(`/activities/${decision.targetId}`)
+        return
+      case 'show-empty-month':
+        setMonthWithoutActivities(decision.monthReference)
+        return
+      case 'clear-empty-month':
+        setMonthWithoutActivities(null)
+        return
+      case 'noop':
+      default:
+        return
     }
-
-    if (siblings.length > 0) {
-      setMonthWithoutActivities(null)
-      if (id !== siblings[0].id) {
-        navigate(`/activities/${siblings[0].id}`)
-      }
-      return
-    }
-
-    setMonthWithoutActivities(selectedMonth)
-  }, [selectedMonth, siblingsLoading, siblingsMonthReference, siblings, activity?.month_reference, id, navigate])
+  }, [selectedMonth, siblingsLoading, siblingsMonthReference, siblings, activity, id, navigate])
 
   // Keyboard shortcuts: ← / → (local navigation in detail page)
   useEffect(() => {
