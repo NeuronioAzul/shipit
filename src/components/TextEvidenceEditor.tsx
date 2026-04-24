@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import CharacterCount from '@tiptap/extension-character-count'
 import Placeholder from '@tiptap/extension-placeholder'
 
-const MAX_CHARS = 2000
+const MAX_CHARS = 20000
 
 interface TextEvidenceEditorProps {
   content: string
@@ -65,7 +65,27 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
     }
   }, [content, editor])
 
+  // Foca o editor automaticamente ao montar (modo edição) para que paste/digitação funcionem
+  // sem precisar de clique inicial em uma área específica do ProseMirror.
+  useEffect(() => {
+    if (editor && !readOnly) {
+      editor.commands.focus('end')
+    }
+  }, [editor, readOnly])
+
   if (!editor) return null
+
+  // Quando o usuário clica numa área "vazia" do wrapper (padding, abaixo do conteúdo),
+  // o ProseMirror não recebe o foco automaticamente. Esse handler garante o foco no
+  // final do documento sempre que o clique acontecer fora da área editável real.
+  const handleContentMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (readOnly) return
+    const target = e.target as HTMLElement
+    if (!target.closest('.tiptap')) {
+      e.preventDefault()
+      editor.commands.focus('end')
+    }
+  }
 
   const charCount = editor.storage.characterCount.characters()
   const isNearLimit = charCount > MAX_CHARS * 0.9
@@ -101,11 +121,15 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
           />
         </div>
       )}
-      <div id="text-evidence-editor-content">
+      <div
+        id="text-evidence-editor-content"
+        onMouseDown={handleContentMouseDown}
+        className="cyber-input p-3 min-h-[150px] max-h-[400px] overflow-y-auto cursor-text"
+      >
         <EditorContent
         editor={editor}
-        className="cyber-input prose prose-sm max-w-none p-3 min-h-[150px] max-h-[400px] overflow-y-auto
-          text-foreground [&_.tiptap]:outline-none [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted-foreground
+        className="prose prose-sm max-w-none
+          text-foreground [&_.tiptap]:outline-none [&_.tiptap]:min-h-[126px] [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted-foreground
           [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_p.is-editor-empty:first-child::before]:float-left
           [&_.tiptap_p.is-editor-empty:first-child::before]:h-0 [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none
           [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-6 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-6
