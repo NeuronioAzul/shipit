@@ -10,14 +10,23 @@
                 | |       
                 |_|       
 ```
-## Atividades
+## Detalhes da atividade
+
+
+
+
+
 
 ### features
 
-- Botão excluir na tela de detalhes da atividade, para excluir a atividade, com confirmação modal para evitar exclusão acidental, e também para melhorar a experiência do usuário.
-- Seletor de meses na tela de listagem de atividades, para facilitar a navegação entre os meses e permitir que os usuários possam acessar facilmente as atividades de meses anteriores.
+- feat: Adicionar o Botão de excluir ao lado de editar na tela de detalhes da atividade, para excluir a atividade, com confirmação modal para evitar exclusão acidental, e também para melhorar a experiência do usuário.
+- feat: na tela de detalhes da atividade remova o elemento `id="activity-nav-mode-toggle"` e no lugar coloque um seletor de meses, para facilitar a navegação entre os meses e permitir que os usuários possam acessar facilmente as atividades de meses anteriores.
 - 
 
+
+## Tela do aplicativo
+
+- feat: ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível, com um botão para instalar a nova versão.
 
 ------------------------------------------------------------------
 
@@ -106,14 +115,7 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
 
 - Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.
 - Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar, - links devem abrir no navegador padrão do usuário fora do app
-- 
------------------------------------------------------------
 
-## Fazendo
-
-## Janela do aplicativo
-
-### features
 
 - Adicionar um menu ao lado do logo para acessar as funcionalidades sugira outros que possam ser úteis para o usuário, além dos que já estão listados:
   - File
@@ -149,3 +151,27 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
     - Verificar Atualizações / atualizar
     - Manual do Usuário - criar tela com as instruções de uso do ShipIt!. Depois será melhorado e atualizado com imagens, gifs, vídeos, etc, para deixar a documentação mais atrativa e fácil de entender, e também para mostrar exemplos de uso do ShipIt! em diferentes cenários.
     - Reportar um Problema - link para o usuário abrir uma issue no GitHub para reportar um problema, bug, sugestão, etc, para ajudar a melhorar o ShipIt! e para mostrar que o projeto é aberto a contribuições e feedbacks da comunidade.
+
+
+Remoção total do toggle antigo de modo de navegação e substituição por seletor de mês com chevrons e label MM/YYYY no centro do nav.
+Navegação no detalhe agora baseada em mês selecionado, com recarga de siblings por month_reference.
+Atalhos ArrowLeft/ArrowRight ajustados para operar no contexto do mês selecionado.
+Botão Excluir adicionado ao lado de Editar no detalhe da atividade.
+Modal de exclusão da atividade implementada com role alertdialog, aria-modal, aria-labelledby, fechamento por clique fora e Escape.
+Fluxo de exclusão reutilizando deleteActivity, toast de sucesso/erro e redirecionamento para /activities?month=mêsSelecionado.
+IDs estáveis adicionados conforme plano, incluindo activity-nav-month-selector, activity-detail-btn-delete e activity-detail-delete-modal.
+Modal de exclusão de evidência mantida separada com id próprio para evitar conflito de seletores.
+
+-----------------------------------------------------------
+
+## Fazendo
+
+## Fix
+
+### Adicionar Evidencia do tipo Texto
+
+- fix: quando eu tento adicionar uma evidência do tipo texto, e na modal eu clico no campo de textarea, em algumas partes não seleciona o campo de textarea, e não deixa eu digitar, para resolver isso, o campo de textarea deve ser ajustado para que ele seja selecionado corretamente quando o usuário clicar em qualquer parte do campo, para que os usuários possam digitar suas descrições sem problemas, e também para melhorar a experiência do usuário.
+- fix: quando eu tento colar usando o ctrl+v ou o menu de contexto, o conteúdo não é colado no campo de textarea, para resolver isso, o campo de textarea deve ser ajustado para permitir a funcionalidade de colar usando o ctrl+v e o menu de contexto, para que os usuários possam colar suas descrições sem problemas, e também para melhorar a experiência do usuário.
+- fix: aumentar a quantidade de caracteres permitidos no campo de textarea para 20000 caracteres, para permitir que os usuários possam inserir descrições mais detalhadas e completas, sem se preocupar com limitações de espaço, e também para melhorar a experiência do usuário, permitindo que eles possam fornecer informações mais ricas e úteis sobre as atividades.
+
+- verificar se todos os campos do tipo input, textarea, estão permitindo a funcionalidade de colar usando o ctrl+v, ctrl+c, ctrl+x, ctrl+a, ctrl+z, ctrl+y, ctrl+shift+z, ctrl+shift+y, etc, e o menu de contexto, para garantir que os usuários possam colar suas informações sem problemas, e também para melhorar a experiência do usuário.
