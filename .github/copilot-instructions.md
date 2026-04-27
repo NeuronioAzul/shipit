@@ -1,18 +1,26 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app for software engineers to track activities, generate service reports, and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (package version 1.3.0, latest release tag: v1.3.0; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
 | Layer | Tech | Notes |
 |-------|------|-------|
-| Desktop | Electron 41 (CommonJS) | Context isolation, preload bridge |
-| UI | React 19 + React Router 7 | SPA with `AppLayout` wrapper |
+| Desktop | Electron 41 (CommonJS) | Context isolation, preload bridge, system tray |
+| UI | React 19 + React Router 7 | SPA with `AppLayout` wrapper, `HashRouter` |
 | Styling | Tailwind CSS 4 | `@theme inline` in `src/index.css`, no config file |
+| Theming | 11 themes (CSS variables) | `src/themes/themes.ts` registry + `themes.css` palettes + `ThemeContext` |
 | ORM | TypeORM 0.3 + better-sqlite3 | SQLite stored in `userData/shipit.db` |
 | Build | Vite 8 | `@vitejs/plugin-react` + `@tailwindcss/vite` |
 | Language | TypeScript 6 | Strict mode everywhere |
 | Icons | Font Awesome 7 | Self-hosted via npm, imported in CSS |
+| Reports | JSZip + @xmldom/xmldom + xpath | DOCX generation from OpenXML template |
+| Drag & Drop | @dnd-kit (core + sortable) | Activity and evidence reorder |
+| Rich Text | TipTap 3 (React) | Text evidence editor with character count |
+| Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
+| Toasts | sonner 2 | Non-blocking notifications |
+| Auto-update | electron-updater 6 | GitHub Releases integration |
+| Testing | Vitest + Playwright | 104 unit/integration tests, 18 declared E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -20,8 +28,12 @@ Electron desktop app for software engineers to track activities, generate servic
 npm run dev       # Vite dev server + Electron (concurrently + wait-on)
 npm run build     # tsc → vite build → tsc electron
 npm run dist      # build + electron-builder package
+npm run test      # Vitest unit tests
+npm run test:e2e  # Playwright E2E tests
 npm run preview   # Vite preview
 ```
+
+Build targets: Windows (NSIS/Portable/MSI x64), macOS (DMG arm64+x64), Linux (AppImage/deb/rpm).
 
 Requires **Node.js ≥ 24**, **npm ≥ 11**. After cloning, `npm install` triggers `postinstall` for native module rebuild.
 
@@ -31,15 +43,42 @@ Requires **Node.js ≥ 24**, **npm ≥ 11**. After cloning, `npm install` trigge
 
 ```
 Renderer (React/Vite)          Preload Bridge              Main (Electron/Node)
-  window.electronAPI  ──────>  contextBridge  ──────>  ipcMain.handle('db:*', 'app:*')
+  window.electronAPI  ──────>  contextBridge  ──────>  ipcMain.handle('db:*', 'app:*', 'window:*')
                                electron/preload.ts         electron/main.ts
                                                            electron/database.ts
+                                                           electron/report-generator.ts
 ```
 
 - **Main process** (`electron/`): CommonJS, `tsconfig.electron.json`, outputs to `dist-electron/`
 - **Renderer** (`src/`): ESNext, `tsconfig.json`, bundled by Vite
-- **IPC pattern**: `ipcRenderer.invoke` ↔ `ipcMain.handle` with `db:` and `app:` prefixes
+- **IPC pattern**: `ipcRenderer.invoke` ↔ `ipcMain.handle` with `db:`, `app:`, and `window:` prefixes
 - **Security**: `contextIsolation: true`, `nodeIntegration: false` — never change these
+- **Custom protocols**: `shipit-evidence://` and `shipit-sfx://` for safe file serving from userData
+
+### IPC Handlers (54 invoke handlers + 4 renderer events)
+
+| Group | Prefix | Key Handlers |
+|-------|--------|-------------|
+| Profile | `db:` | `getUserProfile`, `saveUserProfile` |
+| Activities | `db:` | `getActivities(month)`, `searchActivities(query)`, `getActivity`, `saveActivity`, `deleteActivity`, `reorderActivities` |
+| Evidence | `db:` | `saveEvidence`, `saveEvidenceFromBuffer` (clipboard), `updateEvidenceCaption`, `deleteEvidence` (soft), `reorderEvidences`, `getDeletedEvidences`, `restoreEvidence`, `permanentlyDeleteEvidence`, `saveTextEvidence`, `updateTextEvidence` |
+| Reports | `app:` / `db:` | `generateReport(month)`, `openFileInFolder`, `getReports(month)` |
+| Settings | `app:` | `getSettings`, `saveSettings`, `getDefaultReportsDir` |
+| App menu | `app:` | `openReportsDirectory`, `openEvidencesDirectory`, `quit`, edit commands, zoom commands |
+| Dialogs | `app:` | `selectImages`, `selectDirectory` |
+| Tray | `app:` | `setTrayStatus('default'\|'green'\|'yellow'\|'red')` |
+| Sounds | `app:` | `listSounds`, `playSound` |
+| Auto-launch | `app:` | `getAutoLaunch`, `setAutoLaunch` |
+| Alerts | `db:` | `getAlert`, `saveAlert` |
+| Auto-update | `app:` | `checkForUpdate`, `installUpdate` |
+| Renderer events | `app:` / `window:` | `playSoundData`, `updateStatus`, `navigate`, `maximized-change` |
+| Window | `window:` | `minimize`, `maximize`, `close`, `isMaximized` |
+
+### Background Schedulers
+
+- **Alert checker**: every 60s, fires native notifications based on user config
+- **Tray status updater**: every 5 min, updates icon color based on incomplete activity count
+- **Trash cleanup**: on startup, permanently deletes evidences soft-deleted > 3 months ago
 
 ### Browser Fallback
 
@@ -47,29 +86,96 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 
 ### Database
 
-- Singleton `DataSource` initialized lazily via `getDb()` in `electron/database.ts`
+- Singleton `DataSource` initialized lazily via `initDatabase()` in `electron/database.ts`
 - `synchronize: true` — schema auto-updates from entity definitions (dev only)
-- Entities use TypeORM decorators with UUID v7 primary keys (except `UserProfile` which uses auto-increment)
+- Entities use TypeORM decorators with UUID v7 primary keys (except `UserProfile` and `Alert` which use auto-increment)
+- 6 entities: `UserProfile`, `Activity`, `Evidence`, `Report`, `ActivityReport` (junction), `Alert`
+
+### Data Model
+
+| Entity | PK | Key Fields | Relations |
+|--------|----|-----------|-----------|
+| `UserProfile` | auto-inc | `full_name`, `role`, `seniority_level`, `attendance_type`, `project_scope` | 1:1 → Alert |
+| `Activity` | UUID v7 | `description`, `date_start/end`, `status`, `project_scope`, `link_ref`, `month_reference`, `order` | 1:N → Evidence, M:N → Report |
+| `Evidence` | UUID v7 | `type` (enum: 'image'\|'text'), `file_path`, `text_content`, `caption`, `sort_index`, `date_added`, `deleted_at` (soft-delete) | N:1 → Activity |
+| `Report` | UUID v7 | `month_reference`, `file_path`, `report_name`, `date_generated`, `status` | M:N → Activity |
+| `ActivityReport` | UUID v7 | Junction table (`activities_report`) | Activity ↔ Report |
+| `Alert` | auto-inc | `alert_enabled`, `alert_time`, `alert_days_before` (JSON), `alert_frequency`, `alert_sound_file`, `last_alert_sent` | 1:1 → UserProfile |
+
+### Routes
+
+```
+/                       → HomePage         (Dashboard: Gantt chart, activity summary cards)
+/profile                → ProfilePage      (User profile setup + alert config)
+/settings               → SettingsPage     (Theme, notifications, auto-launch, reports dir, updates)
+/trash                  → TrashPage        (Soft-deleted evidence recovery/permanent deletion)
+/manual                 → UserManualPage   (Static user manual, FAQ, help entry point)
+/activities             → ActivitiesPage   (Monthly activity list, search, drag-reorder)
+/activities/new         → ActivityFormPage  (Create new activity)
+/activities/:id         → ActivityDetailPage (View/edit details, evidence gallery)
+/activities/:id/edit    → ActivityFormPage  (Edit existing activity)
+```
+
+Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout` → Route outlet
+
+### Report Generation (DOCX)
+
+- Template-based OpenXML manipulation via JSZip + xmldom
+- **Encarte A**: activities grouped by `project_scope`, checkboxes per attendance type
+- **Encarte B**: evidence images (one per page) with captions and PAGEREF bookmarks
+- Image auto-scaling to fit page area (~15.5cm × 22cm), converted to EMU
+- Output: `RELATÓRIO DE SERVIÇO - {CARGO}_{NAME}_{MONTH}.docx`
 
 ### Theming
 
-- CSS variables defined in `src/index.css` under `@theme inline` (Tailwind v4 pattern)
-- Light/dark via `.dark` class on `<html>`, managed by `ThemeContext`
-- Brand colors: primary blue (`hsl 216 64% 30%`), accent orange (`hsl 24 89% 54%`)
-- Persist theme choice in `localStorage.shipit-theme`
+- **11 themes** across 3 categories: main (Light, Dark), personality (Colorful, Rose & Violet, Minimalist, Futuristic, Ocean, Sunset), accessibility (High Contrast, High Contrast Dark), bonus (Cyberpunk)
+- `ThemeId` union type: `'light' | 'dark' | 'colorful' | 'rose-violet' | 'minimalist' | 'futuristic' | 'ocean' | 'sunset' | 'high-contrast' | 'high-contrast-dark' | 'cyberpunk'`
+- `ThemeMetadata` interface in `src/themes/themes.ts`: id, label, description, icon, category, base (`'dark'`|`'light'`), preview colors
+- CSS variables (60+ per theme) defined in `src/themes/themes.css` via `[data-theme="id"]` selectors
+- `@theme inline` in `src/index.css` maps CSS variables to Tailwind tokens
+- `ThemeContext` stores full theme ID, computes `isDark` from base property, applies theme class + data attribute to `<html>`
+- Smooth 200ms transitions on theme switch
+- Persist theme choice in `localStorage.shipit-theme` (stores theme ID string, e.g. `"cyberpunk"`)
+- Cyberpunk special effects in `src/themes/cyberpunk-effects.css` (CRT scanlines, neon glow, glitch animations, angular clip-paths)
+- `ThemeSelector` component in SettingsPage with visual grid picker by category
+
+## File Structure
+
+```
+electron/                   # Main process (CommonJS)
+  main.ts                   # App lifecycle, IPC handlers, schedulers, tray
+  preload.ts                # contextBridge API (54 invoke handlers + 4 event subscriptions)
+  database.ts               # DataSource, CRUD, soft-delete, search
+  report-generator.ts       # DOCX generation (JSZip + xmldom)
+  entities/                 # TypeORM entity definitions (6 files)
+src/                        # Renderer (ESNext, Vite)
+  pages/                    # 9 page files / 9 routed views (including UserManualPage)
+  components/               # 17 reusable components (ActivityBar, ActivityNav, AppLayout, AppTopMenu, DatePicker, EmptyState, EvidenceLightbox, EvidenceUpload, Header, SearchBar, Select, Skeleton, TextEvidenceEditor, TextEvidenceModal, ThemeSelector, TimePicker, TitleBar)
+  contexts/                 # ThemeContext + NavigationHistoryContext
+  menu/                     # appMenuCatalog + saveContextRegistry
+  services/                 # localDb.ts (browser fallback)
+  themes/                   # Theme system (themes.ts registry, themes.css palettes, cyberpunk-effects.css)
+  utils/                    # validation, status colors, month refs, keyboard guards, activity month navigation
+e2e/                        # Playwright E2E tests
+docs/                       # Architecture, roadmap, plans, guides
+```
 
 ## Conventions
 
 - **Component naming**: PascalCase files and exports (`HomePage.tsx`, `AppLayout.tsx`)
 - **Pages** in `src/pages/`, **reusable components** in `src/components/`, **contexts** in `src/contexts/`
 - **Entity files**: one entity per file in `electron/entities/`, export related enums from entity file
-- **IPC handlers**: registered in `electron/main.ts` at app startup, prefixed (`db:`, `app:`)
+- **IPC handlers**: registered in `electron/main.ts` at app startup, prefixed (`db:`, `app:`, `window:`)
 - **Services** in `src/services/` for browser-fallback helpers (`localDb.ts`)
+- **Menu commands** in `src/menu/` for the top app menu catalog and contextual save registry
 - **Form pattern**: typed interface for form state, `useEffect` to load, handler to save via IPC
 - **Browser fallback**: when `electronAPI` unavailable, uses `localStorage` via `localDb` service
 - **Tailwind classes**: use CSS variable tokens (`bg-background`, `text-foreground`, `bg-primary`) — not raw color values
+- **Theme files**: theme metadata in `src/themes/themes.ts`, CSS palettes in `src/themes/themes.css`, special effects in `src/themes/cyberpunk-effects.css`
 - **Draggable title bar**: Header uses `WebkitAppRegion: 'drag'`, interactive elements use `'no-drag'`
 - **Language**: UI strings and comments in Portuguese (pt-BR); code identifiers in English
+- **Testing**: unit tests in `*.test.ts` colocated with source, E2E in `e2e/`, use `sql.js` for in-memory DB in tests
+- **Soft-delete**: evidences use `deleted_at` timestamp instead of hard delete; trash auto-cleanup after 3 months
 
 ## Gotchas
 
@@ -77,13 +183,17 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 - **Tailwind v4**: No `tailwind.config.ts` — all theming via `@theme inline` in CSS. See `src/index.css`
 - **Electron rebuild**: Native module `better-sqlite3` requires rebuild after install (`postinstall` script handles this)
 - **Path alias**: `@/*` maps to `src/*` (frontend only)
+- **Asar paths**: icon and asset paths must account for asar packaging (`process.resourcesPath` vs `__dirname`)
+- **Custom protocols**: `shipit-evidence://` and `shipit-sfx://` must be used for serving files from userData — direct `file://` is blocked
 
 ## Existing Documentation
 
-- [docs/TODO.md](docs/TODO.md) — Full roadmap with task tracking
-- [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) — Full dependency audit with versions and system requirements
-- [docs/plan-docx-generator/](docs/plan-docx-generator/) — DOCX report generation feature plan (Phase 2.5+)
+- [docs/TODO.md](/docs/TODO.md) — Full roadmap with task tracking
+- [docs/DEPENDENCIES.md](/docs/DEPENDENCIES.md) — Full dependency audit with versions and system requirements
+- [docs/ARCHITECTURE.md](/docs/ARCHITECTURE.md) — High-level system design
+- [docs/DEVELOPMENT.md](/docs/DEVELOPMENT.md) — Dev setup guide
+- [docs/plan-docx-generator/](/docs/plan-docx-generator/) — DOCX report generation feature plan
 
 ## Roadmap Context
 
-Phases 1 (Foundation) and 2 (Fluxo de Registro) are complete. Next: Phase 2.3 (Validação), 2.4 (Auto-save), 2.5 (Dashboard), then Phase 3 (PDF/DOCX generation).
+All core phases are **complete** through Phase 23: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 104 Vitest tests, 18 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, and chronological activity ordering. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.

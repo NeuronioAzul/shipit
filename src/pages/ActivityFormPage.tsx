@@ -5,6 +5,9 @@ import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
 import { validateActivity, type ValidationError } from '../utils/validation'
+import { DatePicker } from '../components/DatePicker'
+import { Select } from '../components/Select'
+import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
 
 const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
@@ -46,6 +49,39 @@ export function ActivityFormPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialLoadDone = useRef(false)
+  const savedFingerprintRef = useRef('')
+
+  const buildActivityPayload = useCallback((nextForm: ActivityForm, currentActivityId: string | null): Partial<ActivityData> => {
+    const payload: Partial<ActivityData> = {
+      description: nextForm.description,
+      date_start: nextForm.date_start || null,
+      date_end: nextForm.date_end || null,
+      status: nextForm.status as ActivityData['status'],
+      link_ref: nextForm.link_ref || null,
+      attendance_type: (nextForm.attendance_type as ActivityData['attendance_type']) || null,
+      month_reference: nextForm.month_reference,
+      project_scope: nextForm.project_scope || null,
+    }
+
+    if (currentActivityId) {
+      payload.id = currentActivityId
+    }
+
+    return payload
+  }, [])
+
+  const buildFormFingerprint = useCallback((nextForm: ActivityForm): string => {
+    return JSON.stringify({
+      description: nextForm.description.trim(),
+      date_start: nextForm.date_start || null,
+      date_end: nextForm.date_end || null,
+      status: nextForm.status,
+      link_ref: nextForm.link_ref.trim(),
+      attendance_type: nextForm.attendance_type,
+      month_reference: nextForm.month_reference,
+      project_scope: nextForm.project_scope.trim(),
+    })
+  }, [])
 
   // Load profile attendance and project_scope for defaults
   useEffect(() => {
@@ -81,7 +117,7 @@ export function ActivityFormPage() {
       activity = localDb.getActivity(id)
     }
     if (activity) {
-      setForm({
+      const loadedForm: ActivityForm = {
         description: activity.description || '',
         date_start: activity.date_start || '',
         date_end: activity.date_end || '',
@@ -90,11 +126,14 @@ export function ActivityFormPage() {
         attendance_type: activity.attendance_type || '',
         month_reference: activity.month_reference,
         project_scope: activity.project_scope || '',
-      })
+      }
+
+      setForm(loadedForm)
       setEvidences(activity.evidences || [])
       setActivityId(activity.id)
+      savedFingerprintRef.current = buildFormFingerprint(loadedForm)
     }
-  }, [id])
+  }, [id, buildFormFingerprint])
 
   useEffect(() => {
     loadActivity().then(() => {
@@ -124,17 +163,7 @@ export function ActivityFormPage() {
 
       setAutoSaveStatus('saving')
       try {
-        const data: Partial<ActivityData> = {
-          description: form.description,
-          date_start: form.date_start || null,
-          date_end: form.date_end || null,
-          status: form.status as ActivityData['status'],
-          link_ref: form.link_ref || null,
-          attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
-          month_reference: form.month_reference,
-          project_scope: form.project_scope || null,
-        }
-        if (activityId) data.id = activityId
+        const data = buildActivityPayload(form, activityId)
 
         let result: ActivityData
         if (window.electronAPI) {
@@ -143,6 +172,7 @@ export function ActivityFormPage() {
           result = localDb.saveActivity(data)
         }
         if (!activityId) setActivityId(result.id)
+        savedFingerprintRef.current = buildFormFingerprint(form)
         setAutoSaveStatus('saved')
       } catch {
         setAutoSaveStatus('idle')
@@ -153,7 +183,77 @@ export function ActivityFormPage() {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form])
+  }, [form, saving, activityId, buildActivityPayload, buildFormFingerprint])
+
+  const handleContextSave = useCallback(async (): Promise<SaveContextResult> => {
+    if (saving) {
+      return {
+        status: 'unavailable',
+        message: 'O salvamento já está em andamento.',
+      }
+    }
+
+    const currentFingerprint = buildFormFingerprint(form)
+    if (currentFingerprint === savedFingerprintRef.current) {
+      return {
+        status: 'no-changes',
+        message: 'Nenhuma alteração para salvar nesta atividade.',
+      }
+    }
+
+    const validationErrors = validateActivity({
+      description: form.description,
+      date_start: form.date_start || null,
+      date_end: form.date_end || null,
+      status: form.status as ActivityData['status'],
+      month_reference: form.month_reference,
+    } as Partial<ActivityData>)
+
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return {
+        status: 'unavailable',
+        message: 'Preencha os campos obrigatórios antes de salvar.',
+      }
+    }
+
+    setErrors([])
+    setSaving(true)
+
+    try {
+      const data = buildActivityPayload(form, activityId)
+      let savedActivity: ActivityData
+
+      if (window.electronAPI) {
+        savedActivity = await window.electronAPI.saveActivity(data)
+      } else {
+        savedActivity = localDb.saveActivity(data)
+      }
+
+      if (!activityId) {
+        setActivityId(savedActivity.id)
+      }
+
+      savedFingerprintRef.current = currentFingerprint
+      setAutoSaveStatus('saved')
+
+      return {
+        status: 'saved',
+        message: 'Atividade salva com sucesso.',
+      }
+    } catch {
+      return {
+        status: 'error',
+        message: 'Erro ao salvar atividade.',
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [saving, buildFormFingerprint, form, buildActivityPayload, activityId])
+
+  useEffect(() => {
+    return registerSaveContextHandler(handleContextSave)
+  }, [handleContextSave])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -174,18 +274,7 @@ export function ActivityFormPage() {
     setSaving(true)
 
     try {
-      const data: Partial<ActivityData> = {
-        description: form.description,
-        date_start: form.date_start || null,
-        date_end: form.date_end || null,
-        status: form.status as ActivityData['status'],
-        link_ref: form.link_ref || null,
-        attendance_type: (form.attendance_type as ActivityData['attendance_type']) || null,
-        month_reference: form.month_reference,
-        project_scope: form.project_scope || null,
-      }
-
-      if (activityId) data.id = activityId
+      const data = buildActivityPayload(form, activityId)
 
       let savedActivity: ActivityData
       if (window.electronAPI) {
@@ -194,6 +283,7 @@ export function ActivityFormPage() {
         savedActivity = localDb.saveActivity(data)
       }
       setActivityId(savedActivity.id)
+      savedFingerprintRef.current = buildFormFingerprint(form)
       toast.success('Atividade salva com sucesso!')
       setTimeout(() => {
         navigate(`/activities?month=${form.month_reference}`)
@@ -207,6 +297,14 @@ export function ActivityFormPage() {
 
   function handleEvidenceAdded(evidence: EvidenceData) {
     setEvidences((prev) => [...prev, evidence])
+  }
+
+  function handleTextEvidenceAdded(evidence: EvidenceData) {
+    setEvidences((prev) => [...prev, evidence])
+  }
+
+  function handleTextEvidenceUpdated(id: string, textContent: string) {
+    setEvidences((prev) => prev.map((e) => e.id === id ? { ...e, text_content: textContent } : e))
   }
 
   async function handleDeleteEvidence(evidenceId: string) {
@@ -240,10 +338,10 @@ export function ActivityFormPage() {
   }
 
   const inputClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
+    'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
   const inputErrorClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
 
@@ -255,12 +353,17 @@ export function ActivityFormPage() {
     return fieldError(field) ? inputErrorClass : inputClass
   }
 
+  function frameClass(field: string): string {
+    return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+  }
+
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="activity-form-header" className="flex items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
           <button
+            id="activity-form-btn-back"
             onClick={() => navigate(`/activities?month=${form.month_reference}`)}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
@@ -273,230 +376,38 @@ export function ActivityFormPage() {
           </h1>
         </div>
 
-        {/* Auto-save indicator */}
-        {autoSaveStatus === 'saving' && (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <i className="fa-solid fa-spinner fa-spin text-[10px]"></i>
-            Salvando...
+        <div className="flex items-center gap-2">
+          {/* Auto-save indicator */}
+          <span id="activity-form-autosave" className="text-xs min-w-36 text-right">
+            {autoSaveStatus === 'saving' && (
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                <i className="fa-solid fa-spinner fa-spin text-[10px]"></i>
+                Salvando...
+              </span>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <span className="text-success inline-flex items-center gap-1">
+                <i className="fa-solid fa-check text-[10px]"></i>
+                Salvo automaticamente
+              </span>
+            )}
           </span>
-        )}
-        {autoSaveStatus === 'saved' && (
-          <span className="text-xs text-success flex items-center gap-1">
-            <i className="fa-solid fa-check text-[10px]"></i>
-            Salvo automaticamente
-          </span>
-        )}
-      </div>
 
-      {errors.length > 0 && (
-        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
-          <div className="flex items-center gap-2 font-medium mb-1">
-            <i className="fa-solid fa-triangle-exclamation"></i>
-            <span>Preencha os campos obrigatórios:</span>
-          </div>
-          <ul className="list-disc list-inside text-sm">
-            {errors.map((err) => (
-              <li key={err.field}>{err.message}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Descrição */}
-        <div>
-          <label htmlFor="description" className={labelClass}>
-            Descrição <span className="text-destructive">*</span>
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            onPaste={(e) => {
-              const plain = e.clipboardData.getData('text/plain')
-              if (plain) {
-                e.preventDefault()
-                const target = e.currentTarget
-                const start = target.selectionStart
-                const end = target.selectionEnd
-                const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
-                setForm((prev) => ({ ...prev, description: newValue }))
-                setAutoSaveStatus('idle')
-                // Restore cursor position after React re-render
-                requestAnimationFrame(() => {
-                  target.selectionStart = target.selectionEnd = start + plain.length
-                })
-              }
-            }}
-            rows={5}
-            placeholder="Descreva a atividade realizada..."
-            className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
-          />
-          {fieldError('description') && (
-            <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
-          )}
-        </div>
-
-        {/* Período */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="date_start" className={labelClass}>
-              Data de Início <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="date_start"
-              name="date_start"
-              type="date"
-              value={form.date_start}
-              onChange={handleChange}
-              className={fieldClass('date_start')}
-            />
-            {fieldError('date_start') && (
-              <p className="text-xs text-destructive mt-1">{fieldError('date_start')}</p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="date_end" className={labelClass}>
-              Data de Término <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="date_end"
-              name="date_end"
-              type="date"
-              value={form.date_end}
-              onChange={handleChange}
-              className={fieldClass('date_end')}
-            />
-            {fieldError('date_end') && (
-              <p className="text-xs text-destructive mt-1">{fieldError('date_end')}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Status + Atendimento + Mês */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="status" className={labelClass}>
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="attendance_type" className={labelClass}>
-              Tipo de Atendimento
-            </label>
-            <select
-              id="attendance_type"
-              name="attendance_type"
-              value={form.attendance_type}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              <option value="">
-                {profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione'}
-              </option>
-              {ATTENDANCE_TYPES.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="month_reference" className={labelClass}>
-              Mês de Referência <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="month_reference"
-              name="month_reference"
-              type="text"
-              value={form.month_reference}
-              onChange={handleChange}
-              placeholder="MM/YYYY"
-              pattern="\d{2}/\d{4}"
-              className={fieldClass('month_reference')}
-            />
-            {fieldError('month_reference') && (
-              <p className="text-xs text-destructive mt-1">{fieldError('month_reference')}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Links de Referência */}
-        <div>
-          <label htmlFor="project_scope" className={labelClass}>
-            Squad / Projeto / Aplicação
-          </label>
-          <input
-            id="project_scope"
-            name="project_scope"
-            type="text"
-            value={form.project_scope}
-            onChange={handleChange}
-            placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={inputClass}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Agrupa atividades por projeto no relatório. Herdado do perfil, editável por atividade.
-          </p>
-        </div>
-
-        {/* Links de Referência */}
-        <div>
-          <label htmlFor="link_ref" className={labelClass}>
-            Links de Referência
-          </label>
-          <textarea
-            id="link_ref"
-            name="link_ref"
-            value={form.link_ref}
-            onChange={handleChange}
-            rows={2}
-            placeholder="Cole os links aqui, um por linha (ex: https://gitlab.example.com/merge_request/123)"
-            className={inputClass + ' resize-y'}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Insira um link por linha. GitLab, Jira, etc.
-          </p>
-        </div>
-
-        {/* Evidências — só mostra se tiver activityId (precisa salvar a atividade primeiro) */}
-        {activityId ? (
-          <div>
-            <label className={labelClass}>Evidências (Prints)</label>
-            <EvidenceUpload
-              activityId={activityId}
-              evidences={evidences}
-              onEvidenceAdded={handleEvidenceAdded}
-              onEvidenceDeleted={handleDeleteEvidence}
-              onCaptionUpdated={handleUpdateCaption}
-              onReorder={handleReorderEvidences}
-            />
-          </div>
-        ) : (
-          <div className="p-4 border border-dashed border-border rounded-lg text-center text-muted-foreground bg-muted/30">
-            <i className="fa-solid fa-image mr-2"></i>
-            Salve a atividade primeiro para anexar evidências.
-          </div>
-        )}
-
-        {/* Submit */}
-        <div className="flex gap-3 pt-2">
           <button
+            id="activity-form-btn-cancel"
+            type="button"
+            onClick={() => navigate(`/activities?month=${form.month_reference}`)}
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+
+          <button
+            id="activity-form-btn-submit"
             type="submit"
+            form="activity-form"
             disabled={saving}
-            className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
+            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
               hover:opacity-90 transition-all cursor-pointer shadow-md
               disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
@@ -512,16 +423,216 @@ export function ActivityFormPage() {
               </>
             )}
           </button>
-
-          <button
-            type="button"
-            onClick={() => navigate(`/activities?month=${form.month_reference}`)}
-            className="px-6 py-2.5 border border-border text-foreground rounded-lg
-              hover:bg-muted transition-colors cursor-pointer"
-          >
-            Cancelar
-          </button>
         </div>
+      </div>
+
+      {errors.length > 0 && (
+        <div id="activity-form-errors" className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
+          <div className="flex items-center gap-2 font-medium mb-1">
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <span>Preencha os campos obrigatórios:</span>
+          </div>
+          <ul className="list-disc list-inside text-sm">
+            {errors.map((err) => (
+              <li key={err.field}>{err.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <form id="activity-form" onSubmit={handleSubmit} className="space-y-5">
+        {/* Descrição */}
+        <div>
+          <label htmlFor="description" className={labelClass}>
+            Descrição <span className="text-destructive">*</span>
+          </label>
+          <div className={frameClass('description')}>
+            <textarea
+              id="description"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              onPaste={(e) => {
+                const plain = e.clipboardData.getData('text/plain')
+                if (plain) {
+                  e.preventDefault()
+                  const target = e.currentTarget
+                  const start = target.selectionStart
+                  const end = target.selectionEnd
+                  const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
+                  setForm((prev) => ({ ...prev, description: newValue }))
+                  setAutoSaveStatus('idle')
+                  // Restore cursor position after React re-render
+                  requestAnimationFrame(() => {
+                    target.selectionStart = target.selectionEnd = start + plain.length
+                  })
+                }
+              }}
+              rows={5}
+              placeholder="Descreva a atividade realizada..."
+              className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
+            />
+          </div>
+          {fieldError('description') && (
+            <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
+          )}
+        </div>
+
+        {/* Período */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="date_start" className={labelClass}>
+              Data de Início <span className="text-warning">*</span>
+            </label>
+            <DatePicker
+              id="date_start"
+              name="date_start"
+              value={form.date_start}
+              onChange={(v) => { setForm((prev) => ({ ...prev, date_start: v })); setAutoSaveStatus('idle') }}
+              placeholder="dd/mm/aaaa"
+              hasError={!!fieldError('date_start')}
+            />
+            {fieldError('date_start') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('date_start')}</p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="date_end" className={labelClass}>
+              Data de Término <span className="text-warning">*</span>
+            </label>
+            <DatePicker
+              id="date_end"
+              name="date_end"
+              value={form.date_end}
+              onChange={(v) => { setForm((prev) => ({ ...prev, date_end: v })); setAutoSaveStatus('idle') }}
+              placeholder="dd/mm/aaaa"
+              hasError={!!fieldError('date_end')}
+            />
+            {fieldError('date_end') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('date_end')}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Status + Atendimento + Mês */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="status" className={labelClass}>
+              Status
+            </label>
+            <Select
+              id="status"
+              name="status"
+              value={form.status}
+              onChange={(v) => { setForm((prev) => ({ ...prev, status: v })); setAutoSaveStatus('idle') }}
+              options={STATUSES.map((s) => ({ value: s, label: s }))}
+              placeholder="Selecione"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="attendance_type" className={labelClass}>
+              Tipo de Atendimento
+            </label>
+            <Select
+              id="attendance_type"
+              name="attendance_type"
+              value={form.attendance_type}
+              onChange={(v) => { setForm((prev) => ({ ...prev, attendance_type: v })); setAutoSaveStatus('idle') }}
+              options={[
+                { value: '', label: profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione' },
+                ...ATTENDANCE_TYPES.map((a) => ({ value: a, label: a })),
+              ]}
+              placeholder={profileAttendance ? `Padrão (${profileAttendance})` : 'Selecione'}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="month_reference" className={labelClass}>
+              Mês de Referência <span className="text-warning">*</span>
+            </label>
+            <div className={frameClass('month_reference')}>
+              <input
+                id="month_reference"
+                name="month_reference"
+                type="text"
+                value={form.month_reference}
+                onChange={handleChange}
+                placeholder="MM/YYYY"
+                pattern="\d{2}/\d{4}"
+                className={fieldClass('month_reference')}
+              />
+            </div>
+            {fieldError('month_reference') && (
+              <p className="text-xs text-destructive mt-1">{fieldError('month_reference')}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Links de Referência */}
+        <div>
+          <label htmlFor="project_scope" className={labelClass}>
+            Escopo: (Squad / Projeto / Aplicação)
+          </label>
+          <div className="cyber-input-frame">
+            <input
+              id="project_scope"
+              name="project_scope"
+              type="text"
+              value={form.project_scope}
+              onChange={handleChange}
+              placeholder="Ex: Squad SESU / Projeto PNAES"
+              className={inputClass}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Agrupa atividades por projeto no relatório. Herdado do perfil, editável por atividade.
+          </p>
+        </div>
+
+        {/* Links de Referência */}
+        <div>
+          <label htmlFor="link_ref" className={labelClass}>
+            Links de Referência
+          </label>
+          <div className="cyber-input-frame">
+            <textarea
+              id="link_ref"
+              name="link_ref"
+              value={form.link_ref}
+              onChange={handleChange}
+              rows={2}
+              placeholder="Cole os links aqui, um por linha (ex: https://gitlab.example.com/merge_request/123)"
+              className={inputClass + ' resize-y'}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Insira um link por linha. GitLab, Jira, etc.
+          </p>
+        </div>
+
+        {/* Evidências — só mostra se tiver activityId (precisa salvar a atividade primeiro) */}
+        {activityId ? (
+          <div id="activity-form-evidence">
+            <label className={labelClass}>Evidências (Prints)</label>
+            <EvidenceUpload
+              activityId={activityId}
+              evidences={evidences}
+              onEvidenceAdded={handleEvidenceAdded}
+              onEvidenceDeleted={handleDeleteEvidence}
+              onCaptionUpdated={handleUpdateCaption}
+              onReorder={handleReorderEvidences}
+              onTextEvidenceAdded={handleTextEvidenceAdded}
+              onTextEvidenceUpdated={handleTextEvidenceUpdated}
+            />
+          </div>
+        ) : (
+          <div className="p-4 border border-dashed border-border rounded-lg text-center text-muted-foreground bg-muted/30">
+            <i className="fa-solid fa-image mr-2"></i>
+            Salve a atividade primeiro para anexar evidências.
+          </div>
+        )}
+
       </form>
     </div>
   )

@@ -17,7 +17,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-header">
+    <div id="header-about-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-header">
       <div
         className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
         onClick={(e) => e.stopPropagation()}
@@ -77,10 +77,11 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-header text-header-foreground px-6 py-3 flex items-center justify-between shadow-md select-none"
+      <header id="header-nav" className="bg-header text-header-foreground px-6 py-3 flex items-center justify-between shadow-md select-none"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <Link
+          id="header-logo"
           to="/"
           className="flex items-center gap-2 no-underline text-header-foreground hover:opacity-90 transition-opacity"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
@@ -93,10 +94,12 @@ export function Header() {
         </Link>
 
         <nav
+          id="header-nav-links"
           className="flex items-center gap-4"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <Link
+            id="header-link-dashboard"
             to="/"
             className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Dashboard"
@@ -106,6 +109,7 @@ export function Header() {
           </Link>
 
           <Link
+            id="header-link-activities"
             to="/activities"
             className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Atividades"
@@ -115,6 +119,7 @@ export function Header() {
           </Link>
 
           <Link
+            id="header-link-profile"
             to="/profile"
             className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Perfil"
@@ -124,6 +129,7 @@ export function Header() {
           </Link>
 
           <Link
+            id="header-link-settings"
             to="/settings"
             className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Configurações"
@@ -133,6 +139,7 @@ export function Header() {
           </Link>
 
           <Link
+            id="header-link-trash"
             to="/trash"
             className="text-header-foreground/80 hover:text-header-foreground transition-colors relative rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Lixeira"
@@ -140,13 +147,14 @@ export function Header() {
           >
             <i className="fa-solid fa-trash-can text-lg"></i>
             {trashCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-4 h-4 flex items-center justify-center rounded-full px-1">
+              <span id="header-trash-badge" className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-4 h-4 flex items-center justify-center rounded-full px-1">
                 {trashCount > 99 ? '99+' : trashCount}
               </span>
             )}
           </Link>
 
           <button
+            id="header-btn-about"
             onClick={() => setShowAbout(true)}
             className="text-header-foreground/80 hover:text-header-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Sobre o ShipIt!"

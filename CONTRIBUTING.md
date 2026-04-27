@@ -45,8 +45,10 @@ electron/          → Processo principal (CommonJS, tsconfig.electron.json)
 src/               → Renderer / Frontend (ESNext, tsconfig.json)
   ├── pages/       → Componentes de página (uma por rota)
   ├── components/  → Componentes reutilizáveis
-  ├── contexts/    → React Contexts (ThemeContext)
+  ├── contexts/    → React Contexts (ThemeContext, NavigationHistoryContext)
+  ├── menu/        → Catálogo do menu do app e save-context
   ├── services/    → Serviços auxiliares (localDb para fallback)
+  ├── themes/      → Registro, paletas e efeitos de temas
   └── utils/       → Utilitários (validação)
 ```
 
@@ -62,7 +64,7 @@ src/               → Renderer / Frontend (ESNext, tsconfig.json)
 ### Nomeação
 - **Componentes React**: PascalCase (`HomePage.tsx`, `AppLayout.tsx`)
 - **Entidades**: um arquivo por entidade em `electron/entities/`
-- **IPC handlers**: prefixados com `db:` (banco) ou `app:` (funcionalidades)
+- **IPC handlers**: prefixados com `db:` (banco), `app:` (funcionalidades) ou `window:` (controles da janela)
 
 ### Estilização
 - Tailwind CSS v4 com `@theme inline` — **não** existe `tailwind.config.ts`
@@ -123,6 +125,9 @@ refactor: separa lógica de validação em módulo
 | `npm run dev` | Dev server + Electron |
 | `npm run build` | Compila tudo (checa erros TS) |
 | `npm run dist` | Build + empacotamento |
+| `npm run test` | Testes unitários e de integração (Vitest) |
+| `npm run test:e2e` | Testes end-to-end com Playwright |
+| `npm run test:watch` | Vitest em modo watch |
 | `npx tsc -p tsconfig.electron.json` | Compila só o electron |
 | `npx vite build` | Compila só o renderer |
 
@@ -143,7 +148,17 @@ refactor: separa lógica de validação em módulo
 
 1. Crie o componente em `src/pages/NomePage.tsx`
 2. Adicione a rota em `src/App.tsx` dentro de `<Route element={<AppLayout />}>`
-3. Se necessário, adicione navegação no `Header.tsx` ou em outras páginas
+3. Se necessário, adicione navegação em `ActivityBar.tsx`, `AppTopMenu.tsx` ou em outras páginas
+
+---
+
+## Adicionando um Novo Comando de Menu
+
+1. Adicione o comando em `src/menu/appMenuCatalog.ts` com ID, seção, rótulo e atalho, se houver
+2. Se o comando precisar de privilégio do Electron, crie o handler em `electron/main.ts`
+3. Exponha o método em `electron/preload.ts` e tipa a API em `src/vite-env.d.ts`
+4. Integre a ação em `src/components/AppTopMenu.tsx`
+5. Para ações de salvar tela, registre/desregistre o handler pelo `saveContextRegistry`
 
 ---
 
@@ -158,4 +173,4 @@ refactor: separa lógica de validação em módulo
 
 ## Licença
 
-Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma [licença ISC](../LICENSE) do projeto.
+Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma [licença ISC](LICENSE) do projeto.

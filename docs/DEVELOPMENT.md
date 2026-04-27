@@ -37,8 +37,10 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm test`         | Executa 55 testes unitários e de integração (Vitest) |
+| `npm test`         | Executa 104 testes unitários e de integração (Vitest) |
+| `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
 | `npm run test:e2e` | Testes end-to-end com Playwright                     |
+| `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
 
 ---
 
@@ -99,9 +101,12 @@ Outros ícones:
 | ----------- | ------------------------------ |---------------------------------------------------------------- |
 | Desktop     | Electron 41 (CommonJS)         | Janela principal, System Tray, IPC, protocolos customizados     |
 | UI          | React 19 + React Router 7      | SPA com rotas para Dashboard, Atividades, Perfil, Configurações |
-| Estilização | Tailwind CSS 4                 | `@theme inline` com variáveis CSS, dark/light mode              |
+| Estilização | Tailwind CSS 4                 | `@theme inline` com variáveis CSS e 11 temas                    |
 | ORM         | TypeORM 0.3 + better-sqlite 3  | SQLite local em `userData/shipit.db`                            |
 | Relatórios  | jszip + @xmldom/xmldom + xpath | Geração de DOCX via manipulação OpenXML de template             |
+| Rich Text   | TipTap (React)                 | Editor rich-text para evidências de texto                       |
+| Lightbox    | yet-another-react-lightbox     | Visualização de imagens em tela cheia                           |
+| Menu         | React + IPC                    | Menu customizado File/Edit/View/Help, atalhos e save-context    |
 | Build       | Vite 8                         | Bundler do frontend com HMR                                     |
 | Linguagem   | TypeScript 6                   | Tipagem estrita em todo o projeto                               |
 | Ícones      | Font Awesome 7                 | Self-hosted via npm, sem CDN                                    |
@@ -134,10 +139,23 @@ shipit/
 │   ├── index.css              # Tailwind v4 @theme inline
 │   ├── vite-env.d.ts          # Tipagens globais e interfaces IPC
 │   ├── components/            # Componentes reutilizáveis
-│   │   ├── AppLayout.tsx
-│   │   ├── Header.tsx
-│   │   ├── EmptyState.tsx
-│   │   └── EvidenceUpload.tsx
+│   │   ├─ ActivityBar.tsx
+│   │   ├─ ActivityNav.tsx
+│   │   ├─ AppTopMenu.tsx
+│   │   ├─ AppLayout.tsx
+│   │   ├─ DatePicker.tsx
+│   │   ├─ EmptyState.tsx
+│   │   ├─ EvidenceLightbox.tsx
+│   │   ├─ EvidenceUpload.tsx
+│   │   ├─ Header.tsx
+│   │   ├─ SearchBar.tsx
+│   │   ├─ Select.tsx
+│   │   ├─ Skeleton.tsx
+│   │   ├─ TextEvidenceEditor.tsx
+│   │   ├─ TextEvidenceModal.tsx
+│   │   ├─ ThemeSelector.tsx
+│   │   ├─ TimePicker.tsx
+│   │   └─ TitleBar.tsx
 │   ├── pages/                 # Páginas/rotas
 │   │   ├── HomePage.tsx       # Router → Dashboard ou EmptyState
 │   │   ├── DashboardPage.tsx  # Resumo mensal + Gantt
@@ -145,12 +163,26 @@ shipit/
 │   │   ├── ActivityFormPage.tsx    # Formulário criar/editar
 │   │   ├── ActivityDetailPage.tsx  # Detalhes da atividade
 │   │   ├── ProfilePage.tsx    # Perfil do usuário
-│   │   └── SettingsPage.tsx   # Configurações do app
+│   │   ├── SettingsPage.tsx   # Configurações do app
+│   │   ├── TrashPage.tsx      # Lixeira de evidências
+│   │   └── UserManualPage.tsx # Manual e ajuda
 │   ├── contexts/
-│   │   └── ThemeContext.tsx    # Dark/Light mode
+│   │   ├── ThemeContext.tsx    # 11 temas visuais
+│   │   └── NavigationHistoryContext.tsx # Histórico global da navegação
+│   ├── menu/
+│   │   ├── appMenuCatalog.ts   # Catálogo de comandos/atalhos do menu
+│   │   └── saveContextRegistry.ts # Save-context para Ctrl+S/menu
 │   ├── services/
 │   │   └── localDb.ts         # Fallback localStorage (browser dev)
+│   ├── themes/                # Registro/paletas/efeitos dos temas
+│   │   ├── themes.ts
+│   │   ├── themes.css
+│   │   └── cyberpunk-effects.css
 │   └── utils/
+│       ├── activityMonthNavigation.ts
+│       ├── keyboardGuards.ts
+│       ├── monthReference.ts
+│       ├── statusColors.ts
 │       └── validation.ts      # Validação de campos obrigatórios
 ├── assets/                    # Recursos estáticos
 │   ├── images/                # Logos, ícones, tray icons
@@ -209,7 +241,9 @@ erDiagram
     }
     Evidence {
         uuid id PK
+        string type
         string file_path
+        string text_content
         string caption
         int sort_index
         datetime date_added
@@ -243,19 +277,19 @@ O projeto usa GitHub Actions para build automatizado e publicação de releases.
 
 1. Faça suas alterações na branch `dev`
 2. Crie um PR de `dev` → `main` e faça merge
-3. Crie uma tag semver na `main`: `git tag v1.2.1 && git push origin v1.2.1`
+3. Crie uma tag semver na `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`
 4. O workflow dispara automaticamente e publica no GitHub Releases
 
 ### Workflow `.github/workflows/release.yml`
 
-- **Trigger**: push de tag `v*.*.*` (ex: `v1.2.1`, `v1.3.0-beta.1`)
+- **Trigger**: push de tag `v*.*.*` (ex: `v1.2.2`, `v1.3.0-beta.1`)
 - **3 jobs paralelos**:
 
 | Job | Runner | Artefato | Formato |
 | --- | ------ | -------- | ------- |
-| `build-windows` | `windows-latest` | `shipit-setup-X.Y.Z.exe` | NSIS installer |
-| `build-macos` | `macos-latest` | `shipit-X.Y.Z.dmg` | Disk image |
-| `build-linux` | `ubuntu-latest` | `shipit-X.Y.Z-x86_64.AppImage` | Executável portátil |
+| `build-windows` | `windows-latest` | `ShipIt-X.Y.Z-Windows-x64-Setup.exe`, `ShipIt-X.Y.Z-Windows-x64-Portable.exe`, `ShipIt-X.Y.Z-Windows-x64.msi` | NSIS, Portable, MSI |
+| `build-macos` | `macos-latest` | `ShipIt-X.Y.Z-macOS-arm64.dmg`, `ShipIt-X.Y.Z-macOS-x64.dmg` | Disk image |
+| `build-linux` | `ubuntu-latest` | `ShipIt-X.Y.Z-Linux-*.AppImage`, `.deb`, `.rpm` | AppImage, deb, rpm |
 
 Cada job executa: `npm ci` → `npm test` (gate) → `npm run build` → `electron-builder --publish always`
 
@@ -263,9 +297,11 @@ Cada job executa: `npm ci` → `npm test` (gate) → `npm run build` → `electr
 
 | Arquivo | Descrição |
 | ------- | --------- |
-| `shipit-setup-X.Y.Z.exe` | Instalador Windows |
-| `shipit-X.Y.Z.dmg` | Instalador macOS |
-| `shipit-X.Y.Z-x86_64.AppImage` | Executável Linux |
+| `ShipIt-X.Y.Z-Windows-x64-Setup.exe` | Instalador Windows NSIS |
+| `ShipIt-X.Y.Z-Windows-x64-Portable.exe` | Executável Windows portátil |
+| `ShipIt-X.Y.Z-Windows-x64.msi` | Instalador Windows MSI |
+| `ShipIt-X.Y.Z-macOS-*.dmg` | Instalador macOS arm64/x64 |
+| `ShipIt-X.Y.Z-Linux-*` | AppImage, `.deb` e `.rpm` Linux |
 | `*.blockmap` | Mapas de blocos para delta updates (só os blocos alterados são baixados) |
 | `latest.yml` | Manifesto auto-update Windows — contém versão, sha512 e URL do .exe |
 | `latest-mac.yml` | Manifesto auto-update macOS |
@@ -290,7 +326,7 @@ Em builds empacotados (`app.isPackaged`), o app verifica atualizações automati
 
 - **Sem code signing**: macOS pede "Abrir mesmo assim" manualmente; Windows pode exibir SmartScreen
 - **Minutes do GitHub Actions**: macOS consome 10x mais minutos. Free tier = 2000 min/mês
-- **Testes como gate**: se os 55 testes falharem, o build não é publicado
+- **Testes como gate**: se os 104 testes Vitest falharem, o build não é publicado
 
 ---
 

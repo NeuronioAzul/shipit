@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { UserProfileData } from '../vite-env'
 import { validateProfile, type ValidationError } from '../utils/validation'
+import { Select } from '../components/Select'
+import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
 
 const ROLES = [
   'ADMINISTRADOR DE DADOS',
@@ -63,6 +65,29 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const savedFingerprintRef = useRef('')
+
+  const buildProfileFingerprint = useCallback((nextForm: ProfileForm): string => {
+    return JSON.stringify({
+      full_name: nextForm.full_name.trim(),
+      role: nextForm.role,
+      seniority_level: nextForm.seniority_level,
+      contract_identifier: nextForm.contract_identifier.trim(),
+      profile_type: nextForm.profile_type,
+      correlating_activities: nextForm.correlating_activities.trim(),
+      attendance_type: nextForm.attendance_type,
+      project_scope: nextForm.project_scope.trim(),
+    })
+  }, [])
+
+  const persistProfile = useCallback(async (nextForm: ProfileForm) => {
+    if (window.electronAPI) {
+      await window.electronAPI.saveUserProfile(nextForm)
+    } else {
+      localStorage.setItem('shipit-profile', JSON.stringify(nextForm))
+    }
+    savedFingerprintRef.current = buildProfileFingerprint(nextForm)
+  }, [buildProfileFingerprint])
 
   useEffect(() => {
     async function loadProfile() {
@@ -75,7 +100,7 @@ export function ProfilePage() {
       }
 
       if (profile?.full_name) {
-        setForm({
+        const loadedForm: ProfileForm = {
           full_name: (profile.full_name || '').toUpperCase(),
           role: profile.role || '',
           seniority_level: profile.seniority_level || '',
@@ -84,12 +109,64 @@ export function ProfilePage() {
           correlating_activities: profile.correlating_activities || '',
           attendance_type: profile.attendance_type || '',
           project_scope: profile.project_scope || '',
-        })
+        }
+        setForm(loadedForm)
+        savedFingerprintRef.current = buildProfileFingerprint(loadedForm)
         setIsEditing(true)
+      } else {
+        savedFingerprintRef.current = buildProfileFingerprint(initialForm)
       }
     }
     loadProfile()
-  }, [])
+  }, [buildProfileFingerprint])
+
+  const handleContextSave = useCallback(async (): Promise<SaveContextResult> => {
+    if (saving) {
+      return {
+        status: 'unavailable',
+        message: 'O salvamento já está em andamento.',
+      }
+    }
+
+    const currentFingerprint = buildProfileFingerprint(form)
+    if (currentFingerprint === savedFingerprintRef.current) {
+      return {
+        status: 'no-changes',
+        message: 'Nenhuma alteração para salvar no perfil.',
+      }
+    }
+
+    const validationErrors = validateProfile(form)
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return {
+        status: 'unavailable',
+        message: 'Preencha os campos obrigatórios do perfil.',
+      }
+    }
+
+    setErrors([])
+    setSaving(true)
+
+    try {
+      await persistProfile(form)
+      return {
+        status: 'saved',
+        message: 'Perfil salvo com sucesso.',
+      }
+    } catch {
+      return {
+        status: 'error',
+        message: 'Erro ao salvar perfil.',
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [saving, buildProfileFingerprint, form, persistProfile])
+
+  useEffect(() => {
+    return registerSaveContextHandler(handleContextSave)
+  }, [handleContextSave])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -112,16 +189,12 @@ export function ProfilePage() {
     setSaving(true)
 
     try {
-      if (window.electronAPI) {
-        await window.electronAPI.saveUserProfile(form)
-      } else {
-        localStorage.setItem('shipit-profile', JSON.stringify(form))
-      }
+      await persistProfile(form)
       toast.success('Perfil salvo com sucesso!')
       setTimeout(() => {
         navigate('/')
       }, 800)
-    } catch (err) {
+    } catch {
       toast.error('Erro ao salvar perfil')
     } finally {
       setSaving(false)
@@ -129,10 +202,10 @@ export function ProfilePage() {
   }
 
   const inputClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
+    'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
   const inputErrorClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
 
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
@@ -145,10 +218,15 @@ export function ProfilePage() {
     return fieldError(field) ? inputErrorClass : inputClass
   }
 
+  function frameClass(field: string): string {
+    return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+  }
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="max-w-4xl mx-auto">
+      <div id="profile-header" className="flex items-center gap-3 mb-6">
         <button
+          id="profile-btn-edit"
           onClick={() => navigate('/')}
           className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           title="Voltar"
@@ -162,7 +240,7 @@ export function ProfilePage() {
       </div>
 
       {errors.length > 0 && (
-        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
+        <div id="profile-errors" className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
           <div className="flex items-center gap-2 font-medium mb-1">
             <i className="fa-solid fa-triangle-exclamation"></i>
             <span>Preencha os campos obrigatórios:</span>
@@ -175,22 +253,24 @@ export function ProfilePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="profile-form" onSubmit={handleSubmit} className="space-y-5">
         {/* Nome Completo */}
         <div>
           <label htmlFor="full_name" className={labelClass}>
             Nome Completo <span className="text-destructive">*</span>
           </label>
-          <input
-            id="full_name"
-            name="full_name"
-            type="text"
-            required
-            value={form.full_name}
-            onChange={handleChange}
-            placeholder="Ex: MARIA SILVA DE SOUZA E SILVA"
-            className={`${fieldClass('full_name')} uppercase`}
-          />
+          <div className={frameClass('full_name')}>
+            <input
+              id="full_name"
+              name="full_name"
+              type="text"
+              required
+              value={form.full_name}
+              onChange={handleChange}
+              placeholder="Ex: MARIA SILVA DE SOUZA E SILVA"
+              className={`${fieldClass('full_name')} uppercase`}
+            />
+          </div>
           {fieldError('full_name') && (
             <p className="text-xs text-destructive mt-1">{fieldError('full_name')}</p>
           )}
@@ -202,19 +282,18 @@ export function ProfilePage() {
             <label htmlFor="role" className={labelClass}>
               Cargo <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="role"
               name="role"
-              required
               value={form.role}
-              onChange={handleChange}
-              className={fieldClass('role')}
-            >
-              <option value="">Selecione o cargo</option>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, role: v }))}
+              options={[
+                { value: '', label: 'Selecione o cargo' },
+                ...ROLES.map((r) => ({ value: r, label: r })),
+              ]}
+              placeholder="Selecione o cargo"
+              hasError={!!fieldError('role')}
+            />
             {fieldError('role') && (
               <p className="text-xs text-destructive mt-1">{fieldError('role')}</p>
             )}
@@ -224,19 +303,18 @@ export function ProfilePage() {
             <label htmlFor="seniority_level" className={labelClass}>
               Senioridade <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="seniority_level"
               name="seniority_level"
-              required
               value={form.seniority_level}
-              onChange={handleChange}
-              className={fieldClass('seniority_level')}
-            >
-              <option value="">Selecione a senioridade</option>
-              {SENIORITY_LEVELS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, seniority_level: v }))}
+              options={[
+                { value: '', label: 'Selecione a senioridade' },
+                ...SENIORITY_LEVELS.map((s) => ({ value: s, label: s })),
+              ]}
+              placeholder="Selecione a senioridade"
+              hasError={!!fieldError('seniority_level')}
+            />
             {fieldError('seniority_level') && (
               <p className="text-xs text-destructive mt-1">{fieldError('seniority_level')}</p>
             )}
@@ -248,16 +326,18 @@ export function ProfilePage() {
           <label htmlFor="contract_identifier" className={labelClass}>
             Identificador do Contrato <span className="text-destructive">*</span>
           </label>
-          <input
-            id="contract_identifier"
-            name="contract_identifier"
-            type="text"
-            required
-            value={form.contract_identifier}
-            onChange={handleChange}
-            placeholder="Ex: Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda"
-            className={fieldClass('contract_identifier')}
-          />
+          <div className={frameClass('contract_identifier')}>
+            <input
+              id="contract_identifier"
+              name="contract_identifier"
+              type="text"
+              required
+              value={form.contract_identifier}
+              onChange={handleChange}
+              placeholder="Ex: Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda"
+              className={fieldClass('contract_identifier')}
+            />
+          </div>
           {fieldError('contract_identifier') && (
             <p className="text-xs text-destructive mt-1">{fieldError('contract_identifier')}</p>
           )}
@@ -269,19 +349,18 @@ export function ProfilePage() {
             <label htmlFor="profile_type" className={labelClass}>
               Tipo de Perfil <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="profile_type"
               name="profile_type"
-              required
               value={form.profile_type}
-              onChange={handleChange}
-              className={fieldClass('profile_type')}
-            >
-              <option value="">Selecione o perfil</option>
-              {PROFILE_TYPES.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, profile_type: v }))}
+              options={[
+                { value: '', label: 'Selecione o perfil' },
+                ...PROFILE_TYPES.map((p) => ({ value: p, label: p })),
+              ]}
+              placeholder="Selecione o perfil"
+              hasError={!!fieldError('profile_type')}
+            />
             {fieldError('profile_type') && (
               <p className="text-xs text-destructive mt-1">{fieldError('profile_type')}</p>
             )}
@@ -291,19 +370,18 @@ export function ProfilePage() {
             <label htmlFor="attendance_type" className={labelClass}>
               Tipo de Atendimento <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               id="attendance_type"
               name="attendance_type"
-              required
               value={form.attendance_type}
-              onChange={handleChange}
-              className={fieldClass('attendance_type')}
-            >
-              <option value="">Selecione</option>
-              {ATTENDANCE_TYPES.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm((prev) => ({ ...prev, attendance_type: v }))}
+              options={[
+                { value: '', label: 'Selecione' },
+                ...ATTENDANCE_TYPES.map((a) => ({ value: a, label: a })),
+              ]}
+              placeholder="Selecione"
+              hasError={!!fieldError('attendance_type')}
+            />
             {fieldError('attendance_type') && (
               <p className="text-xs text-destructive mt-1">{fieldError('attendance_type')}</p>
             )}
@@ -313,18 +391,20 @@ export function ProfilePage() {
         {/* Squad/Projeto/Aplicação */}
         <div>
           <label htmlFor="project_scope" className={labelClass}>
-            Squad / Projeto / Aplicação <span className="text-destructive">*</span>
+            Escopo: (Squad / Projeto / Aplicação) <span className="text-destructive">*</span>
           </label>
-          <input
-            id="project_scope"
-            name="project_scope"
-            type="text"
-            required
-            value={form.project_scope}
-            onChange={handleChange}
-            placeholder="Ex: Squad SESU / Projeto PNAES"
-            className={fieldClass('project_scope')}
-          />
+          <div className={frameClass('project_scope')}>
+            <input
+              id="project_scope"
+              name="project_scope"
+              type="text"
+              required
+              value={form.project_scope}
+              onChange={handleChange}
+              placeholder="Ex: Squad SESU / Projeto PNAES"
+              className={fieldClass('project_scope')}
+            />
+          </div>
           {fieldError('project_scope') && (
             <p className="text-xs text-destructive mt-1">{fieldError('project_scope')}</p>
           )}
@@ -338,16 +418,18 @@ export function ProfilePage() {
           <label htmlFor="correlating_activities" className={labelClass}>
             Atividades Correlatas <span className="text-destructive">*</span>
           </label>
-          <textarea
-            id="correlating_activities"
-            name="correlating_activities"
-            required
-            value={form.correlating_activities}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Texto explicativo para correlacionar as atividades do mês com o perfil..."
-            className={fieldClass('correlating_activities') + ' resize-y'}
-          />
+          <div className={frameClass('correlating_activities')}>
+            <textarea
+              id="correlating_activities"
+              name="correlating_activities"
+              required
+              value={form.correlating_activities}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Texto explicativo para correlacionar as atividades do mês com o perfil..."
+              className={fieldClass('correlating_activities') + ' resize-y'}
+            />
+          </div>
           {fieldError('correlating_activities') && (
             <p className="text-xs text-destructive mt-1">{fieldError('correlating_activities')}</p>
           )}
@@ -359,6 +441,7 @@ export function ProfilePage() {
         {/* Submit */}
         <div className="flex gap-3 pt-2">
           <button
+            id="profile-btn-submit"
             type="submit"
             disabled={saving}
             className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
@@ -380,6 +463,7 @@ export function ProfilePage() {
           </button>
 
           <button
+            id="profile-btn-cancel"
             type="button"
             onClick={() => navigate('/')}
             className="px-6 py-2.5 border border-border text-foreground rounded-lg

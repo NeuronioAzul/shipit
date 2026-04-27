@@ -4,7 +4,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ onCreateProfile }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] gap-8 select-none">
+    <div id="empty-state" className="flex flex-col items-center justify-center h-[calc(100vh-80px)] gap-8 select-none">
       <img
         src="./assets/images/icon-foguete-logo-tons-cinza.svg"
         alt="ShipIt! Foguete"
@@ -23,6 +23,7 @@ export function EmptyState({ onCreateProfile }: EmptyStateProps) {
       </div>
 
       <button
+        id="empty-state-btn"
         onClick={onCreateProfile}
         className="px-8 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
           hover:opacity-90 transition-all cursor-pointer shadow-lg hover:shadow-xl

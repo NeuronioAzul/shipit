@@ -48,33 +48,55 @@ Responsável por:
 - **Janela principal**: `BrowserWindow` com `contextIsolation: true` e `nodeIntegration: false`
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
-- **IPC Handlers**: ~25 handlers organizados por prefixo
+- **IPC Handlers**: 54 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
 
 #### Prefixos IPC
 
-| Prefixo | Escopo                 | Exemplos                                                   |
-|---------|------------------------|------------------------------------------------------------|
-| `db:`   | Banco de dados (CRUD)  | `db:getUserProfile`, `db:saveActivity`, `db:getReports`    |
-| `app:`  | Funcionalidades do app | `app:getVersion`, `app:generateReport`, `app:selectImages` |
+| Prefixo   | Escopo                 | Exemplos                                                                            |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `db:`     | Banco de dados (CRUD)  | `db:getUserProfile`, `db:saveActivity`, `db:getReports`                             |
+| `app:`    | Funcionalidades do app | `app:getVersion`, `app:generateReport`, `app:openReportsDirectory`, `app:zoomIn`    |
+| `window:` | Controles da janela    | `window:minimize`, `window:maximize`, `window:close`                                |
 
 #### Handlers registrados
 
 ```text
 db:getUserProfile          db:saveUserProfile
-db:getActivities           db:getActivity
-db:saveActivity            db:deleteActivity
-db:reorderActivities       db:saveEvidence
-db:saveEvidenceFromBuffer  db:updateEvidenceCaption
-db:deleteEvidence          db:getEvidenceFilePath
-db:getReports
+db:getActivities           db:searchActivities
+db:getActivity             db:saveActivity
+db:deleteActivity          db:reorderActivities
+db:saveEvidence            db:saveEvidenceFromBuffer
+db:updateEvidenceCaption   db:deleteEvidence
+db:getEvidenceFilePath     db:reorderEvidences
+db:getDeletedEvidences     db:restoreEvidence
+db:permanentlyDeleteEvidence  db:saveTextEvidence
+db:updateTextEvidence      db:getReports
+db:getAlert                db:saveAlert
 
 app:getVersion             app:selectImages
-app:setTrayStatus          app:generateReport
-app:openFileInFolder       app:getSettings
+app:setTrayStatus          app:getSettings
 app:saveSettings           app:selectDirectory
-app:getDefaultReportsDir   app:listSounds
+app:getDefaultReportsDir   app:openReportsDirectory
+app:openEvidencesDirectory app:quit
+app:editUndo               app:editRedo
+app:editCut                app:editCopy
+app:editPaste              app:editSelectAll
+app:zoomIn                 app:zoomOut
+app:zoomReset              app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
+app:generateReport         app:openFileInFolder
+app:checkForUpdate         app:installUpdate
+
+window:minimize            window:maximize
+window:close               window:isMaximized
+```
+
+#### Eventos renderer (`ipcRenderer.on`)
+
+```text
+app:playSoundData          app:updateStatus
+app:navigate               window:maximized-change
 ```
 
 ### `database.ts` — Acesso a Dados
@@ -91,7 +113,7 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 1. Carrega o template `.docx` (é um ZIP com XMLs internos)
 2. Substitui placeholders no `document.xml` (nome, cargo, contrato, mês, etc.)
 3. Monta **Encarte A**: tabela de atividades agrupada por `project_scope`
-4. Monta **Encarte B**: uma página por evidência com imagem + legenda + bookmark
+4. Monta **Encarte B**: uma página por evidência com imagem ou texto formatado + legenda + bookmark
 5. Insere campos PAGEREF para referência cruzada de páginas
 6. Atualiza `[Content_Types].xml` com os tipos MIME das imagens
 7. Salva o DOCX na pasta configurada ou padrão (`userData/reports/`)
@@ -100,7 +122,7 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 
 ### `preload.ts` — Context Bridge
 
-Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke()`. Nenhuma API do Node.js é exposta diretamente ao renderer.
+Expõe `window.electronAPI` com 54 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
 
 ### `entities/` — Modelo de Dados
 
@@ -109,7 +131,7 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 | `UserProfile` | `user_profile` | Auto-increment | Perfil do usuário (cargo, contrato, etc.) |
 | `Alert` | `alerts` | Auto-increment | Configuração de alertas (1:1 com UserProfile) |
 | `Activity` | `activities` | UUID v7 | Atividade registrada com período e status |
-| `Evidence` | `evidences` | UUID v7 | Evidência (print) vinculada a uma atividade |
+| `Evidence` | `evidences` | UUID v7 | Evidência (imagem ou texto) vinculada a uma atividade |
 | `Report` | `reports` | UUID v7 | Relatório DOCX gerado |
 | `ActivityReport` | `activities_report` | UUID v7 | Junction table: atividade ↔ relatório |
 
@@ -130,28 +152,53 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 /                          → HomePage (Dashboard ou EmptyState)
 /profile                   → ProfilePage
 /settings                  → SettingsPage
+/trash                     → TrashPage (lixeira de evidências)
+/manual                    → UserManualPage (manual e ajuda)
 /activities                → ActivitiesPage (listagem)
 /activities/new            → ActivityFormPage (criar)
 /activities/:id            → ActivityDetailPage (visualizar)
 /activities/:id/edit       → ActivityFormPage (editar)
 ```
 
-Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outlet>`.
+Todas as rotas ficam dentro de `<AppLayout>` que renderiza `<TitleBar>` + `<ActivityBar>` + `<Outlet>`.
+
+Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout` → Route outlet
 
 ### Componentes Principais
 
 | Componente | Responsabilidade |
 | ------------ | ----------------- |
-| `AppLayout` | Layout wrapper com Header |
-| `Header` | Barra superior draggable, ícone do usuário (→ perfil), engrenagem (→ configurações) |
+| `AppLayout` | Layout wrapper com TitleBar + ActivityBar + Outlet |
+| `TitleBar` | Barra superior draggable com controles de janela e SearchBar |
+| `AppTopMenu` | Menu customizado File/Edit/View/Help ao lado do logo |
+| `Header` | Header com logo, barra de busca (interno ao TitleBar) |
+| `ActivityBar` | Sidebar lateral com nav links: Dashboard, Atividades, Perfil, Configurações, Lixeira, Sobre |
+| `SearchBar` | Barra de busca estilo Command Palette (`Ctrl+K`) com dropdown de resultados |
 | `EmptyState` | Tela inicial quando não há perfil cadastrado |
+| `DatePicker` | Campo de data reutilizável para formulários |
+| `TimePicker` | Campo de horário reutilizável para alertas/configurações |
+| `Select` | Select estilizado reutilizável |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
+| `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
+| `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
+| `TextEvidenceModal` | Modal para visualização/edição de evidências de texto |
+| `ActivityNav` | Navegação prev/next entre atividades na tela de detalhes |
+| `ThemeSelector` | Seletor visual de temas em grid com cards por categoria e preview de cores |
+| `Skeleton` | Componentes de loading placeholder |
 
 ### Contextos
 
 | Contexto | Função |
 | ---------- | -------- |
-| `ThemeContext` | Gerencia dark/light mode, persiste em `localStorage` |
+| `ThemeContext` | Gerencia 11 temas, computa `isDark` a partir da base, persiste em `localStorage.shipit-theme` |
+| `NavigationHistoryContext` | Histórico global do HashRouter com botões/atalhos Voltar e Avançar |
+
+### Menu e Atalhos (`src/menu/`)
+
+| Módulo | Função |
+| ------ | ------ |
+| `appMenuCatalog.ts` | Catálogo central de comandos do menu do app, atalhos e agrupamentos |
+| `saveContextRegistry.ts` | Registro de handlers de salvamento contextual para `Ctrl+S`/menu |
 
 ### Serviços
 
@@ -164,6 +211,51 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza o `<Header>` + `<Outl
 | Módulo | Função |
 | -------- | -------- |
 | `validation.ts` | Valida campos obrigatórios do perfil e das atividades antes da geração do relatório |
+| `monthReference.ts` | Normalização e formatação de mês de referência (`YYYY-MM`) |
+| `activityMonthNavigation.ts` | Cálculo de navegação mensal para a tela de detalhes |
+| `keyboardGuards.ts` | Guardas para atalhos não dispararem durante digitação |
+| `statusColors.ts` | Mapeamento compartilhado de status para ícones/cores |
+
+### Temas (`src/themes/`)
+
+| Arquivo | Função |
+| -------- | -------- |
+| `themes.ts` | Registro de 11 temas com `ThemeMetadata` (id, label, description, icon, category, base, preview) |
+| `themes.css` | 60+ variáveis CSS por tema via seletores `[data-theme="id"]` |
+| `cyberpunk-effects.css` | Efeitos especiais do tema Cyberpunk (scanlines CRT, neon glow, glitch, clip-path angular) |
+
+---
+
+## Arquitetura Multi-Tema
+
+O sistema de temas usa uma cascata de 3 camadas:
+
+```text
+1. Registro (themes.ts)           → ThemeMetadata[] com 11 temas tipados
+2. Paletas CSS (themes.css)       → [data-theme="id"] define 60+ variáveis CSS
+3. Mapeamento Tailwind (index.css) → @theme inline mapeia variáveis para tokens Tailwind
+```
+
+### Fluxo de troca de tema
+
+```text
+ThemeSelector (click)  →  ThemeContext.setTheme(id)  →  localStorage.shipit-theme = id
+                                                       →  <html data-theme="id" class="dark?"> 
+                                                       →  CSS variables recalculadas
+                                                       →  Tailwind tokens atualizados
+                                                       →  Transição suave (200ms)
+```
+
+### Categorias de temas
+
+| Categoria | Temas | Base |
+| --------- | ----- | ---- |
+| Principais | Claro, Escuro | light, dark |
+| Personalidade | Colorido, Rosa & Violeta, Minimalista, Futurista, Oceano, Pôr do Sol | mixed |
+| Acessibilidade | Alto Contraste, Alto Contraste Escuro | light, dark |
+| Bônus | Cyberpunk | dark |
+
+O `ThemeContext` computa `isDark` automaticamente a partir da propriedade `base` do tema selecionado, aplicando a classe `.dark` quando necessário.
 
 ---
 
@@ -190,6 +282,16 @@ shipit-sfx://host?file=alert-sound-01.mp3
 **Segurança**: Usa `path.basename()` para prevenir path traversal; valida que o arquivo está dentro de `assets/sounds/`.
 
 Ambos registrados como privilegiados com `supportFetchAPI` e `stream` antes de `app.ready()`.
+
+---
+
+## Jobs em Segundo Plano
+
+| Job | Frequência | Responsabilidade |
+| --- | ---------- | ---------------- |
+| Alert checker | 60 segundos | Dispara notificações nativas conforme configuração de alerta do usuário |
+| Tray status updater | 5 minutos | Atualiza o ícone do tray conforme pendências do mês atual |
+| Trash cleanup | Inicialização do app | Remove definitivamente evidências em soft-delete há mais de 3 meses |
 
 ---
 
@@ -249,7 +351,7 @@ Merge parcial: `saveSettings({ key: value })` faz merge com as configurações e
 
 Usado apenas no renderer para:
 
-- `shipit-theme`: preferência de tema (`dark` | `light`)
+- `shipit-theme`: preferência de tema (ID do tema, ex: `"cyberpunk"`, `"ocean"`, `"dark"`)
 - Fallback de dados quando `electronAPI` não está disponível (dev no browser)
 
 ---
@@ -318,7 +420,10 @@ npm run dist
 | SQLite (não PostgreSQL/MySQL) | 100% offline, sem servidor externo, um único arquivo |
 | DOCX via OpenXML (não Puppeteer PDF) | O modelo do MEC é DOCX; manipulação direta garante fidelidade ao template |
 | UUID v7 (não auto-increment) | Ordenação cronológica natural + unicidade global |
-| Tailwind v4 `@theme inline` | Sem arquivo de config; variáveis CSS permitem dark/light via classe `.dark` |
+| Tailwind v4 `@theme inline` | Sem arquivo de config; variáveis CSS permitem multi-tema via `[data-theme]` |
+| Multi-tema via CSS variables | Zero custo em runtime; integração total com Tailwind v4; 11 temas sem CSS-in-JS |
+| Sistema de categorias de temas | Organização visual no seletor: principais, personalidade, acessibilidade |
+| Temas WCAG AAA de alto contraste | Design inclusivo para usuários com baixa visão (contraste 7:1+) |
 | `settings.json` separado do SQLite | Configurações do app vs. dados do usuário; evita colisão com `synchronize: true` |
 | Font Awesome via npm | 100% offline; sem CDN ou dependências externas |
 | `contextIsolation: true` | Segurança: renderer não tem acesso ao Node.js |

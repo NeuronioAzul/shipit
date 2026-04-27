@@ -1,0 +1,1417 @@
+/* =====================================================
+   Cyberpunk Theme Effects
+   Active only when .cyberpunk is on <html>
+   Animations adapted from cyberpunk-2077.css reference
+   ===================================================== */
+
+/* --- Theme timing variables --- */
+.cyberpunk {
+  --glitched-duration: 0.9s;
+  --glitched-long-duration: 3s;
+}
+
+/* --- CRT scanline overlay --- */
+.cyberpunk::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgb(0 0 0 / 0.04) 2px,
+    rgb(0 0 0 / 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ===== Typography: Neon text glow ===== */
+
+.cyberpunk h1 {
+  text-shadow:
+    0 0 10px rgb(248 239 2 / 0.5),
+    0 0 40px rgb(248 239 2 / 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  position: relative;
+  padding-bottom: 14px;
+}
+
+.cyberpunk h2 {
+  text-shadow:
+    0 0 8px rgb(0 255 210 / 0.45),
+    0 0 30px rgb(0 255 210 / 0.12);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.cyberpunk h3 {
+  text-shadow: 0 0 6px rgb(57 255 20 / 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* --- Heading decorative underlines (from cyberpunk-2077.css) --- */
+.cyberpunk h1::before {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 2px;
+  width: 100%;
+  height: 10px;
+  background-color: rgb(248 239 2);
+  clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 0px 10px);
+}
+
+.cyberpunk h2::before {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 2px;
+  width: 100%;
+  height: 10px;
+  background-color: rgb(0 255 210);
+  clip-path: polygon(0px 5px, 35px 5px, 40px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 20px 10px, 15px 6px, 0px 6px);
+}
+
+/* Blinking cursor after headings (from cyberpunk-2077.css) */
+.cyberpunk h1::after,
+.cyberpunk h2::after {
+  content: '_';
+  animation: cyber-hx-blink var(--glitched-duration) linear infinite;
+}
+
+.cyberpunk h3::after {
+  content: '_';
+  animation: cyber-hx-blink var(--glitched-duration) linear infinite reverse;
+  animation-duration: calc(var(--glitched-duration) / 2);
+}
+
+@keyframes cyber-hx-blink {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  51% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ===== Angular shapes — diagonal clip-path + double-polygon border ===== */
+/* Technique: element bg = border color (clipped to outer polygon),
+   ::before bg = card color (clipped to inner polygon, inset 1px).
+   The 1px gap between outer and inner polygons reveals the neon border. */
+
+/* All .rounded-lg — angular clip-path shape */
+.cyberpunk main .rounded-lg {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+/* Card elements — neon border via double-polygon (exclude form fields) */
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results),
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results) {
+  position: relative;
+  isolation: isolate;
+  border-radius: 0 !important;
+  border: none !important;
+  background-color: rgb(57 255 20 / 0.4) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+/* Inner fill — creates 1px neon border at all edges including diagonal cuts */
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results)::before,
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results)::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background-color: var(--card);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Hover: brighter border */
+.cyberpunk main .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results):hover,
+.cyberpunk .rounded-lg[class*="bg-card"]:not(input):not(select):not(textarea):not(#searchbar-results):hover {
+  background-color: rgb(57 255 20 / 0.65) !important;
+}
+
+/* Small rounded elements (buttons, inputs with rounded-md/rounded) */
+.cyberpunk main .rounded-md,
+.cyberpunk main .rounded {
+  border-radius: 0 !important;
+}
+
+/* Badges & pills — from rounded-full to sharp chip */
+.cyberpunk main .rounded-full {
+  border-radius: 2px !important;
+}
+
+/* ===== Buttons ===== */
+/* Neon-bordered button via double-polygon (for outlined/ghost buttons with diagonal cuts) */
+.cyberpunk main button.cyber-neon-border {
+  position: relative;
+  isolation: isolate;
+  border: none !important;
+  background-color: inherit !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+  filter: none;
+}
+
+.cyberpunk main button.cyber-neon-border::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background-color: var(--background);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+.cyberpunk main button.cyber-neon-border:hover {
+  background-color: inherit !important;
+}
+
+.cyberpunk button,
+.cyberpunk a[class*="bg-primary"],
+.cyberpunk a[class*="bg-accent"] {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.cyberpunk main button:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+  filter: drop-shadow(0 0 1px rgb(248 239 2 / 0.8))
+    drop-shadow(0 0 1px rgb(248 239 2 / 0.6));
+}
+
+.cyberpunk button:hover:not(:disabled) {
+  filter: drop-shadow(0 0 1px rgb(248 239 2 / 0.7))
+    drop-shadow(0 0 6px rgb(248 239 2 / 0.8));
+  transition: filter 0.15s ease;
+}
+
+.cyberpunk button[class*="bg-destructive"]:hover:not(:disabled) {
+  filter: drop-shadow(0 0 1px rgb(255 0 60 / 0.7))
+    drop-shadow(0 0 6px rgb(255 0 60 / 0.25));
+}
+
+/* ===== Input fields ===== */
+.cyberpunk input,
+.cyberpunk textarea,
+.cyberpunk select {
+  border-radius: 0 !important;
+}
+
+/* Date/time picker icons — yellow neon instead of default black */
+.cyberpunk input[type="date"]::-webkit-calendar-picker-indicator,
+.cyberpunk input[type="time"]::-webkit-calendar-picker-indicator,
+.cyberpunk input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(89%) sepia(63%) saturate(1000%) hue-rotate(5deg) brightness(103%) contrast(97%);
+  cursor: pointer;
+}
+
+.cyberpunk input:focus,
+.cyberpunk textarea:focus,
+.cyberpunk select:focus {
+  box-shadow:
+    0 0 8px rgb(0 255 210 / 0.3),
+    0 0 20px rgb(0 255 210 / 0.08) !important;
+}
+
+/* ===== Form fields — neon angular style matching DatePicker/Select ===== */
+.cyberpunk .cyber-input {
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  letter-spacing: 0.3px;
+  border: 1px solid rgb(57 255 20 / 0.3) !important;
+  background-color: rgba(21, 255, 0, 0.00) !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* um aqui */
+.cyberpunk .cyber-input:hover:not(:focus) {
+  /* border-color: rgb(57 255 20 / 0.5) !important; */
+}
+
+.cyberpunk .cyber-input:focus {
+  border-color: rgb(57 255 20 / 0.7) !important;
+  background-color: rgba(43, 255, 0, 0.05) !important;
+}
+
+.cyberpunk .cyber-input::placeholder {
+  color: rgb(138 230 110 / 0.4) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+/* Error state: red neon */
+.cyberpunk .cyber-input.cyber-input-error {
+  border-color: rgb(255 0 60 / 0.5) !important;
+  background-color: rgba(255, 0, 60, 0.2) !important;
+}
+
+.cyberpunk .cyber-input.cyber-input-error:focus {
+  border-color: rgb(255 0 60 / 0.8) !important;
+  background-color: rgba(255, 0, 60, 0.35) !important;
+  box-shadow:
+    0 0 12px rgb(255 0 60 / 0.2),
+    0 0 30px rgb(255 0 60 / 0.06) !important;
+}
+
+/* Textarea line-height */
+.cyberpunk textarea.cyber-input {
+  line-height: 1.6;
+}
+
+/* ===== Cyber Input Frame — angular clip-path border wrapper ===== */
+/* Wraps text/textarea inputs: outer = border via clip-path bg, ::before = inner fill */
+.cyberpunk .cyber-input-frame {
+  position: relative;
+  background: rgb(57 255 20 / 0.3);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  /* transition: background-color 0.15s ease, filter 0.15s ease; */
+}
+
+.cyberpunk .cyber-input-frame::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background-color: var(--card);
+  clip-path: inherit;
+  z-index: 0;
+  pointer-events: none;
+  transition: background-color 0.15s ease;
+}
+
+.cyberpunk .cyber-input-frame.cyber-frame-muted::before {
+  background-color: var(--muted);
+}
+
+/* Hover: brighter border */
+.cyberpunk .cyber-input-frame:hover {
+  background: rgb(57 255 20 / 0.5);
+}
+
+/* Focus-within: neon glow */
+.cyberpunk .cyber-input-frame:focus-within {
+  /* background: rgb(57 255 20 / 0.7); */
+  filter:
+    drop-shadow(0 0 8px rgb(57 255 20 / 0.3))
+    drop-shadow(0 0 20px rgb(0 255 210 / 0.3));
+}
+
+.cyberpunk .cyber-input-frame:focus-within::before {
+  /* background-color: rgba(43, 255, 0, 0.05); */
+}
+
+/* Error frame */
+.cyberpunk .cyber-input-frame.cyber-frame-error {
+  background: rgb(255 0 60 / 0.5);
+}
+
+.cyberpunk .cyber-input-frame.cyber-frame-error::before {
+  background-color: rgba(255, 0, 60, 0.08);
+}
+
+.cyberpunk .cyber-input-frame.cyber-frame-error:hover {
+  background: rgb(255 0 60 / 0.65);
+}
+
+.cyberpunk .cyber-input-frame.cyber-frame-error:focus-within {
+  background: rgb(255 0 60 / 0.8);
+  filter:
+    drop-shadow(0 0 8px rgb(255 0 60 / 0.25))
+    drop-shadow(0 0 20px rgb(255 0 60 / 0.08));
+}
+
+.cyberpunk .cyber-input-frame.cyber-frame-error:focus-within::before {
+  background-color: rgba(255, 0, 60, 0.15);
+}
+
+/* Input inside frame: transparent, no border, no clip-path */
+.cyberpunk .cyber-input-frame .cyber-input {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  border-color: transparent !important;
+  clip-path: none !important;
+  box-shadow: none !important;
+}
+
+/* TipTap editor monospace */
+.cyberpunk .ProseMirror {
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  letter-spacing: 0.3px;
+}
+
+/* ===== Cyberpunk Checkboxes ===== */
+.cyberpunk input[type="checkbox"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  min-width: 1.25rem;
+  border: 2px solid rgb(57 255 20 / 0.4) !important;
+  border-radius: 0 !important;
+  transition: all 0.15s ease;
+  position: relative;
+  vertical-align: middle;
+}
+
+.cyberpunk input[type="checkbox"]:hover:not(:disabled) {
+  border-color: rgb(57 255 20 / 0.7) !important;
+  background: rgba(98, 186, 82, 0.35) !important;
+  box-shadow: 0 0 6px rgb(57 255 20 / 0.3);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23050512' stroke-width='3.5' stroke-linecap='square'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") !important;
+}
+
+.cyberpunk input[type="checkbox"]:checked {
+  background: rgb(248 239 2) !important;
+  border-color: rgb(248 239 2) !important;
+  box-shadow: 0 0 8px rgb(248 239 2 / 0.4);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23050512' stroke-width='3.5' stroke-linecap='square'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") !important;
+  background-size: 75% 75%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.cyberpunk input[type="checkbox"]:hover:checked {
+  background: rgb(248 239 2) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23050512' stroke-width='3.5' stroke-linecap='square'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") !important;
+  box-shadow:
+    0 0 6px rgb(248 239 2 / 0.6),
+    0 0 14px rgb(248 239 2 / 0.35),
+    0 0 28px rgb(248 239 2 / 0.15) !important;
+}
+
+.cyberpunk input[type="checkbox"]:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgb(57 255 20 / 0.3), 0 0 8px rgb(57 255 20 / 0.2) !important;
+}
+
+/* ===== Cyberpunk Radio Buttons ===== */
+.cyberpunk input[type="radio"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  min-width: 1.25rem;
+  background: rgba(191, 0, 255, 0.2) !important;
+  border: 1px solid rgb(57 255 20 / 0.4) !important;
+  border-radius: 50% !important;
+  transition: all 0.15s ease;
+  position: relative;
+  vertical-align: middle;
+}
+
+.cyberpunk input[type="radio"]:hover:not(:disabled) {
+  border-color: rgb(57 255 20 / 0.7) !important;
+  background: rgba(98, 186, 82, 0.35) !important;
+  box-shadow: 0 0 6px rgb(57 255 20 / 0.3);
+}
+
+.cyberpunk input[type="radio"]:checked {
+  background: rgb(248 239 2) !important;
+  border-color: rgb(248 239 2) !important;
+  box-shadow: 0 0 8px rgb(248 239 2 / 0.4);
+  background-image: radial-gradient(circle at center, rgb(5 5 18) 30%, transparent 35%) !important;
+}
+
+.cyberpunk input[type="radio"]:hover:checked {
+  box-shadow:
+    0 0 6px rgb(248 239 2 / 0.6),
+    0 0 14px rgb(248 239 2 / 0.35),
+    0 0 28px rgb(248 239 2 / 0.15) !important;
+}
+
+.cyberpunk input[type="radio"]:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgb(57 255 20 / 0.3), 0 0 8px rgb(57 255 20 / 0.2) !important;
+}
+
+/* ===== Scrollbar ===== */
+.cyberpunk ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background-color: rgb(5 5 12);
+}
+
+.cyberpunk ::-webkit-scrollbar-track {
+  background: rgb(12 12 24);
+}
+
+.cyberpunk ::-webkit-scrollbar-thumb {
+  background: rgb(57 255 20 / 0.6);
+  border: 1px solid rgb(248 239 2 / 0.2);
+}
+
+.cyberpunk ::-webkit-scrollbar-thumb:hover {
+  background: rgb(248 239 2);
+}
+
+.cyberpunk ::-webkit-scrollbar-corner {
+  background: rgb(5 5 12);
+}
+
+/* ===== Sidebar neon accent line ===== */
+.cyberpunk [class*="bg-sidebar"][class*="border"] {
+  border-right-width: 1px;
+  border-image: linear-gradient(
+    to bottom,
+    rgb(248 239 2),
+    rgb(0 255 210),
+    rgb(57 255 20)
+  ) 1;
+}
+
+/* ===== Neon link hover ===== */
+.cyberpunk a:hover {
+  text-shadow: 0 0 6px rgb(0 255 210 / 0.4);
+}
+
+/* ===== Table styling ===== */
+.cyberpunk table {
+  border-collapse: collapse;
+}
+
+.cyberpunk th {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  border-bottom: 2px solid rgb(248 239 2) !important;
+  text-shadow: 0 0 4px rgb(248 239 2 / 0.3);
+}
+
+.cyberpunk td {
+  border-bottom: 1px solid rgb(57 255 20 / 0.2) !important;
+}
+
+.cyberpunk tr:hover td {
+  background-color: rgb(57 255 20 / 0.04);
+}
+
+/* ===== Header & TitleBar neon bottom edge ===== */
+.cyberpunk [class*="bg-titlebar"] {
+  border-bottom: 1px solid rgb(248 239 2 / 0.4);
+  box-shadow: 0 2px 10px rgb(248 239 2 / 0.08);
+}
+
+.cyberpunk [class*="bg-header"] {
+  border-bottom: 1px solid rgb(0 255 210 / 0.3);
+  box-shadow: 0 2px 10px rgb(0 255 210 / 0.06);
+}
+
+/* ===== Glitch animations (from cyberpunk-2077.css) ===== */
+
+/* --- h1 glitch: skew + shift (adapted from h1glitched) --- */
+.cyberpunk h1 {
+  animation:
+    cyber-glitch-text 8s linear infinite,
+    cyber-h1-glitch calc(var(--glitched-duration) * 1.4) linear infinite;
+}
+
+@keyframes cyber-h1-glitch {
+  0%, 10% {
+    transform: skew(-2deg);
+    margin-left: -2px;
+  }
+  11%, 50% {
+    transform: skew(0deg);
+    margin-left: 0;
+  }
+  51%, 59% {
+    transform: skew(1.5deg);
+  }
+  60%, 100% {
+    transform: skew(0deg);
+  }
+}
+
+/* --- h1 underline glitch (adapted from h1beforeglitched) --- */
+.cyberpunk h1::before {
+  animation: cyber-h1-underline-glitch calc(var(--glitched-duration) * 2) linear infinite;
+}
+
+@keyframes cyber-h1-underline-glitch {
+  0%, 50% {
+    clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 0px 10px);
+    transform: skew(0deg);
+  }
+  51%, 59% {
+    clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 40% 5px, calc(40% - 30px) 0px, calc(40% + 30px) 0px, calc(45% - 15px) 5px, 100% 5px, 100% 6px, calc(45% - 14px) 6px, calc(40% + 29px) 1px, calc(40% - 29px) 1px, calc(40% + 1px) 6px, 85px 6px, 80px 10px, 0px 10px);
+    transform: skew(0deg);
+  }
+  60%, 100% {
+    clip-path: polygon(0px 0px, 85px 0px, 90px 5px, 100% 5px, 100% 6px, 85px 6px, 80px 10px, 0px 10px);
+    transform: skew(0deg);
+  }
+}
+
+/* --- h2 underline glitch: scaleY flip (from h2beforeglitched) --- */
+.cyberpunk h2::before {
+  animation: cyber-h2-underline-glitch calc(var(--glitched-duration) * 2) linear infinite;
+}
+
+@keyframes cyber-h2-underline-glitch {
+  0%, 10% { transform: scaleY(1); }
+  11%, 50% { transform: scaleY(-1); }
+  51%, 100% { transform: scaleY(1); }
+}
+
+/* --- Text glitch: chromatic aberration (for h1) --- */
+@keyframes cyber-glitch-text {
+  0%, 92%, 95%, 97%, 100% {
+    text-shadow:
+      0 0 10px rgb(248 239 2 / 0.5),
+      0 0 40px rgb(248 239 2 / 0.15);
+  }
+  93% {
+    color: rgb(248 239 2 / 0.5);
+    text-shadow:
+      -2px 0 rgb(0 255 210),
+      2px 0 rgb(251, 0, 255),
+      0 0 10px rgb(248 239 2 / 0.5);
+  }
+  94% {
+    color: rgb(248 239 2 / 0.8);
+    text-shadow:
+      2px 0 rgb(0 255 210),
+      -2px 0 rgb(234, 0, 255),
+      0 0 15px rgb(248 239 2 / 0.8);
+  }
+  96% {
+    color: rgb(248 239 2 / 0.6);
+    text-shadow:
+      -1px 0 rgb(255, 0, 230),
+      1px 0 rgb(0 255 210),
+      0 0 12px rgb(248 239 2 / 0.6);
+  }
+}
+
+/* ===== Button hover animation (from buttonhover) ===== */
+.cyberpunk button:hover:not(:disabled) {
+  animation: cyber-button-hover var(--glitched-duration) linear infinite;
+}
+
+@keyframes cyber-button-hover {
+  0%, 60% { transform: skew(0deg); }
+  61%, 70% { transform: skew(5deg); }
+  71%, 100% { transform: skew(0deg); }
+}
+
+/* ===== Card / container scan line (from scannedh) ===== */
+.cyberpunk [class*="bg-card"][class*="border"]:not(#searchbar-results) {
+  position: relative;
+}
+
+.cyberpunk [class*="bg-card"][class*="border"]:not(#searchbar-results)::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(60, 255, 0, 0.06);
+  box-shadow: 0 0 8px 2px rgba(60, 255, 0, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cyberpunk [class*="bg-card"][class*="border"]:not(#searchbar-results):hover::after {
+  opacity: 1;
+  animation: cyber-card-scan var(--glitched-long-duration) linear infinite alternate;
+}
+
+/* SearchBar dropdown: keep stable in cyberpunk without inheriting global card effects */
+.cyberpunk #searchbar-results {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  margin-top: 0 !important;
+  clip-path: none !important;
+  transform: none !important;
+  isolation: auto;
+}
+
+.cyberpunk #searchbar-results::before,
+.cyberpunk #searchbar-results::after {
+  content: none !important;
+}
+
+/* TitleBar app menu: avoid border-* substring collisions from global cyberpunk rules */
+.cyberpunk [id^="titlebar-menu-panel-"] {
+  position: absolute !important;
+  top: calc(100% + 0.25rem);
+  margin-top: 0 !important;
+  left: 0;
+  transform: none !important;
+}
+
+.cyberpunk [id^="titlebar-menu-panel-"]::before,
+.cyberpunk [id^="titlebar-menu-panel-"]::after {
+  content: none !important;
+}
+
+@keyframes cyber-card-scan {
+  0% { top: -2px; }
+  100% { top: calc(100% + 2px); }
+}
+
+/* ===== Horizontal separator glitch (from hr glitched) ===== */
+.cyberpunk hr,
+.cyberpunk [class*="border-b"][class*="border-border"]:not(button):not(th):not(td):not(tr):not([id^="titlebar-menu-panel-"]) {
+  position: relative;
+}
+
+.cyberpunk hr {
+  border: none;
+  height: 6px;
+  background: rgb(57 255 20);
+  clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+  animation: cyber-hr-glitch var(--glitched-long-duration) linear infinite;
+}
+
+@keyframes cyber-hr-glitch {
+  0%, 15% {
+    transform: skew(0deg);
+    clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+    margin-left: 0;
+  }
+  16% {
+    transform: skew(20deg);
+    clip-path: polygon(1px 0px, 0px 0px, 0px 0px, 8px 6px, 13px 6px, 22px 3px, 42px 2px, 49px 0px, 100% 0px, 100% 0px, 42px 0px, 35px 2px, 22px 3px, 13px 5px, 9px 5px);
+    margin-left: -10px;
+  }
+  20% {
+    transform: skew(-20deg);
+    margin-left: 10px;
+  }
+  21%, 65% {
+    transform: skew(0deg);
+    clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+    margin-left: 0;
+  }
+  66% {
+    transform: skew(20deg);
+    margin-left: -5px;
+  }
+  70% {
+    transform: skew(40deg);
+    margin-left: 10px;
+  }
+  71%, 100% {
+    transform: skew(0deg);
+    clip-path: polygon(0px 2px, 100% 2px, 100% 4px, 0px 4px);
+    margin-left: 0;
+  }
+}
+
+/* ===== Summary card top-accent line ===== */
+.cyberpunk main [class*="bg-chart-"] {
+  position: relative;
+}
+
+.cyberpunk main [class*="bg-chart-"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* ===== Drop zone pulse glow ===== */
+.cyberpunk [class*="border-dashed"] {
+  border-style: dashed !important;
+  border-color: rgb(0 255 210 / 0.4) !important;
+  animation: cyber-drop-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cyber-drop-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgb(0 255 210 / 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgb(0 255 210 / 0.25);
+  }
+}
+
+/* ===== Tooltip / Popover ===== */
+.cyberpunk [class*="bg-popover"] {
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 10px rgb(248 239 2 / 0.15),
+    0 4px 20px rgb(0 0 0 / 0.6);
+}
+
+/* ===== Focus ring override — neon glow ===== */
+.cyberpunk *:focus-visible {
+  /* outline: 1px solid rgb(51, 248, 2 / 0.6) !important; */
+  /* outline-offset: 12px; */
+  /* box-shadow: 0 0 8px rgb(248 239 2 / 0.3); */
+}
+
+/* ===== Gantt chart: angular bars ===== */
+.cyberpunk .rounded-sm {
+  border-radius: 0 !important;
+}
+
+/* Gantt activity bars — diagonal corners with neon glow */
+.cyberpunk [class*="bg-chart-"][class*="absolute"] {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
+  filter: drop-shadow(0 0 0.5px rgb(138 230 110 / 0.5))
+    drop-shadow(0 0 0.5px rgb(138 230 110 / 0.3));
+}
+
+/* Gantt track background — angular */
+.cyberpunk [class*="bg-muted/30"] {
+  border-radius: 0 !important;
+}
+
+/* ===== Activity bar (sidebar) icon neon pulse ===== */
+.cyberpunk [class*="activitybar-foreground-active"] {
+  text-shadow: 0 0 6px currentColor;
+}
+
+/* ===== Flicker animation for muted-foreground elements ===== */
+.cyberpunk .text-muted-foreground {
+  animation: cyber-flicker 5s linear infinite;
+}
+
+@keyframes cyber-flicker {
+  0%, 8%, 10%, 60%, 62%, 64%, 66%, 100% {
+    opacity: 1;
+  }
+  2% { opacity: 0.8; }
+  4% { opacity: 0.9; }
+  6% { opacity: 0.7; }
+  61% { opacity: 0.6; }
+  63% { opacity: 0.85; }
+  65% { opacity: 0.5; }
+}
+
+/* Card neon border is handled by double clip-path technique (see angular shapes section) */
+
+/* ===== Badges: angular chip with subtle glow ===== */
+.cyberpunk main .rounded-full {
+  box-shadow: 0 0 4px rgb(248 239 2 / 0.15);
+  border: 1px solid rgb(57 255 20 / 0.2);
+}
+
+/* ===== Image/evidence frames ===== */
+.cyberpunk img[class*="object-"] {
+  clip-path: polygon(
+    0 8px, 8px 0,
+    calc(60% - 8px) 0, 60% 8px,
+    100% 8px, 100% calc(100% - 4px),
+    calc(100% - 6px) calc(100% - 4px),
+    calc(80% - 4px) calc(100% - 4px),
+    calc(80% - 6px) 100%,
+    4px 100%, 0 calc(100% - 4px)
+  );
+  filter: drop-shadow(0 0 0.5px rgb(138 230 110 / 0.5))
+    drop-shadow(0 0 0.5px rgb(138 230 110 / 0.3));
+}
+
+/* ===== DatePicker — Cyberpunk Calendar ===== */
+
+/* Calendar dropdown: angular frame with neon border */
+.cyberpunk .datepicker-calendar {
+  border-radius: 0 !important;
+  border: 1px solid rgb(57 255 20 / 0.6) !important;
+  background: rgb(8 8 18 / 0.97) !important;
+  box-shadow:
+  0 0 20px rgb(57 255 20 / 0.15),
+  0 0 60px rgb(248 239 2 / 0.05),
+  inset 0 0 30px rgb(0 0 0 / 0.4) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+/* Calendar header: month/year title area */
+.cyberpunk .datepicker-header {
+  border-bottom: 1px solid rgb(57 255 20 / 0.3) !important;
+  background: rgb(12 12 24 / 0.8);
+  position: relative;
+}
+
+.cyberpunk .datepicker-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgb(57 255 20 / 0.6) 20%,
+    rgb(248 239 2 / 0.8) 50%,
+    rgb(57 255 20 / 0.6) 80%,
+    transparent 100%
+  );
+}
+
+/* Month/year title neon glow */
+.cyberpunk .datepicker-title {
+  color: rgb(248 239 2) !important;
+  text-shadow:
+    0 0 6px rgb(248 239 2 / 0.6),
+    0 0 12px rgb(248 239 2 / 0.3);
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+/* Nav buttons: angular with neon hover */
+.cyberpunk .datepicker-nav-btn {
+  border-radius: 0 !important;
+  border: 1px solid rgb(57 255 20 / 0.3);
+  color: rgb(138 230 110) !important;
+  transition: all 0.15s ease;
+}
+
+.cyberpunk .datepicker-nav-btn:hover {
+  background: rgb(57 255 20 / 0.15) !important;
+  border-color: rgb(57 255 20 / 0.7);
+  box-shadow: 0 0 8px rgb(57 255 20 / 0.3);
+  color: rgb(248 239 2) !important;
+}
+
+/* Weekday headers: dim neon */
+.cyberpunk .datepicker-weekdays div {
+  color: rgb(0 255 210 / 0.6) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+/* Day cells */
+.cyberpunk .datepicker-day {
+  border-radius: 0 !important;
+  border: 1px solid transparent;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  transition: all 0.12s ease;
+  position: relative;
+}
+
+.cyberpunk .datepicker-day:hover:not(.datepicker-day-selected) {
+  background: rgb(57 255 20 / 0.1) !important;
+  border-color: rgb(57 255 20 / 0.4);
+  color: rgb(248 239 2) !important;
+  text-shadow: 0 0 4px rgb(248 239 2 / 0.5);
+}
+
+/* Selected day: neon highlight */
+.cyberpunk .datepicker-day-selected {
+  background: rgb(248 239 2) !important;
+  color: rgb(0 0 0) !important;
+  font-weight: 900;
+  box-shadow:
+    0 0 8px rgb(248 239 2 / 0.5),
+    0 0 16px rgb(248 239 2 / 0.2);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
+}
+
+/* Today marker: cyan accent */
+.cyberpunk .datepicker-day-today:not(.datepicker-day-selected) {
+  background: rgb(0 255 210 / 0.12) !important;
+  border: 1px solid rgb(0 255 210 / 0.4) !important;
+  color: rgb(0 255 210) !important;
+  text-shadow: 0 0 6px rgb(0 255 210 / 0.5);
+}
+
+/* Footer area */
+.cyberpunk .datepicker-footer {
+  border-top: 1px solid rgb(57 255 20 / 0.2) !important;
+  background: rgb(12 12 24 / 0.6);
+}
+
+/* Today button: neon cyan */
+.cyberpunk .datepicker-today-btn {
+  color: rgb(0 255 210) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cyberpunk .datepicker-today-btn:hover {
+  text-shadow: 0 0 6px rgb(0 255 210 / 0.6);
+}
+
+/* Clear button: destructive neon */
+.cyberpunk .datepicker-clear-btn {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cyberpunk .datepicker-clear-btn:hover {
+  color: rgb(255 0 60) !important;
+  text-shadow: 0 0 6px rgb(255 0 60 / 0.6);
+}
+
+/* Scanline overlay on calendar */
+.cyberpunk .datepicker-calendar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgb(0 255 210 / 0.015) 2px,
+    rgb(0 255 210 / 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Calendar grid glow animation on open */
+.cyberpunk .datepicker-grid {
+  animation: cyber-calendar-fade-in 0.2s ease-out;
+}
+
+@keyframes cyber-calendar-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Select Dropdown — Cyberpunk ===== */
+
+/* Dropdown panel: angular frame with neon border */
+.cyberpunk .select-dropdown {
+  border-radius: 0 !important;
+  border: 1px solid rgb(57 255 20 / 0.6) !important;
+  background: rgb(8 8 18 / 0.97) !important;
+  box-shadow:
+    0 0 20px rgb(57 255 20 / 0.15),
+    0 0 60px rgb(248 239 2 / 0.05),
+    inset 0 0 30px rgb(0 0 0 / 0.4) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  backdrop-filter: blur(8px);
+  animation: cyber-select-fade-in 0.15s ease-out;
+}
+
+/* Scanline overlay on dropdown */
+.cyberpunk .select-dropdown::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgb(0 255 210 / 0.015) 2px,
+    rgb(0 255 210 / 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Option items */
+.cyberpunk .select-option {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 0.3px;
+  border-left: 2px solid transparent;
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+.cyberpunk .select-option:hover,
+.cyberpunk .select-option.bg-surface-hover {
+  background: rgb(57 255 20 / 0.08) !important;
+  border-left-color: rgb(57 255 20 / 0.6);
+  color: rgb(248 239 2) !important;
+  text-shadow: 0 0 4px rgb(248 239 2 / 0.3);
+}
+
+/* Selected option */
+.cyberpunk .select-option-selected {
+  background: rgb(248 239 2 / 0.1) !important;
+  border-left: 2px solid rgb(248 239 2) !important;
+  color: rgb(248 239 2) !important;
+  text-shadow: 0 0 6px rgb(248 239 2 / 0.4);
+}
+
+/* Chevron icon neon */
+.cyberpunk .select-container .fa-chevron-down {
+  color: rgb(138 230 110) !important;
+  filter: drop-shadow(0 0 2px rgb(138 230 110 / 0.4));
+}
+
+/* Scrollbar inside dropdown */
+.cyberpunk .select-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cyberpunk .select-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cyberpunk .select-dropdown::-webkit-scrollbar-thumb {
+  background: rgb(57 255 20 / 0.3);
+  border-radius: 0;
+}
+
+@keyframes cyber-select-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== TimePicker — Cyberpunk ===== */
+
+/* Dropdown panel: angular frame with neon border */
+.cyberpunk .timepicker-dropdown {
+  border-radius: 0 !important;
+  border: 1px solid rgb(57 255 20 / 0.6) !important;
+  background: rgb(8 8 18 / 0.97) !important;
+  box-shadow:
+    0 0 20px rgb(57 255 20 / 0.15),
+    0 0 60px rgb(248 239 2 / 0.05),
+    inset 0 0 30px rgb(0 0 0 / 0.4) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  backdrop-filter: blur(8px);
+  animation: cyber-timepicker-fade-in 0.15s ease-out;
+  overflow: hidden;
+}
+
+/* Scanline overlay */
+.cyberpunk .timepicker-dropdown::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgb(0 255 210 / 0.015) 2px,
+    rgb(0 255 210 / 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header */
+.cyberpunk .timepicker-header {
+  border-bottom: 1px solid rgb(57 255 20 / 0.3) !important;
+  background: rgb(12 12 24 / 0.8);
+  position: relative;
+}
+
+.cyberpunk .timepicker-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgb(57 255 20 / 0.6) 20%,
+    rgb(248 239 2 / 0.8) 50%,
+    rgb(57 255 20 / 0.6) 80%,
+    transparent 100%
+  );
+}
+
+.cyberpunk .timepicker-title {
+  color: rgb(248 239 2) !important;
+  text-shadow:
+    0 0 6px rgb(248 239 2 / 0.6),
+    0 0 12px rgb(248 239 2 / 0.3);
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.cyberpunk .timepicker-now-btn {
+  color: rgb(0 255 210) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cyberpunk .timepicker-now-btn:hover {
+  text-shadow: 0 0 6px rgb(0 255 210 / 0.6);
+}
+
+/* Columns */
+.cyberpunk .timepicker-column {
+  border-color: rgb(57 255 20 / 0.2) !important;
+}
+
+.cyberpunk .timepicker-column-label {
+  color: rgb(0 255 210 / 0.6) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 1px;
+  background: rgb(8 8 18 / 0.97) !important;
+  border-color: rgb(57 255 20 / 0.15) !important;
+}
+
+.cyberpunk .timepicker-item {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  transition: all 0.1s ease;
+}
+
+.cyberpunk .timepicker-item:hover,
+.cyberpunk .timepicker-item.bg-surface-hover {
+  background: rgb(57 255 20 / 0.08) !important;
+  color: rgb(248 239 2) !important;
+  text-shadow: 0 0 4px rgb(248 239 2 / 0.3);
+}
+
+.cyberpunk .timepicker-item-selected {
+  background: rgb(248 239 2 / 0.1) !important;
+  color: rgb(248 239 2) !important;
+  text-shadow: 0 0 6px rgb(248 239 2 / 0.4);
+  font-weight: 700 !important;
+}
+
+/* Column scrollbar */
+.cyberpunk .timepicker-column::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cyberpunk .timepicker-column::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cyberpunk .timepicker-column::-webkit-scrollbar-thumb {
+  background: rgb(57 255 20 / 0.3);
+  border-radius: 0;
+}
+
+@keyframes cyber-timepicker-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Custom Cyberpunk Cursors ===== */
+/* Cursors from public/assets/cursors/ — active only in Cyberpunk theme */
+
+/* Default cursor */
+.cyberpunk,
+.cyberpunk * {
+  cursor: url('/assets/cursors/arrow.cur'), default !important;
+}
+
+/* Text inputs */
+.cyberpunk input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.cyberpunk textarea,
+.cyberpunk [contenteditable="true"],
+.cyberpunk .ProseMirror {
+  cursor: url('/assets/cursors/beam.cur'), text !important;
+}
+
+/* Clickable elements — pointer */
+.cyberpunk a, .cyberpunk a *,
+.cyberpunk button, .cyberpunk button *,
+.cyberpunk [role="button"], .cyberpunk [role="button"] *,
+.cyberpunk label[for], .cyberpunk label[for] *,
+.cyberpunk select, .cyberpunk select *,
+.cyberpunk input[type="checkbox"], .cyberpunk input[type="checkbox"] *,
+.cyberpunk input[type="radio"], .cyberpunk input[type="radio"] *,
+.cyberpunk input[type="file"], .cyberpunk input[type="file"] *,
+.cyberpunk summary, .cyberpunk summary *,
+.cyberpunk [class*="cursor-pointer"], .cyberpunk [class*="cursor-pointer"] * {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Select: element and options */
+.cyberpunk select option {
+  cursor: url('/assets/cursors/link.cur'), pointer !important;
+}
+
+/* Drag handles — pin cursor */
+.cyberpunk [class*="cursor-grab"],
+.cyberpunk [data-dnd-kit-draggable] [aria-roledescription="sortable"] {
+  cursor: url('/assets/cursors/pin.cur'), grab !important;
+}
+
+/* Actively dragging */
+.cyberpunk [class*="cursor-grabbing"] {
+  cursor: url('/assets/cursors/move.cur'), grabbing !important;
+}
+
+/* Move / draggable */
+.cyberpunk [class*="cursor-move"] {
+  cursor: url('/assets/cursors/move.cur'), move !important;
+}
+
+/* Not allowed / disabled */
+/* .cyberpunk [disabled], */
+/* .cyberpunk [aria-disabled="true"], */
+.cyberpunk [class*="cursor-not-allowed"],
+.cyberpunk button:disabled {
+  cursor: url('/assets/cursors/no.cur'), not-allowed !important;
+}
+
+/* Help */
+.cyberpunk [class*="cursor-help"],
+.cyberpunk [title]:not(button):not(a):not(input) {
+  cursor: url('/assets/cursors/help.cur'), help !important;
+}
+
+/* Crosshair */
+.cyberpunk [class*="cursor-crosshair"] {
+  cursor: url('/assets/cursors/cross.cur'), crosshair !important;
+}
+
+/* Wait / loading spinners */
+.cyberpunk [class*="cursor-wait"],
+.cyberpunk [class*="animate-spin"] {
+  cursor: url('/assets/cursors/wait.ani'), wait !important;
+}
+
+/* Progress / busy */
+.cyberpunk [class*="cursor-progress"] {
+  cursor: url('/assets/cursors/busy.ani'), progress !important;
+}
+
+/* Resize — horizontal */
+.cyberpunk [class*="cursor-ew-resize"],
+.cyberpunk [class*="cursor-col-resize"] {
+  cursor: url('/assets/cursors/size3.cur'), ew-resize !important;
+}
+
+/* Resize — vertical */
+.cyberpunk [class*="cursor-ns-resize"],
+.cyberpunk [class*="cursor-row-resize"] {
+  cursor: url('/assets/cursors/size4.cur'), ns-resize !important;
+}
+
+/* Resize — diagonal ↘↗ */
+.cyberpunk [class*="cursor-nwse-resize"] {
+  cursor: url('/assets/cursors/size1.cur'), nwse-resize !important;
+}
+
+/* Resize — diagonal ↙↖ */
+.cyberpunk [class*="cursor-nesw-resize"] {
+  cursor: url('/assets/cursors/size2.cur'), nesw-resize !important;
+}
+
+/* Up arrow */
+.cyberpunk [class*="cursor-n-resize"] {
+  cursor: url('/assets/cursors/up.cur'), n-resize !important;
+}

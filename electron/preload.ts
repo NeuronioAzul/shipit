@@ -38,6 +38,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('db:getEvidenceFilePath', id),
   reorderEvidences: (items: { id: string; sort_index: number }[]) =>
     ipcRenderer.invoke('db:reorderEvidences', items),
+  saveTextEvidence: (activityId: string, textContent: string, caption: string | null) =>
+    ipcRenderer.invoke('db:saveTextEvidence', activityId, textContent, caption),
+  updateTextEvidence: (id: string, textContent: string) =>
+    ipcRenderer.invoke('db:updateTextEvidence', id, textContent),
 
   // Dialogs
   selectImages: () => ipcRenderer.invoke('app:selectImages'),
@@ -60,6 +64,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('app:saveSettings', partial),
   selectDirectory: () => ipcRenderer.invoke('app:selectDirectory'),
   getDefaultReportsDir: () => ipcRenderer.invoke('app:getDefaultReportsDir'),
+  openReportsDirectory: () => ipcRenderer.invoke('app:openReportsDirectory'),
+  openEvidencesDirectory: () => ipcRenderer.invoke('app:openEvidencesDirectory'),
+  quitApp: () => ipcRenderer.invoke('app:quit'),
+
+  // Menu Edit Actions
+  editUndo: () => ipcRenderer.invoke('app:editUndo'),
+  editRedo: () => ipcRenderer.invoke('app:editRedo'),
+  editCut: () => ipcRenderer.invoke('app:editCut'),
+  editCopy: () => ipcRenderer.invoke('app:editCopy'),
+  editPaste: () => ipcRenderer.invoke('app:editPaste'),
+  editSelectAll: () => ipcRenderer.invoke('app:editSelectAll'),
+
+  // Menu View Actions
+  zoomIn: () => ipcRenderer.invoke('app:zoomIn'),
+  zoomOut: () => ipcRenderer.invoke('app:zoomOut'),
+  zoomReset: () => ipcRenderer.invoke('app:zoomReset'),
 
   // Sounds
   listSounds: () => ipcRenderer.invoke('app:listSounds'),

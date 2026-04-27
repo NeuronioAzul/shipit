@@ -22,20 +22,8 @@ import type { ActivityData, ActivityStatus, AttendanceType } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonActivityItem } from '../components/Skeleton'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
-}
-
-const STATUS_ICONS: Record<string, string> = {
-  'Em andamento': 'fa-spinner',
-  'Concluído': 'fa-check-circle',
-  'Cancelado': 'fa-times-circle',
-  'Pendente': 'fa-clock',
-}
+import { Select } from '../components/Select'
+import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 
 function formatDateShort(d: string | null): string {
   if (!d) return '—'
@@ -89,7 +77,7 @@ function SortableActivityItem({
             </span>
             {!isActivityComplete(activity) && (
               <span
-                className="text-xs px-2 py-0.5 rounded-full font-medium bg-warning/15 text-warning-foreground inline-flex items-center gap-1"
+                className="text-xs px-2 py-0.5 rounded-full font-medium bg-chart-4/15 text-chart-4 inline-flex items-center gap-1"
                 title="Campos obrigatórios não preenchidos"
               >
                 <i className="fa-solid fa-triangle-exclamation text-[10px]"></i>
@@ -275,9 +263,9 @@ export function ActivitiesPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="activities-header" className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/')}
@@ -294,10 +282,11 @@ export function ActivitiesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-3 py-2 rounded-lg border transition-colors cursor-pointer text-sm flex items-center gap-1.5 ${
+            className={`px-4 py-2 bg-primary text-primary-foreground rounded-lg
+            hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2 ${
               showFilters || hasActiveFilters
-                ? 'bg-primary/10 border-primary/30 text-primary'
-                : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
+                ? 'bg-primary/20 hover:bg-primary'
+                : ''
             }`}
             title="Filtros"
           >
@@ -320,54 +309,65 @@ export function ActivitiesPage() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="bg-card border border-border rounded-lg p-4 mb-4 space-y-3">
+        <div id="activities-filters" className="bg-card border border-border rounded-lg p-4 mb-4 space-y-3">
+          <div>
+            <h3>Filtros</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Texto livre</label>
-              <input
-                type="text"
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                placeholder="Buscar..."
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              />
+              <div className="cyber-input-frame cyber-frame-muted">
+                <input
+                  type="text"
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                  placeholder="Buscar..."
+                  className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                />
+              </div>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
-              <select
+              <Select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as ActivityStatus | '')}
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              >
-                <option value="">Todos</option>
-                <option value="Em andamento">Em andamento</option>
-                <option value="Concluído">Concluído</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Cancelado">Cancelado</option>
-              </select>
+                onChange={(v) => setFilterStatus(v as ActivityStatus | '')}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'Em andamento', label: 'Em andamento' },
+                  { value: 'Concluído', label: 'Concluído' },
+                  { value: 'Pendente', label: 'Pendente' },
+                  { value: 'Cancelado', label: 'Cancelado' },
+                ]}
+                placeholder="Todos"
+                size="sm"
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Atendimento</label>
-              <select
+              <Select
                 value={filterAttendance}
-                onChange={(e) => setFilterAttendance(e.target.value as AttendanceType | '')}
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              >
-                <option value="">Todos</option>
-                <option value="Presencial">Presencial</option>
-                <option value="Remoto">Remoto</option>
-                <option value="Híbrido">Híbrido</option>
-              </select>
+                onChange={(v) => setFilterAttendance(v as AttendanceType | '')}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'Presencial', label: 'Presencial' },
+                  { value: 'Remoto', label: 'Remoto' },
+                  { value: 'Híbrido', label: 'Híbrido' },
+                ]}
+                placeholder="Todos"
+                size="sm"
+              />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo</label>
-              <input
-                type="text"
-                value={filterScope}
-                onChange={(e) => setFilterScope(e.target.value)}
-                placeholder="Filtrar por escopo..."
-                className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
-              />
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo: (Squad / Projeto / Aplicação)</label>
+              <div className="cyber-input-frame cyber-frame-muted">
+                <input
+                  type="text"
+                  value={filterScope}
+                  onChange={(e) => setFilterScope(e.target.value)}
+                  placeholder="Filtrar por escopo..."
+                  className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                />
+              </div>
             </div>
           </div>
           {/* Active filter pills */}
@@ -442,7 +442,7 @@ export function ActivitiesPage() {
 
       {/* Empty state */}
       {!loading && filteredActivities.length === 0 && (
-        <div className="text-center py-16">
+        <div id="activities-empty" className="text-center py-16">
           <i className={`fa-solid ${hasActiveFilters ? 'fa-filter-circle-xmark' : 'fa-clipboard-list'} text-5xl text-muted-foreground/30 mb-4`}></i>
           <p className="text-muted-foreground text-lg">
             {hasActiveFilters
@@ -452,7 +452,7 @@ export function ActivitiesPage() {
           {hasActiveFilters ? (
             <button
               onClick={clearFilters}
-              className="mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="cyber-neon-border mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
             >
               <i className="fa-solid fa-xmark"></i>
               Limpar filtros
@@ -474,7 +474,7 @@ export function ActivitiesPage() {
       {!loading && filteredActivities.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={filteredActivities.map(a => a.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
+            <div id="activities-list" className="space-y-3">
               {filteredActivities.map((activity, idx) => (
                 <SortableActivityItem
                   key={activity.id}
@@ -491,8 +491,8 @@ export function ActivitiesPage() {
 
       {/* Delete confirmation modal */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="alertdialog" aria-modal="true" aria-labelledby="delete-activity-title">
-          <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4 shadow-2xl animate-modal-in">
+        <div id="activities-delete-modal" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="alertdialog" aria-modal="true" aria-labelledby="delete-activity-title">
+          <div className="bg-card border border-border rounded-lg p-6 max-w-sm mx-4 shadow-2xl animate-modal-in">
             <h3 id="delete-activity-title" className="text-lg font-semibold mb-2">Excluir Atividade</h3>
             <p className="text-muted-foreground mb-4">
               Tem certeza? Esta ação não pode ser desfeita. As evidências associadas também serão removidas.
@@ -500,13 +500,13 @@ export function ActivitiesPage() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/60 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDelete(deleteId)}
-                className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer"
               >
                 Excluir
               </button>

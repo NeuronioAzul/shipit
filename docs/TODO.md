@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 14/04/2026 (v1.2.1)
+> Atualizado em: 27/04/2026 (preparado para release v1.3.0)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -279,3 +279,99 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Atualizar ícones de tray (novas versões em alta qualidade)
 - [x] Atualizar campo `author` em `package.json` para objeto com name + email
 - [x] Validar: .exe mostra ícone correto no File Explorer, taskbar e lista de programas
+
+### Automação de Release ✅
+
+- [x] Script Python `docs/scripts/release.py` para automação completa do fluxo de release
+  - [x] Validação de ambiente (git, gh CLI, autenticação, branch)
+  - [x] Commit condicional de mudanças pendentes (com fallback manual)
+  - [x] Atualização de CHANGELOG.md via Copilot CLI (com fallback manual)
+  - [x] Bump de versão no package.json (patch/minor/major/custom)
+  - [x] Push, PR (dev → main), squash merge, tag, aguardar CI/CD, publicar release
+  - [x] `--dry-run`, `--skip-changelog`, `--skip-commit`, `--version`, `--help`
+  - [x] Resumibilidade: detecta estado atual e pula passos concluídos
+  - [x] Compatibilidade Windows (subprocess, encoding UTF-8)
+- [x] Documentação: `RELEASE_GUIDE.md`, `RELEASE_TROUBLESHOOTING.md`, `README.md`
+
+### Fase 17: Sistema Multi-Tema ✅
+
+- [x] Refatorar arquitetura de temas: `src/themes/themes.ts` (registro), `src/themes/themes.css` (paletas)
+- [x] Projetar 11 paletas de temas (2 principais, 6 personalidade, 2 acessibilidade, 1 bônus)
+  - [x] Claro (modernizado) e Escuro (preto profundo)
+  - [x] Colorido, Rosa & Violeta, Minimalista, Futurista, Oceano, Pôr do Sol
+  - [x] Alto Contraste (WCAG AAA claro) e Alto Contraste Escuro (WCAG AAA escuro)
+  - [x] Cyberpunk (neon amarelo/ciano, efeitos especiais)
+- [x] 60+ variáveis CSS por tema (foundation, surfaces, semantic, navigation, charts, radius, shadows)
+- [x] Componente `ThemeSelector` com grid visual por categoria e preview de cores
+- [x] Refatorar `ThemeContext` de toggle dark/light para multi-tema completo
+- [x] Integração do `ThemeSelector` na SettingsPage (seção "Aparência")
+- [x] Efeitos especiais Cyberpunk (`cyberpunk-effects.css`): scanlines CRT, neon glow, glitch, cantos angulares
+- [x] Transições de tema suaves (200ms)
+- [x] Persistência de tema atualizada: `localStorage.shipit-theme` armazena ID do tema
+
+### Fase 18: Atualização da Documentação ✅
+
+- [x] Reescrever `README.md` como documentação para usuário final (instalação, primeiros passos, funcionalidades, FAQ)
+- [x] Atualizar `CHANGELOG.md` com informações do ciclo v1.2.2 e mudanças pendentes
+- [x] Atualizar `docs/TODO.md` com fases 17 e 18
+- [x] Atualizar `.github/copilot-instructions.md` (versão, stack, temas, file structure)
+- [x] Atualizar `docs/ARCHITECTURE.md` (arquitetura multi-tema, decisões técnicas)
+
+### Fase 19: Evidências de Texto ✅
+
+- [x] Editor rich-text com TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-character-count`)
+- [x] Componente `TextEvidenceEditor` para edição de evidências de texto formatado
+- [x] Componente `TextEvidenceModal` para visualização/edição em modal
+- [x] Campo `type` ('image' | 'text') e `text_content` na entidade Evidence
+- [x] IPC handlers `db:saveTextEvidence` e `db:updateTextEvidence`
+
+### Fase 20: Lightbox de Evidências e Navegação entre Atividades ✅
+
+- [x] Componente `EvidenceLightbox` para visualização em tela cheia de imagens (via `yet-another-react-lightbox`)
+- [x] Componente `ActivityNav` com navegação prev/next entre atividades na tela de detalhes
+
+### Fase 20.1: Sincronização da Documentação (Full Sync) ✅
+
+- [x] Sincronizar os documentos principais com o estado real do código
+- [x] Adicionar 4 componentes faltantes na documentação (`ActivityNav`, `EvidenceLightbox`, `TextEvidenceEditor`, `TextEvidenceModal`)
+- [x] Adicionar 19 dependências faltantes em DEPENDENCIES.md
+- [x] Atualizar entidade Evidence com campos `type` e `text_content` em todos os docs
+- [x] Atualizar contagem de testes e componentes em todos os docs
+
+### Fase 21: Navegação Global, Menu de Contexto e Menu do App ✅
+
+- [x] `NavigationHistoryContext` com histórico global, botões Voltar/Avançar na TitleBar e atalhos `Alt+←` / `Alt+→`
+- [x] Ajuste da navegação local da tela de detalhes para `←` / `→`, preservando guardas de digitação
+- [x] Menu de contexto nativo para campos editáveis e texto selecionado (`undo`, `redo`, `cut`, `copy`, `paste`, `selectAll`)
+- [x] Política centralizada de links externos no processo principal (`http`, `https`, `mailto`) com abertura via navegador/cliente externo
+- [x] `AppTopMenu` ao lado do logo com seções File/Edit/View/Help, atalhos globais e ações integradas via IPC
+- [x] Módulo `src/menu` com catálogo de comandos e registro de save-context
+- [x] Rota `/manual` com `UserManualPage` e ações de ajuda/reportar problema
+
+### Fase 22: Detalhe da Atividade e Evidência de Texto ✅
+
+- [x] Tela de detalhes da atividade com botão Excluir e modal de confirmação acessível
+- [x] `ActivityNav` com seletor de mês no lugar do antigo toggle de modo
+- [x] Redirecionamento pós-exclusão para `/activities?month={mês}`
+- [x] `TextEvidenceEditor` com foco ao clicar na área vazia/padding do editor
+- [x] Colagem em evidências de texto estabilizada via foco correto do ProseMirror
+- [x] Limite de evidência textual ampliado para 20.000 caracteres
+
+### Fase 23: Ordenação Cronológica de Atividades ✅
+
+- [x] Helper de normalização em `electron/database.ts` para atividades legadas com `order = null`
+- [x] Novas atividades entram no fim do mês de referência usando o maior `order` existente
+- [x] `getActivities`, `getReportPayload` e `searchActivities` usam ordenação estável por `order ASC`, `id ASC`
+- [x] `reorderActivities` permanece como fonte autoritativa para drag-and-drop
+- [x] Fallback browser (`localDb.ts`) alinhado com a mesma regra de ordenação
+- [x] Cobertura Vitest ampliada para criação, legado, reorder, payload DOCX e busca
+- [x] Suíte atual: 104 testes Vitest passando (8 arquivos)
+
+---
+
+## Backlog
+
+- [ ] Diretório de armazenamento de dados customizável (opcional, adiado)
+- [ ] Ajustar ícones de tray para macOS (template images)
+- [ ] Testar auto-launch e paths em cada plataforma (macOS/Linux)
+- [ ] Verificar path do DOCX template com acentos no CI Linux/macOS (primeira run)

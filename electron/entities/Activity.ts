@@ -16,7 +16,7 @@ export class Activity {
   id!: string // UUID v7
 
   @Column({ type: 'integer', nullable: true })
-  order!: number
+  order!: number | null
 
   @Column({ type: 'text', nullable: true })
   description!: string

@@ -17,21 +17,26 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ActivityData, EvidenceData } from '../vite-env'
-import { localDb } from '../services/localDb'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
-}
+import { getCurrentMonthRef, localDb } from '../services/localDb'
+import { STATUS_COLORS } from '../utils/statusColors'
+import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
+import { TextEvidenceModal } from '../components/TextEvidenceModal'
+import { ActivityNav } from '../components/ActivityNav'
+import { isTypingTarget } from '../utils/keyboardGuards'
+import { shiftMonthReference } from '../utils/monthReference'
+import {
+  resolveMonthNavigation,
+  shouldSyncSelectedMonthToActivity,
+} from '../utils/activityMonthNavigation'
 
 function SortableEvidenceCard({ 
   evidence, 
-  onDelete 
+  onDelete,
+  onClick,
 }: { 
   evidence: EvidenceData
   onDelete: (id: string) => void
+  onClick?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: evidence.id,
@@ -44,6 +49,8 @@ function SortableEvidenceCard({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const isText = evidence.type === 'text'
+
   function handleImageDragStart(e: React.DragEvent) {
     e.preventDefault()
     if (handleRef.current) {
@@ -54,8 +61,13 @@ function SortableEvidenceCard({
     }
   }
 
+  function getTextPreview(html: string | null): string {
+    if (!html) return ''
+    return html.replace(/<[^>]*>/g, '').slice(0, 100)
+  }
+
   return (
-    <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden group/ev relative">
+    <div ref={setNodeRef} style={style} className="cyber-neon-border bg-card border border-border rounded-lg overflow-hidden group p-2 relative">
       <button
         ref={handleRef}
         {...attributes}
@@ -74,21 +86,33 @@ function SortableEvidenceCard({
       >
         <i className="fa-solid fa-trash text-xs" aria-hidden="true"></i>
       </button>
-      <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-        <img
-          src={
-            evidence.file_path.startsWith('data:')
-              ? evidence.file_path
-              : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path)}`
-          }
-          alt={evidence.caption || 'Evidência'}
-          className="w-full h-full object-contain"
-          draggable
-          onDragStart={handleImageDragStart}
-          onError={(e) => {
-            ;(e.target as HTMLImageElement).style.display = 'none'
-          }}
-        />
+      <div
+        className="aspect-video bg-muted flex items-center justify-center overflow-hidden cursor-pointer"
+        onClick={onClick}
+      >
+        {isText ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
+            <i className="fa-solid fa-file-lines text-3xl text-primary/60" aria-hidden="true"></i>
+            <p className="text-xs text-muted-foreground line-clamp-3 text-center px-2">
+              {getTextPreview(evidence.text_content) || 'Texto vazio'}
+            </p>
+          </div>
+        ) : (
+          <img
+            src={
+              evidence.file_path?.startsWith('data:')
+                ? evidence.file_path
+                : `shipit-evidence://host?path=${encodeURIComponent(evidence.file_path || '')}`
+            }
+            alt={evidence.caption || 'Evidência'}
+            className="w-full h-full object-contain"
+            draggable
+            onDragStart={handleImageDragStart}
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
+          />
+        )}
       </div>
       {evidence.caption && (
         <p className="p-2 text-sm text-muted-foreground border-t border-border">
@@ -105,9 +129,21 @@ export function ActivityDetailPage() {
   const [activity, setActivity] = useState<ActivityData | null>(null)
   const [loading, setLoading] = useState(true)
   const [dropActive, setDropActive] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [confirmEvidenceDelete, setConfirmEvidenceDelete] = useState<string | null>(null)
+  const [deletingEvidence, setDeletingEvidence] = useState(false)
+  const [confirmActivityDelete, setConfirmActivityDelete] = useState(false)
+  const [deletingActivity, setDeletingActivity] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [siblings, setSiblings] = useState<ActivityData[]>([])
+  const [siblingsLoading, setSiblingsLoading] = useState(false)
+  const [siblingsMonthReference, setSiblingsMonthReference] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState('')
+  const [monthWithoutActivities, setMonthWithoutActivities] = useState<string | null>(null)
+  const [textModalOpen, setTextModalOpen] = useState(false)
+  const [textModalMode, setTextModalMode] = useState<'create' | 'edit' | 'view'>('view')
+  const [textModalEvidence, setTextModalEvidence] = useState<EvidenceData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sensors = useSensors(
@@ -133,6 +169,145 @@ export function ActivityDetailPage() {
   useEffect(() => {
     loadActivity()
   }, [loadActivity])
+
+  const fetchSiblingsByMonth = useCallback(async (monthReference: string) => {
+    if (window.electronAPI) {
+      return window.electronAPI.getActivities(monthReference)
+    }
+
+    return localDb.getActivities(monthReference)
+  }, [])
+
+  useEffect(() => {
+    setSelectedMonth('')
+    setSiblings([])
+    setSiblingsMonthReference('')
+    setMonthWithoutActivities(null)
+  }, [id])
+
+  useEffect(() => {
+    if (
+      shouldSyncSelectedMonthToActivity({
+        currentId: id,
+        activity,
+        selectedMonth,
+      })
+    ) {
+      setSelectedMonth(activity!.month_reference)
+    }
+  }, [activity, id, selectedMonth])
+
+  useEffect(() => {
+    if (!selectedMonth) return
+    sessionStorage.setItem('shipit-selected-month', selectedMonth)
+  }, [selectedMonth])
+
+  // Fetch siblings for prev/next navigation based on selected month
+  useEffect(() => {
+    if (!selectedMonth) return
+    let cancelled = false
+    setSiblingsLoading(true)
+
+    async function fetchSiblings() {
+      try {
+        const list = await fetchSiblingsByMonth(selectedMonth)
+
+        if (!cancelled) {
+          setSiblings(list)
+          setSiblingsMonthReference(selectedMonth)
+        }
+      } finally {
+        if (!cancelled) setSiblingsLoading(false)
+      }
+    }
+
+    fetchSiblings()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedMonth, fetchSiblingsByMonth])
+
+  useEffect(() => {
+    const decision = resolveMonthNavigation({
+      currentId: id,
+      activity,
+      selectedMonth,
+      siblings,
+      siblingsMonthReference,
+      siblingsLoading,
+    })
+
+    switch (decision.type) {
+      case 'navigate':
+        setMonthWithoutActivities(null)
+        navigate(`/activities/${decision.targetId}`)
+        return
+      case 'show-empty-month':
+        setMonthWithoutActivities(decision.monthReference)
+        return
+      case 'clear-empty-month':
+        setMonthWithoutActivities(null)
+        return
+      case 'noop':
+      default:
+        return
+    }
+  }, [selectedMonth, siblingsLoading, siblingsMonthReference, siblings, activity, id, navigate])
+
+  // Keyboard shortcuts: ← / → (local navigation in detail page)
+  useEffect(() => {
+    if (!activity || siblings.length === 0) return
+
+    const currentIndex = siblings.findIndex((a) => a.id === activity.id)
+
+    function getNavigationTarget(key: 'ArrowLeft' | 'ArrowRight'): ActivityData | null {
+      if (currentIndex === -1) {
+        if (key === 'ArrowLeft') {
+          return siblings[siblings.length - 1] ?? null
+        }
+
+        return siblings[0] ?? null
+      }
+
+      if (key === 'ArrowLeft' && currentIndex > 0) {
+        return siblings[currentIndex - 1]
+      }
+
+      if (key === 'ArrowRight' && currentIndex < siblings.length - 1) {
+        return siblings[currentIndex + 1]
+      }
+
+      return null
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (isTypingTarget(e.target)) return
+
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      const target = getNavigationTarget(e.key)
+      if (!target) return
+
+      e.preventDefault()
+      navigate(`/activities/${target.id}`)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activity, siblings, navigate])
+
+  useEffect(() => {
+    if (!confirmActivityDelete) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape' || deletingActivity) return
+      e.preventDefault()
+      setConfirmActivityDelete(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [confirmActivityDelete, deletingActivity])
 
   async function handleEvidenceDragEnd(event: DragEndEvent) {
     if (!activity?.evidences) return
@@ -174,10 +349,12 @@ export function ActivityDetailPage() {
   }
 
   async function handleDeleteEvidence(evidenceId: string) {
-    if (!window.electronAPI) return
-    setDeleting(true)
+    setDeletingEvidence(true)
     try {
-      const success = await window.electronAPI.deleteEvidence(evidenceId)
+      const success = window.electronAPI
+        ? await window.electronAPI.deleteEvidence(evidenceId)
+        : localDb.deleteEvidence(evidenceId)
+
       if (success && activity) {
         setActivity({
           ...activity,
@@ -189,8 +366,42 @@ export function ActivityDetailPage() {
     } catch {
       toast.error('Erro ao excluir evidência')
     } finally {
-      setDeleting(false)
-      setConfirmDelete(null)
+      setDeletingEvidence(false)
+      setConfirmEvidenceDelete(null)
+    }
+  }
+
+  function handleChangeMonth(delta: number) {
+    const baseMonth = selectedMonth || activity?.month_reference || getCurrentMonthRef()
+    const nextMonth = shiftMonthReference(baseMonth, delta)
+
+    setMonthWithoutActivities(null)
+    setSelectedMonth(nextMonth)
+  }
+
+  async function handleDeleteActivity() {
+    if (!activity) return
+
+    const monthToRedirect = selectedMonth || activity.month_reference
+    setDeletingActivity(true)
+
+    try {
+      const success = window.electronAPI
+        ? await window.electronAPI.deleteActivity(activity.id)
+        : localDb.deleteActivity(activity.id)
+
+      if (!success) {
+        toast.error('Erro ao excluir atividade')
+        return
+      }
+
+      toast.success('Atividade excluída')
+      navigate(`/activities?month=${monthToRedirect}`)
+    } catch {
+      toast.error('Erro ao excluir atividade')
+    } finally {
+      setDeletingActivity(false)
+      setConfirmActivityDelete(false)
     }
   }
 
@@ -303,14 +514,18 @@ export function ActivityDetailPage() {
   }
 
   const links = parseLinks(activity.link_ref)
+  const activeMonthReference = selectedMonth || activity.month_reference
+  const showEmptyMonthState = monthWithoutActivities === activeMonthReference
+  const showMonthLoadingState = siblingsLoading && activeMonthReference !== activity.month_reference
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div id="activity-detail" className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="activity-detail-header" className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(`/activities?month=${activity.month_reference}`)}
+            id="activity-detail-btn-back"
+            onClick={() => navigate(`/activities?month=${activeMonthReference}`)}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Voltar"
             aria-label="Voltar para lista de atividades"
@@ -319,18 +534,62 @@ export function ActivityDetailPage() {
           </button>
           <h1 className="text-2xl font-bold">Detalhes da Atividade</h1>
         </div>
-        <button
-          onClick={() => navigate(`/activities/${activity.id}/edit`)}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg
-            hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
-        >
-          <i className="fa-solid fa-pen-to-square"></i>
-          Editar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            id="activity-detail-btn-edit"
+            onClick={() => navigate(`/activities/${activity.id}/edit`)}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg
+              hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
+          >
+            <i className="fa-solid fa-pen-to-square"></i>
+            Editar
+          </button>
+          <button
+            id="activity-detail-btn-delete"
+            onClick={() => setConfirmActivityDelete(true)}
+            className="px-4 py-2 border border-destructive/40 text-destructive rounded-lg
+              hover:bg-destructive/10 transition-colors cursor-pointer flex items-center gap-2"
+            aria-label="Excluir atividade"
+          >
+            <i className="fa-solid fa-trash-can" aria-hidden="true"></i>
+            Excluir
+          </button>
+        </div>
+      </div>
+
+      {/* Top navigation */}
+      <div id="activity-detail-nav" className="mb-4">
+        <ActivityNav
+          siblings={siblings}
+          currentId={activity.id}
+          selectedMonth={activeMonthReference}
+          onChangeMonth={handleChangeMonth}
+        />
       </div>
 
       {/* Info card */}
-      <div className="bg-card border border-border rounded-lg p-6 space-y-5">
+      {showMonthLoadingState ? (
+        <div className="bg-card border border-border rounded-lg p-8 text-center space-y-3">
+          <i className="fa-solid fa-spinner fa-spin text-2xl text-muted-foreground" aria-hidden="true"></i>
+          <p className="text-sm text-muted-foreground">
+            Carregando atividades de {activeMonthReference}...
+          </p>
+        </div>
+      ) : showEmptyMonthState ? (
+        <div
+          id="activity-detail-empty-month"
+          className="bg-card border border-border rounded-lg p-8 text-center space-y-3"
+          role="status"
+          aria-live="polite"
+        >
+          <i className="fa-regular fa-calendar-xmark text-3xl text-muted-foreground" aria-hidden="true"></i>
+          <h2 className="text-lg font-semibold">Mês sem atividades cadastradas</h2>
+          <p className="text-sm text-muted-foreground">
+            Não há atividades cadastradas para {activeMonthReference}.
+          </p>
+        </div>
+      ) : (
+      <div id="activity-detail-info" className="bg-card border border-border rounded-lg p-6 space-y-5">
         {/* Status + Period */}
         <div className="flex flex-wrap items-center gap-4">
           <span
@@ -352,6 +611,12 @@ export function ActivityDetailPage() {
             <i className="fa-solid fa-calendar-days mr-1"></i>
             Ref: {activity.month_reference}
           </span>
+          {activity.project_scope && (
+            <span className="text-sm text-muted-foreground">
+              <i className="fa-solid fa-diagram-project mr-1"></i>
+              {activity.project_scope}
+            </span>
+          )}
         </div>
 
         {/* Description */}
@@ -390,6 +655,7 @@ export function ActivityDetailPage() {
 
         {/* Evidences */}
         <div
+          id="activity-detail-evidence"
           onDragOver={(e) => { e.preventDefault(); setDropActive(true) }}
           onDragLeave={() => setDropActive(false)}
           onDrop={handleFileDrop}
@@ -428,7 +694,7 @@ export function ActivityDetailPage() {
                         e.stopPropagation()
                         handlePaste()
                       }}
-                      className="text-sm px-3 py-1 border border-border rounded-md
+                      className="cyber-neon-border text-sm px-3 py-1 border border-border rounded-md
                         hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                     >
                       <i className="fa-solid fa-paste mr-1"></i>
@@ -442,14 +708,28 @@ export function ActivityDetailPage() {
             <>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEvidenceDragEnd}>
                 <SortableContext items={activity.evidences.map(e => e.id)} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {activity.evidences.map((ev) => (
-                      <SortableEvidenceCard 
-                        key={ev.id} 
-                        evidence={ev} 
-                        onDelete={(id) => setConfirmDelete(id)}
-                      />
-                    ))}
+                  <div id="activity-detail-evidence-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {activity.evidences.map((ev) => {
+                      const imageEvidences = activity.evidences!.filter(e => e.type !== 'text')
+                      return (
+                        <SortableEvidenceCard 
+                          key={ev.id} 
+                          evidence={ev} 
+                          onDelete={(id) => setConfirmEvidenceDelete(id)}
+                          onClick={() => {
+                            if (ev.type === 'text') {
+                              setTextModalEvidence(ev)
+                              setTextModalMode('view')
+                              setTextModalOpen(true)
+                            } else {
+                              const imgIdx = imageEvidences.findIndex(e => e.id === ev.id)
+                              setLightboxIndex(imgIdx >= 0 ? imgIdx : 0)
+                              setLightboxOpen(true)
+                            }
+                          }}
+                        />
+                      )
+                    })}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -479,8 +759,8 @@ export function ActivityDetailPage() {
                         e.stopPropagation()
                         handlePaste()
                       }}
-                      className="text-xs px-2 py-1 border border-border rounded
-                        hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                      className="cyber-neon-border text-xs px-2 py-1 border border-border rounded-lg cursor-pointer 
+                      hover:bg-success transition-colors text-foreground hover:text-foreground"
                     >
                       <i className="fa-solid fa-paste mr-1"></i>
                       Colar
@@ -507,12 +787,73 @@ export function ActivityDetailPage() {
           Última atualização: {new Date(activity.last_updated).toLocaleString('pt-BR')}
         </div>
       </div>
+      )}
 
-      {/* Confirm delete modal */}
-      {confirmDelete && (
+      {/* Bottom navigation */}
+      <div className="mt-4">
+        <ActivityNav
+          siblings={siblings}
+          currentId={activity.id}
+          selectedMonth={activeMonthReference}
+          onChangeMonth={handleChangeMonth}
+        />
+      </div>
+
+      {/* Confirm activity delete modal */}
+      {confirmActivityDelete && (
         <div
+          id="activity-detail-delete-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setConfirmDelete(null)}
+          onClick={() => !deletingActivity && setConfirmActivityDelete(false)}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="activity-detail-delete-title"
+        >
+          <div
+            className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-sm w-full mx-4 animate-modal-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4 text-destructive">
+              <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+              <h2 id="activity-detail-delete-title" className="text-lg font-semibold">Excluir atividade?</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Esta ação removerá a atividade e suas evidências de forma permanente.
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setConfirmActivityDelete(false)}
+                disabled={deletingActivity}
+                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                id="activity-detail-confirm-delete"
+                onClick={handleDeleteActivity}
+                disabled={deletingActivity}
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {deletingActivity ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    Excluindo...
+                  </>
+                ) : (
+                  'Excluir'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm evidence delete modal */}
+      {confirmEvidenceDelete && (
+        <div
+          id="activity-detail-evidence-delete-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setConfirmEvidenceDelete(null)}
           role="alertdialog" aria-modal="true" aria-labelledby="detail-delete-title"
         >
           <div
@@ -528,18 +869,18 @@ export function ActivityDetailPage() {
             </p>
             <div className="flex items-center gap-3 justify-end">
               <button
-                onClick={() => setConfirmDelete(null)}
-                disabled={deleting}
-                className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+                onClick={() => setConfirmEvidenceDelete(null)}
+                disabled={deletingEvidence}
+                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
-                onClick={() => handleDeleteEvidence(confirmDelete)}
-                disabled={deleting}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                onClick={() => handleDeleteEvidence(confirmEvidenceDelete)}
+                disabled={deletingEvidence}
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
-                {deleting ? (
+                {deletingEvidence ? (
                   <>
                     <i className="fa-solid fa-spinner fa-spin"></i>
                     Excluindo...
@@ -552,6 +893,31 @@ export function ActivityDetailPage() {
           </div>
         </div>
       )}
+
+      {activity.evidences && activity.evidences.length > 0 && (() => {
+        const imageEvidences = activity.evidences!.filter(e => e.type !== 'text')
+        return imageEvidences.length > 0 ? (
+          <EvidenceLightbox
+            open={lightboxOpen}
+            index={lightboxIndex}
+            slides={imageEvidences.map((ev): LightboxSlide => ({
+              src: ev.file_path?.startsWith('data:')
+                ? ev.file_path
+                : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
+              description: ev.caption || undefined,
+            }))}
+            onClose={() => setLightboxOpen(false)}
+          />
+        ) : null
+      })()}
+
+      <TextEvidenceModal
+        open={textModalOpen}
+        mode={textModalMode}
+        onClose={() => setTextModalOpen(false)}
+        initialContent={textModalEvidence?.text_content || ''}
+        initialCaption={textModalEvidence?.caption || ''}
+      />
     </div>
   )
 }

@@ -203,6 +203,8 @@ describe('generateDocxReport', () => {
         id: '019746ab-0000-7000-8000-ev0000000001',
         activity_id: '019746ab-0000-7000-8000-000000000001',
         file_path: imgPath,
+        type: 'image' as any,
+        text_content: null,
         caption: 'Evidência de teste',
         sort_index: 0,
         date_added: new Date(),
@@ -276,5 +278,43 @@ describe('generateDocxReport', () => {
     const settingsXml = await zip.file('word/settings.xml')!.async('string')
 
     expect(settingsXml).toContain('updateFields')
+  })
+
+  it('handles activity with text evidence', async () => {
+    const activity = makeActivity({
+      evidences: [{
+        id: '019746ab-0000-7000-8000-ev0000000002',
+        activity_id: '019746ab-0000-7000-8000-000000000001',
+        file_path: null as any,
+        type: 'text' as any,
+        text_content: '<p><strong>Bold note</strong> with <em>italic</em></p>',
+        caption: 'Nota de texto',
+        sort_index: 0,
+        date_added: new Date(),
+        deleted_at: null,
+        activity: null as any,
+      }],
+    })
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [activity],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+
+    // No media files should be added for text evidence
+    const mediaFiles = Object.keys(zip.files).filter(f => f.startsWith('word/media/image_ev_'))
+    expect(mediaFiles.length).toBe(0)
+
+    // Verify document contains the text evidence caption and content
+    const docXml = await zip.file('word/document.xml')!.async('string')
+    expect(docXml).toContain('Nota de texto')
+    expect(docXml).toContain('Bold note')
+    expect(docXml).toContain('italic')
   })
 })

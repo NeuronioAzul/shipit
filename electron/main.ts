@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification, shell, type MenuItemConstructorOptions, type WebContents } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
@@ -19,6 +19,52 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'shipit-evidence', privileges: { supportFetchAPI: true, stream: true } },
   { scheme: 'shipit-sfx', privileges: { supportFetchAPI: true, stream: true } },
 ])
+
+const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
+
+function parseUrlSafe(rawUrl: string): URL | null {
+  try {
+    return new URL(rawUrl)
+  } catch {
+    return null
+  }
+}
+
+function normalizeFilePathname(fileUrl: URL): string {
+  const decoded = decodeURIComponent(fileUrl.pathname)
+  const withDriveLetter = decoded.replace(/^\/([A-Za-z]:)/, '$1')
+  return path.normalize(withDriveLetter).toLowerCase()
+}
+
+function isInternalAppNavigation(targetUrl: string, currentUrl: string): boolean {
+  if (targetUrl === currentUrl) return true
+
+  const target = parseUrlSafe(targetUrl)
+  const current = parseUrlSafe(currentUrl)
+  if (!target || !current) return false
+
+  if (target.protocol === 'file:' && current.protocol === 'file:') {
+    return normalizeFilePathname(target) === normalizeFilePathname(current)
+  }
+
+  if (isDev && (target.protocol === 'http:' || target.protocol === 'https:')) {
+    return target.origin === current.origin
+  }
+
+  return false
+}
+
+async function openExternalSafely(rawUrl: string): Promise<void> {
+  const parsed = parseUrlSafe(rawUrl)
+  if (!parsed) return
+  if (!ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) return
+
+  try {
+    await shell.openExternal(parsed.toString())
+  } catch (error) {
+    console.error('Failed to open external URL:', parsed.toString(), error)
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -58,6 +104,56 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null
+  })
+
+  const { webContents } = mainWindow
+
+  webContents.setWindowOpenHandler(({ url }) => {
+    void openExternalSafely(url)
+    return { action: 'deny' }
+  })
+
+  webContents.on('will-navigate', (event, url) => {
+    const currentUrl = webContents.getURL()
+    if (isInternalAppNavigation(url, currentUrl)) {
+      return
+    }
+
+    event.preventDefault()
+    void openExternalSafely(url)
+  })
+
+  webContents.on('context-menu', (_event, params) => {
+    const template: MenuItemConstructorOptions[] = []
+    const { editFlags, isEditable, selectionText } = params
+    let hasEnabledAction = false
+
+    const pushAction = (item: MenuItemConstructorOptions) => {
+      template.push(item)
+      if (item.type !== 'separator' && item.enabled !== false) {
+        hasEnabledAction = true
+      }
+    }
+
+    if (isEditable) {
+      pushAction({ role: 'undo', enabled: editFlags.canUndo })
+      pushAction({ role: 'redo', enabled: editFlags.canRedo })
+      template.push({ type: 'separator' })
+      pushAction({ role: 'cut', enabled: editFlags.canCut })
+      pushAction({ role: 'copy', enabled: editFlags.canCopy })
+      pushAction({ role: 'paste', enabled: editFlags.canPaste })
+      template.push({ type: 'separator' })
+      pushAction({ role: 'selectAll', enabled: editFlags.canSelectAll })
+    } else if (selectionText.trim().length > 0) {
+      pushAction({ role: 'copy', enabled: editFlags.canCopy })
+    }
+
+    if (!hasEnabledAction) {
+      return
+    }
+
+    const contextMenu = Menu.buildFromTemplate(template)
+    contextMenu.popup({ window: mainWindow ?? undefined })
   })
 
   // Notify renderer of maximize/unmaximize changes
@@ -356,6 +452,16 @@ ipcMain.handle('db:permanentlyDeleteEvidence', async (_event, id: string) => {
   return permanentlyDeleteEvidence(id)
 })
 
+ipcMain.handle('db:saveTextEvidence', async (_event, activityId: string, textContent: string, caption: string | null) => {
+  const { saveTextEvidence } = await import('./database')
+  return saveTextEvidence(activityId, textContent, caption)
+})
+
+ipcMain.handle('db:updateTextEvidence', async (_event, id: string, textContent: string) => {
+  const { updateTextEvidence } = await import('./database')
+  return updateTextEvidence(id, textContent)
+})
+
 // ──── Dialog IPC ────
 
 ipcMain.handle('app:selectImages', async () => {
@@ -394,6 +500,73 @@ function saveSettingsFile(data: Record<string, unknown>): void {
   fs.writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2), 'utf-8')
 }
 
+function ensureDirectoryExists(targetDir: string): string {
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true })
+  }
+  return targetDir
+}
+
+function getConfiguredReportsDir(): string {
+  const configuredPath = loadSettings().reportsDirectory
+  if (typeof configuredPath === 'string' && configuredPath.trim().length > 0) {
+    return configuredPath
+  }
+  return path.join(app.getPath('userData'), 'reports')
+}
+
+function getEvidencesDirPath(): string {
+  return path.join(app.getPath('userData'), 'evidences')
+}
+
+function getActiveWebContents(): WebContents | null {
+  return BrowserWindow.getFocusedWindow()?.webContents ?? mainWindow?.webContents ?? null
+}
+
+function runEditCommand(command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll'): boolean {
+  const webContents = getActiveWebContents()
+  if (!webContents) return false
+
+  switch (command) {
+    case 'undo':
+      webContents.undo()
+      return true
+    case 'redo':
+      webContents.redo()
+      return true
+    case 'cut':
+      webContents.cut()
+      return true
+    case 'copy':
+      webContents.copy()
+      return true
+    case 'paste':
+      webContents.paste()
+      return true
+    case 'selectAll':
+      webContents.selectAll()
+      return true
+    default:
+      return false
+  }
+}
+
+function runZoomCommand(command: 'in' | 'out' | 'reset'): boolean {
+  const webContents = getActiveWebContents()
+  if (!webContents) return false
+
+  const currentLevel = webContents.getZoomLevel()
+  if (command === 'reset') {
+    webContents.setZoomLevel(0)
+    return true
+  }
+
+  const delta = command === 'in' ? 0.5 : -0.5
+  const nextLevel = Math.max(-8, Math.min(8, currentLevel + delta))
+  webContents.setZoomLevel(nextLevel)
+  return true
+}
+
 ipcMain.handle('app:getSettings', () => {
   return loadSettings()
 })
@@ -417,6 +590,35 @@ ipcMain.handle('app:selectDirectory', async () => {
 ipcMain.handle('app:getDefaultReportsDir', () => {
   return path.join(app.getPath('userData'), 'reports')
 })
+
+ipcMain.handle('app:openReportsDirectory', async () => {
+  const reportsDir = ensureDirectoryExists(getConfiguredReportsDir())
+  const error = await shell.openPath(reportsDir)
+  return error.length === 0
+})
+
+ipcMain.handle('app:openEvidencesDirectory', async () => {
+  const evidencesDir = ensureDirectoryExists(getEvidencesDirPath())
+  const error = await shell.openPath(evidencesDir)
+  return error.length === 0
+})
+
+ipcMain.handle('app:quit', () => {
+  tray?.destroy()
+  tray = null
+  app.quit()
+})
+
+ipcMain.handle('app:editUndo', () => runEditCommand('undo'))
+ipcMain.handle('app:editRedo', () => runEditCommand('redo'))
+ipcMain.handle('app:editCut', () => runEditCommand('cut'))
+ipcMain.handle('app:editCopy', () => runEditCommand('copy'))
+ipcMain.handle('app:editPaste', () => runEditCommand('paste'))
+ipcMain.handle('app:editSelectAll', () => runEditCommand('selectAll'))
+
+ipcMain.handle('app:zoomIn', () => runZoomCommand('in'))
+ipcMain.handle('app:zoomOut', () => runZoomCommand('out'))
+ipcMain.handle('app:zoomReset', () => runZoomCommand('reset'))
 
 // ──── Sound Playback IPC ────
 

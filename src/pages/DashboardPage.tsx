@@ -5,20 +5,8 @@ import type { ActivityData, ReportData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonStats, Skeleton } from '../components/Skeleton'
-
-const STATUS_COLORS: Record<string, string> = {
-  'Em andamento': 'bg-brand-blue/15 text-primary',
-  'Concluído': 'bg-success/15 text-success',
-  'Cancelado': 'bg-destructive/15 text-destructive',
-  'Pendente': 'bg-warning/15 text-warning-foreground',
-}
-
-const STATUS_ICONS: Record<string, string> = {
-  'Em andamento': 'fa-spinner',
-  'Concluído': 'fa-check-circle',
-  'Cancelado': 'fa-times-circle',
-  'Pendente': 'fa-clock',
-}
+import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
+import { isTypingTarget } from '../utils/keyboardGuards'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -66,12 +54,12 @@ export function DashboardPage() {
     loadActivities()
   }, [loadActivities])
 
-  function changeMonth(delta: number) {
+  const changeMonth = useCallback((delta: number) => {
     const [mm, yyyy] = monthRef.split('/')
     const d = new Date(parseInt(yyyy), parseInt(mm) - 1 + delta, 1)
     const newMonth = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
     setSearchParams({ month: newMonth })
-  }
+  }, [monthRef, setSearchParams])
 
   function formatDate(d: string | null): string {
     if (!d) return '—'
@@ -84,6 +72,24 @@ export function DashboardPage() {
     { month: 'long', year: 'numeric' }
   )
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (isTypingTarget(e.target)) return
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        changeMonth(-1)
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        changeMonth(1)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [changeMonth])
+
   // Summary stats
   const total = activities.length
   const concluidas = activities.filter((a) => a.status === 'Concluído').length
@@ -93,11 +99,11 @@ export function DashboardPage() {
   const incompletas = activities.filter((a) => !isActivityComplete(a)).length
 
   const summaryCards = [
-    { label: 'Total', value: total, icon: 'fa-list-check', color: 'text-foreground', bg: 'bg-muted' },
-    { label: 'Concluídas', value: concluidas, icon: 'fa-check-circle', color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Em Andamento', value: emAndamento, icon: 'fa-spinner', color: 'text-primary', bg: 'bg-brand-blue/10' },
-    { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-warning-foreground', bg: 'bg-warning/10' },
-    { label: 'Canceladas', value: canceladas, icon: 'fa-times-circle', color: 'text-destructive', bg: 'bg-destructive/10' },
+    { label: 'Total', value: total, icon: 'fa-list-check', color: 'text-chart-1', bg: 'bg-chart-1/10' },
+    { label: 'Concluídas', value: concluidas, icon: 'fa-check-circle', color: 'text-chart-2', bg: 'bg-chart-2/10' },
+    { label: 'Em Andamento', value: emAndamento, icon: 'fa-spinner', color: 'text-chart-3', bg: 'bg-chart-3/10' },
+    { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-chart-4', bg: 'bg-chart-4/10' },
+    { label: 'Canceladas', value: canceladas, icon: 'fa-times-circle', color: 'text-chart-5', bg: 'bg-chart-5/10' },
   ]
 
   // Gantt chart data
@@ -120,10 +126,11 @@ export function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="dashboard-header" className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-3">
           <button
+            id="dashboard-btn-new"
             onClick={() => navigate(`/activities/new?month=${monthRef}`)}
             className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
               hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
@@ -136,19 +143,21 @@ export function DashboardPage() {
 
       {/* Month selector */}
 
-      <div className="relative flex items-center justify-center mb-6 select-none">
+      <div id="dashboard-month-selector" className="relative flex items-center justify-center mb-6 select-none">
         <div className="flex items-center gap-2">
           <button
+            id="dashboard-btn-prev-month"
             onClick={() => changeMonth(-1)}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="Mês anterior"
           >
             <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
           </button>
-          <span className="text-lg font-medium capitalize min-w-48 text-center">
+          <span id="dashboard-month-label" className="text-lg font-medium capitalize min-w-48 text-center">
             {monthName}
           </span>
           <button
+            id="dashboard-btn-next-month"
             onClick={() => changeMonth(1)}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="Próximo mês"
@@ -159,7 +168,7 @@ export function DashboardPage() {
         {!isCurrentMonth && (
           <button
             onClick={() => setSearchParams({ month: currentMonthRef })}
-            className="absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
+            className="cyber-neon-border absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
               hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
             title="Ir para o mês atual"
           >
@@ -171,7 +180,7 @@ export function DashboardPage() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-6">
+        <div id="dashboard-loading" className="space-y-6">
           <SkeletonStats />
           <div className="bg-card border border-border rounded-lg p-4">
             <Skeleton className="h-5 w-40 mb-4" />
@@ -187,7 +196,7 @@ export function DashboardPage() {
       {!loading && (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          <div id='summary-cards' className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
             {summaryCards.map((card) => (
               <div
                 key={card.label}
@@ -202,7 +211,7 @@ export function DashboardPage() {
 
           {/* Incomplete warning */}
           {incompletas > 0 && (
-            <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-warning-foreground flex items-center gap-2 text-sm">
+            <div id="dashboard-warning" className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-warning flex items-center gap-2 text-sm">
               <i className="fa-solid fa-triangle-exclamation"></i>
               <span>
                 {incompletas} atividade{incompletas > 1 ? 's' : ''} com campos obrigatórios não preenchidos.
@@ -213,12 +222,12 @@ export function DashboardPage() {
 
           {/* Gantt chart */}
           {activities.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-4 mb-6 overflow-x-auto">
+            <div id="dashboard-gantt" className="bg-card border border-border rounded-lg p-4 mb-6 overflow-x-auto">
               <h2 className="text-sm font-semibold text-muted-foreground mb-3">
                 <i className="fa-solid fa-chart-gantt mr-1"></i>
                 Linha do Tempo
               </h2>
-              <div className="min-w-[600px]">
+              <div className="min-w-150">
                 {/* Day headers */}
                 <div className="flex items-center mb-1" style={{ paddingLeft: '140px' }}>
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
@@ -236,17 +245,17 @@ export function DashboardPage() {
                 {activities.map((activity, idx) => {
                   const days = getActivityDays(activity)
                   const barColor = activity.status === 'Concluído'
-                    ? 'bg-success'
+                    ? 'bg-chart-2'
                     : activity.status === 'Cancelado'
-                      ? 'bg-destructive'
+                      ? 'bg-chart-5'
                       : activity.status === 'Em andamento'
-                        ? 'bg-primary'
-                        : 'bg-warning'
+                        ? 'bg-chart-3'
+                        : 'bg-chart-4'
 
                   return (
                     <div key={activity.id} className="flex items-center h-7 group">
                       <div
-                        className="w-[140px] shrink-0 text-xs text-foreground truncate pr-2 cursor-pointer hover:text-primary"
+                        className="w-35 shrink-0 text-xs text-foreground truncate pr-2 cursor-pointer hover:text-primary"
                         title={activity.description}
                         onClick={() => navigate(`/activities/${activity.id}`)}
                       >
@@ -299,7 +308,7 @@ export function DashboardPage() {
                         {idx + 1}
                         {!isActivityComplete(activity) && (
                           <i
-                            className="fa-solid fa-triangle-exclamation text-warning-foreground text-[10px] ml-1"
+                            className="fa-solid fa-triangle-exclamation text-warning text-[10px] ml-1"
                             title="Campos obrigatórios não preenchidos"
                           ></i>
                         )}
@@ -362,7 +371,7 @@ export function DashboardPage() {
 
           {/* Generate report button */}
           {activities.length > 0 && (
-            <div className="flex flex-col items-center gap-3">
+            <div id="dashboard-report" className="flex flex-col items-center gap-3">
               {/* Report result feedback */}
               {reportResult && (
                 <div
@@ -409,8 +418,9 @@ export function DashboardPage() {
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setShowConfirm(false)}
-                      className="px-4 py-2 border border-border text-foreground rounded-lg
-                        hover:bg-muted transition-colors cursor-pointer text-sm"
+                      className="px-4 py-2
+                      bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer
+                         text-sm"
                     >
                       Cancelar
                     </button>
@@ -512,8 +522,8 @@ export function DashboardPage() {
                       {report.status === 'Gerado' && window.electronAPI && (
                         <button
                           onClick={() => window.electronAPI!.openFileInFolder(report.file_path)}
-                          className="px-2.5 py-1 text-xs border border-border rounded-lg
-                            hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                          className="px-2.5 py-1 text-success bg-success/20 rounded text-xs font-medium hover:bg-success/30 transition-colors cursor-pointer
+                          flex items-center gap-1.5 shrink-0"
                           title="Abrir pasta do relatório"
                         >
                           <i className="fa-solid fa-folder-open"></i>

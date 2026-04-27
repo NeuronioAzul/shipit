@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { EvidenceData } from '../vite-env'
 import { SkeletonEvidenceGrid } from '../components/Skeleton'
+import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
 
 function formatDate(d: string | null): string {
   if (!d) return '—'
@@ -29,6 +30,8 @@ export function TrashPage() {
   const [emptyingTrash, setEmptyingTrash] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [confirmEmpty, setConfirmEmpty] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   const loadEvidences = useCallback(async () => {
     setLoading(true)
@@ -103,8 +106,8 @@ export function TrashPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between gap-3 mb-6">
+    <div className="max-w-6xl mx-auto">
+      <div id="trash-header" className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -127,9 +130,10 @@ export function TrashPage() {
 
         {evidences.length > 0 && (
           <button
+            id="trash-btn-empty"
             onClick={() => setConfirmEmpty(true)}
             disabled={emptyingTrash}
-            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {emptyingTrash ? (
               <>
@@ -147,7 +151,7 @@ export function TrashPage() {
       </div>
 
       {/* Info banner */}
-      <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+      <div className="bg-card border border-border rounded-lg overflow-hidden p-4 mb-6">
         <div className="flex items-start gap-3">
           <i className="fa-solid fa-circle-info text-primary mt-0.5"></i>
           <div className="text-sm text-muted-foreground">
@@ -178,7 +182,7 @@ export function TrashPage() {
 
       {/* Evidences grid */}
       {!loading && evidences.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="trash-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {evidences.map((ev) => {
             const daysLeft = getDaysUntilPermanentDelete(ev.deleted_at)
             const isExpiringSoon = daysLeft <= 7
@@ -186,20 +190,38 @@ export function TrashPage() {
             return (
               <div
                 key={ev.id}
-                className="bg-card border border-border rounded-lg overflow-hidden group"
+                className="bg-card border border-border rounded-lg overflow-hidden group p-2"
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video bg-muted">
-                  <img
-                    src={`shipit-evidence://host?path=${encodeURIComponent(ev.file_path)}`}
-                    alt={ev.caption || 'Evidência'}
-                    className="w-full h-full object-cover opacity-60"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%239CA3AF" font-size="12">Sem preview</text></svg>'
-                    }}
-                  />
+                <div
+                  className="relative aspect-video bg-muted cursor-pointer"
+                  onClick={() => {
+                    if (ev.type !== 'text') {
+                      const imgIdx = evidences.filter(e => e.type !== 'text').findIndex(e => e.id === ev.id)
+                      setLightboxIndex(imgIdx >= 0 ? imgIdx : 0)
+                      setLightboxOpen(true)
+                    }
+                  }}
+                >
+                  {ev.type === 'text' ? (
+                    <div className="flex flex-col items-center justify-center gap-2 w-full h-full opacity-60">
+                      <i className="fa-solid fa-file-lines text-3xl text-primary/60" aria-hidden="true"></i>
+                      <p className="text-xs text-muted-foreground line-clamp-2 text-center px-2">
+                        {(ev.text_content || '').replace(/<[^>]*>/g, '').slice(0, 80) || 'Texto vazio'}
+                      </p>
+                    </div>
+                  ) : (
+                    <img
+                      src={`shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`}
+                      alt={ev.caption || 'Evidência'}
+                      className="w-full h-full object-cover opacity-60"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%239CA3AF" font-size="12">Sem preview</text></svg>'
+                      }}
+                    />
+                  )}
                   {/* Overlay with days left */}
-                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                  <div className={`cyber-neon-border absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                     isExpiringSoon
                       ? 'bg-destructive text-destructive-foreground'
                       : 'bg-background/80 text-muted-foreground'
@@ -238,7 +260,7 @@ export function TrashPage() {
                     <button
                       onClick={() => setConfirmDelete(ev.id)}
                       disabled={restoring === ev.id || deleting === ev.id}
-                      className="px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="cyber-neon-border px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Excluir permanentemente"
                       aria-label="Excluir permanentemente"
                     >
@@ -259,6 +281,7 @@ export function TrashPage() {
       {/* Confirm permanent delete modal */}
       {confirmDelete && (
         <div
+          id="trash-delete-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmDelete(null)}
           role="alertdialog" aria-modal="true" aria-labelledby="trash-delete-title"
@@ -277,7 +300,7 @@ export function TrashPage() {
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer"
+                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -295,6 +318,7 @@ export function TrashPage() {
       {/* Confirm empty trash modal */}
       {confirmEmpty && (
         <div
+          id="trash-empty-modal"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmEmpty(false)}
           role="alertdialog" aria-modal="true" aria-labelledby="trash-empty-title"
@@ -320,7 +344,7 @@ export function TrashPage() {
               </button>
               <button
                 onClick={handleEmptyTrash}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer"
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors cursor-pointer"
               >
                 Esvaziar lixeira
               </button>
@@ -328,6 +352,21 @@ export function TrashPage() {
           </div>
         </div>
       )}
+
+      {evidences.length > 0 && (() => {
+        const imageEvidences = evidences.filter(e => e.type !== 'text')
+        return imageEvidences.length > 0 ? (
+          <EvidenceLightbox
+            open={lightboxOpen}
+            index={lightboxIndex}
+            slides={imageEvidences.map((ev): LightboxSlide => ({
+              src: `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
+              description: ev.caption || undefined,
+            }))}
+            onClose={() => setLightboxOpen(false)}
+          />
+        ) : null
+      })()}
     </div>
   )
 }

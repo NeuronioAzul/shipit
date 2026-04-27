@@ -15,11 +15,26 @@ function generateId(): string {
   return crypto.randomUUID()
 }
 
+function getNextActivityOrder(activities: ActivityData[], monthReference: string): number {
+  const orders = activities
+    .filter((a) => a.month_reference === monthReference && a.order !== null && a.order !== undefined)
+    .map((a) => a.order)
+
+  return orders.length > 0 ? Math.max(...orders) + 1 : 1
+}
+
 export const localDb = {
   getActivities(monthReference: string): ActivityData[] {
     return getStoredActivities()
-      .filter((a) => a.month_reference === monthReference)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((activity, index) => ({ activity, index }))
+      .filter(({ activity }) => activity.month_reference === monthReference)
+      .sort((a, b) => {
+        const orderA = a.activity.order ?? Number.MAX_SAFE_INTEGER
+        const orderB = b.activity.order ?? Number.MAX_SAFE_INTEGER
+        if (orderA !== orderB) return orderA - orderB
+        return a.index - b.index
+      })
+      .map(({ activity }) => activity)
   },
 
   getActivity(id: string): ActivityData | null {
@@ -32,26 +47,30 @@ export const localDb = {
     if (data.id) {
       const idx = all.findIndex((a) => a.id === data.id)
       if (idx >= 0) {
+        const currentOrder = all[idx].order
         all[idx] = { ...all[idx], ...data, last_updated: new Date().toISOString() }
+        all[idx].order = currentOrder
         setStoredActivities(all)
         return all[idx]
       }
     }
 
+    const monthReference = data.month_reference || getCurrentMonthRef()
+    const id = data.id || generateId()
     const activity: ActivityData = {
-      id: generateId(),
-      order: all.filter((a) => a.month_reference === data.month_reference).length + 1,
       description: '',
       date_start: null,
       date_end: null,
       link_ref: null,
       status: 'Pendente',
-      month_reference: data.month_reference || getCurrentMonthRef(),
       attendance_type: null,
       project_scope: null,
       last_updated: new Date().toISOString(),
       evidences: [],
       ...data,
+      id,
+      order: getNextActivityOrder(all, monthReference),
+      month_reference: monthReference,
     }
     all.push(activity)
     setStoredActivities(all)
@@ -83,7 +102,9 @@ export const localDb = {
     const evidence: EvidenceData = {
       id: generateId(),
       activity_id: activityId,
+      type: 'image',
       file_path: fileDataUrl,
+      text_content: null,
       caption,
       sort_index: activity.evidences?.length ?? 0,
       date_added: new Date().toISOString(),
@@ -121,6 +142,42 @@ export const localDb = {
       }
     }
     return false
+  },
+
+  saveTextEvidence(activityId: string, textContent: string, caption: string | null): EvidenceData {
+    const all = getStoredActivities()
+    const activity = all.find((a) => a.id === activityId)
+    if (!activity) throw new Error('Activity not found')
+
+    const evidence: EvidenceData = {
+      id: generateId(),
+      activity_id: activityId,
+      type: 'text',
+      file_path: null,
+      text_content: textContent,
+      caption,
+      sort_index: activity.evidences?.length ?? 0,
+      date_added: new Date().toISOString(),
+      deleted_at: null,
+    }
+
+    if (!activity.evidences) activity.evidences = []
+    activity.evidences.push(evidence)
+    setStoredActivities(all)
+    return evidence
+  },
+
+  updateTextEvidence(id: string, textContent: string): EvidenceData | null {
+    const all = getStoredActivities()
+    for (const activity of all) {
+      const ev = activity.evidences?.find((e) => e.id === id)
+      if (ev && ev.type === 'text') {
+        ev.text_content = textContent
+        setStoredActivities(all)
+        return ev
+      }
+    }
+    return null
   },
 }
 

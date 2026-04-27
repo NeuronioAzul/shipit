@@ -22,14 +22,14 @@ export function HomePage() {
 
   if (hasProfile === null) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div id="home-loading" className="flex items-center justify-center h-full">
         <i className="fa-solid fa-spinner fa-spin text-3xl text-muted-foreground"></i>
       </div>
     )
   }
 
   if (!hasProfile) {
-    return <EmptyState onCreateProfile={() => navigate('/profile')} />
+    return <div id="home-empty"><EmptyState onCreateProfile={() => navigate('/profile')} /></div>
   }
 
   return <DashboardPage />
