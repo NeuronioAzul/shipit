@@ -1,6 +1,6 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app (v1.2.2-dev, last release: v1.2.1) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (package version 1.2.2, latest release tag: v1.2.2; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@ Electron desktop app (v1.2.2-dev, last release: v1.2.1) for software engineers t
 | Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
 | Toasts | sonner 2 | Non-blocking notifications |
 | Auto-update | electron-updater 6 | GitHub Releases integration |
-| Testing | Vitest + Playwright | 70 unit/integration tests, 4 E2E scenarios |
+| Testing | Vitest + Playwright | 104 unit/integration tests, 18 declared E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -55,7 +55,7 @@ Renderer (React/Vite)          Preload Bridge              Main (Electron/Node)
 - **Security**: `contextIsolation: true`, `nodeIntegration: false` — never change these
 - **Custom protocols**: `shipit-evidence://` and `shipit-sfx://` for safe file serving from userData
 
-### IPC Handlers (70+ methods)
+### IPC Handlers (54 invoke handlers + 4 renderer events)
 
 | Group | Prefix | Key Handlers |
 |-------|--------|-------------|
@@ -64,12 +64,14 @@ Renderer (React/Vite)          Preload Bridge              Main (Electron/Node)
 | Evidence | `db:` | `saveEvidence`, `saveEvidenceFromBuffer` (clipboard), `updateEvidenceCaption`, `deleteEvidence` (soft), `reorderEvidences`, `getDeletedEvidences`, `restoreEvidence`, `permanentlyDeleteEvidence`, `saveTextEvidence`, `updateTextEvidence` |
 | Reports | `app:` / `db:` | `generateReport(month)`, `openFileInFolder`, `getReports(month)` |
 | Settings | `app:` | `getSettings`, `saveSettings`, `getDefaultReportsDir` |
+| App menu | `app:` | `openReportsDirectory`, `openEvidencesDirectory`, `quit`, edit commands, zoom commands |
 | Dialogs | `app:` | `selectImages`, `selectDirectory` |
 | Tray | `app:` | `setTrayStatus('default'\|'green'\|'yellow'\|'red')` |
 | Sounds | `app:` | `listSounds`, `playSound` |
 | Auto-launch | `app:` | `getAutoLaunch`, `setAutoLaunch` |
 | Alerts | `db:` | `getAlert`, `saveAlert` |
 | Auto-update | `app:` | `checkForUpdate`, `installUpdate` |
+| Renderer events | `app:` / `window:` | `playSoundData`, `updateStatus`, `navigate`, `maximized-change` |
 | Window | `window:` | `minimize`, `maximize`, `close`, `isMaximized` |
 
 ### Background Schedulers
@@ -97,8 +99,8 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 | `Activity` | UUID v7 | `description`, `date_start/end`, `status`, `project_scope`, `link_ref`, `month_reference`, `order` | 1:N → Evidence, M:N → Report |
 | `Evidence` | UUID v7 | `type` (enum: 'image'\|'text'), `file_path`, `text_content`, `caption`, `sort_index`, `date_added`, `deleted_at` (soft-delete) | N:1 → Activity |
 | `Report` | UUID v7 | `month_reference`, `file_path`, `report_name`, `date_generated`, `status` | M:N → Activity |
-| `ActivityReport` | — | Junction table (`activities_report`) | Activity ↔ Report |
-| `Alert` | auto-inc | `alert_enabled`, `alert_time`, `alert_days_before` (JSON), `alert_frequency`, `alert_sound_file`, `last_alert_sent` | N:1 → UserProfile |
+| `ActivityReport` | UUID v7 | Junction table (`activities_report`) | Activity ↔ Report |
+| `Alert` | auto-inc | `alert_enabled`, `alert_time`, `alert_days_before` (JSON), `alert_frequency`, `alert_sound_file`, `last_alert_sent` | 1:1 → UserProfile |
 
 ### Routes
 
@@ -107,6 +109,7 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 /profile                → ProfilePage      (User profile setup + alert config)
 /settings               → SettingsPage     (Theme, notifications, auto-launch, reports dir, updates)
 /trash                  → TrashPage        (Soft-deleted evidence recovery/permanent deletion)
+/manual                 → UserManualPage   (Static user manual, FAQ, help entry point)
 /activities             → ActivitiesPage   (Monthly activity list, search, drag-reorder)
 /activities/new         → ActivityFormPage  (Create new activity)
 /activities/:id         → ActivityDetailPage (View/edit details, evidence gallery)
@@ -141,17 +144,18 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 ```
 electron/                   # Main process (CommonJS)
   main.ts                   # App lifecycle, IPC handlers, schedulers, tray
-  preload.ts                # contextBridge API (70+ methods)
+  preload.ts                # contextBridge API (54 invoke handlers + 4 event subscriptions)
   database.ts               # DataSource, CRUD, soft-delete, search
   report-generator.ts       # DOCX generation (JSZip + xmldom)
   entities/                 # TypeORM entity definitions (6 files)
 src/                        # Renderer (ESNext, Vite)
-  pages/                    # 8 route pages
-  components/               # 13 reusable components (AppLayout, Header, TitleBar, SearchBar, EvidenceUpload, EvidenceLightbox, TextEvidenceEditor, TextEvidenceModal, ActivityBar, ActivityNav, EmptyState, Skeleton, ThemeSelector)
-  contexts/                 # ThemeContext (multi-theme support)
+  pages/                    # 9 page files / 9 routed views (including UserManualPage)
+  components/               # 17 reusable components (ActivityBar, ActivityNav, AppLayout, AppTopMenu, DatePicker, EmptyState, EvidenceLightbox, EvidenceUpload, Header, SearchBar, Select, Skeleton, TextEvidenceEditor, TextEvidenceModal, ThemeSelector, TimePicker, TitleBar)
+  contexts/                 # ThemeContext + NavigationHistoryContext
+  menu/                     # appMenuCatalog + saveContextRegistry
   services/                 # localDb.ts (browser fallback)
   themes/                   # Theme system (themes.ts registry, themes.css palettes, cyberpunk-effects.css)
-  utils/                    # validation.ts, statusColors.ts
+  utils/                    # validation, status colors, month refs, keyboard guards, activity month navigation
 e2e/                        # Playwright E2E tests
 docs/                       # Architecture, roadmap, plans, guides
 ```
@@ -163,6 +167,7 @@ docs/                       # Architecture, roadmap, plans, guides
 - **Entity files**: one entity per file in `electron/entities/`, export related enums from entity file
 - **IPC handlers**: registered in `electron/main.ts` at app startup, prefixed (`db:`, `app:`, `window:`)
 - **Services** in `src/services/` for browser-fallback helpers (`localDb.ts`)
+- **Menu commands** in `src/menu/` for the top app menu catalog and contextual save registry
 - **Form pattern**: typed interface for form state, `useEffect` to load, handler to save via IPC
 - **Browser fallback**: when `electronAPI` unavailable, uses `localStorage` via `localDb` service
 - **Tailwind classes**: use CSS variable tokens (`bg-background`, `text-foreground`, `bg-primary`) — not raw color values
@@ -191,4 +196,4 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** (Phases 1–20.1): Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, Navigation & menus, UI/UX polish, CI/CD multiplatform builds, 70 tests, WCAG AA audit, E2E tests, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), Documentation update, Text evidence (TipTap), Evidence lightbox, Activity navigation. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments.
+All core phases are **complete** through Phase 23: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 104 Vitest tests, 18 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, and chronological activity ordering. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.

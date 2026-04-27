@@ -48,42 +48,55 @@ Responsável por:
 - **Janela principal**: `BrowserWindow` com `contextIsolation: true` e `nodeIntegration: false`
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
-- **IPC Handlers**: ~46 handlers organizados por prefixo
+- **IPC Handlers**: 54 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
 
 #### Prefixos IPC
 
-| Prefixo | Escopo                 | Exemplos                                                   |
-|---------|------------------------|------------------------------------------------------------||
-| `db:`   | Banco de dados (CRUD)  | `db:getUserProfile`, `db:saveActivity`, `db:getReports`    |
-| `app:`  | Funcionalidades do app | `app:getVersion`, `app:generateReport`, `app:selectImages` |
-| `window:` | Controles da janela  | `window:minimize`, `window:maximize`, `window:close`       |
+| Prefixo   | Escopo                 | Exemplos                                                                            |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `db:`     | Banco de dados (CRUD)  | `db:getUserProfile`, `db:saveActivity`, `db:getReports`                             |
+| `app:`    | Funcionalidades do app | `app:getVersion`, `app:generateReport`, `app:openReportsDirectory`, `app:zoomIn`    |
+| `window:` | Controles da janela    | `window:minimize`, `window:maximize`, `window:close`                                |
 
 #### Handlers registrados
 
 ```text
 db:getUserProfile          db:saveUserProfile
-db:getActivities           db:getActivity
-db:saveActivity            db:deleteActivity
-db:reorderActivities       db:saveEvidence
-db:saveEvidenceFromBuffer  db:updateEvidenceCaption
-db:deleteEvidence          db:getEvidenceFilePath
-db:reorderEvidences        db:getDeletedEvidences
-db:restoreEvidence         db:permanentlyDeleteEvidence
-db:saveTextEvidence        db:updateTextEvidence
-db:getReports
+db:getActivities           db:searchActivities
+db:getActivity             db:saveActivity
+db:deleteActivity          db:reorderActivities
+db:saveEvidence            db:saveEvidenceFromBuffer
+db:updateEvidenceCaption   db:deleteEvidence
+db:getEvidenceFilePath     db:reorderEvidences
+db:getDeletedEvidences     db:restoreEvidence
+db:permanentlyDeleteEvidence  db:saveTextEvidence
+db:updateTextEvidence      db:getReports
 db:getAlert                db:saveAlert
 
 app:getVersion             app:selectImages
-app:setTrayStatus          app:generateReport
-app:openFileInFolder       app:getSettings
+app:setTrayStatus          app:getSettings
 app:saveSettings           app:selectDirectory
-app:getDefaultReportsDir   app:listSounds
+app:getDefaultReportsDir   app:openReportsDirectory
+app:openEvidencesDirectory app:quit
+app:editUndo               app:editRedo
+app:editCut                app:editCopy
+app:editPaste              app:editSelectAll
+app:zoomIn                 app:zoomOut
+app:zoomReset              app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
+app:generateReport         app:openFileInFolder
 app:checkForUpdate         app:installUpdate
 
 window:minimize            window:maximize
 window:close               window:isMaximized
+```
+
+#### Eventos renderer (`ipcRenderer.on`)
+
+```text
+app:playSoundData          app:updateStatus
+app:navigate               window:maximized-change
 ```
 
 ### `database.ts` — Acesso a Dados
@@ -100,7 +113,7 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 1. Carrega o template `.docx` (é um ZIP com XMLs internos)
 2. Substitui placeholders no `document.xml` (nome, cargo, contrato, mês, etc.)
 3. Monta **Encarte A**: tabela de atividades agrupada por `project_scope`
-4. Monta **Encarte B**: uma página por evidência com imagem + legenda + bookmark
+4. Monta **Encarte B**: uma página por evidência com imagem ou texto formatado + legenda + bookmark
 5. Insere campos PAGEREF para referência cruzada de páginas
 6. Atualiza `[Content_Types].xml` com os tipos MIME das imagens
 7. Salva o DOCX na pasta configurada ou padrão (`userData/reports/`)
@@ -109,7 +122,7 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 
 ### `preload.ts` — Context Bridge
 
-Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke()`. Nenhuma API do Node.js é exposta diretamente ao renderer.
+Expõe `window.electronAPI` com 54 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
 
 ### `entities/` — Modelo de Dados
 
@@ -140,6 +153,7 @@ Expõe `window.electronAPI` com métodos tipados que chamam `ipcRenderer.invoke(
 /profile                   → ProfilePage
 /settings                  → SettingsPage
 /trash                     → TrashPage (lixeira de evidências)
+/manual                    → UserManualPage (manual e ajuda)
 /activities                → ActivitiesPage (listagem)
 /activities/new            → ActivityFormPage (criar)
 /activities/:id            → ActivityDetailPage (visualizar)
@@ -156,10 +170,14 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | ------------ | ----------------- |
 | `AppLayout` | Layout wrapper com TitleBar + ActivityBar + Outlet |
 | `TitleBar` | Barra superior draggable com controles de janela e SearchBar |
+| `AppTopMenu` | Menu customizado File/Edit/View/Help ao lado do logo |
 | `Header` | Header com logo, barra de busca (interno ao TitleBar) |
 | `ActivityBar` | Sidebar lateral com nav links: Dashboard, Atividades, Perfil, Configurações, Lixeira, Sobre |
 | `SearchBar` | Barra de busca estilo Command Palette (`Ctrl+K`) com dropdown de resultados |
 | `EmptyState` | Tela inicial quando não há perfil cadastrado |
+| `DatePicker` | Campo de data reutilizável para formulários |
+| `TimePicker` | Campo de horário reutilizável para alertas/configurações |
+| `Select` | Select estilizado reutilizável |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
 | `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
 | `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
@@ -173,6 +191,14 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | Contexto | Função |
 | ---------- | -------- |
 | `ThemeContext` | Gerencia 11 temas, computa `isDark` a partir da base, persiste em `localStorage.shipit-theme` |
+| `NavigationHistoryContext` | Histórico global do HashRouter com botões/atalhos Voltar e Avançar |
+
+### Menu e Atalhos (`src/menu/`)
+
+| Módulo | Função |
+| ------ | ------ |
+| `appMenuCatalog.ts` | Catálogo central de comandos do menu do app, atalhos e agrupamentos |
+| `saveContextRegistry.ts` | Registro de handlers de salvamento contextual para `Ctrl+S`/menu |
 
 ### Serviços
 
@@ -185,6 +211,10 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | Módulo | Função |
 | -------- | -------- |
 | `validation.ts` | Valida campos obrigatórios do perfil e das atividades antes da geração do relatório |
+| `monthReference.ts` | Normalização e formatação de mês de referência (`YYYY-MM`) |
+| `activityMonthNavigation.ts` | Cálculo de navegação mensal para a tela de detalhes |
+| `keyboardGuards.ts` | Guardas para atalhos não dispararem durante digitação |
+| `statusColors.ts` | Mapeamento compartilhado de status para ícones/cores |
 
 ### Temas (`src/themes/`)
 
@@ -252,6 +282,16 @@ shipit-sfx://host?file=alert-sound-01.mp3
 **Segurança**: Usa `path.basename()` para prevenir path traversal; valida que o arquivo está dentro de `assets/sounds/`.
 
 Ambos registrados como privilegiados com `supportFetchAPI` e `stream` antes de `app.ready()`.
+
+---
+
+## Jobs em Segundo Plano
+
+| Job | Frequência | Responsabilidade |
+| --- | ---------- | ---------------- |
+| Alert checker | 60 segundos | Dispara notificações nativas conforme configuração de alerta do usuário |
+| Tray status updater | 5 minutos | Atualiza o ícone do tray conforme pendências do mês atual |
+| Trash cleanup | Inicialização do app | Remove definitivamente evidências em soft-delete há mais de 3 meses |
 
 ---
 

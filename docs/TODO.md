@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 18/04/2026 (v1.2.2-dev — não publicado)
+> Atualizado em: 27/04/2026 (v1.2.2 — tag publicada; branch `dev` com mudanças pós-release em `[Unreleased]`)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -312,7 +312,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 ### Fase 18: Atualização da Documentação ✅
 
 - [x] Reescrever `README.md` como documentação para usuário final (instalação, primeiros passos, funcionalidades, FAQ)
-- [x] Atualizar `CHANGELOG.md` com entrada v1.2.2 (multi-tema)
+- [x] Atualizar `CHANGELOG.md` com informações do ciclo v1.2.2 e mudanças pendentes
 - [x] Atualizar `docs/TODO.md` com fases 17 e 18
 - [x] Atualizar `.github/copilot-instructions.md` (versão, stack, temas, file structure)
 - [x] Atualizar `docs/ARCHITECTURE.md` (arquitetura multi-tema, decisões técnicas)
@@ -332,11 +332,40 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 
 ### Fase 20.1: Sincronização da Documentação (Full Sync) ✅
 
-- [x] Sincronizar todos os 7 arquivos de documentação com o estado real do código
+- [x] Sincronizar os documentos principais com o estado real do código
 - [x] Adicionar 4 componentes faltantes na documentação (`ActivityNav`, `EvidenceLightbox`, `TextEvidenceEditor`, `TextEvidenceModal`)
 - [x] Adicionar 19 dependências faltantes em DEPENDENCIES.md
 - [x] Atualizar entidade Evidence com campos `type` e `text_content` em todos os docs
-- [x] Atualizar contagem de testes (70) e componentes (13) em todos os docs
+- [x] Atualizar contagem de testes e componentes em todos os docs
+
+### Fase 21: Navegação Global, Menu de Contexto e Menu do App ✅
+
+- [x] `NavigationHistoryContext` com histórico global, botões Voltar/Avançar na TitleBar e atalhos `Alt+←` / `Alt+→`
+- [x] Ajuste da navegação local da tela de detalhes para `←` / `→`, preservando guardas de digitação
+- [x] Menu de contexto nativo para campos editáveis e texto selecionado (`undo`, `redo`, `cut`, `copy`, `paste`, `selectAll`)
+- [x] Política centralizada de links externos no processo principal (`http`, `https`, `mailto`) com abertura via navegador/cliente externo
+- [x] `AppTopMenu` ao lado do logo com seções File/Edit/View/Help, atalhos globais e ações integradas via IPC
+- [x] Módulo `src/menu` com catálogo de comandos e registro de save-context
+- [x] Rota `/manual` com `UserManualPage` e ações de ajuda/reportar problema
+
+### Fase 22: Detalhe da Atividade e Evidência de Texto ✅
+
+- [x] Tela de detalhes da atividade com botão Excluir e modal de confirmação acessível
+- [x] `ActivityNav` com seletor de mês no lugar do antigo toggle de modo
+- [x] Redirecionamento pós-exclusão para `/activities?month={mês}`
+- [x] `TextEvidenceEditor` com foco ao clicar na área vazia/padding do editor
+- [x] Colagem em evidências de texto estabilizada via foco correto do ProseMirror
+- [x] Limite de evidência textual ampliado para 20.000 caracteres
+
+### Fase 23: Ordenação Cronológica de Atividades ✅
+
+- [x] Helper de normalização em `electron/database.ts` para atividades legadas com `order = null`
+- [x] Novas atividades entram no fim do mês de referência usando o maior `order` existente
+- [x] `getActivities`, `getReportPayload` e `searchActivities` usam ordenação estável por `order ASC`, `id ASC`
+- [x] `reorderActivities` permanece como fonte autoritativa para drag-and-drop
+- [x] Fallback browser (`localDb.ts`) alinhado com a mesma regra de ordenação
+- [x] Cobertura Vitest ampliada para criação, legado, reorder, payload DOCX e busca
+- [x] Suíte atual: 104 testes Vitest passando (8 arquivos)
 
 ---
 

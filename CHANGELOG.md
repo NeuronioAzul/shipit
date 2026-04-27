@@ -9,6 +9,35 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Corrigido (Fase 22 — Ordenação cronológica de atividades)
+
+- **Ordenação estável no backend**
+  - Novas atividades passam a ser anexadas ao fim do mês de referência em vez de depender de `last_updated`
+  - Atividades antigas com `order = null` são normalizadas por mês usando UUID v7 (`id ASC`) como fallback de criação
+  - `getActivities`, `getReportPayload` e `searchActivities` agora usam a mesma fonte de ordenação (`order ASC`, `id ASC`)
+- **Fallback browser alinhado**
+  - `localDb` calcula a próxima ordem pelo maior `order` existente no mês e mantém fallback por posição de inserção
+- **Cobertura de testes ampliada**
+  - Regressões para criação, normalização de legado, drag-and-drop autoritativo, payload DOCX e busca ordenada
+
+### Corrigido (Fase 21 — Modal de Evidência de Texto)
+
+- **Foco e colagem no editor TipTap**
+  - Clique no padding/área vazia do editor agora foca o ProseMirror corretamente
+  - Colagem via `Ctrl+V` e menu de contexto passa a funcionar de forma consistente no modal
+- **Limite de evidência textual ampliado**
+  - Contador e extensão TipTap atualizados de 2.000 para 20.000 caracteres
+
+### Adicionado (Fase 20 — Detalhe da Atividade: exclusão e seletor de mês)
+
+- **Seletor de mês no `ActivityNav`**
+  - O antigo toggle de modo de navegação foi substituído por um seletor de mês alinhado ao padrão do Dashboard/Atividades
+  - Navegação local por `←` / `→` opera sobre a lista do mês selecionado com guardas de digitação
+- **Exclusão pela tela de detalhes**
+  - Botão de excluir atividade com modal de confirmação acessível e redirecionamento para a lista do mês selecionado
+- **Cobertura E2E ampliada**
+  - Cenários para ausência do toggle antigo, troca de mês no detalhe e exclusão/cancelamento/confirmação
+
 ### Adicionado (Fase 19 — Menu do App ao lado do Logo)
 
 - **Menu customizado na barra superior (TitleBar)**
@@ -106,7 +135,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   - Novo cenário E2E para busca no tema cyberpunk (foco via `Ctrl+K`, input/ícone visíveis, dropdown ancorado e limite de largura)
   - Nova assertiva estrutural E2E para o contrato drag/no-drag na titlebar/searchbar
 
-### Adicionado
+### Adicionado (Evidências e navegação)
 
 - **Evidências de texto** — novo tipo de evidência que permite registrar conteúdo textual formatado (além de imagens)
   - Editor rich-text com TipTap (negrito, itálico, listas, etc.) e contagem de caracteres
@@ -133,6 +162,18 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - **Navegação local por teclado**
   - Tela de detalhes da atividade passou a usar apenas `←` / `→` para navegação local entre atividades
   - Dashboard passou a suportar `←` / `→` para alternar mês localmente
+
+---
+
+## [1.2.2] — 2026-04-14
+
+### Adicionado (release v1.2.2)
+
+- Release tag `v1.2.2` consolidando os instaladores multi-formato, busca na TitleBar, UI de auto-update, workflow de release multiplataforma, melhorias de testes/E2E e correções de ícones iniciadas após `v1.2.1`.
+
+### Observação
+
+- A branch `dev` continuou recebendo mudanças após a tag `v1.2.2`; por isso as funcionalidades pós-tag permanecem em `[Unreleased]` até o próximo release.
 
 ---
 

@@ -1,27 +1,96 @@
+---
+description: "Audite e sincronize a documentação do ShipIt com o estado real do código, sem alterar funcionalidades. Use após releases, features grandes ou mudanças em arquitetura, IPC, dependências, rotas, temas ou testes."
+agent: "agent"
+argument-hint: "Escopo opcional: full sync, release docs, quick audit, docs específicos"
+---
+
 # Plan: Atualização de Documentação do Projeto (Reutilizável)
 
-**TL;DR**: Plano reutilizável para sincronizar toda a documentação do ShipIt com o estado atual do código. Execute este plano após cada release ou conjunto significativo de mudanças.
+**TL;DR**: plano reutilizável para auditar e sincronizar a documentação do ShipIt com o estado real do código. Use após releases, features significativas ou mudanças em arquitetura, IPC, dependências, rotas, temas, testes, empacotamento ou fluxos principais.
+
+---
+
+## Objetivo
+
+Atualizar os documentos do projeto para que eles reflitam o código atual, sem inventar funcionalidades e sem transformar uma atualização documental em alteração de produto.
+
+Ao final, entregar:
+
+1. Documentos atualizados e consistentes entre si.
+2. Um resumo do que mudou por arquivo.
+3. Validações executadas e qualquer validação não executada com motivo.
+4. Problemas encontrados que ficaram pendentes, com indicação clara de follow-up.
+
+---
+
+## Modos de Execução
+
+Use o modo pedido pelo usuário. Se nenhum modo for informado, use **Full sync**.
+
+| Modo | Quando usar | Escopo |
+|------|-------------|--------|
+| **Full sync** | Após feature grande, release ou documentação desatualizada | Todas as fases deste plano |
+| **Release docs** | Preparação de tag/release | CHANGELOG, README, TODO, DEVELOPMENT, DEPENDENCIES, release workflow e links |
+| **Quick audit** | Verificação sem edições grandes | Coleta de contexto + lista objetiva de gaps; só editar se o usuário pedir |
+| **Targeted docs** | Usuário cita documentos específicos | Apenas docs pedidos + verificação cruzada mínima |
+
+---
+
+## Regras de Execução
+
+- Use o código como fonte da verdade. Documentos antigos são referência, não prova.
+- Não altere código de produto, testes ou build para “fazer a documentação bater”. Este plano é documental.
+- Não faça bump de versão em `package.json` nem crie tag/release, a menos que o usuário peça explicitamente.
+- Não mova mudanças de `[Unreleased]` para uma versão lançada sem evidência de release/tag.
+- Não fabrique screenshots, números de testes, contagens de IPC, nomes de componentes ou links de download.
+- Preserve mudanças não relacionadas já existentes no working tree.
+- Prefira atualizar textos com afirmações verificáveis e datas reais.
+- Se uma validação falhar por problema pré-existente, registre o bloqueio e continue a auditoria documental quando possível.
 
 ---
 
 ## Pré-execução: Coleta de Contexto
 
-Antes de iniciar, colete automaticamente:
+Colete os dados abaixo antes de editar. Quando possível, faça leituras em paralelo, mas aplique edições de forma coordenada para manter consistência entre documentos.
 
-1. **Versão atual** → `package.json` → campo `version`
-2. **Data atual** → data de execução do plano
-3. **Contagem de IPC** → `electron/preload.ts` → contar todos os métodos expostos via `contextBridge`
-4. **Lista de componentes** → `src/components/` → listar todos os `.tsx`
-5. **Lista de páginas** → `src/pages/` → listar todos os `.tsx`
-6. **Lista de entidades** → `electron/entities/` → listar todos os `.ts`
-7. **Rotas** → `src/App.tsx` → extrair todas as `<Route>`
-8. **Temas** → `src/themes/themes.ts` → contar e listar temas registrados
-9. **Dependências** → `package.json` → listar `dependencies` e `devDependencies` com versões
-10. **Scripts** → `package.json` → listar todos os scripts de build/test/dev
-11. **Contagem de testes** → executar `npm run test` e capturar total
-12. **Último CHANGELOG entry** → `CHANGELOG.md` → ler a versão mais recente documentada
+### Estado do repositório
 
-Armazenar esses dados como referência para comparação em cada fase.
+1. **Working tree** → arquivos modificados, não rastreados e mudanças relevantes já presentes.
+2. **Versão atual** → `package.json` → campo `version`.
+3. **Data atual** → data de execução do plano.
+4. **Último release documentado** → primeira seção versionada em `CHANGELOG.md`.
+5. **Mudanças desde o último release** → `git log`/diff quando necessário, mais mudanças não commitadas relevantes.
+
+### Código-fonte como fonte da verdade
+
+6. **IPC exposto no preload** → `electron/preload.ts` → métodos/eventos expostos via `contextBridge`.
+7. **IPC registrado no main** → `electron/main.ts` → canais `ipcMain.handle` e eventos relacionados.
+8. **Contrato renderer** → `src/vite-env.d.ts` → interface `ElectronAPI` e tipos de dados.
+9. **Componentes** → `src/components/` → todos os `.tsx`.
+10. **Páginas** → `src/pages/` → todos os `.tsx`.
+11. **Rotas** → `src/App.tsx` → todas as rotas reais do `HashRouter`.
+12. **Entidades** → `electron/entities/` → entidades, campos-chave, relações e enums.
+13. **Serviços/fallbacks** → `src/services/` → especialmente `localDb.ts`.
+14. **Temas** → `src/themes/themes.ts` e `src/themes/*.css` → contagem, ids, categorias e mecanismo.
+15. **Background jobs/protocolos** → `electron/main.ts` → schedulers, protocolos customizados e integrações do tray.
+16. **Dependências e scripts** → `package.json` → `dependencies`, `devDependencies`, `scripts`, `engines`, `build`.
+17. **Workflows de CI/CD** → `.github/workflows/` → gatilhos, jobs, Node/npm, testes e artefatos.
+18. **Assets de release** → `build/`, `public/assets/`, `extraResources` no `package.json`.
+
+### Validações quantitativas
+
+19. **Contagem de testes** → executar `npm run test` e capturar arquivos/testes passados. Se falhar, registrar o total parcial e o erro.
+20. **E2E** → não executar por padrão; verificar documentação sobre `npm run test:e2e` e registrar se a execução completa foi solicitada.
+21. **Build** → executar `npm run build` apenas se a atualização documental depender de saída gerada ou se o usuário pedir validação completa; caso contrário, não é obrigatório para docs-only.
+
+### Inventário documental
+
+22. **Documentos principais** → `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md`.
+23. **Docs técnicos** → `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`.
+24. **Planos reutilizáveis** → `docs/plan-*.prompt.md` e este arquivo, quando o próprio processo documental mudou.
+25. **Links internos** → paths relativos entre README, docs e `.github/copilot-instructions.md`.
+
+Registre os dados coletados em uma tabela curta de referência antes de editar mentalmente; não precisa criar arquivo temporário.
 
 ---
 
@@ -31,20 +100,20 @@ Armazenar esses dados como referência para comparação em cada fase.
 
 ### Checklist
 
-- [ ] A versão no topo do CHANGELOG corresponde à versão do `package.json`?
-- [ ] Existe uma entry `[Unreleased]` para mudanças ainda não versionadas?
-- [ ] Todas as features novas desde o último release estão documentadas?
-- [ ] Categorias corretas (Adicionado, Alterado, Corrigido, Removido)?
-- [ ] Formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/)?
-- [ ] Links de comparação no rodapé estão atualizados?
+- [ ] Existe uma seção `[Unreleased]` para mudanças ainda não versionadas?
+- [ ] A versão no topo, quando versionada, corresponde ao release real e não apenas ao `package.json` em desenvolvimento?
+- [ ] Features novas desde o último release estão documentadas?
+- [ ] Correções e mudanças comportamentais aparecem nas categorias corretas?
+- [ ] Categorias seguem Keep a Changelog em pt-BR: `Adicionado`, `Alterado`, `Corrigido`, `Removido`, quando aplicável?
+- [ ] Links de comparação no rodapé estão corretos ou marcados como pendentes?
 
 ### O que verificar
 
-1. Comparar os commits desde a última versão documentada com as entries do CHANGELOG
-2. Novos componentes, IPC handlers, entidades ou páginas devem aparecer em "Adicionado"
-3. Mudanças de comportamento devem aparecer em "Alterado"
-4. Bug fixes devem aparecer em "Corrigido"
-5. Se a versão do `package.json` for maior que a última entry, criar nova seção de release com a data atual
+1. Comparar commits/diffs desde a última versão documentada com as entradas existentes.
+2. Novos componentes, páginas, IPC handlers, entidades, dependências ou workflows devem aparecer em `Adicionado`.
+3. Mudanças de comportamento devem aparecer em `Alterado` ou `Corrigido`, conforme o caso.
+4. Se `package.json` estiver em versão `-dev`, mantenha mudanças em `[Unreleased]` até confirmação de release.
+5. Não reescreva histórico antigo sem necessidade.
 
 ---
 
@@ -54,21 +123,22 @@ Armazenar esses dados como referência para comparação em cada fase.
 
 ### Checklist
 
-- [ ] Badge de versão no topo corresponde à versão do `package.json`?
-- [ ] Seção "Funcionalidades" lista todas as features atuais?
-- [ ] Links de download estão corretos para a versão atual?
-- [ ] Seção "Requisitos do Sistema" está atualizada (Node.js, npm, plataformas)?
-- [ ] Seção "Primeiros Passos" reflete o fluxo atual do app?
-- [ ] FAQ está atualizada com perguntas relevantes?
-- [ ] Nenhuma seção está truncada ou incompleta?
-- [ ] Screenshots/placeholders refletem o estado visual atual?
+- [ ] Badge de versão reflete o último release público, ou deixa claro que a versão atual está em desenvolvimento.
+- [ ] Seção `Funcionalidades` lista as capacidades atuais do produto.
+- [ ] Links de download apontam para releases corretas e não para artefatos inexistentes.
+- [ ] Requisitos do sistema estão coerentes com `package.json` e targets do electron-builder.
+- [ ] Primeiros Passos refletem o fluxo real do app.
+- [ ] Evidências, relatórios, temas, busca, tray, alertas, atualizações e lixeira estão descritos quando existirem.
+- [ ] FAQ está atualizada com perguntas úteis e verificáveis.
+- [ ] Screenshots/placeholders não prometem imagens inexistentes como se fossem reais.
+- [ ] Links para docs internos funcionam.
 
 ### O que verificar
 
-1. Contar features listadas vs features reais (rotas, componentes, capabilities)
-2. Verificar se novas funcionalidades (componentes, temas, etc.) estão mencionadas
-3. Verificar se instruções de instalação funcionam nas 3 plataformas
-4. Verificar se os links para documentação interna (`docs/`) estão corretos
+1. Comparar funcionalidades listadas com rotas, componentes e IPC reais.
+2. Verificar se novas funcionalidades aparecem em linguagem de usuário final, não só técnica.
+3. Conferir instruções de instalação nas três plataformas.
+4. Manter conteúdo de desenvolvimento resumido, apontando para `docs/DEVELOPMENT.md` e `CONTRIBUTING.md`.
 
 ---
 
@@ -78,18 +148,18 @@ Armazenar esses dados como referência para comparação em cada fase.
 
 ### Checklist
 
-- [ ] Header mostra a versão e data atuais?
-- [ ] Todas as fases concluídas estão marcadas como `✅`?
-- [ ] Novas fases/tarefas foram adicionadas para trabalho recente?
-- [ ] Todas as checkboxes `[x]` correspondem a funcionalidades realmente implementadas?
-- [ ] Seção "Backlog" reflete itens pendentes reais?
-- [ ] Não há fases ou itens duplicados?
+- [ ] Header mostra versão e data atuais.
+- [ ] Fases concluídas estão marcadas como `✅` ou `[x]` de forma consistente.
+- [ ] Trabalho recente tem fase/tarefa correspondente.
+- [ ] Backlog não contém itens já implementados.
+- [ ] Fases não estão duplicadas nem fora de ordem sem justificativa.
+- [ ] Itens pendentes são claros o bastante para virar tarefa futura.
 
 ### O que verificar
 
-1. Cruzar fases documentadas com features existentes no código
-2. Verificar se algum componente/página/IPC novo não tem fase correspondente
-3. Verificar se o Backlog tem itens que já foram implementados (mover para fase completa)
+1. Cruzar fases documentadas com funcionalidades existentes no código.
+2. Mover backlog implementado para fase concluída ou registrar como concluído.
+3. Adicionar tarefas pendentes reais descobertas durante a auditoria.
 
 ---
 
@@ -99,24 +169,22 @@ Armazenar esses dados como referência para comparação em cada fase.
 
 ### Checklist
 
-- [ ] Diagrama de processos (Main ↔ Preload ↔ Renderer) está correto?
-- [ ] Contagem de IPC handlers corresponde ao total real em `preload.ts`?
-- [ ] Tabela de IPC handlers lista TODOS os métodos atuais com prefixos corretos?
-- [ ] Tabela de componentes lista TODOS os componentes em `src/components/`?
-- [ ] Tabela de rotas lista TODAS as rotas em `App.tsx`?
-- [ ] Entidades do banco de dados (6 entities) estão corretas com campos e relações?
-- [ ] Seção de temas reflete o sistema atual (quantidade, categorias, mecanismo)?
-- [ ] Background schedulers estão documentados?
-- [ ] Custom protocols (`shipit-evidence://`, `shipit-sfx://`) estão documentados?
-- [ ] Seção de Design Decisions está atualizada?
+- [ ] Diagrama Main ↔ Preload ↔ Renderer está correto.
+- [ ] Contagem de IPC exposto e canais registrados está coerente com o código.
+- [ ] Tabela de IPC lista grupos e métodos atuais com prefixos corretos.
+- [ ] Componentes em `src/components/` estão todos representados ou a regra de agrupamento está clara.
+- [ ] Rotas de `src/App.tsx` estão todas documentadas.
+- [ ] Entidades do banco refletem campos, relações, enums e soft-delete atuais.
+- [ ] Temas refletem contagem, categorias, ids e mecanismo atual.
+- [ ] Background schedulers, tray e protocolos customizados estão documentados.
+- [ ] Decisões arquiteturais refletem padrões reais do projeto.
 
 ### O que verificar
 
-1. **IPC** — comparar lista de métodos no doc vs métodos reais em `electron/preload.ts`
-2. **Componentes** — comparar tabela no doc vs arquivos em `src/components/`
-3. **Rotas** — comparar tabela no doc vs `<Route>` em `src/App.tsx`
-4. **Entidades** — comparar diagrama/tabela no doc vs arquivos em `electron/entities/`
-5. **Temas** — comparar contagem/lista no doc vs `src/themes/themes.ts`
+1. Comparar `electron/preload.ts`, `electron/main.ts` e `src/vite-env.d.ts` para detectar drift de IPC.
+2. Comparar tabela de componentes com arquivos reais.
+3. Comparar diagrama/tabela de entidades com decorators TypeORM.
+4. Verificar se mudanças recentes em ordenação, busca, relatórios ou fallback local aparecem como comportamento documentado quando forem relevantes para arquitetura.
 
 ---
 
@@ -126,19 +194,20 @@ Armazenar esses dados como referência para comparação em cada fase.
 
 ### Checklist
 
-- [ ] Requisitos de Node.js e npm correspondem aos engines no `package.json`?
-- [ ] Todos os scripts npm estão listados com descrição correta?
-- [ ] Estrutura de diretórios reflete o estado atual do projeto?
-- [ ] Contagem de testes corresponde ao resultado real de `npm run test`?
-- [ ] Instruções de setup funcionam (clone → install → dev)?
-- [ ] Targets de build (Windows, macOS, Linux) estão corretos?
-- [ ] Seção de CI/CD reflete o workflow atual?
+- [ ] Requisitos de Node.js e npm correspondem aos `engines`.
+- [ ] Todos os scripts npm estão listados com descrição correta.
+- [ ] Estrutura de diretórios reflete arquivos e pastas significativos atuais.
+- [ ] Contagem de testes corresponde ao resultado real de `npm run test`.
+- [ ] Setup `clone → npm install → npm run dev` está correto.
+- [ ] Targets de build batem com `package.json`.
+- [ ] CI/CD reflete workflows reais.
+- [ ] Notas sobre Electron rebuild, Tailwind v4, TypeORM e Playwright estão atualizadas.
 
 ### O que verificar
 
-1. Executar mentalmente o fluxo de setup e verificar se cada passo funciona
-2. Verificar se novos scripts foram adicionados ao `package.json` mas não ao doc
-3. Verificar se a árvore de diretórios inclui novos diretórios/arquivos significativos
+1. Comparar scripts do `package.json` com a tabela do doc.
+2. Atualizar árvore de diretórios somente para itens relevantes; não listar build output como fonte principal.
+3. Registrar pré-requisitos ou gotchas descobertos em testes recentes.
 
 ---
 
@@ -148,96 +217,177 @@ Armazenar esses dados como referência para comparação em cada fase.
 
 ### Checklist
 
-- [ ] Data de última atualização é recente?
-- [ ] Todas as dependências de produção estão listadas com versões corretas?
-- [ ] Todas as devDependencies estão listadas com versões corretas?
-- [ ] Novas dependências adicionadas desde a última atualização estão documentadas?
-- [ ] Dependências removidas foram retiradas da lista?
-- [ ] Requisitos do sistema (Node.js, npm, OS) estão corretos?
+- [ ] Data de última atualização é a data de execução.
+- [ ] Todas as `dependencies` aparecem com versões corretas.
+- [ ] Todas as `devDependencies` aparecem com versões corretas.
+- [ ] Dependências removidas não permanecem documentadas.
+- [ ] Cada dependência tem propósito breve e correto.
+- [ ] Requisitos de Node.js, npm e OS batem com `package.json` e build targets.
 
 ### O que verificar
 
-1. Comparar `dependencies` e `devDependencies` do `package.json` com a lista no doc
-2. Para cada dependência nova, adicionar descrição breve do propósito
-3. Atualizar data de última atualização para a data de execução
+1. Comparar `package.json` com a lista do doc, dependência por dependência.
+2. Separar produção, desenvolvimento/teste, empacotamento e tipos quando fizer sentido.
+3. Não extrapolar riscos de segurança sem evidência; se houver auditoria de vulnerabilidades, registre comando e resultado.
 
 ---
 
-## Fase 7: .github/copilot-instructions.md
+## Fase 7: CONTRIBUTING.md e Metadados do Projeto
+
+**Arquivos**: `CONTRIBUTING.md`, `package.json`, `.github/workflows/*`, docs de release quando existirem
+
+### Checklist
+
+- [ ] Pré-requisitos de contribuição batem com `engines`.
+- [ ] Fluxo de setup, build, testes e PR corresponde ao estado atual.
+- [ ] Convenções documentadas ainda são verdadeiras.
+- [ ] Instruções para adicionar entidades, páginas, IPC e evidências estão coerentes com o código.
+- [ ] Workflows de release/CI citados existem e usam versões corretas de Node/npm.
+- [ ] Nomes de artefatos e targets batem com `package.json`.
+
+### O que verificar
+
+1. Atualizar `CONTRIBUTING.md` quando mudanças arquiteturais ou scripts afetam contribuidores.
+2. Conferir se a documentação de release menciona draft, tags semver, auto-update e artefatos reais.
+3. Não editar `package.json` neste plano, exceto se o usuário pediu explicitamente uma mudança documental em metadados.
+
+---
+
+## Fase 8: .github/copilot-instructions.md
 
 **Arquivo**: `.github/copilot-instructions.md`
 
 ### Checklist
 
-- [ ] Versão no header corresponde ao `package.json`?
-- [ ] Tech Stack table está completa e com versões corretas?
-- [ ] Tabela de IPC Handlers reflete todos os grupos e métodos atuais?
-- [ ] Contagem de IPC handlers está correta (ex: "70+ methods")?
-- [ ] Lista de rotas corresponde ao `App.tsx`?
-- [ ] Lista de componentes (em File Structure e Conventions) está completa?
-- [ ] Seção de Theming documenta todos os temas e mecanismo atual?
-- [ ] Seção de Database/entities lista todas as 6 entidades com campos-chave?
-- [ ] Background schedulers estão corretos?
-- [ ] Gotchas estão atualizadas?
-- [ ] Roadmap Context reflete as fases reais concluídas?
+- [ ] Header reflete versão atual/dev e último release.
+- [ ] Tech Stack table está completa e com versões corretas.
+- [ ] IPC handlers, rotas, entidades, temas e schedulers batem com o código.
+- [ ] File Structure lista pastas e componentes relevantes sem ficar obsoleta demais.
+- [ ] Conventions refletem práticas reais do projeto.
+- [ ] Gotchas incluem aprendizados recentes que evitam erro recorrente.
+- [ ] Roadmap Context reflete fases realmente concluídas.
 
 ### O que verificar
 
-Este é o arquivo mais crítico — é a referência principal para o AI assistant.
-1. Cruzar CADA seção com o código real
-2. Garantir que convenções documentadas são seguidas no código
-3. Verificar se novos padrões/convenções emergentes estão capturados
+Este é o arquivo mais crítico para agentes de IA no projeto.
+
+1. Cruze cada seção com o código real.
+2. Prefira descrições estáveis a contagens frágeis quando o doc não precisa de número exato.
+3. Atualize padrões emergentes quando eles ajudam futuras alterações.
+4. Não inclua detalhes temporários ou ruído de uma task específica, a menos que seja uma prática recorrente.
 
 ---
 
-## Fase 8: Verificação Cruzada
+## Fase 9: Planos e Prompts Reutilizáveis
+
+**Arquivos**: `docs/plan-*.prompt.md`, `.github/prompts/*.prompt.md` se existirem
+
+### Checklist
+
+- [ ] Planos reutilizáveis ainda descrevem o fluxo correto.
+- [ ] Prompts com intenção de slash command têm `description` útil e, se aplicável, frontmatter válido.
+- [ ] Nomes de arquivo não confundem escopo (`*.prompt.md` vs documentação comum).
+- [ ] Planos antigos não contradizem docs atuais ou decisões já tomadas.
+
+### O que verificar
+
+1. Se o usuário usa um arquivo como prompt recorrente, melhorar descrição, escopo, regras de execução e saída esperada.
+2. Se a intenção for slash prompt oficial do VS Code, recomendar localização em `.github/prompts/` ou no diretório de prompts do usuário.
+3. Não mover arquivos de `docs/` sem autorização, pois eles também funcionam como histórico de planejamento.
+
+---
+
+## Fase 10: Verificação Cruzada
+
+Execute esta fase por último.
 
 ### Consistência entre documentos
 
-- [ ] A versão é a mesma em TODOS os arquivos: `package.json`, README badge, CHANGELOG entry, TODO header, copilot-instructions header
-- [ ] A contagem de testes é consistente entre DEVELOPMENT.md, copilot-instructions.md e TODO.md
-- [ ] A contagem de IPC handlers é consistente entre ARCHITECTURE.md e copilot-instructions.md
-- [ ] A contagem de temas é consistente entre todos os documentos
-- [ ] A contagem de componentes é consistente entre ARCHITECTURE.md e copilot-instructions.md
-- [ ] Links internos entre documentos funcionam (paths relativos corretos)
+- [ ] Versão, último release e estado `-dev` estão consistentes.
+- [ ] Contagem de testes é a mesma em README/DEVELOPMENT/TODO/copilot-instructions quando citada.
+- [ ] Contagem de IPC é consistente ou documentada como aproximada de forma intencional.
+- [ ] Contagem de temas é consistente.
+- [ ] Componentes/páginas/rotas/entidades batem entre ARCHITECTURE e copilot-instructions.
+- [ ] Dependências e scripts batem com `package.json`.
+- [ ] Links internos usam paths relativos corretos.
+- [ ] README e CONTRIBUTING não duplicam detalhes técnicos extensos que pertencem a `docs/DEVELOPMENT.md`.
 
 ### Validação de formato
 
-- [ ] Nenhum arquivo com seções truncadas ou incompletas
-- [ ] Tabelas markdown renderizam corretamente
-- [ ] Sem warnings significativos de markdown lint
+- [ ] Nenhum arquivo tem seções truncadas ou placeholders acidentais.
+- [ ] Tabelas Markdown renderizam corretamente.
+- [ ] Links internos foram verificados por leitura ou busca.
+- [ ] Não há referências a arquivos removidos ou artefatos não existentes.
+- [ ] Não há datas futuras, versões inventadas ou contagens não verificadas.
+
+---
+
+## Comandos Úteis de Auditoria
+
+Use os comandos conforme necessário, adaptando ao shell disponível.
+
+```bash
+npm run test
+npm run build
+rg "Version|Versão|1\." README.md CHANGELOG.md docs .github/copilot-instructions.md
+rg "ipcMain\.handle|contextBridge|electronAPI" electron src
+rg --files src/components src/pages electron/entities .github/workflows docs
+```
+
+Observações:
+
+- Use `npm run test` para obter a contagem real de testes quando essa contagem for documentada.
+- Use `npm run build` como validação complementar, não como requisito obrigatório de uma edição docs-only.
+- Se o ambiente não tiver `rg`, use a busca equivalente disponível.
 
 ---
 
 ## Como Executar Este Plano
 
-1. **Inicie pela Pré-execução** — colete todos os dados de referência do código
-2. **Execute Fases 1-7 em paralelo** — cada fase é independente
-3. **Fase 8 por último** — verificação cruzada depende das fases anteriores
-4. **Documente o que mudou** — ao final, liste brevemente as alterações feitas em cada arquivo para referência futura
+1. **Defina o modo**: full sync, release docs, quick audit ou targeted docs.
+2. **Colete o contexto**: gere um snapshot curto com versão, data, contagens e docs afetados.
+3. **Identifique gaps**: compare código vs documentação antes de editar.
+4. **Edite em lotes pequenos**: mantenha termos, números e versões consistentes entre arquivos.
+5. **Rode validações**: no mínimo `npm run test` quando contagem de testes for atualizada; build se solicitado ou necessário.
+6. **Faça verificação cruzada**: procure divergências de versão, contagens, links e nomes.
+7. **Atualize o estado conhecido**: preencha a seção final deste plano quando ele for usado como registro da execução.
+8. **Finalize com resumo**: liste arquivos alterados, validações e pendências.
 
-### Frequência Recomendada
+---
+
+## Frequência Recomendada
 
 | Trigger | Fases a executar |
-|---------|-----------------|
-| **Após cada release** | Todas (1-8) |
-| **Após adicionar IPC handlers** | 4 (ARCHITECTURE), 7 (copilot-instructions) |
-| **Após adicionar componentes/páginas** | 4, 5, 7 |
-| **Após adicionar dependências** | 6 (DEPENDENCIES) |
-| **Após completar fase do TODO** | 1 (CHANGELOG), 3 (TODO), 7 (copilot-instructions) |
-| **Verificação rápida periódica** | 8 (Verificação Cruzada) |
+|---------|------------------|
+| **Após cada release** | 1-10 |
+| **Após feature grande** | 1-10, ajustando profundidade conforme impacto |
+| **Após adicionar IPC handlers** | 4, 8, 10 |
+| **Após adicionar componentes/páginas/rotas** | 2, 4, 5, 8, 10 |
+| **Após adicionar entidades/campos de banco** | 4, 5, 8, 10 |
+| **Após adicionar dependências/scripts** | 5, 6, 7, 10 |
+| **Após mudar CI/CD ou empacotamento** | 2, 5, 7, 10 |
+| **Após completar fase do TODO** | 1, 3, 8, 10 |
+| **Verificação rápida periódica** | Pré-execução + 10 |
 
 ---
 
 ## Estado Atual Conhecido (para referência na próxima execução)
 
-> Atualize esta seção ao final de cada execução do plano.
+> Atualize esta seção ao final de cada execução real do plano. Não use esta seção como fonte da verdade sem reconferir o código.
 
-- **Última execução**: _(preencher)_
-- **Versão**: _(preencher)_
-- **IPC handlers**: _(preencher)_
-- **Componentes**: _(preencher)_
-- **Páginas**: _(preencher)_
-- **Temas**: _(preencher)_
-- **Testes**: _(preencher)_
-- **Problemas encontrados**: _(preencher)_
+- **Última execução do plano**: 2026-04-27 — Full sync documental
+- **Versão em `package.json`**: 1.2.2
+- **Último release documentado**: v1.2.2 (`git tag v1.2.2`, 2026-04-14)
+- **Data da execução**: 2026-04-27
+- **IPC exposto no preload**: 54 chamadas `ipcRenderer.invoke` + 4 listeners `ipcRenderer.on`
+- **IPC registrado no main**: 54 handlers `ipcMain.handle`
+- **Componentes**: 17 arquivos `.tsx` em `src/components/`
+- **Páginas/rotas**: 9 arquivos em `src/pages/`; 9 rotas em `src/App.tsx` incluindo `/manual`
+- **Entidades**: 6 (`UserProfile`, `Activity`, `Evidence`, `Report`, `ActivityReport`, `Alert`)
+- **Temas**: 11 temas registrados (`light`, `dark`, `colorful`, `rose-violet`, `minimalist`, `futuristic`, `ocean`, `sunset`, `high-contrast`, `high-contrast-dark`, `cyberpunk`)
+- **Dependências prod/dev**: 21 produção / 17 desenvolvimento
+- **Scripts npm**: 8 scripts
+- **Testes**: `npm run test` — 8 arquivos, 104 testes passando
+- **Build**: não executado; alteração foi documental e `npm run test` bastou para a contagem verificada
+- **Documentos alterados**: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md`, `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`, este plano
+- **Problemas encontrados**: `rg` não disponível no PowerShell; Playwright E2E não executado nesta auditoria

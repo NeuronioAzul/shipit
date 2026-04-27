@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Versão-1.2.1-blue" alt="Versão" />
+  <img src="https://img.shields.io/badge/Versão-1.2.2-blue" alt="Versão" />
   <img src="https://img.shields.io/badge/Plataforma-Windows%20|%20macOS%20|%20Linux-brightgreen" alt="Plataformas" />
   <img src="https://img.shields.io/badge/Offline-100%25-orange" alt="Offline" />
   <img src="https://img.shields.io/badge/license-ISC-green" alt="License" />
@@ -128,6 +128,8 @@ O **Dashboard** mostra um resumo visual do seu mês:
 - **Gráfico de Gantt** — visualize o período de cada atividade ao longo do mês
 - **Tabela de atividades** — lista completa com indicadores de campos incompletos
 
+Use o seletor de mês e os botões de navegação para alternar rapidamente o período exibido.
+
 <!-- Screenshot: Dashboard completo com Gantt chart e cards de resumo -->
 
 ### 5. Gere o Relatório
@@ -158,7 +160,9 @@ Resumo visual completo do mês com cards de status, gráfico de Gantt interativo
 
 ### Gerenciamento de Atividades
 
-CRUD completo de atividades com campos para descrição, período, status, links de referência, tipo de atendimento e escopo do projeto. Reorganize a ordem das atividades arrastando e soltando.
+CRUD completo de atividades com campos para descrição, período, status, links de referência, tipo de atendimento e escopo do projeto. Reorganize a ordem das atividades arrastando e soltando; novas atividades entram no fim do mês selecionado e a ordem persistida também alimenta o relatório DOCX.
+
+Na tela de detalhes, navegue entre atividades do mês, alterne o mês de referência pelo seletor dedicado e exclua uma atividade com confirmação quando necessário.
 
 <!-- Screenshot: Lista de atividades com drag & drop -->
 
@@ -251,6 +255,19 @@ Use `Ctrl+K` para abrir a barra de busca rápida (estilo Command Palette). Pesqu
 - Links de referência
 - Legendas das evidências
 
+Também há navegação global na barra superior com botões Voltar/Avançar e atalhos `Alt+←` / `Alt+→`, preservando histórico de rotas e filtros.
+
+### Menu do App e Manual
+
+O menu ao lado do logo reúne ações rápidas de **Arquivo**, **Editar**, **Exibir** e **Ajuda**:
+
+- Criar nova atividade, salvar a tela atual e abrir pastas de relatórios/evidências
+- Ações de edição nativas (desfazer, refazer, recortar, copiar, colar, selecionar tudo)
+- Zoom da interface e controles de janela
+- Manual do usuário, verificação de atualizações, Sobre e abertura segura de issue no GitHub
+
+Links externos e e-mails abrem fora da janela do ShipIt!, preservando a rota atual do app.
+
 ### Lixeira de Evidências 🗑️
 
 Evidências excluídas vão para a **Lixeira** e podem ser restauradas a qualquer momento. Itens na lixeira são automaticamente removidos após 3 meses.
@@ -266,6 +283,11 @@ O ShipIt! verifica e baixa atualizações automaticamente em segundo plano. Quan
 | Atalho / Dica | Descrição |
 |---------------|-----------|
 | `Ctrl+K` | Abre a barra de busca rápida |
+| `Ctrl+F` | Foca a busca pelo menu/atalho |
+| `Ctrl+N` | Cria uma nova atividade |
+| `Ctrl+S` | Salva a tela atual quando houver contexto editável |
+| `Alt+←` / `Alt+→` | Navega pelo histórico global da aplicação |
+| `←` / `→` | Na tela de detalhe, navega entre atividades do mês selecionado |
 | `Ctrl+V` | Cola um print da área de transferência como evidência (na tela de detalhes) |
 | **System Tray** | Fechar a janela minimiza para o tray — o app continua rodando |
 | **Salvamento automático** | Não precisa clicar "Salvar" — seus rascunhos são salvos continuamente |
