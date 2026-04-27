@@ -15,11 +15,26 @@ function generateId(): string {
   return crypto.randomUUID()
 }
 
+function getNextActivityOrder(activities: ActivityData[], monthReference: string): number {
+  const orders = activities
+    .filter((a) => a.month_reference === monthReference && a.order !== null && a.order !== undefined)
+    .map((a) => a.order)
+
+  return orders.length > 0 ? Math.max(...orders) + 1 : 1
+}
+
 export const localDb = {
   getActivities(monthReference: string): ActivityData[] {
     return getStoredActivities()
-      .filter((a) => a.month_reference === monthReference)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((activity, index) => ({ activity, index }))
+      .filter(({ activity }) => activity.month_reference === monthReference)
+      .sort((a, b) => {
+        const orderA = a.activity.order ?? Number.MAX_SAFE_INTEGER
+        const orderB = b.activity.order ?? Number.MAX_SAFE_INTEGER
+        if (orderA !== orderB) return orderA - orderB
+        return a.index - b.index
+      })
+      .map(({ activity }) => activity)
   },
 
   getActivity(id: string): ActivityData | null {
@@ -32,26 +47,30 @@ export const localDb = {
     if (data.id) {
       const idx = all.findIndex((a) => a.id === data.id)
       if (idx >= 0) {
+        const currentOrder = all[idx].order
         all[idx] = { ...all[idx], ...data, last_updated: new Date().toISOString() }
+        all[idx].order = currentOrder
         setStoredActivities(all)
         return all[idx]
       }
     }
 
+    const monthReference = data.month_reference || getCurrentMonthRef()
+    const id = data.id || generateId()
     const activity: ActivityData = {
-      id: generateId(),
-      order: all.filter((a) => a.month_reference === data.month_reference).length + 1,
       description: '',
       date_start: null,
       date_end: null,
       link_ref: null,
       status: 'Pendente',
-      month_reference: data.month_reference || getCurrentMonthRef(),
       attendance_type: null,
       project_scope: null,
       last_updated: new Date().toISOString(),
       evidences: [],
       ...data,
+      id,
+      order: getNextActivityOrder(all, monthReference),
+      month_reference: monthReference,
     }
     all.push(activity)
     setStoredActivities(all)

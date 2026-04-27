@@ -20,8 +20,10 @@ import {
   saveUserProfile,
   getActivities,
   getActivity,
+  searchActivities,
   saveActivity,
   deleteActivity,
+  reorderActivities,
   saveEvidence,
   deleteEvidence,
   getDeletedEvidences,
@@ -32,10 +34,12 @@ import {
   countActivities,
   countIncompleteActivities,
   getDb,
+  getReportPayload,
   saveTextEvidence,
   updateTextEvidence,
   updateEvidenceCaption,
 } from './database'
+import { Activity } from './entities/Activity'
 
 beforeEach(async () => {
   // Use sql.js (pure JS SQLite) to avoid better-sqlite3 Electron ABI mismatch
@@ -143,6 +147,140 @@ describe('Activity CRUD', () => {
     const april = await getActivities('04/2026')
     expect(april.length).toBe(1)
     expect(april[0].description).toBe('Abril A')
+  })
+
+  it('appends new activities without explicit order in creation order', async () => {
+    await saveActivity({
+      description: 'Primeira criação',
+      status: 'Pendente',
+      month_reference: '03/2026',
+    })
+    await saveActivity({
+      description: 'Segunda criação',
+      status: 'Pendente',
+      month_reference: '03/2026',
+    })
+    await saveActivity({
+      description: 'Terceira criação',
+      status: 'Pendente',
+      month_reference: '03/2026',
+    })
+
+    const activities = await getActivities('03/2026')
+
+    expect(activities.map((activity) => activity.description)).toEqual([
+      'Primeira criação',
+      'Segunda criação',
+      'Terceira criação',
+    ])
+    expect(activities.map((activity) => activity.order)).toEqual([1, 2, 3])
+  })
+
+  it('normalizes legacy null-order activities by UUID v7 creation fallback', async () => {
+    const repo = (await getDb()).getRepository(Activity)
+    await repo.save([
+      {
+        id: '019746ab-0000-7000-8000-000000000003',
+        description: 'Legada terceira',
+        status: 'Pendente' as const,
+        month_reference: '03/2026',
+        order: null,
+      },
+      {
+        id: '019746ab-0000-7000-8000-000000000001',
+        description: 'Legada primeira',
+        status: 'Pendente' as const,
+        month_reference: '03/2026',
+        order: null,
+      },
+      {
+        id: '019746ab-0000-7000-8000-000000000002',
+        description: 'Legada segunda',
+        status: 'Pendente' as const,
+        month_reference: '03/2026',
+        order: null,
+      },
+    ])
+
+    const activities = await getActivities('03/2026')
+
+    expect(activities.map((activity) => activity.description)).toEqual([
+      'Legada primeira',
+      'Legada segunda',
+      'Legada terceira',
+    ])
+    expect(activities.map((activity) => activity.order)).toEqual([1, 2, 3])
+  })
+
+  it('keeps drag-and-drop reorder authoritative after activity updates', async () => {
+    const first = await saveActivity({ description: 'A', status: 'Pendente', month_reference: '03/2026' })
+    const second = await saveActivity({ description: 'B', status: 'Pendente', month_reference: '03/2026' })
+    const third = await saveActivity({ description: 'C', status: 'Pendente', month_reference: '03/2026' })
+
+    await reorderActivities([
+      { id: third.id, order: 0 },
+      { id: first.id, order: 1 },
+      { id: second.id, order: 2 },
+    ])
+    await saveActivity({
+      id: first.id,
+      description: 'A atualizada',
+      status: 'Concluído',
+      month_reference: '03/2026',
+      order: 99,
+    })
+
+    const activities = await getActivities('03/2026')
+
+    expect(activities.map((activity) => activity.description)).toEqual(['C', 'A atualizada', 'B'])
+    expect(activities.map((activity) => activity.order)).toEqual([0, 1, 2])
+  })
+
+  it('returns report payload activities in the same order as getActivities', async () => {
+    const first = await saveActivity({ description: 'Relatório A', status: 'Pendente', month_reference: '03/2026' })
+    const second = await saveActivity({ description: 'Relatório B', status: 'Pendente', month_reference: '03/2026' })
+    const third = await saveActivity({ description: 'Relatório C', status: 'Pendente', month_reference: '03/2026' })
+
+    await reorderActivities([
+      { id: second.id, order: 0 },
+      { id: third.id, order: 1 },
+      { id: first.id, order: 2 },
+    ])
+
+    const activities = await getActivities('03/2026')
+    const payload = await getReportPayload('03/2026')
+
+    expect(payload.activities.map((activity) => activity.id)).toEqual(
+      activities.map((activity) => activity.id)
+    )
+  })
+
+  it('orders search results by month and persisted activity order', async () => {
+    const first = await saveActivity({ description: 'Busca API A', status: 'Pendente', month_reference: '03/2026' })
+    const second = await saveActivity({ description: 'Busca API B', status: 'Pendente', month_reference: '03/2026' })
+    const third = await saveActivity({ description: 'Busca API C', status: 'Pendente', month_reference: '03/2026' })
+    await saveActivity({ description: 'Busca API Abril', status: 'Pendente', month_reference: '04/2026' })
+
+    await reorderActivities([
+      { id: second.id, order: 0 },
+      { id: third.id, order: 1 },
+      { id: first.id, order: 2 },
+    ])
+    await saveActivity({
+      id: first.id,
+      description: 'Busca API A atualizada',
+      status: 'Pendente',
+      month_reference: '03/2026',
+    })
+
+    const activities = await searchActivities('Busca API')
+
+    expect(activities.map((activity) => activity.description)).toEqual([
+      'Busca API B',
+      'Busca API C',
+      'Busca API A atualizada',
+      'Busca API Abril',
+    ])
   })
 
   it('updates an existing activity', async () => {

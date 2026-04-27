@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { DataSource, type DataSourceOptions } from 'typeorm'
+import { DataSource, IsNull, type DataSourceOptions, type Repository } from 'typeorm'
 import { UserProfile } from './entities/UserProfile'
 import { Alert } from './entities/Alert'
 import { Activity } from './entities/Activity'
@@ -83,13 +83,62 @@ export async function saveUserProfile(
 
 // ──── Activities ────
 
+async function getMaxActivityOrder(
+  repo: Repository<Activity>,
+  monthReference: string
+): Promise<number> {
+  const result = await repo.createQueryBuilder('activity')
+    .select('MAX(activity.order)', 'maxOrder')
+    .where('activity.month_reference = :monthReference', { monthReference })
+    .getRawOne<{ maxOrder: number | string | null }>()
+
+  const maxOrder = result?.maxOrder
+  return maxOrder === null || maxOrder === undefined ? 0 : Number(maxOrder)
+}
+
+async function normalizeActivityOrdersForMonth(
+  repo: Repository<Activity>,
+  monthReference: string
+): Promise<void> {
+  const activitiesWithoutOrder = await repo.find({
+    where: { month_reference: monthReference, order: IsNull() },
+    order: { id: 'ASC' },
+  })
+
+  if (activitiesWithoutOrder.length === 0) return
+
+  let nextOrder = await getMaxActivityOrder(repo, monthReference) + 1
+  for (const activity of activitiesWithoutOrder) {
+    activity.order = nextOrder
+    nextOrder++
+  }
+
+  await repo.save(activitiesWithoutOrder)
+}
+
+async function normalizeActivityOrdersWithMissingValues(
+  repo: Repository<Activity>
+): Promise<void> {
+  const rows = await repo.createQueryBuilder('activity')
+    .select('DISTINCT activity.month_reference', 'monthReference')
+    .where('activity.order IS NULL')
+    .getRawMany<{ monthReference: string | null }>()
+
+  for (const row of rows) {
+    if (row.monthReference) {
+      await normalizeActivityOrdersForMonth(repo, row.monthReference)
+    }
+  }
+}
+
 export async function getActivities(monthReference: string): Promise<Activity[]> {
   const db = await getDb()
   const repo = db.getRepository(Activity)
+  await normalizeActivityOrdersForMonth(repo, monthReference)
   const activities = await repo.find({
     where: { month_reference: monthReference },
     relations: ['evidences'],
-    order: { order: 'ASC', last_updated: 'DESC' },
+    order: { order: 'ASC', id: 'ASC' },
   })
   // Exclude soft-deleted evidences
   for (const act of activities) {
@@ -115,15 +164,25 @@ export async function saveActivity(data: Partial<Activity>): Promise<Activity> {
   if (data.id) {
     const existing = await repo.findOne({ where: { id: data.id } })
     if (existing) {
+      const currentOrder = existing.order
       Object.assign(existing, data)
+      existing.order = currentOrder
       existing.last_updated = new Date()
       return repo.save(existing)
     }
   }
 
+  const monthReference = data.month_reference
+  let nextOrder = data.order
+  if (monthReference) {
+    await normalizeActivityOrdersForMonth(repo, monthReference)
+    nextOrder = await getMaxActivityOrder(repo, monthReference) + 1
+  }
+
   const activity = repo.create({
     ...data,
     id: data.id || uuidv7(),
+    order: nextOrder,
     last_updated: new Date(),
   })
   return repo.save(activity)
@@ -413,11 +472,13 @@ export async function saveReport(data: {
 
 export async function getReportPayload(monthReference: string) {
   const db = await getDb()
+  const activityRepo = db.getRepository(Activity)
+  await normalizeActivityOrdersForMonth(activityRepo, monthReference)
   const profile = await db.getRepository(UserProfile).findOne({ where: {} })
-  const activities = await db.getRepository(Activity).find({
+  const activities = await activityRepo.find({
     where: { month_reference: monthReference },
     relations: ['evidences'],
-    order: { order: 'ASC', last_updated: 'DESC' },
+    order: { order: 'ASC', id: 'ASC' },
   })
   for (const act of activities) {
     act.evidences = (act.evidences || []).filter(e => !e.deleted_at)
@@ -486,15 +547,19 @@ export async function countActivities(monthReference: string): Promise<number> {
 /** Search activities across all months by query string */
 export async function searchActivities(query: string): Promise<Activity[]> {
   const db = await getDb()
+  const repo = db.getRepository(Activity)
+  await normalizeActivityOrdersWithMissingValues(repo)
   const like = `%${query}%`
-  const activities = await db.getRepository(Activity)
+  const activities = await repo
     .createQueryBuilder('activity')
     .leftJoinAndSelect('activity.evidences', 'evidence', 'evidence.deleted_at IS NULL')
     .where('activity.description LIKE :like', { like })
     .orWhere('activity.project_scope LIKE :like', { like })
     .orWhere('activity.link_ref LIKE :like', { like })
     .orWhere('evidence.caption LIKE :like', { like })
-    .orderBy('activity.last_updated', 'DESC')
+    .orderBy('activity.month_reference', 'ASC')
+    .addOrderBy('activity.order', 'ASC')
+    .addOrderBy('activity.id', 'ASC')
     .take(50)
     .getMany()
   // Deduplicate (join may produce duplicates)
