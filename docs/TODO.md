@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 27/04/2026 (v1.2.2 — tag publicada; branch `dev` com mudanças pós-release em `[Unreleased]`)
+> Atualizado em: 27/04/2026 (preparado para release v1.3.0)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.

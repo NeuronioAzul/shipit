@@ -376,8 +376,8 @@ Observações:
 > Atualize esta seção ao final de cada execução real do plano. Não use esta seção como fonte da verdade sem reconferir o código.
 
 - **Última execução do plano**: 2026-04-27 — Full sync documental
-- **Versão em `package.json`**: 1.2.2
-- **Último release documentado**: v1.2.2 (`git tag v1.2.2`, 2026-04-14)
+- **Versão em `package.json`**: 1.3.0 após execução do `release.py` (1.2.2 antes do bump)
+- **Último release documentado**: v1.3.0 (preparado em 2026-04-27)
 - **Data da execução**: 2026-04-27
 - **IPC exposto no preload**: 54 chamadas `ipcRenderer.invoke` + 4 listeners `ipcRenderer.on`
 - **IPC registrado no main**: 54 handlers `ipcMain.handle`

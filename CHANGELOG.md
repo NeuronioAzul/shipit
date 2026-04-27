@@ -9,6 +9,14 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Pendente
+
+- Sem mudanças documentadas desde `v1.3.0`.
+
+---
+
+## [1.3.0] — 2026-04-27
+
 ### Corrigido (Fase 22 — Ordenação cronológica de atividades)
 
 - **Ordenação estável no backend**
@@ -151,7 +159,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   - Histórico global com `pathname + search + hash`, deduplicação consecutiva, limpeza da forward stack e limite de 100 entradas
   - Atalhos globais `Alt+←` / `Alt+→` com guardas para `input`, `textarea`, `select` e `contenteditable`
 
-### Alterado
+### Alterado (Temas e navegação)
 
 - **ThemeContext** refatorado de toggle dark/light para suporte multi-tema completo
   - Estado `theme` armazena `ThemeId` (union de 11 IDs)

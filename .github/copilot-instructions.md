@@ -1,6 +1,6 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app (package version 1.2.2, latest release tag: v1.2.2; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (package version 1.3.0, latest release tag: v1.3.0; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
