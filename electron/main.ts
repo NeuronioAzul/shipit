@@ -3,6 +3,11 @@ import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol,
 import path from 'path'
 import fs from 'fs'
 
+// Set AppUserModelId for Windows notifications to show correct app name and icon
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.neuronioazul.shipit')
+}
+
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let alertIntervalId: ReturnType<typeof setInterval> | null = null
@@ -532,7 +537,7 @@ async function checkAndFireAlerts(): Promise<void> {
     const notification = new Notification({
       title: 'ShipIt! — Lembrete',
       body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
-      icon: path.join(__dirname, '..', 'images', 'icons', 'favicon-96x96.png'),
+      icon: path.join(__dirname, '..', 'assets', 'images', 'icons', 'favicon-96x96.png'),
     })
     notification.on('click', () => {
       mainWindow?.show()
