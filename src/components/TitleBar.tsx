@@ -18,7 +18,7 @@ export function TitleBar() {
 
   return (
     <div 
-      className="h-9 bg-titlebar flex items-center justify-between select-none shrink-0"
+      className="h-[53px] bg-titlebar flex items-center justify-between select-none shrink-0"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* Left: Full Logo */}
