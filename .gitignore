@@ -7,3 +7,4 @@ dist-electron/
 .env.local
 release/
 out/
+docs/scripts/__pycache__/*
