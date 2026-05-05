@@ -23,6 +23,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ---
 
 
+
+## [1.3.2] — 2026-05-04
+
+### Alterado
+
+- Atualização de versão para 1.3.2 e alinhamento dos metadados de release, sem mudanças funcionais adicionais em relação à 1.3.1.
+
 ## [1.3.1] — 2026-05-04
 
 ### Adicionado
