@@ -1,6 +1,12 @@
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import { _electron as electron } from 'playwright'
 import path from 'path'
+import {
+  createActivityRecord as createActivityFixtureRecord,
+  createActivityThroughForm,
+  getUniqueMonthSequence,
+  type ActivityFixtureOverrides,
+} from './fixtures/activityFixtures'
 
 let app: ElectronApplication
 let page: Page
@@ -26,26 +32,6 @@ test.afterAll(async () => {
   })
 })
 
-function getCurrentMonthRef(): string {
-  const now = new Date()
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const yyyy = now.getFullYear()
-  return `${mm}/${yyyy}`
-}
-
-function getUniqueMonthSequence(seed: number, count: number): string[] {
-  const startYear = 2040 + (seed % 500)
-  const startMonthIndex = seed % 12
-
-  return Array.from({ length: count }, (_, index) => {
-    const absoluteMonthIndex = startMonthIndex + index
-    const month = (absoluteMonthIndex % 12) + 1
-    const year = startYear + Math.floor(absoluteMonthIndex / 12)
-
-    return `${String(month).padStart(2, '0')}/${year}`
-  })
-}
-
 function menuItemSelector(commandId: string): string {
   return `#titlebar-menu-item-${commandId.replace(/\./g, '-')}`
 }
@@ -68,53 +54,14 @@ async function restoreMainWindow() {
 
 async function createActivityRecord(
   description: string,
-  monthReference = getCurrentMonthRef(),
-  overrides: Record<string, unknown> = {},
+  monthReference?: string,
+  overrides: ActivityFixtureOverrides = {},
 ) {
-  return page.evaluate(async ({ description, monthReference, overrides }) => {
-    const api = (window as unknown as { electronAPI?: { saveActivity?: (data: Record<string, unknown>) => Promise<unknown> } }).electronAPI
-
-    if (!api?.saveActivity) {
-      throw new Error('electronAPI.saveActivity indisponível no E2E')
-    }
-
-    return api.saveActivity({
-      description,
-      date_start: null,
-      date_end: null,
-      status: 'Pendente',
-      link_ref: null,
-      attendance_type: null,
-      month_reference: monthReference,
-      project_scope: null,
-      ...overrides,
-    })
-  }, { description, monthReference, overrides })
+  return createActivityFixtureRecord(page, description, monthReference, overrides)
 }
 
 async function createActivity(description: string, monthReference?: string) {
-  const targetMonth = monthReference || getCurrentMonthRef()
-
-  await page.click('[title="Atividades"]')
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
-
-  await page.evaluate((month) => {
-    window.location.hash = `#/activities?month=${month}`
-  }, targetMonth)
-  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${targetMonth}`))
-
-  await page.click('button:has-text("Nova Atividade")')
-
-  const descInput = page.locator('textarea#description')
-  await descInput.waitFor({ timeout: 5_000 })
-  await descInput.fill(description)
-
-  const monthInput = page.locator('input#month_reference')
-  await monthInput.fill(targetMonth)
-
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/#\/activities(?:\?.*)?$/, { timeout: 10_000 })
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 10_000 })
+  await createActivityThroughForm(page, description, monthReference)
 }
 
 // ──── Window ────

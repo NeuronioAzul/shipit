@@ -14,6 +14,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Cobertura Playwright/Electron ampliada para controles reais da janela na TitleBar: minimizar, maximizar/restaurar e fechar para tray sem destruir a janela.
 - Regressão completa da busca na TitleBar cobrindo foco via `Ctrl+K`, ícone, debounce, limite de resultados, destaque com `<mark>`, estado vazio, navegação por teclado, filtro avançado, `Escape` e clique fora.
 - Validação completa do menu superior customizado: navegação por teclado entre seções/itens e comandos File/Edit/View/Help, com instrumentação segura para ações nativas (`shell.openPath`, `webContents`, zoom, janela e quit).
+- Fixtures E2E de atividades centralizadas para criar registros via IPC/formulário e gerar meses únicos por execução.
 
 ### Corrigido 1.3.3
 

@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 04/05/2026 (validação de release pós-v1.3.0)
+> Atualizado em: 05/05/2026 (validação TitleBar/release para v1.3.3)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -375,7 +375,9 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Histórico global preserva query string e profundidade mínima de navegação por botões/atalhos
 - [x] Menu superior validado por mouse, teclado e todos os command IDs de File/Edit/View/Help com instrumentação segura
 - [x] Teste mensal do detalhe isolado com meses únicos por execução para evitar dados persistidos entre runs
+- [x] Fixtures E2E de atividades centralizadas em `e2e/fixtures/activityFixtures.ts`
 - [x] Suíte E2E atual: 25 cenários Playwright/Electron
+- [x] Dry-run oficial de release `1.3.3` concluído sem ações remotas destrutivas
 
 ---
 
