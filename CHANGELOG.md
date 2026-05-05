@@ -7,7 +7,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
-## [Unreleased]
+## [1.3.3]
 
 ### Adicionado (Validação TitleBar e Release)
 
@@ -15,14 +15,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Regressão completa da busca na TitleBar cobrindo foco via `Ctrl+K`, ícone, debounce, limite de resultados, destaque com `<mark>`, estado vazio, navegação por teclado, filtro avançado, `Escape` e clique fora.
 - Validação completa do menu superior customizado: navegação por teclado entre seções/itens e comandos File/Edit/View/Help, com instrumentação segura para ações nativas (`shell.openPath`, `webContents`, zoom, janela e quit).
 
-### Corrigido
+### Corrigido 1.3.3
 
 - Resultados da SearchBar ganharam IDs, `role="listbox"`, `role="option"`, `aria-selected` e `data-selected` para tornar a seleção por teclado assertiva e acessível.
 - Teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando contaminação por dados persistidos de runs anteriores.
 
 ---
-
-
 
 ## [1.3.2] — 2026-05-04
 
@@ -38,7 +36,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Regressão completa da busca na TitleBar, cobrindo foco via `Ctrl+K`, debounce, limite de resultados, destaque, navegação por teclado, filtro avançado, `Escape` e clique fora.
 - Validação automatizada do menu superior customizado, com navegação por mouse/teclado e execução segura dos comandos de **File / Edit / View / Help**.
 
-### Corrigido
+### Corrigido 1.3.1
 
 - Resultados da SearchBar passaram a ter IDs e atributos ARIA (`role="listbox"`, `role="option"`, `aria-selected` e `data-selected`) para tornar a navegação por teclado mais previsível e acessível.
 - O teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando interferência de dados persistidos entre execuções.
