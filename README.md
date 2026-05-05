@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/images/logo-composto-colorido.svg" alt="ShipIt! Logo" width="400" />
+  <img src="public/assets/images/logo-composto-colorido.svg" alt="ShipIt! Logo" width="400" />
 </p>
 
 <h1 align="center">ShipIt!</h1>

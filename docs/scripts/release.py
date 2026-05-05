@@ -5,7 +5,8 @@ ShipIt — Script Automatizado de Release (Python)
 
 Automatiza o fluxo completo de release:
   validar ambiente → commit → CHANGELOG via Copilot CLI → bump version →
-  push → PR (dev → main) → squash merge → tag → aguardar CI/CD draft → publicar release
+  push → PR (dev → main) → squash merge → tag → aguardar draft → aguardar workflow →
+  validar assets → publicar release
 
 Uso:
   python docs/scripts/release.py                          # Modo interativo
@@ -13,6 +14,8 @@ Uso:
   python docs/scripts/release.py --dry-run                # Simulação sem executar
   python docs/scripts/release.py --skip-changelog          # Pular geração de changelog
   python docs/scripts/release.py --skip-commit             # Pular commit de mudanças pendentes
+  python docs/scripts/release.py --ci-timeout 5400         # Timeout em segundos para o workflow CI/CD
+  python docs/scripts/release.py --skip-asset-validation   # Pular validação de assets (emergência)
 
 Requer: Python 3.10+, git, gh CLI (autenticado com escopos repo + write:packages)
 """
@@ -36,8 +39,11 @@ PROJECT_ROOT = SCRIPT_DIR.parent.parent
 PACKAGE_JSON = PROJECT_ROOT / "package.json"
 CHANGELOG_FILE = PROJECT_ROOT / "CHANGELOG.md"
 
-TIMEOUT_CI_SECONDS = 300  # 5 minutos para aguardar CI/CD draft
+TIMEOUT_CI_SECONDS = 300  # 5 minutos para aguardar a draft release aparecer
 POLL_INTERVAL_SECONDS = 15
+TIMEOUT_WORKFLOW_SECONDS = 5400  # 90 minutos para builds Windows + macOS + Linux
+WORKFLOW_POLL_INTERVAL_SECONDS = 30
+WORKFLOW_NAME = "Build & Release"
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -231,7 +237,7 @@ def copilot_prompt(prompt: str, allow_tools: list[str] | None = None) -> str | N
 
 def check_environment() -> bool:
     """Verifica pré-requisitos: git, gh CLI, autenticação, branch."""
-    print_header("Step 1/11 — Validação de Ambiente")
+    print_header("Step 1/13 — Validação de Ambiente")
     ok = True
 
     # git
@@ -326,7 +332,7 @@ def has_uncommitted_changes() -> bool:
 
 def do_commit(dry_run: bool) -> None:
     """Commita mudanças pendentes."""
-    print_header("Step 2-3/11 — Commit de Mudanças Pendentes")
+    print_header("Step 2-3/13 — Commit de Mudanças Pendentes")
 
     if not has_uncommitted_changes():
         print_success("Nenhuma mudança pendente. Pulando commit.")
@@ -399,7 +405,7 @@ def do_commit(dry_run: bool) -> None:
 
 def update_changelog(version: str, dry_run: bool) -> None:
     """Atualiza CHANGELOG.md com entrada para a nova versão."""
-    print_header("Step 4/11 — Atualizar CHANGELOG.md")
+    print_header("Step 4/13 — Atualizar CHANGELOG.md")
 
     today = datetime.now().strftime("%Y-%m-%d")
     section_header = f"## [{version}] — {today}"
@@ -531,7 +537,7 @@ def update_changelog(version: str, dry_run: bool) -> None:
 
 def bump_version(version: str, dry_run: bool) -> str:
     """Atualiza a versão no package.json."""
-    print_header("Step 5/11 — Bump de Versão")
+    print_header("Step 5/13 — Bump de Versão")
 
     current = get_current_version()
     print_info(f"Versão atual: {current}")
@@ -612,7 +618,7 @@ def bump_version(version: str, dry_run: bool) -> str:
 
 def push_dev(dry_run: bool) -> None:
     """Envia commits para origin/dev."""
-    print_header("Step 6/11 — Push dev Branch")
+    print_header("Step 6/13 — Push dev Branch")
 
     if dry_run:
         print_dry_run("Faria: git push origin dev")
@@ -629,7 +635,7 @@ def push_dev(dry_run: bool) -> None:
 
 def create_pr(version: str, dry_run: bool) -> int | None:
     """Cria PR de dev → main. Retorna número do PR."""
-    print_header("Step 7/11 — Criar PR (dev → main)")
+    print_header("Step 7/13 — Criar PR (dev → main)")
 
     # Verificar se já existe PR aberto
     print_step("Verificando PRs existentes...")
@@ -719,7 +725,7 @@ def create_pr(version: str, dry_run: bool) -> int | None:
 
 def merge_pr(pr_number: int | None, dry_run: bool) -> None:
     """Faz squash merge do PR."""
-    print_header("Step 8/11 — Merge PR (squash)")
+    print_header("Step 8/13 — Merge PR (squash)")
 
     if pr_number is None:
         if dry_run:
@@ -775,7 +781,7 @@ def merge_pr(pr_number: int | None, dry_run: bool) -> None:
 
 def create_and_push_tag(version: str, dry_run: bool) -> None:
     """Cria tag e envia para origin. Sincroniza dev com main."""
-    print_header("Step 9/11 — Criar e Enviar Tag")
+    print_header("Step 9/13 — Criar e Enviar Tag")
 
     tag_name = f"v{version}"
 
@@ -826,13 +832,13 @@ def create_and_push_tag(version: str, dry_run: bool) -> None:
 
 
 # ================================================================================================
-# Step 10: Aguardar CI/CD draft release
+# Step 10: Aguardar draft release aparecer
 # ================================================================================================
 
 
 def wait_for_draft_release(version: str, dry_run: bool) -> None:
-    """Aguarda CI/CD criar o draft release no GitHub."""
-    print_header("Step 10/11 — Aguardar CI/CD Draft Release")
+    """Aguarda a draft release ser criada no GitHub (job create-release do workflow)."""
+    print_header("Step 10/13 — Aguardar Draft Release")
 
     tag_name = f"v{version}"
 
@@ -876,13 +882,295 @@ def wait_for_draft_release(version: str, dry_run: bool) -> None:
 
 
 # ================================================================================================
-# Step 11: Publicar release
+# Step 11: Aguardar workflow CI/CD concluir
+# ================================================================================================
+
+
+def _get_tag_sha(tag_name: str) -> str | None:
+    """Retorna o SHA do commit apontado pela tag, ou None."""
+    result = run_cmd(["git", "rev-list", "-n", "1", tag_name], check=False)
+    if result.returncode == 0 and result.stdout.strip():
+        return result.stdout.strip()
+    return None
+
+
+def _find_workflow_run(tag_name: str, tag_sha: str | None) -> dict | None:
+    """Localiza o run mais recente do workflow Build & Release para a tag."""
+    result = run_cmd(
+        [
+            "gh", "run", "list",
+            "--workflow", WORKFLOW_NAME,
+            "--event", "push",
+            "--limit", "30",
+            "--json",
+            "databaseId,headBranch,headSha,status,conclusion,url,displayTitle,createdAt",
+        ],
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
+    try:
+        runs = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return None
+    # Tag pushes aparecem com headBranch == tag_name
+    for run in runs:
+        if run.get("headBranch") == tag_name:
+            return run
+    if tag_sha:
+        for run in runs:
+            if run.get("headSha") == tag_sha:
+                return run
+    return None
+
+
+def wait_for_release_workflow_completion(
+    version: str, timeout_seconds: int, dry_run: bool
+) -> dict | None:
+    """Aguarda o workflow Build & Release concluir com `conclusion: success`."""
+    print_header("Step 11/13 — Aguardar Workflow CI/CD")
+
+    tag_name = f"v{version}"
+
+    if dry_run:
+        print_dry_run(
+            f"Aguardaria conclusão de '{WORKFLOW_NAME}' para {tag_name} "
+            f"(timeout: {timeout_seconds}s)"
+        )
+        return None
+
+    tag_sha = _get_tag_sha(tag_name)
+    if tag_sha:
+        print_info(f"SHA da tag {tag_name}: {tag_sha[:12]}")
+
+    print_step(f"Procurando workflow run para {tag_name}...")
+    print_info(
+        f"Timeout: {timeout_seconds}s (poll a cada {WORKFLOW_POLL_INTERVAL_SECONDS}s)"
+    )
+
+    elapsed = 0
+    run_summary: dict | None = None
+    while elapsed < timeout_seconds:
+        run_summary = _find_workflow_run(tag_name, tag_sha)
+        if run_summary:
+            break
+        print(
+            f"  ⏳ Aguardando run aparecer... ({elapsed}s / {timeout_seconds}s)",
+            end="\r",
+        )
+        time.sleep(WORKFLOW_POLL_INTERVAL_SECONDS)
+        elapsed += WORKFLOW_POLL_INTERVAL_SECONDS
+
+    if not run_summary:
+        print()
+        print_error(
+            f"Workflow run para {tag_name} não encontrado dentro do timeout."
+        )
+        print_info(f"Verifique manualmente: gh run list --workflow \"{WORKFLOW_NAME}\"")
+        sys.exit(1)
+
+    run_id = run_summary["databaseId"]
+    run_url = run_summary.get("url", "")
+    print()
+    print_success(f"Run encontrado: #{run_id}")
+    if run_url:
+        print_info(f"URL: {run_url}")
+
+    last_line_len = 0
+    while elapsed < timeout_seconds:
+        result = run_cmd(
+            [
+                "gh", "run", "view", str(run_id),
+                "--json", "status,conclusion,jobs,url",
+            ],
+            check=False,
+        )
+        if result.returncode != 0:
+            time.sleep(WORKFLOW_POLL_INTERVAL_SECONDS)
+            elapsed += WORKFLOW_POLL_INTERVAL_SECONDS
+            continue
+
+        try:
+            data = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            time.sleep(WORKFLOW_POLL_INTERVAL_SECONDS)
+            elapsed += WORKFLOW_POLL_INTERVAL_SECONDS
+            continue
+
+        status = data.get("status", "")
+        conclusion = data.get("conclusion") or ""
+        jobs = data.get("jobs", []) or []
+
+        job_parts = []
+        for job in jobs:
+            jname = job.get("name", "?")
+            jstatus = job.get("status", "")
+            jconc = job.get("conclusion") or ""
+            if jstatus == "completed":
+                mark = "✔" if jconc == "success" else "✖"
+            elif jstatus == "in_progress":
+                mark = "⏵"
+            else:
+                mark = "⏳"
+            job_parts.append(f"{mark} {jname}")
+
+        line = " | ".join(job_parts) if job_parts else f"status={status}"
+        line_full = f"  [{elapsed}s] {line}"
+        if len(line_full) > 110:
+            line_full = line_full[:107] + "..."
+        # Limpa a linha anterior
+        print("\r" + " " * max(last_line_len, len(line_full)), end="\r")
+        print(line_full, end="\r")
+        last_line_len = len(line_full)
+
+        if status == "completed":
+            print()
+            run_summary = {
+                "databaseId": run_id,
+                "url": run_url or data.get("url", ""),
+                "status": status,
+                "conclusion": conclusion,
+                "jobs": jobs,
+            }
+            if conclusion == "success":
+                print_success("Workflow concluído com sucesso.")
+                return run_summary
+            print_error(f"Workflow concluiu com '{conclusion}'.")
+            print_info(f"Logs:  gh run view {run_id} --log")
+            print_info(f"Rerun: gh run rerun {run_id}")
+            sys.exit(1)
+
+        time.sleep(WORKFLOW_POLL_INTERVAL_SECONDS)
+        elapsed += WORKFLOW_POLL_INTERVAL_SECONDS
+
+    print()
+    print_error(f"Timeout de {timeout_seconds}s atingido aguardando workflow.")
+    print_info(f"Verifique manualmente: gh run view {run_id} --url")
+    sys.exit(1)
+
+
+# ================================================================================================
+# Step 12: Validar assets antes de publicar
+# ================================================================================================
+
+
+def expected_release_assets(version: str) -> list[str]:
+    """Lista de assets esperados na release final, conforme o workflow atual."""
+    v = version
+    return [
+        f"ShipIt-{v}-Windows-x64-Setup.exe",
+        f"ShipIt-{v}-Windows-x64-Portable.exe",
+        f"ShipIt-{v}-Windows-x64.msi",
+        f"ShipIt-{v}-Windows-x64-Setup.exe.blockmap",
+        "latest.yml",
+        f"ShipIt-{v}-macOS-arm64.dmg",
+        f"ShipIt-{v}-macOS-arm64.dmg.blockmap",
+        f"ShipIt-{v}-macOS-x64.dmg",
+        f"ShipIt-{v}-macOS-x64.dmg.blockmap",
+        "latest-mac.yml",
+        f"ShipIt-{v}-Linux-x86_64.AppImage",
+        f"ShipIt-{v}-Linux-amd64.deb",
+        f"ShipIt-{v}-Linux-x86_64.rpm",
+        "latest-linux.yml",
+    ]
+
+
+def validate_release_assets(
+    version: str, skip: bool, dry_run: bool
+) -> dict | None:
+    """Valida que a release tem todos os assets esperados e que o upload concluiu."""
+    print_header("Step 12/13 — Validar Assets da Release")
+
+    tag_name = f"v{version}"
+
+    if dry_run:
+        print_dry_run(f"Validaria assets da release {tag_name}")
+        return None
+
+    if skip:
+        print_warning("Validação de assets pulada (--skip-asset-validation).")
+        return None
+
+    result = run_cmd(
+        [
+            "gh", "release", "view", tag_name,
+            "--json", "isDraft,assets,url,tagName",
+        ],
+        check=False,
+    )
+    if result.returncode != 0:
+        print_error(f"Release {tag_name} não encontrada.")
+        sys.exit(1)
+
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print_error("Resposta inválida do GitHub para a release.")
+        sys.exit(1)
+
+    is_draft = bool(data.get("isDraft"))
+    assets = data.get("assets", []) or []
+    expected = expected_release_assets(version)
+    asset_by_name = {a.get("name", ""): a for a in assets}
+
+    print_info(f"Release isDraft: {is_draft}")
+    print_info(f"Assets encontrados: {len(assets)} / esperados: {len(expected)}")
+
+    missing: list[str] = []
+    not_uploaded: list[str] = []
+    for name in expected:
+        asset = asset_by_name.get(name)
+        if asset is None:
+            missing.append(name)
+            print_error(f"  • {name} (faltando)")
+            continue
+        state = asset.get("state") or ""
+        if state and state != "uploaded":
+            not_uploaded.append(name)
+            print_warning(f"  • {name} (state={state})")
+        else:
+            print_success(f"  • {name}")
+
+    if missing or not_uploaded:
+        print()
+        print_error("Validação de assets falhou.")
+        if missing:
+            print_info(f"Assets faltando: {len(missing)}")
+        if not_uploaded:
+            print_info(f"Assets com upload incompleto: {not_uploaded}")
+        print()
+        print_info("Comandos úteis para diagnóstico:")
+        print(f"  gh release view {tag_name} --json isDraft,assets,url")
+        print(f"  gh run list --workflow \"{WORKFLOW_NAME}\" --event push --limit 5")
+        print("  gh run rerun <run_id>")
+        if not is_draft:
+            print()
+            print_error(
+                "Atenção: a release JÁ FOI PUBLICADA mas está com assets incompletos. "
+                "Reverta para draft antes de re-rodar o workflow:"
+            )
+            print(f"  gh release edit {tag_name} --draft=true")
+            print("  gh run rerun <run_id>")
+        sys.exit(1)
+
+    if not is_draft:
+        print_warning(
+            f"Release {tag_name} já está publicada — assets completos, validação OK."
+        )
+    else:
+        print_success("Todos os assets esperados estão presentes e completos.")
+
+    return data
+
+
+# ================================================================================================
+# Step 13: Publicar release
 # ================================================================================================
 
 
 def publish_release(version: str, dry_run: bool) -> None:
     """Publica a release (draft → published)."""
-    print_header("Step 11/11 — Publicar Release")
+    print_header("Step 13/13 — Publicar Release")
 
     tag_name = f"v{version}"
 
@@ -983,6 +1271,20 @@ Exemplos:
         action="store_true",
         help="Pula o commit de mudanças não commitadas.",
     )
+    parser.add_argument(
+        "--ci-timeout",
+        type=int,
+        default=TIMEOUT_WORKFLOW_SECONDS,
+        help=(
+            "Timeout em segundos para aguardar o workflow CI/CD concluir "
+            f"(padrão: {TIMEOUT_WORKFLOW_SECONDS})."
+        ),
+    )
+    parser.add_argument(
+        "--skip-asset-validation",
+        action="store_true",
+        help="Pula a validação de assets antes de publicar (uso emergencial).",
+    )
     return parser.parse_args()
 
 
@@ -1029,15 +1331,39 @@ def main() -> None:
     # Step 9: Criar e enviar tag
     create_and_push_tag(version, dry_run)
 
-    # Step 10: Aguardar CI/CD
+    # Step 10: Aguardar a draft release aparecer
     wait_for_draft_release(version, dry_run)
 
-    # Step 11: Publicar release
+    # Step 11: Aguardar o workflow CI/CD concluir todos os builds
+    workflow_summary = wait_for_release_workflow_completion(
+        version, args.ci_timeout, dry_run
+    )
+
+    # Step 12: Validar assets antes de publicar
+    release_data = validate_release_assets(
+        version, args.skip_asset_validation, dry_run
+    )
+
+    # Step 13: Publicar release
     publish_release(version, dry_run)
 
     # Resumo final
     print_header("Release Concluída!")
     print_success(f"Versão: v{version}")
+    if release_data:
+        assets = release_data.get("assets", []) or []
+        url = release_data.get("url", "")
+        is_draft = bool(release_data.get("isDraft"))
+        status_label = "draft" if is_draft else "published"
+        print_info(f"Status no momento da validação: {status_label}")
+        print_info(f"Assets anexados: {len(assets)}")
+        for asset in assets:
+            name = asset.get("name", "?")
+            print(f"  • {name}")
+        if url:
+            print_info(f"Release URL: {url}")
+    if workflow_summary and workflow_summary.get("url"):
+        print_info(f"Workflow run:  {workflow_summary['url']}")
     print_success("Todos os passos concluídos com sucesso.")
     print()
 

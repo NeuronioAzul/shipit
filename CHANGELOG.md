@@ -9,11 +9,32 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-### Pendente
+### Adicionado (Validação TitleBar e Release)
 
-- Sem mudanças documentadas desde `v1.3.0`.
+- Cobertura Playwright/Electron ampliada para controles reais da janela na TitleBar: minimizar, maximizar/restaurar e fechar para tray sem destruir a janela.
+- Regressão completa da busca na TitleBar cobrindo foco via `Ctrl+K`, ícone, debounce, limite de resultados, destaque com `<mark>`, estado vazio, navegação por teclado, filtro avançado, `Escape` e clique fora.
+- Validação completa do menu superior customizado: navegação por teclado entre seções/itens e comandos File/Edit/View/Help, com instrumentação segura para ações nativas (`shell.openPath`, `webContents`, zoom, janela e quit).
+
+### Corrigido
+
+- Resultados da SearchBar ganharam IDs, `role="listbox"`, `role="option"`, `aria-selected` e `data-selected` para tornar a seleção por teclado assertiva e acessível.
+- Teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando contaminação por dados persistidos de runs anteriores.
 
 ---
+
+
+## [1.3.1] — 2026-05-04
+
+### Adicionado
+
+- Cobertura Playwright/Electron ampliada para validar os controles reais da janela na TitleBar, incluindo minimizar, maximizar/restaurar e fechar para a bandeja.
+- Regressão completa da busca na TitleBar, cobrindo foco via `Ctrl+K`, debounce, limite de resultados, destaque, navegação por teclado, filtro avançado, `Escape` e clique fora.
+- Validação automatizada do menu superior customizado, com navegação por mouse/teclado e execução segura dos comandos de **File / Edit / View / Help**.
+
+### Corrigido
+
+- Resultados da SearchBar passaram a ter IDs e atributos ARIA (`role="listbox"`, `role="option"`, `aria-selected` e `data-selected`) para tornar a navegação por teclado mais previsível e acessível.
+- O teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando interferência de dados persistidos entre execuções.
 
 ## [1.3.0] — 2026-04-27
 
