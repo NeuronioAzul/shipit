@@ -10,19 +10,32 @@
                 | |       
                 |_|       
 ```
+
 ## Detalhes da atividade
 
+## validar funcionalidades, corrigir erros e criar testes
 
+Validar funcionalidade e caso necessário corrigir e criar testes para não acontecer mais o erro.
 
-
-
+- testar todas as funcionalidades do titlebar:
+  - clicar e arrastar para mover a janela
+  - clicar no ícone de minimizar
+  - maximizar a janela e restaurar para o tamanho anterior
+  - fechar a janela
+  - verificar se:
+    - o campo de busca está funcionando corretamente,
+    - se os resultados da busca estão sendo exibidos corretamente,
+    - se o ícone de busca está sendo exibido corretamente,
+    - se a navegação entre os resultados da busca usando as setas para cima e para baixo está funcionando corretamente;
+  - verificar se as setas anterior e próximo estão funcionando corretamente, navegando entre as páginas visitadas pelo usuário,
+    - e se o histórico de navegação está sendo registrado corretamente para permitir a navegação entre as páginas visitadas.
+  - verificar todos os itens do menu, para garantir que estão funcionando corretamente, e que as funcionalidades estão sendo executadas conforme o esperado.
 
 ### features
 
 - feat: Adicionar o Botão de excluir ao lado de editar na tela de detalhes da atividade, para excluir a atividade, com confirmação modal para evitar exclusão acidental, e também para melhorar a experiência do usuário.
 - feat: na tela de detalhes da atividade remova o elemento `id="activity-nav-mode-toggle"` e no lugar coloque um seletor de meses, para facilitar a navegação entre os meses e permitir que os usuários possam acessar facilmente as atividades de meses anteriores.
-- 
-
+-
 
 ## Tela do aplicativo
 
@@ -116,7 +129,6 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
 - Adicionar ao lado esquerdo do campo de busca a navegação anterior e próximo igual no vscode, para navegar no histórico de navegação do usuário, facilitando voltar para última tela onde estava.
 - Permitir o menu de contexto ao clicar com o botão direito do mouse (right-click) para copiar, recortar e colar, - links devem abrir no navegador padrão do usuário fora do app
 
-
 - Adicionar um menu ao lado do logo para acessar as funcionalidades sugira outros que possam ser úteis para o usuário, além dos que já estão listados:
   - File
     - Nova Atividade - ctrl+n
@@ -152,7 +164,6 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
     - Manual do Usuário - criar tela com as instruções de uso do ShipIt!. Depois será melhorado e atualizado com imagens, gifs, vídeos, etc, para deixar a documentação mais atrativa e fácil de entender, e também para mostrar exemplos de uso do ShipIt! em diferentes cenários.
     - Reportar um Problema - link para o usuário abrir uma issue no GitHub para reportar um problema, bug, sugestão, etc, para ajudar a melhorar o ShipIt! e para mostrar que o projeto é aberto a contribuições e feedbacks da comunidade.
 
-
 Remoção total do toggle antigo de modo de navegação e substituição por seletor de mês com chevrons e label MM/YYYY no centro do nav.
 Navegação no detalhe agora baseada em mês selecionado, com recarga de siblings por month_reference.
 Atalhos ArrowLeft/ArrowRight ajustados para operar no contexto do mês selecionado.
@@ -161,10 +172,6 @@ Modal de exclusão da atividade implementada com role alertdialog, aria-modal, a
 Fluxo de exclusão reutilizando deleteActivity, toast de sucesso/erro e redirecionamento para /activities?month=mêsSelecionado.
 IDs estáveis adicionados conforme plano, incluindo activity-nav-month-selector, activity-detail-btn-delete e activity-detail-delete-modal.
 Modal de exclusão de evidência mantida separada com id próprio para evitar conflito de seletores.
-
------------------------------------------------------------
-
-## Fazendo
 
 ## Fix
 
@@ -175,3 +182,32 @@ Modal de exclusão de evidência mantida separada com id próprio para evitar co
 - fix: aumentar a quantidade de caracteres permitidos no campo de textarea para 20000 caracteres, para permitir que os usuários possam inserir descrições mais detalhadas e completas, sem se preocupar com limitações de espaço, e também para melhorar a experiência do usuário, permitindo que eles possam fornecer informações mais ricas e úteis sobre as atividades.
 
 - verificar se todos os campos do tipo input, textarea, estão permitindo a funcionalidade de colar usando o ctrl+v, ctrl+c, ctrl+x, ctrl+a, ctrl+z, ctrl+y, ctrl+shift+z, ctrl+shift+y, etc, e o menu de contexto, para garantir que os usuários possam colar suas informações sem problemas, e também para melhorar a experiência do usuário.
+
+-----------------------------------------------------------
+
+## Fazendo
+
+
+## 1 - validar funcionalidades, corrigir erros e criar testes
+
+Validar funcionalidade e caso necessário corrigir e criar testes para não acontecer mais o erro.
+
+- testar todas as funcionalidades do titlebar:
+  - clicar e arrastar para mover a janela
+  - clicar no ícone de minimizar
+  - maximizar a janela e restaurar para o tamanho anterior
+  - fechar a janela
+  - verificar se:
+    - o campo de busca está funcionando corretamente,
+    - se os resultados da busca estão sendo exibidos corretamente,
+    - se o ícone de busca está sendo exibido corretamente,
+    - se a navegação entre os resultados da busca usando as setas para cima e para baixo está funcionando corretamente;
+  - verificar se as setas anterior e próximo estão funcionando corretamente, navegando entre as páginas visitadas pelo usuário,
+    - e se o histórico de navegação está sendo registrado corretamente para permitir a navegação entre as páginas visitadas.
+  - verificar todos os itens do menu, para garantir que estão funcionando corretamente, e que as funcionalidades estão sendo executadas conforme o esperado.
+
+## 2 - criar tag
+
+Depois que tudo estiver validado, corrigido e testado, e a documentação estiver atualizada, o próximo passo é criar uma nova tag para a versão que será publicada. Para isso, siga os passos abaixo:
+
+Executar o script de publicação `docs\scripts\release.py` para criar uma nova tag no GitHub, seguindo as instruções detalhadas na documentação `docs\scripts\`, para publicar a nova versão do ShipIt! e disponibilizá-la para os usuários.
