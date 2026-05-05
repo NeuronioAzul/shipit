@@ -22,6 +22,20 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+
+## [1.3.1] — 2026-05-04
+
+### Adicionado
+
+- Cobertura Playwright/Electron ampliada para validar os controles reais da janela na TitleBar, incluindo minimizar, maximizar/restaurar e fechar para a bandeja.
+- Regressão completa da busca na TitleBar, cobrindo foco via `Ctrl+K`, debounce, limite de resultados, destaque, navegação por teclado, filtro avançado, `Escape` e clique fora.
+- Validação automatizada do menu superior customizado, com navegação por mouse/teclado e execução segura dos comandos de **File / Edit / View / Help**.
+
+### Corrigido
+
+- Resultados da SearchBar passaram a ter IDs e atributos ARIA (`role="listbox"`, `role="option"`, `aria-selected` e `data-selected`) para tornar a navegação por teclado mais previsível e acessível.
+- O teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando interferência de dados persistidos entre execuções.
+
 ## [1.3.0] — 2026-04-27
 
 ### Corrigido (Fase 22 — Ordenação cronológica de atividades)
