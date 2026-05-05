@@ -39,7 +39,7 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
 | `npm test`         | Executa 104 testes unitários e de integração (Vitest) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Testes end-to-end com Playwright                     |
+| `npm run test:e2e` | Executa 25 cenários end-to-end com Playwright/Electron |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
 
 ---

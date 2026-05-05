@@ -9,9 +9,16 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-### Pendente
+### Adicionado (Validação TitleBar e Release)
 
-- Sem mudanças documentadas desde `v1.3.0`.
+- Cobertura Playwright/Electron ampliada para controles reais da janela na TitleBar: minimizar, maximizar/restaurar e fechar para tray sem destruir a janela.
+- Regressão completa da busca na TitleBar cobrindo foco via `Ctrl+K`, ícone, debounce, limite de resultados, destaque com `<mark>`, estado vazio, navegação por teclado, filtro avançado, `Escape` e clique fora.
+- Validação completa do menu superior customizado: navegação por teclado entre seções/itens e comandos File/Edit/View/Help, com instrumentação segura para ações nativas (`shell.openPath`, `webContents`, zoom, janela e quit).
+
+### Corrigido
+
+- Resultados da SearchBar ganharam IDs, `role="listbox"`, `role="option"`, `aria-selected` e `data-selected` para tornar a seleção por teclado assertiva e acessível.
+- Teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando contaminação por dados persistidos de runs anteriores.
 
 ---
 

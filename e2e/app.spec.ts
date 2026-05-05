@@ -33,6 +33,65 @@ function getCurrentMonthRef(): string {
   return `${mm}/${yyyy}`
 }
 
+function getUniqueMonthSequence(seed: number, count: number): string[] {
+  const startYear = 2040 + (seed % 500)
+  const startMonthIndex = seed % 12
+
+  return Array.from({ length: count }, (_, index) => {
+    const absoluteMonthIndex = startMonthIndex + index
+    const month = (absoluteMonthIndex % 12) + 1
+    const year = startYear + Math.floor(absoluteMonthIndex / 12)
+
+    return `${String(month).padStart(2, '0')}/${year}`
+  })
+}
+
+function menuItemSelector(commandId: string): string {
+  return `#titlebar-menu-item-${commandId.replace(/\./g, '-')}`
+}
+
+async function clickMenuCommand(sectionId: string, commandId: string) {
+  await page.click(`#titlebar-menu-btn-${sectionId}`)
+  await page.click(menuItemSelector(commandId))
+}
+
+async function restoreMainWindow() {
+  await app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) return
+    if (win.isMinimized()) win.restore()
+    if (win.isMaximized()) win.unmaximize()
+    win.show()
+    win.focus()
+  })
+}
+
+async function createActivityRecord(
+  description: string,
+  monthReference = getCurrentMonthRef(),
+  overrides: Record<string, unknown> = {},
+) {
+  return page.evaluate(async ({ description, monthReference, overrides }) => {
+    const api = (window as unknown as { electronAPI?: { saveActivity?: (data: Record<string, unknown>) => Promise<unknown> } }).electronAPI
+
+    if (!api?.saveActivity) {
+      throw new Error('electronAPI.saveActivity indisponível no E2E')
+    }
+
+    return api.saveActivity({
+      description,
+      date_start: null,
+      date_end: null,
+      status: 'Pendente',
+      link_ref: null,
+      attendance_type: null,
+      month_reference: monthReference,
+      project_scope: null,
+      ...overrides,
+    })
+  }, { description, monthReference, overrides })
+}
+
 async function createActivity(description: string, monthReference?: string) {
   const targetMonth = monthReference || getCurrentMonthRef()
 
@@ -66,6 +125,47 @@ test('window starts visible', async () => {
     return win?.isVisible() ?? false
   })
   expect(isVisible).toBe(true)
+})
+
+test('controls real window state from titlebar buttons', async () => {
+  await restoreMainWindow()
+
+  const minimizeButton = page.locator('#titlebar-btn-minimize')
+  const maximizeButton = page.locator('#titlebar-btn-maximize')
+  const closeButton = page.locator('#titlebar-btn-close')
+
+  await minimizeButton.click()
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized() ?? false)
+  }).toBe(true)
+
+  await restoreMainWindow()
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible() ?? false)
+  }).toBe(true)
+
+  await expect(maximizeButton).toHaveAttribute('aria-label', 'Maximizar janela')
+  await maximizeButton.click()
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMaximized() ?? false)
+  }).toBe(true)
+  await expect(maximizeButton).toHaveAttribute('aria-label', 'Restaurar janela')
+
+  await maximizeButton.click()
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMaximized() ?? false)
+  }).toBe(false)
+  await expect(maximizeButton).toHaveAttribute('aria-label', 'Maximizar janela')
+
+  await closeButton.click()
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible() ?? false)
+  }).toBe(false)
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isDestroyed() ?? true)
+  }).toBe(false)
+
+  await restoreMainWindow()
 })
 
 test('shows titlebar navigation buttons disabled by default', async () => {
@@ -279,6 +379,217 @@ test('opens and closes app menu sections with mouse and Escape', async () => {
   await expect(fileMenuPanel).toBeHidden({ timeout: 5_000 })
 })
 
+test('supports full keyboard navigation across top menu sections', async () => {
+  await page.locator('#titlebar-menu-btn-file').focus()
+  await page.keyboard.press('ArrowDown')
+
+  await expect(page.locator('#titlebar-menu-panel-file')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#titlebar-menu-item-file-new-activity')).toBeFocused()
+
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('#titlebar-menu-item-file-open-reports-folder')).toBeFocused()
+
+  await page.keyboard.press('ArrowUp')
+  await expect(page.locator('#titlebar-menu-item-file-new-activity')).toBeFocused()
+
+  await page.keyboard.press('End')
+  await expect(page.locator('#titlebar-menu-item-file-quit')).toBeFocused()
+
+  await page.keyboard.press('Home')
+  await expect(page.locator('#titlebar-menu-item-file-new-activity')).toBeFocused()
+
+  await page.keyboard.press('ArrowRight')
+  await expect(page.locator('#titlebar-menu-panel-edit')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#titlebar-menu-item-edit-undo')).toBeFocused()
+
+  await page.keyboard.press('ArrowLeft')
+  await expect(page.locator('#titlebar-menu-panel-file')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#titlebar-menu-item-file-new-activity')).toBeFocused()
+
+  await page.keyboard.press('Tab')
+  await expect(page.locator('#titlebar-menu-panel-file')).toBeHidden({ timeout: 5_000 })
+})
+
+test('runs file menu commands with safe instrumentation', async () => {
+  await app.evaluate(({ shell }) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitOpenPathCalls?: string[]
+      __shipitRestoreOpenPath?: () => void
+    }
+
+    const calls: string[] = []
+    const originalOpenPath = shell.openPath
+
+    shell.openPath = async (targetPath: string) => {
+      calls.push(targetPath)
+      return ''
+    }
+
+    globalState.__shipitOpenPathCalls = calls
+    globalState.__shipitRestoreOpenPath = () => {
+      shell.openPath = originalOpenPath
+    }
+  })
+
+  try {
+    const runId = Date.now()
+    const [monthRef] = getUniqueMonthSequence(runId, 1)
+    const description = `Atividade Salvar Menu ${runId}`
+
+    await clickMenuCommand('file', 'file.new-activity')
+    await page.waitForURL(/#\/activities\/new$/)
+
+    await page.locator('textarea#description').fill(description)
+    await page.locator('input#month_reference').fill(monthRef)
+    await clickMenuCommand('file', 'file.save-context')
+
+    await expect.poll(async () => {
+      return page.evaluate(async (description) => {
+        const api = (window as unknown as { electronAPI?: { searchActivities?: (query: string) => Promise<Array<{ description?: string }>> } }).electronAPI
+        const results = await api?.searchActivities?.(description)
+        return results?.some((activity) => activity.description === description) ?? false
+      }, description)
+    }, { timeout: 1_000, intervals: [100, 150, 250] }).toBe(true)
+
+    await clickMenuCommand('file', 'file.settings')
+    await page.waitForURL(/#\/settings$/)
+
+    await clickMenuCommand('file', 'file.open-reports-folder')
+    await clickMenuCommand('file', 'file.open-evidences-folder')
+
+    await expect.poll(async () => {
+      return app.evaluate(() => {
+        const globalState = globalThis as typeof globalThis & { __shipitOpenPathCalls?: string[] }
+        return globalState.__shipitOpenPathCalls?.length ?? 0
+      })
+    }).toBe(2)
+
+    const openPathCalls = await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & { __shipitOpenPathCalls?: string[] }
+      return globalState.__shipitOpenPathCalls ?? []
+    })
+
+    expect(openPathCalls[0]).toBeTruthy()
+    expect(openPathCalls[1]).toMatch(/evidences$/i)
+  } finally {
+    await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitOpenPathCalls?: string[]
+        __shipitRestoreOpenPath?: () => void
+      }
+      globalState.__shipitRestoreOpenPath?.()
+      delete globalState.__shipitRestoreOpenPath
+      delete globalState.__shipitOpenPathCalls
+    })
+  }
+})
+
+test('runs edit menu commands against active webContents', async () => {
+  await app.evaluate(({ BrowserWindow }) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitEditCalls?: string[]
+      __shipitRestoreEditCommands?: () => void
+    }
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) throw new Error('Janela principal indisponível')
+
+    const webContents = win.webContents as unknown as Record<string, () => void>
+    const methods = ['undo', 'redo', 'cut', 'copy', 'paste', 'selectAll']
+    const originals = new Map<string, () => void>()
+    const calls: string[] = []
+
+    for (const method of methods) {
+      originals.set(method, webContents[method])
+      webContents[method] = () => {
+        calls.push(method)
+      }
+    }
+
+    globalState.__shipitEditCalls = calls
+    globalState.__shipitRestoreEditCommands = () => {
+      for (const [method, original] of originals) {
+        webContents[method] = original
+      }
+    }
+  })
+
+  try {
+    await clickMenuCommand('edit', 'edit.undo')
+    await clickMenuCommand('edit', 'edit.redo')
+    await clickMenuCommand('edit', 'edit.cut')
+    await clickMenuCommand('edit', 'edit.copy')
+    await clickMenuCommand('edit', 'edit.paste')
+    await clickMenuCommand('edit', 'edit.select-all')
+
+    const editCalls = await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & { __shipitEditCalls?: string[] }
+      return globalState.__shipitEditCalls ?? []
+    })
+
+    expect(editCalls).toEqual(['undo', 'redo', 'cut', 'copy', 'paste', 'selectAll'])
+
+    await clickMenuCommand('edit', 'edit.focus-search')
+    await expect(page.locator('#searchbar-input')).toBeFocused()
+  } finally {
+    await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitEditCalls?: string[]
+        __shipitRestoreEditCommands?: () => void
+      }
+      globalState.__shipitRestoreEditCommands?.()
+      delete globalState.__shipitRestoreEditCommands
+      delete globalState.__shipitEditCalls
+    })
+  }
+})
+
+test('runs view menu zoom and window commands', async () => {
+  await restoreMainWindow()
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.setZoomLevel(0)
+  })
+
+  await clickMenuCommand('view', 'view.zoom-in')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.getZoomLevel() ?? 0)
+  }).toBe(0.5)
+
+  await clickMenuCommand('view', 'view.zoom-out')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.getZoomLevel() ?? 0)
+  }).toBe(0)
+
+  await clickMenuCommand('view', 'view.zoom-in')
+  await clickMenuCommand('view', 'view.zoom-reset')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.getZoomLevel() ?? 0)
+  }).toBe(0)
+
+  await clickMenuCommand('view', 'view.window-maximize')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMaximized() ?? false)
+  }).toBe(true)
+
+  await clickMenuCommand('view', 'view.window-maximize')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMaximized() ?? false)
+  }).toBe(false)
+
+  await clickMenuCommand('view', 'view.window-minimize')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized() ?? false)
+  }).toBe(true)
+
+  await restoreMainWindow()
+
+  await clickMenuCommand('view', 'view.window-close')
+  await expect.poll(async () => {
+    return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible() ?? false)
+  }).toBe(false)
+
+  await restoreMainWindow()
+})
+
 test('runs help menu actions for manual and report issue', async () => {
   await app.evaluate(({ shell }) => {
     const globalState = globalThis as typeof globalThis & {
@@ -300,6 +611,15 @@ test('runs help menu actions for manual and report issue', async () => {
   })
 
   try {
+    await clickMenuCommand('help', 'help.about')
+    await expect(page.locator('#sidebar-about-modal')).toBeVisible({ timeout: 5_000 })
+    await page.keyboard.press('Escape')
+    await expect(page.locator('#sidebar-about-modal')).toHaveCount(0)
+
+    await clickMenuCommand('help', 'help.check-updates')
+    await page.waitForURL(/#\/settings$/)
+    await expect(page.locator('#settings-update-section')).toContainText('Disponível apenas na versão instalada.', { timeout: 5_000 })
+
     await page.click('#titlebar-menu-btn-help')
     await page.click('#titlebar-menu-item-help-user-manual')
     await page.waitForURL(/#\/manual$/)
@@ -507,9 +827,7 @@ test('uses local ArrowLeft/ArrowRight navigation on activity detail page', async
 
 test('replaces nav mode toggle with month selector and updates detail navigation context', async () => {
   const runId = Date.now()
-  const monthA = '10/2036'
-  const monthB = '11/2036'
-  const monthC = '12/2036'
+  const [monthA, monthB, monthC] = getUniqueMonthSequence(runId, 3)
   const activityA = `Atividade Detalhe Mês ${runId} A`
   const activityB = `Atividade Detalhe Mês ${runId} B`
 
@@ -519,13 +837,13 @@ test('replaces nav mode toggle with month selector and updates detail navigation
   await page.evaluate((month) => {
     window.location.hash = `#/activities?month=${month}`
   }, monthB)
-  await page.waitForURL(/#\/activities\?month=11\/2036$/)
+  await page.waitForURL((url) => url.hash === `#/activities?month=${monthB}`)
   await expect(page.locator('.flex-1.cursor-pointer', { hasText: activityB }).first()).toBeVisible({ timeout: 5_000 })
 
   await page.evaluate((month) => {
     window.location.hash = `#/activities?month=${month}`
   }, monthA)
-  await page.waitForURL(/#\/activities\?month=10\/2036$/)
+  await page.waitForURL((url) => url.hash === `#/activities?month=${monthA}`)
 
   await page.locator('.flex-1.cursor-pointer', { hasText: activityA }).first().click()
   await page.waitForURL(/#\/activities\/[^/?#]+$/)
@@ -584,6 +902,70 @@ test('opens, cancels and confirms activity deletion on detail page', async () =>
 
   await page.waitForURL(/#\/activities\?month=12\/2036$/)
   await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(0)
+})
+
+test('searches from titlebar with debounce, keyboard navigation and close behavior', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId, 1)
+  const query = `Busca Titlebar ${runId}`
+  const noMatchQuery = `Sem Resultado ${runId}`
+
+  for (let index = 0; index < 12; index++) {
+    await createActivityRecord(`${query} Item ${String(index).padStart(2, '0')}`, monthRef)
+  }
+
+  await page.locator('#app-main').click()
+  await page.keyboard.press('Control+k')
+
+  const input = page.locator('#searchbar-input')
+  const dropdown = page.locator('#searchbar-results')
+  const resultButtons = dropdown.locator('button[id^="searchbar-result-"]')
+
+  await expect(input).toBeFocused()
+  await expect(page.locator('#searchbar-magnifier')).toBeVisible()
+
+  await input.fill(query.slice(0, 1))
+  await expect(dropdown).toHaveCount(0)
+
+  await input.fill(query)
+  await expect(dropdown).toBeVisible({ timeout: 5_000 })
+  await expect(resultButtons).toHaveCount(10)
+  await expect(dropdown.locator('mark').first()).toHaveText(query)
+  await expect(dropdown.locator('button', { hasText: `Filtro avançado para "${query}"` })).toBeVisible()
+
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('#searchbar-result-0')).toHaveAttribute('data-selected', 'true')
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('#searchbar-result-1')).toHaveAttribute('data-selected', 'true')
+  await page.keyboard.press('ArrowUp')
+  await expect(page.locator('#searchbar-result-0')).toHaveAttribute('data-selected', 'true')
+
+  await page.keyboard.press('Enter')
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+  await expect(page.locator('#activity-detail-info')).toContainText(`${query} Item 00`, { timeout: 5_000 })
+
+  await page.keyboard.press('Control+k')
+  await input.fill(query)
+  await expect(dropdown).toBeVisible({ timeout: 5_000 })
+  await page.keyboard.press('Enter')
+  await page.waitForURL((url) => url.hash === `#/activities?search=${encodeURIComponent(query)}`)
+
+  await page.keyboard.press('Control+k')
+  await input.fill(noMatchQuery)
+  await expect(dropdown).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#searchbar-empty')).toBeVisible({ timeout: 5_000 })
+
+  await input.fill(query)
+  await expect(dropdown).toBeVisible({ timeout: 5_000 })
+  await page.keyboard.press('Escape')
+  await expect(dropdown).toHaveCount(0)
+  await expect(input).not.toBeFocused()
+
+  await page.keyboard.press('Control+k')
+  await input.fill(query)
+  await expect(dropdown).toBeVisible({ timeout: 5_000 })
+  await page.locator('#app-main').click()
+  await expect(dropdown).toHaveCount(0)
 })
 
 // ──── Cyberpunk Search Regression ────
@@ -651,4 +1033,44 @@ test('keeps searchbar stable and anchored in cyberpunk theme', async () => {
   expect(metrics!.leftDelta).toBeLessThanOrEqual(1)
   expect(metrics!.searchbarWidth).toBeLessThanOrEqual(metrics!.expectedMaxWidth + 1)
   expect(metrics!.dropdownWidth).toBeLessThanOrEqual(metrics!.expectedMaxWidth + 1)
+})
+
+test('routes quit menu command through Electron without ending the suite', async () => {
+  await app.evaluate(({ app }) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitQuitCalls?: number
+      __shipitRestoreQuit?: () => void
+    }
+
+    const originalQuit = app.quit
+    globalState.__shipitQuitCalls = 0
+    app.quit = () => {
+      globalState.__shipitQuitCalls = (globalState.__shipitQuitCalls ?? 0) + 1
+    }
+    globalState.__shipitRestoreQuit = () => {
+      app.quit = originalQuit
+    }
+  })
+
+  try {
+    await restoreMainWindow()
+    await clickMenuCommand('file', 'file.quit')
+
+    await expect.poll(async () => {
+      return app.evaluate(() => {
+        const globalState = globalThis as typeof globalThis & { __shipitQuitCalls?: number }
+        return globalState.__shipitQuitCalls ?? 0
+      })
+    }).toBe(1)
+  } finally {
+    await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitQuitCalls?: number
+        __shipitRestoreQuit?: () => void
+      }
+      globalState.__shipitRestoreQuit?.()
+      delete globalState.__shipitRestoreQuit
+      delete globalState.__shipitQuitCalls
+    })
+  }
 })

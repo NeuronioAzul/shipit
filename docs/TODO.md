@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 27/04/2026 (preparado para release v1.3.0)
+> Atualizado em: 04/05/2026 (validação de release pós-v1.3.0)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -366,6 +366,16 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Fallback browser (`localDb.ts`) alinhado com a mesma regra de ordenação
 - [x] Cobertura Vitest ampliada para criação, legado, reorder, payload DOCX e busca
 - [x] Suíte atual: 104 testes Vitest passando (8 arquivos)
+
+### Fase 23.1: Validação TitleBar e Release ✅
+
+- [x] Preflight local validado em `dev`: Node 24/npm 11, build, Vitest e E2E baseline registrados
+- [x] Controles reais da TitleBar cobertos por Playwright/Electron (`minimize`, `maximize/restore`, `close` para tray)
+- [x] Busca da TitleBar coberta com debounce, ícone, resultados, estado vazio, destaque, limite, navegação por teclado, filtro avançado e fechamento
+- [x] Histórico global preserva query string e profundidade mínima de navegação por botões/atalhos
+- [x] Menu superior validado por mouse, teclado e todos os command IDs de File/Edit/View/Help com instrumentação segura
+- [x] Teste mensal do detalhe isolado com meses únicos por execução para evitar dados persistidos entre runs
+- [x] Suíte E2E atual: 25 cenários Playwright/Electron
 
 ---
 

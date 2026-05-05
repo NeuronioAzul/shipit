@@ -153,7 +153,12 @@ export function SearchBar() {
 
       {/* Results dropdown */}
       {isOpen && (query.trim().length >= 2) && (
-        <div id="searchbar-results" className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto">
+        <div
+          id="searchbar-results"
+          role="listbox"
+          aria-label="Resultados da busca"
+          className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto"
+        >
           {results.length === 0 && !loading && (
             <div id="searchbar-empty" className="px-4 py-3 text-sm text-muted-foreground text-center">
               Nenhuma atividade encontrada.
@@ -161,7 +166,11 @@ export function SearchBar() {
           )}
           {results.map((activity, idx) => (
             <button
+              id={`searchbar-result-${idx}`}
               key={activity.id}
+              role="option"
+              aria-selected={idx === selectedIndex}
+              data-selected={idx === selectedIndex ? 'true' : 'false'}
               onClick={() => navigateToResult(activity)}
               className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer border-b border-border/30 last:border-b-0 ${
                 idx === selectedIndex ? 'bg-muted/50' : ''
