@@ -15,8 +15,6 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Implemented notification system for available updates with user prompts for installation.
 - Created a PowerShell script to clear Windows icon cache for the application.
 
-## [unreleased]
-
 ### Adicionado (Validação TitleBar e Release)
 
 - Cobertura Playwright/Electron ampliada para controles reais da janela na TitleBar: minimizar, maximizar/restaurar e fechar para tray sem destruir a janela.
