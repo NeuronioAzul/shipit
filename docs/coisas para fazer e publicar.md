@@ -4,6 +4,8 @@ SHIPIT!
 
 ## New features
 
+- 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
+
 - 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
 ## Verificação, correção e criação de testes
