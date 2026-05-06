@@ -288,7 +288,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
   - [x] Atualização de CHANGELOG.md via Copilot CLI (com fallback manual)
   - [x] Bump de versão no package.json (patch/minor/major/custom)
   - [x] Push, PR (dev → main), squash merge, tag, aguardar CI/CD, publicar release
-  - [x] `--dry-run`, `--skip-changelog`, `--skip-commit`, `--version`, `--help`
+  - [x] `--dry-run`, `--skip-changelog`, `--skip-commit`, `--skip-pull-request`, `--version`, `--help`
   - [x] Resumibilidade: detecta estado atual e pula passos concluídos
   - [x] Compatibilidade Windows (subprocess, encoding UTF-8)
 - [x] Documentação: `RELEASE_GUIDE.md`, `RELEASE_TROUBLESHOOTING.md`, `README.md`
