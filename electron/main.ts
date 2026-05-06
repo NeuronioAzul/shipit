@@ -3,14 +3,40 @@ import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol,
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
+import {
+  configureTestUserDataDir,
+  createNativeImageWithFallback,
+  getAppIdentity,
+  getNotificationFallbackIconPath,
+  getNotificationIconPath,
+  getRuntimePathContext,
+  getSoundsDir as resolveSoundsDir,
+  getTrayIconPath,
+  getWindowIconPath,
+} from './runtime-paths'
+import { createUpdateService, type UpdateService } from './update-notifications'
 
-// Set AppUserModelId for Windows notifications to show correct app name and icon
+configureTestUserDataDir(app)
+
+const appIdentity = getAppIdentity()
+app.setName(appIdentity.appName)
+
 if (process.platform === 'win32') {
-  app.setAppUserModelId('com.neuronioazul.shipit')
+  app.setAppUserModelId(appIdentity.appId)
+}
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock()
+if (!hasSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    focusMainWindow()
+  })
 }
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let updateService: UpdateService | null = null
 let alertIntervalId: ReturnType<typeof setInterval> | null = null
 let trayIntervalId: ReturnType<typeof setInterval> | null = null
 const isDev = !app.isPackaged
@@ -66,6 +92,94 @@ async function openExternalSafely(rawUrl: string): Promise<void> {
   }
 }
 
+function getRuntimePaths() {
+  return getRuntimePathContext(app)
+}
+
+function createWindowIcon() {
+  const paths = getRuntimePaths()
+  return createNativeImageWithFallback(nativeImage, [
+    getWindowIconPath(paths),
+    getNotificationFallbackIconPath(paths),
+  ])
+}
+
+function createNotificationIcon() {
+  const paths = getRuntimePaths()
+  return createNativeImageWithFallback(nativeImage, [
+    getNotificationIconPath(paths),
+    getNotificationFallbackIconPath(paths),
+  ])
+}
+
+function getNotificationIconFilePath(): string | undefined {
+  const paths = getRuntimePaths()
+  const candidates = [
+    getNotificationIconPath(paths),
+    getNotificationFallbackIconPath(paths),
+  ]
+
+  for (const candidate of candidates) {
+    if (!nativeImage.createFromPath(candidate).isEmpty()) {
+      return candidate
+    }
+  }
+
+  return candidates[candidates.length - 1]
+}
+
+function createTrayIconImage(status: 'default' | 'green' | 'yellow' | 'red' = 'default') {
+  const statusMap: Record<string, string> = {
+    default: 'tray-icon-foguete-black.png',
+    green: 'tray-icon-foguete-green.png',
+    yellow: 'tray-icon-foguete-yellow.png',
+    red: 'tray-icon-foguete-red.png',
+  }
+  const iconFile = statusMap[status] || statusMap['default']
+  const paths = getRuntimePaths()
+
+  return createNativeImageWithFallback(nativeImage, [
+    getTrayIconPath(paths, iconFile),
+    getNotificationFallbackIconPath(paths),
+    getWindowIconPath(paths),
+  ], { width: 16, height: 16 })
+}
+
+function focusMainWindow(route?: string): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  }
+
+  if (!mainWindow.isVisible()) {
+    mainWindow.show()
+  }
+
+  mainWindow.focus()
+
+  if (route) {
+    mainWindow.webContents.send('app:navigate', route)
+  }
+}
+
+function getUpdateService(): UpdateService {
+  if (!updateService) {
+    updateService = createUpdateService({
+      autoUpdater,
+      isPackaged: () => app.isPackaged,
+      sendStatus: (data) => {
+        mainWindow?.webContents.send('app:updateStatus', data)
+      },
+      Notification,
+      getNotificationIcon: getNotificationIconFilePath,
+      focusSettings: () => focusMainWindow('/settings'),
+    })
+  }
+
+  return updateService
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
@@ -73,7 +187,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'ShipIt.ico'),
+    icon: createWindowIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -166,66 +280,44 @@ function createWindow() {
 }
 
 function createTray() {
-  const trayIconPath = path.join(
-    __dirname,
-    '..',
-    'public',
-    'assets',
-    'images',
-    'tray',
-    'tray-icon-foguete-black.png'
-  )
-  const icon = nativeImage.createFromPath(trayIconPath)
-  const trayIcon = icon.isEmpty() ? nativeImage.createEmpty() : icon.resize({ width: 16, height: 16 })
-  tray = new Tray(trayIcon)
+  tray = new Tray(createTrayIconImage())
 
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Abrir ShipIt!',
       click: () => {
-        mainWindow?.show()
-        mainWindow?.focus()
+        focusMainWindow()
       },
     },
     { type: 'separator' },
     {
       label: 'Nova Atividade',
       click: () => {
-        mainWindow?.show()
-        mainWindow?.focus()
-        mainWindow?.webContents.send('app:navigate', '/activities/new')
+        focusMainWindow('/activities/new')
       },
     },
     {
       label: 'Dashboard',
       click: () => {
-        mainWindow?.show()
-        mainWindow?.focus()
-        mainWindow?.webContents.send('app:navigate', '/')
+        focusMainWindow('/')
       },
     },
     {
       label: 'Atividades',
       click: () => {
-        mainWindow?.show()
-        mainWindow?.focus()
-        mainWindow?.webContents.send('app:navigate', '/activities')
+        focusMainWindow('/activities')
       },
     },
     {
       label: 'Perfil',
       click: () => {
-        mainWindow?.show()
-        mainWindow?.focus()
-        mainWindow?.webContents.send('app:navigate', '/profile')
+        focusMainWindow('/profile')
       },
     },
     {
       label: 'Configurações',
       click: () => {
-        mainWindow?.show()
-        mainWindow?.focus()
-        mainWindow?.webContents.send('app:navigate', '/settings')
+        focusMainWindow('/settings')
       },
     },
     { type: 'separator' },
@@ -243,18 +335,13 @@ function createTray() {
   tray.setContextMenu(contextMenu)
 
   tray.on('click', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.focus()
-      } else {
-        mainWindow.show()
-        mainWindow.focus()
-      }
-    }
+    focusMainWindow()
   })
 }
 
 app.whenReady().then(async () => {
+  if (!hasSingleInstanceLock) return
+
   // Initialize database early to ensure TypeORM metadata is registered
   const { initDatabase, cleanupTrash } = await import('./database')
   await initDatabase()
@@ -313,35 +400,9 @@ app.whenReady().then(async () => {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
 
-    autoUpdater.on('checking-for-update', () => {
-      mainWindow?.webContents.send('app:updateStatus', { status: 'checking' })
-    })
-
-    autoUpdater.on('update-available', (info) => {
-      mainWindow?.webContents.send('app:updateStatus', { status: 'available', version: info.version })
-      new Notification({
-        title: 'ShipIt! — Atualização disponível',
-        body: `Versão ${info.version} está sendo baixada...`,
-      }).show()
-    })
-
-    autoUpdater.on('update-not-available', () => {
-      mainWindow?.webContents.send('app:updateStatus', { status: 'not-available' })
-    })
-
-    autoUpdater.on('update-downloaded', (info) => {
-      mainWindow?.webContents.send('app:updateStatus', { status: 'downloaded', version: info.version })
-      new Notification({
-        title: 'ShipIt! — Atualização pronta',
-        body: `Versão ${info.version} será instalada ao reiniciar o app.`,
-      }).show()
-    })
-
-    autoUpdater.on('error', (err) => {
-      mainWindow?.webContents.send('app:updateStatus', { status: 'error', error: err.message })
-    })
-
-    autoUpdater.checkForUpdatesAndNotify()
+    const service = getUpdateService()
+    service.registerAutoUpdaterHandlers()
+    void service.checkForUpdates()
   }
 })
 
@@ -355,6 +416,8 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
+  } else {
+    focusMainWindow()
   }
 })
 
@@ -623,11 +686,7 @@ ipcMain.handle('app:zoomReset', () => runZoomCommand('reset'))
 // ──── Sound Playback IPC ────
 
 function getSoundsDir(): string {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar', 'public', 'assets', 'sounds')
-  }
-  // In dev mode, app.getAppPath() returns project root
-  return path.join(app.getAppPath(), 'public', 'assets', 'sounds')
+  return resolveSoundsDir(getRuntimePaths())
 }
 
 ipcMain.handle('app:listSounds', () => {
@@ -782,11 +841,10 @@ async function checkAndFireAlerts(): Promise<void> {
     const notification = new Notification({
       title: 'ShipIt! — Lembrete',
       body: alert.alert_message || `Você tem ${incomplete} atividade(s) pendente(s) para o relatório mensal.`,
-      icon: path.join(__dirname, '..', 'public', 'assets', 'images', 'icons', 'favicon-96x96.png'),
+      icon: createNotificationIcon(),
     })
     notification.on('click', () => {
-      mainWindow?.show()
-      mainWindow?.focus()
+      focusMainWindow()
     })
     notification.show()
 
@@ -815,18 +873,7 @@ async function checkAndFireAlerts(): Promise<void> {
 
 function setTrayIcon(status: 'default' | 'green' | 'yellow' | 'red'): void {
   if (!tray) return
-  const statusMap: Record<string, string> = {
-    default: 'tray-icon-foguete-black.png',
-    green: 'tray-icon-foguete-green.png',
-    yellow: 'tray-icon-foguete-yellow.png',
-    red: 'tray-icon-foguete-red.png',
-  }
-  const iconFile = statusMap[status] || statusMap['default']
-  const iconPath = path.join(__dirname, '..', 'public', 'assets', 'images', 'tray', iconFile)
-  const icon = nativeImage.createFromPath(iconPath)
-  if (!icon.isEmpty()) {
-    tray.setImage(icon.resize({ width: 16, height: 16 }))
-  }
+  tray.setImage(createTrayIconImage(status))
 }
 
 let trayBlinkState = false
@@ -900,17 +947,11 @@ function stopSchedulers(): void {
 // ──── Auto-Update IPC ────
 
 ipcMain.handle('app:checkForUpdate', async () => {
-  if (!app.isPackaged) return { status: 'dev' }
-  try {
-    await autoUpdater.checkForUpdatesAndNotify()
-    return { status: 'checking' }
-  } catch (err: any) {
-    return { status: 'error', error: err.message }
-  }
+  return getUpdateService().checkForUpdates()
 })
 
 ipcMain.handle('app:installUpdate', () => {
-  autoUpdater.quitAndInstall()
+  getUpdateService().installUpdate()
 })
 
 // ──── Window Controls IPC ────

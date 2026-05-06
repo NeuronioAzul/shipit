@@ -79,9 +79,14 @@ Validar a release criando uma esteira objetiva para titlebar, busca, historico, 
 - Usar Playwright Electron como fonte principal de confianca para comportamentos de janela/menu, porque a app ja tem suite E2E e IDs estaveis.
 - Usar Vitest apenas onde Playwright nao consegue observar sem flakiness ou sem encerrar a propria app, especialmente close sem tray e comandos nativos de webContents.
 - Corrigir somente bugs do escopo solicitado; nao incluir redesign, nova funcionalidade de negocio, tray nativo completo ou refatoracoes amplas.
-- Versao recomendada para o proximo tag: patch (`v1.3.1`) salvo decisao explicita por minor/major.
+- Versao para o proximo tag: patch (`v1.3.3`) ainda não publicado, adicionar as mudanças na 1.3.3 no CHANGELOG.md.
 
 **Further Considerations**
 1. Alguns itens nativos nao sao 100% automatizaveis no Playwright, como interacao com tray/Explorer. Para eles, combinar instrumentacao/mocks com checklist manual assinado antes da tag.
 2. Se os resultados da busca nao tiverem semantica suficiente para assertiva robusta de selecao, adicionar ARIA/IDs pequenos e testar acessibilidade basica no mesmo fluxo.
 3. A release v1.3.0 teve historico de publicacao antes dos assets; esta validacao deve tratar a presenca dos 14 assets como gate obrigatorio antes de publicar.
+
+## important
+Crie as fixtures para os testes.
+Atualize o `CHANGELOG.md` com as correcoes e testes adicionados.
+Documente no `docs/TODO.md` o status da validação.

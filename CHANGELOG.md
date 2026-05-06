@@ -7,22 +7,34 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
-## [Unreleased]
+
+## [1.3.3] — 2026-05-06
+
+- Enhanced text formatting preservation in DOCX exports.
+- Introduced user-controlled application updates with notification indicators.
+- Implemented notification system for available updates with user prompts for installation.
+- Created a PowerShell script to clear Windows icon cache for the application.
+
+## [unreleased]
 
 ### Adicionado (Validação TitleBar e Release)
 
 - Cobertura Playwright/Electron ampliada para controles reais da janela na TitleBar: minimizar, maximizar/restaurar e fechar para tray sem destruir a janela.
 - Regressão completa da busca na TitleBar cobrindo foco via `Ctrl+K`, ícone, debounce, limite de resultados, destaque com `<mark>`, estado vazio, navegação por teclado, filtro avançado, `Escape` e clique fora.
 - Validação completa do menu superior customizado: navegação por teclado entre seções/itens e comandos File/Edit/View/Help, com instrumentação segura para ações nativas (`shell.openPath`, `webContents`, zoom, janela e quit).
+- Fixtures E2E de atividades centralizadas para criar registros via IPC/formulário e gerar meses únicos por execução.
+- Helpers testáveis para identidade runtime, resolução de assets/ícones, notificações de update e perfil temporário E2E com marcador de segurança.
+- Script manual opt-in `docs/scripts/clear-shipit-icon-cache.ps1` para limpeza dry-run do cache global de ícones do Windows.
 
-### Corrigido
+### Corrigido 1.3.3
 
 - Resultados da SearchBar ganharam IDs, `role="listbox"`, `role="option"`, `aria-selected` e `data-selected` para tornar a seleção por teclado assertiva e acessível.
 - Teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando contaminação por dados persistidos de runs anteriores.
+- Auto-update passou a usar `checkForUpdates()` com notificações próprias do ShipIt em pt-BR, ícone controlado, dedupe por versão/status e clique focando a janela existente em Configurações.
+- Execução Playwright/Electron agora usa `userData` temporário isolado com marcador `.shipit-test-profile`, evitando escrita em `%APPDATA%\shipit` e permitindo cleanup seguro.
+- Identidade visual do Windows foi centralizada para alinhar AppUserModelId, nome do app e ícones de janela, notificação, tray e empacotamento.
 
 ---
-
-
 
 ## [1.3.2] — 2026-05-04
 
@@ -38,7 +50,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Regressão completa da busca na TitleBar, cobrindo foco via `Ctrl+K`, debounce, limite de resultados, destaque, navegação por teclado, filtro avançado, `Escape` e clique fora.
 - Validação automatizada do menu superior customizado, com navegação por mouse/teclado e execução segura dos comandos de **File / Edit / View / Help**.
 
-### Corrigido
+### Corrigido 1.3.1
 
 - Resultados da SearchBar passaram a ter IDs e atributos ARIA (`role="listbox"`, `role="option"`, `aria-selected` e `data-selected`) para tornar a navegação por teclado mais previsível e acessível.
 - O teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando interferência de dados persistidos entre execuções.

@@ -1,14 +1,32 @@
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import { _electron as electron } from 'playwright'
+import fs from 'fs'
+import os from 'os'
 import path from 'path'
+import { SHIPIT_TEST_PROFILE_MARKER, SHIPIT_TEST_PROFILE_PREFIX } from '../electron/runtime-paths'
+import {
+  createActivityRecord as createActivityFixtureRecord,
+  createActivityThroughForm,
+  getUniqueMonthSequence,
+  type ActivityFixtureOverrides,
+} from './fixtures/activityFixtures'
+import {
+  createShipItTestProfileDir,
+  createShipItTestProfileEnv,
+  removeShipItTestProfileDir,
+  removeShipItTestProfileDirWithRetries,
+} from './fixtures/testProfile'
 
 let app: ElectronApplication
 let page: Page
+let testUserDataDir: string
 
 test.beforeAll(async () => {
+  testUserDataDir = createShipItTestProfileDir()
+
   app = await electron.launch({
     args: [path.join(__dirname, '..', 'dist-electron', 'main.js')],
-    env: { ...process.env, NODE_ENV: 'test', PLAYWRIGHT: '1' },
+    env: createShipItTestProfileEnv(process.env, testUserDataDir),
   })
 
   page = await app.firstWindow()
@@ -21,30 +39,23 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   // Force kill — the tray intercepts normal close and app.quit waits for handlers
-  await app.evaluate(({ app }) => {
-    app.exit(0)
-  })
+  try {
+    if (app) {
+      await app.evaluate(({ app }) => {
+        app.exit(0)
+      }).catch(() => {})
+      await app.close().catch(() => {})
+    }
+  } finally {
+    if (testUserDataDir) {
+      try {
+        await removeShipItTestProfileDirWithRetries(testUserDataDir)
+      } catch (error) {
+        console.error('Falha ao limpar perfil temporario do E2E:', error)
+      }
+    }
+  }
 })
-
-function getCurrentMonthRef(): string {
-  const now = new Date()
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const yyyy = now.getFullYear()
-  return `${mm}/${yyyy}`
-}
-
-function getUniqueMonthSequence(seed: number, count: number): string[] {
-  const startYear = 2040 + (seed % 500)
-  const startMonthIndex = seed % 12
-
-  return Array.from({ length: count }, (_, index) => {
-    const absoluteMonthIndex = startMonthIndex + index
-    const month = (absoluteMonthIndex % 12) + 1
-    const year = startYear + Math.floor(absoluteMonthIndex / 12)
-
-    return `${String(month).padStart(2, '0')}/${year}`
-  })
-}
 
 function menuItemSelector(commandId: string): string {
   return `#titlebar-menu-item-${commandId.replace(/\./g, '-')}`
@@ -68,53 +79,14 @@ async function restoreMainWindow() {
 
 async function createActivityRecord(
   description: string,
-  monthReference = getCurrentMonthRef(),
-  overrides: Record<string, unknown> = {},
+  monthReference?: string,
+  overrides: ActivityFixtureOverrides = {},
 ) {
-  return page.evaluate(async ({ description, monthReference, overrides }) => {
-    const api = (window as unknown as { electronAPI?: { saveActivity?: (data: Record<string, unknown>) => Promise<unknown> } }).electronAPI
-
-    if (!api?.saveActivity) {
-      throw new Error('electronAPI.saveActivity indisponível no E2E')
-    }
-
-    return api.saveActivity({
-      description,
-      date_start: null,
-      date_end: null,
-      status: 'Pendente',
-      link_ref: null,
-      attendance_type: null,
-      month_reference: monthReference,
-      project_scope: null,
-      ...overrides,
-    })
-  }, { description, monthReference, overrides })
+  return createActivityFixtureRecord(page, description, monthReference, overrides)
 }
 
 async function createActivity(description: string, monthReference?: string) {
-  const targetMonth = monthReference || getCurrentMonthRef()
-
-  await page.click('[title="Atividades"]')
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
-
-  await page.evaluate((month) => {
-    window.location.hash = `#/activities?month=${month}`
-  }, targetMonth)
-  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${targetMonth}`))
-
-  await page.click('button:has-text("Nova Atividade")')
-
-  const descInput = page.locator('textarea#description')
-  await descInput.waitFor({ timeout: 5_000 })
-  await descInput.fill(description)
-
-  const monthInput = page.locator('input#month_reference')
-  await monthInput.fill(targetMonth)
-
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/#\/activities(?:\?.*)?$/, { timeout: 10_000 })
-  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 10_000 })
+  await createActivityThroughForm(page, description, monthReference)
 }
 
 // ──── Window ────
@@ -125,6 +97,38 @@ test('window starts visible', async () => {
     return win?.isVisible() ?? false
   })
   expect(isVisible).toBe(true)
+})
+
+test('uses isolated test userData profile with safety marker', async () => {
+  const profile = await app.evaluate(({ app }) => {
+    return {
+      userData: app.getPath('userData'),
+      appData: app.getPath('appData'),
+    }
+  })
+  const productionUserData = path.join(profile.appData, 'shipit')
+
+  expect(path.resolve(profile.userData)).toBe(path.resolve(testUserDataDir))
+  expect(path.basename(profile.userData).startsWith(SHIPIT_TEST_PROFILE_PREFIX)).toBe(true)
+  expect(fs.existsSync(path.join(profile.userData, SHIPIT_TEST_PROFILE_MARKER))).toBe(true)
+  expect(path.resolve(profile.userData).toLowerCase()).not.toBe(path.resolve(productionUserData).toLowerCase())
+})
+
+test('removes only marked temporary test profiles', async () => {
+  const markedDir = createShipItTestProfileDir()
+  const unsafeDir = fs.mkdtempSync(path.join(os.tmpdir(), SHIPIT_TEST_PROFILE_PREFIX))
+
+  fs.mkdirSync(path.join(markedDir, 'evidences'), { recursive: true })
+  fs.mkdirSync(path.join(markedDir, 'reports'), { recursive: true })
+  fs.writeFileSync(path.join(markedDir, 'settings.json'), '{}', 'utf-8')
+  fs.writeFileSync(path.join(markedDir, 'evidences', 'artifact.txt'), 'teste', 'utf-8')
+
+  removeShipItTestProfileDir(markedDir)
+  expect(fs.existsSync(markedDir)).toBe(false)
+
+  expect(() => removeShipItTestProfileDir(unsafeDir)).toThrow(/marcador|prefixo/)
+  expect(fs.existsSync(path.join(unsafeDir, SHIPIT_TEST_PROFILE_MARKER))).toBe(false)
+  fs.rmSync(unsafeDir, { recursive: true, force: true })
 })
 
 test('controls real window state from titlebar buttons', async () => {

@@ -1,45 +1,25 @@
-# First Release plan changes
+# Coisas para fazer e publicar
 
-```txt
-  _____ _     _       _   
- / ____| |   (_)     | |  
-| (___ | |__  _ _ __ | |_ 
- \___ \| '_ \| | '_ \| __|
- ____) | | | | | |_) | |_ 
-|_____/|_| |_|_| .__/ \__|
-                | |       
-                |_|       
-```
+SHIPIT!  
 
-## Detalhes da atividade
+## New features
 
-## validar funcionalidades, corrigir erros e criar testes
+- 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
-Validar funcionalidade e caso necessário corrigir e criar testes para não acontecer mais o erro.
+## Verificação, correção e criação de testes
 
-- testar todas as funcionalidades do titlebar:
-  - clicar e arrastar para mover a janela
-  - clicar no ícone de minimizar
-  - maximizar a janela e restaurar para o tamanho anterior
-  - fechar a janela
-  - verificar se:
-    - o campo de busca está funcionando corretamente,
-    - se os resultados da busca estão sendo exibidos corretamente,
-    - se o ícone de busca está sendo exibido corretamente,
-    - se a navegação entre os resultados da busca usando as setas para cima e para baixo está funcionando corretamente;
-  - verificar se as setas anterior e próximo estão funcionando corretamente, navegando entre as páginas visitadas pelo usuário,
-    - e se o histórico de navegação está sendo registrado corretamente para permitir a navegação entre as páginas visitadas.
-  - verificar todos os itens do menu, para garantir que estão funcionando corretamente, e que as funcionalidades estão sendo executadas conforme o esperado.
+- 🟡 Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
 
-### features
+## Funcionalidades de atualização do aplicativo
 
-- feat: Adicionar o Botão de excluir ao lado de editar na tela de detalhes da atividade, para excluir a atividade, com confirmação modal para evitar exclusão acidental, e também para melhorar a experiência do usuário.
-- feat: na tela de detalhes da atividade remova o elemento `id="activity-nav-mode-toggle"` e no lugar coloque um seletor de meses, para facilitar a navegação entre os meses e permitir que os usuários possam acessar facilmente as atividades de meses anteriores.
--
+- fix: Não instalar a nova versão baixada do aplicativo automaticamente, para evitar que o aplicativo seja atualizado sem o consentimento do usuário, e para permitir que os usuários possam escolher quando e como atualizar o aplicativo, garantindo uma experiência de usuário mais personalizada e controlada.
+- feat: colocar uma bolinha de notificação no ícone do aplicativo na taskbar, para indicar que existe uma nova versão disponível, e para chamar a atenção dos usuários para a atualização, garantindo que eles estejam cientes das novidades e melhorias disponíveis na nova versão do aplicativo.
+  - colocar uma bolinha no ícone de configurações, para indicar que existe uma nova versão disponível. a bolinha deve ter um efeito do tipo "sonar" para chamar a atenção do usuário, e quando o usuário clicar na bolinha ou no ícone de configurações, deve abrir a tela de configurações, na parte de atualização do aplicativo colocar também a bolinha de notificação, para indicar que existe uma nova versão disponível, remover as bolinhas quando o usuário clicar para abrir a tela de configurações e visualizar o campo de atualização aguarde 10 segundos para remover as bolinhas e para evitar que fiquem aparecendo mesmo depois do usuário ter visto a notificação.
+  - Ao clicar na notificação de que existe uma nova versão disponível, o aplicativo deve abrir a tela de configurações, onde o usuário pode ver as informações da nova versão e escolher quando instalar a nova versão, para permitir que os usuários possam tomar uma decisão informada sobre a atualização do aplicativo.
+  - colocar um botão para o usuário escolher quando instalar a nova versão, para permitir que os usuários possam controlar o processo de atualização do aplicativo, garantindo que eles possam escolher um momento conveniente para instalar a nova versão.
+- feat: Ao fazer o download da nova versão, o aplicativo deve exibir uma notificação informando que a nova versão foi baixada e está pronta para ser instalada, com um botão na notificação para instalar a nova versão.
+- feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
 
-## Tela do aplicativo
-
-- feat: ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível, com um botão para instalar a nova versão.
 
 ------------------------------------------------------------------
 
@@ -122,6 +102,11 @@ Na tela de cadastro de atividades, incluir um campo no formulário para inserir 
   - O ícone de busca não está sendo exibido.
   - Os resultados da busca também estão quebrando e movendo de lugar para baixo.
 
+### features
+
+- feat: Adicionar o Botão de excluir ao lado de editar na tela de detalhes da atividade, para excluir a atividade, com confirmação modal para evitar exclusão acidental, e também para melhorar a experiência do usuário.
+- feat: na tela de detalhes da atividade remova o elemento `id="activity-nav-mode-toggle"` e no lugar coloque um seletor de meses, para facilitar a navegação entre os meses e permitir que os usuários possam acessar facilmente as atividades de meses anteriores.
+
 ## Janela do aplicativo
 
 ### features
@@ -183,11 +168,6 @@ Modal de exclusão de evidência mantida separada com id próprio para evitar co
 
 - verificar se todos os campos do tipo input, textarea, estão permitindo a funcionalidade de colar usando o ctrl+v, ctrl+c, ctrl+x, ctrl+a, ctrl+z, ctrl+y, ctrl+shift+z, ctrl+shift+y, etc, e o menu de contexto, para garantir que os usuários possam colar suas informações sem problemas, e também para melhorar a experiência do usuário.
 
------------------------------------------------------------
-
-## Fazendo
-
-
 ## 1 - validar funcionalidades, corrigir erros e criar testes
 
 Validar funcionalidade e caso necessário corrigir e criar testes para não acontecer mais o erro.
@@ -211,3 +191,21 @@ Validar funcionalidade e caso necessário corrigir e criar testes para não acon
 Depois que tudo estiver validado, corrigido e testado, e a documentação estiver atualizada, o próximo passo é criar uma nova tag para a versão que será publicada. Para isso, siga os passos abaixo:
 
 Executar o script de publicação `docs\scripts\release.py` para criar uma nova tag no GitHub, seguindo as instruções detalhadas na documentação `docs\scripts\`, para publicar a nova versão do ShipIt! e disponibilizá-la para os usuários.
+
+-----------------------------------------------------------
+
+## Fazendo
+
+## validar funcionalidades, corrigir erros e criar testes
+
+Fix: Acontecendo um excesso de notificações de atualização, quando o usuário clica em "Verificar Atualizações" e existe uma nova versão disponível, o aplicativo exibe uma notificação informando que existe uma nova versão disponível, e na sequencia aparece uma outra notificação em inglês com o logo do electron, dizendo "New version available". Quando eu testar o aplicativo novamente eu gostaria que uma rotina fosse executada para remover o lixo que pode ter ficado, deixando o meu conputador mais limpo e organizado, removendo registros e arquivos temporários que possam ter sido criados durante os testes, só não pode mexer no que eu estou usando com a versão instalada na máquina.
+Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! instalada. Não quero que essa versão seja afetada, e também não quero que os arquivos e registros relacionados a essa versão sejam afetados, A rotina também precisa limpar o cache de ícones do aplicativo, para evitar que ícones antigos ou corrompidos sejam exibidos, e o que mais for preciso para garantir o aplicativo em produção que está instalado na minha máquina não seja afetado. Além das mensagens aparecendo duplicadas ainda tem problema onde o ícone da taskbar fica com o ícone do electron, e não o ícone do ShipIt!. Também as mensagens de notificação quando clicadas abrem uma janela do electron com o logo do electron, e não do ShipIt!. 
+
+- fix: Notificações avaliar, corrigir e criar testes para garantir que as notificações de atualização estejam funcionando corretamente.
+- fix: Verificar se as notificações estão sendo exibidas corretamente, sem mensagens duplicadas, e com o ícone correto do ShipIt!.
+- fix: Verificar se as notificações estão abrindo a janela correta do ShipIt! quando clicadas, e não uma janela do electron.
+- fix: Verificar se o aplicativo está limpando corretamente os arquivos e registros temporários relacionados aos testes, sem afetar a versão instalada do ShipIt! na máquina, e garantindo que o cache de ícones do aplicativo seja limpo para evitar problemas de exibição de ícones antigos ou corrompidos.
+- fix: Verificar se o aplicativo está com o ícone correto do ShipIt! na taskbar, e não o ícone do electron, para garantir uma experiência de usuário consistente e profissional.
+
+- testes: Caso aconteça algum erro ou seja verificado um cenário que não esteja coberto por testes automatizados, criar testes para validar o comportamento correto, para garantir as funcionalidades sempre corretas.
+- testes: Criar testes automatizados para validar o comportamento das notificações de atualização, garantindo que as mensagens sejam exibidas corretamente, sem duplicação, e com o ícone correto do ShipIt!. Os testes devem incluir cenários para verificar se as notificações estão abrindo a janela correta do ShipIt! quando clicadas, e não uma janela do electron, e também para garantir que o aplicativo esteja limpando corretamente os arquivos e registros temporários relacionados aos testes, sem afetar a versão instalada do ShipIt! na máquina, e garantindo que o cache de ícones do aplicativo seja limpo para evitar problemas de exibição de ícones antigos ou corrompidos.
