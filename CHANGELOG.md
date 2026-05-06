@@ -7,6 +7,14 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+
+## [1.3.3] — 2026-05-06
+
+- Enhanced text formatting preservation in DOCX exports.
+- Introduced user-controlled application updates with notification indicators.
+- Implemented notification system for available updates with user prompts for installation.
+- Created a PowerShell script to clear Windows icon cache for the application.
+
 ## [unreleased]
 
 ### Adicionado (Validação TitleBar e Release)
