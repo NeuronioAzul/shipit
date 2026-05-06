@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-export const APP_ID = 'com.neuronioazul.shipit'
+export const APP_ID = 'br.com.neuronioazul.shipit'
 export const APP_NAME = 'ShipIt!'
 export const TEST_APP_ID = `${APP_ID}.test`
 export const TEST_APP_NAME = `${APP_NAME} Test`
@@ -124,13 +124,13 @@ export function prepareShipItTestProfileDir(
 ): string {
   const resolvedDir = path.resolve(targetDir)
   if (!path.basename(resolvedDir).startsWith(SHIPIT_TEST_PROFILE_PREFIX)) {
-    throw new Error(`Diretorio de teste recusado: o nome deve iniciar com ${SHIPIT_TEST_PROFILE_PREFIX}`)
+    throw new Error(`Diretório de teste recusado: o nome deve iniciar com ${SHIPIT_TEST_PROFILE_PREFIX}`)
   }
 
   fsLike.mkdirSync(resolvedDir, { recursive: true })
   fsLike.writeFileSync(
     getTestProfileMarkerPath(resolvedDir),
-    'ShipIt test profile. Safe to delete only via guarded test cleanup.\n',
+    'ShipIt perfil de teste. Seguro para excluir apenas via limpeza de teste protegida.\n',
     'utf-8',
   )
   return resolvedDir
@@ -145,7 +145,7 @@ export function isSafeShipItTestProfileDir(targetDir: string, fsLike: Pick<TestP
 export function assertSafeShipItTestProfileDir(targetDir: string, fsLike: Pick<TestProfileFs, 'existsSync'> = fs): string {
   const resolvedDir = path.resolve(targetDir)
   if (!isSafeShipItTestProfileDir(resolvedDir, fsLike)) {
-    throw new Error('Cleanup recusado: perfil de teste sem marcador de seguranca ou prefixo esperado.')
+    throw new Error('Limpeza recusada: perfil de teste sem marcador de segurança ou prefixo esperado.')
   }
 
   return resolvedDir
