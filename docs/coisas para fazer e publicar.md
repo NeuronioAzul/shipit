@@ -2,14 +2,24 @@
 
 SHIPIT!  
 
-## Detalhes da atividade
+## New features
 
+- 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
+## Verificação, correção e criação de testes
 
+- 🟡 Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
 
-## Tela do aplicativo
+## Funcionalidades de atualização do aplicativo
 
-- feat: ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível, com um botão para instalar a nova versão.
+- fix: Não instalar a nova versão baixada do aplicativo automaticamente, para evitar que o aplicativo seja atualizado sem o consentimento do usuário, e para permitir que os usuários possam escolher quando e como atualizar o aplicativo, garantindo uma experiência de usuário mais personalizada e controlada.
+- feat: colocar uma bolinha de notificação no ícone do aplicativo na taskbar, para indicar que existe uma nova versão disponível, e para chamar a atenção dos usuários para a atualização, garantindo que eles estejam cientes das novidades e melhorias disponíveis na nova versão do aplicativo.
+  - colocar uma bolinha no ícone de configurações, para indicar que existe uma nova versão disponível. a bolinha deve ter um efeito do tipo "sonar" para chamar a atenção do usuário, e quando o usuário clicar na bolinha ou no ícone de configurações, deve abrir a tela de configurações, na parte de atualização do aplicativo colocar também a bolinha de notificação, para indicar que existe uma nova versão disponível, remover as bolinhas quando o usuário clicar para abrir a tela de configurações e visualizar o campo de atualização aguarde 10 segundos para remover as bolinhas e para evitar que fiquem aparecendo mesmo depois do usuário ter visto a notificação.
+  - Ao clicar na notificação de que existe uma nova versão disponível, o aplicativo deve abrir a tela de configurações, onde o usuário pode ver as informações da nova versão e escolher quando instalar a nova versão, para permitir que os usuários possam tomar uma decisão informada sobre a atualização do aplicativo.
+  - colocar um botão para o usuário escolher quando instalar a nova versão, para permitir que os usuários possam controlar o processo de atualização do aplicativo, garantindo que eles possam escolher um momento conveniente para instalar a nova versão.
+- feat: Ao fazer o download da nova versão, o aplicativo deve exibir uma notificação informando que a nova versão foi baixada e está pronta para ser instalada, com um botão na notificação para instalar a nova versão.
+- feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
+
 
 ------------------------------------------------------------------
 

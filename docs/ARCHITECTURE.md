@@ -49,6 +49,8 @@ Responsável por:
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
 - **IPC Handlers**: 54 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
+- **Identidade runtime**: `runtime-paths.ts` centraliza `appId`, nome, assets públicos, ícones e perfil temporário de testes
+- **Auto-update controlado**: `update-notifications.ts` usa `checkForUpdates()` com notificações próprias do ShipIt, dedupe e foco da janela existente
 
 #### Prefixos IPC
 
@@ -119,6 +121,18 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 7. Salva o DOCX na pasta configurada ou padrão (`userData/reports/`)
 
 **Bibliotecas usadas**: `jszip` (ZIP), `@xmldom/xmldom` (DOM XML), `xpath` (queries XPath)
+
+### `runtime-paths.ts` — Identidade e Assets
+
+Centraliza constantes de identidade (`com.neuronioazul.shipit`, `ShipIt!`), variante isolada de teste (`ShipIt! Test`), resolução de assets públicos em dev/asar, ícones de janela/notificação/tray e diretório de sons.
+
+Também expõe helpers de perfil temporário E2E com marcador `.shipit-test-profile`; a limpeza automatizada só aceita diretórios com esse marcador e prefixo `shipit-e2e-`.
+
+### `update-notifications.ts` — Auto-Update Testável
+
+Isola a lógica do `electron-updater` para permitir testes unitários sem carregar o `main.ts` inteiro. O serviço registra os eventos `checking-for-update`, `update-available`, `update-not-available`, `update-downloaded` e `error`, envia `app:updateStatus` ao renderer e exibe notificação nativa apenas para estados que exigem ação do usuário.
+
+As notificações usam cópia pt-BR, ícone ShipIt resolvido pelo runtime e clique centralizado para restaurar/focar a janela existente em `/settings`.
 
 ### `preload.ts` — Context Bridge
 
@@ -312,13 +326,16 @@ O `electron-updater` é integrado ao `main.ts` e executa apenas em builds empaco
 ```text
 app.whenReady()
   └── app.isPackaged?
-        ├── Sim → autoUpdater.checkForUpdatesAndNotify()
-        │         ├── GET latest*.yml do GitHub Releases
-        │         ├── Compara versão remota vs local
-        │         ├── Download automático em background
-        │         └── Notification nativa ao usuário
-        └── Não → skip (modo dev)
+    ├── Sim → updateService.checkForUpdates()
+    │         ├── GET latest*.yml do GitHub Releases
+    │         ├── Compara versão remota vs local
+    │         ├── Download automático em background
+    │         ├── app:updateStatus para o renderer
+    │         └── Notificação ShipIt customizada para update disponível/pronto
+    └── Não → skip (modo dev)
 ```
+
+O app não usa `checkForUpdatesAndNotify()`, evitando o toast automático em inglês do `electron-updater`. Chamadas manuais via `app:checkForUpdate` são protegidas contra concorrência e notificações repetidas da mesma versão/status.
 
 Config de publish no `package.json`:
 

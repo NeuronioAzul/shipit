@@ -365,7 +365,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] `reorderActivities` permanece como fonte autoritativa para drag-and-drop
 - [x] Fallback browser (`localDb.ts`) alinhado com a mesma regra de ordenação
 - [x] Cobertura Vitest ampliada para criação, legado, reorder, payload DOCX e busca
-- [x] Suíte atual: 104 testes Vitest passando (8 arquivos)
+- [x] Suíte atual: 113 testes Vitest passando (10 arquivos)
 
 ### Fase 23.1: Validação TitleBar e Release ✅
 
@@ -376,8 +376,21 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Menu superior validado por mouse, teclado e todos os command IDs de File/Edit/View/Help com instrumentação segura
 - [x] Teste mensal do detalhe isolado com meses únicos por execução para evitar dados persistidos entre runs
 - [x] Fixtures E2E de atividades centralizadas em `e2e/fixtures/activityFixtures.ts`
-- [x] Suíte E2E atual: 25 cenários Playwright/Electron
+- [x] Suíte E2E atual: 27 cenários Playwright/Electron
 - [x] Dry-run oficial de release `1.3.3` concluído sem ações remotas destrutivas
+
+### Fase 24: Atualizações, Ícones e Limpeza Segura ✅
+
+- [x] Identidade runtime centralizada para `appId`, nome do app, modo de teste e paths de assets públicos
+- [x] Ícones de janela, notificação e tray resolvidos por helper com fallback explícito de `nativeImage`
+- [x] Auto-update alterado para `checkForUpdates()` com notificações customizadas do ShipIt em pt-BR
+- [x] Dedupe de notificações por versão/status e proteção contra verificações concorrentes de update
+- [x] Clique em notificação de update restaura/foca a janela existente e navega para Configurações
+- [x] `requestSingleInstanceLock()` configurado para evitar segunda janela/instância concorrente
+- [x] Playwright/Electron isolado em `userData` temporário com marcador `.shipit-test-profile`
+- [x] Cleanup E2E protegido por marcador e prefixo `shipit-e2e-`, recusando diretórios não marcados
+- [x] Script manual dry-run para limpeza opt-in do cache global de ícones do Windows validado sem remoção real
+- [x] Cobertura focada para paths/ícones, update notifications, dedupe e limpeza segura de perfil temporário
 
 ---
 
