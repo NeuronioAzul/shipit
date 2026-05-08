@@ -19,7 +19,7 @@ vi.mock('electron', () => ({
   },
 }))
 
-import { generateDocxReport } from './report-generator'
+import { generateDocxReport } from './report-generator.ts'
 import type { UserProfile } from './entities/UserProfile'
 import type { Activity } from './entities/Activity'
 

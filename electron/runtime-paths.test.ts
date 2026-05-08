@@ -23,7 +23,7 @@ import {
   isSafeShipItTestProfileDir,
   prepareShipItTestProfileDir,
   type RuntimeNativeImage,
-} from './runtime-paths'
+} from './runtime-paths.ts'
 
 class FakeImage implements RuntimeNativeImage {
   constructor(

@@ -397,7 +397,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] `userData` de produção fixado no diretório legado `shipit` dentro de `appData`, preservando banco, settings, evidências e relatórios existentes.
 - [x] Desenvolvimento local mantido separado em `ShipIt!` para não misturar dados reais com `npm run dev`.
 - [x] E2E continua com prioridade para `SHIPIT_TEST_USER_DATA_DIR` e perfil temporário protegido por marcador `.shipit-test-profile`.
-- [x] `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`com.neuronioazul.shipit`).
+- [x] `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`).
 - [x] Cobertura Vitest ampliada para produção, desenvolvimento, E2E e alinhamento de identidade.
 
 ---

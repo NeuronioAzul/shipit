@@ -38,7 +38,7 @@ import {
   saveTextEvidence,
   updateTextEvidence,
   updateEvidenceCaption,
-} from './database'
+} from './database.ts'
 import { Activity } from './entities/Activity'
 
 beforeEach(async () => {

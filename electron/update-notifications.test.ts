@@ -6,7 +6,7 @@ import {
   type DesktopNotificationLike,
   type DesktopNotificationOptions,
   type UpdateStatusData,
-} from './update-notifications'
+} from './update-notifications.ts'
 
 class FakeAutoUpdater implements AutoUpdaterLike {
   autoDownload = false

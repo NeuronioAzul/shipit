@@ -45,6 +45,7 @@ POLL_INTERVAL_SECONDS = 15
 TIMEOUT_WORKFLOW_SECONDS = 5400  # 90 minutos para builds Windows + macOS + Linux
 WORKFLOW_POLL_INTERVAL_SECONDS = 30
 WORKFLOW_NAME = "Build & Release"
+COPILOT_PROMPT_MAX_CHARS = 12000
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -213,6 +214,73 @@ def _strip_copilot_tool_logs(text: str) -> str:
     return "\n".join(clean_lines)
 
 
+def _strip_ansi(text: str) -> str:
+    """Remove sequências ANSI que podem vazar mesmo com --no-color."""
+    return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+
+
+def _truncate_for_prompt(text: str, max_chars: int = COPILOT_PROMPT_MAX_CHARS) -> str:
+    """Limita contexto enviado ao Copilot sem cortar pelo começo, que costuma ter o resumo."""
+    if len(text) <= max_chars:
+        return text
+    omitted = len(text) - max_chars
+    return (
+        text[:max_chars]
+        + f"\n\n[conteúdo truncado: {omitted} caracteres omitidos para caber no prompt]"
+    )
+
+
+def extract_commit_message(copilot_output: str) -> str | None:
+    """Extrai uma mensagem Conventional Commit válida do output completo do Copilot."""
+    output = _strip_ansi(_strip_copilot_tool_logs(copilot_output)).strip()
+    if not output:
+        return None
+
+    # Remover code fences e rótulos comuns antes de procurar a mensagem final.
+    output = re.sub(r"^```[a-zA-Z0-9_-]*\s*", "", output)
+    output = re.sub(r"\s*```$", "", output)
+
+    conventional_pattern = re.compile(
+        r"^(feat|fix|chore|docs|refactor|test|style|perf|build|ci|revert)"
+        r"(\([a-zA-Z0-9_.-]+\))?!?:\s+\S.+$"
+    )
+    label_pattern = re.compile(
+        r"^(?:commit message|mensagem(?: de commit)?|suggestion|sugest[aã]o)\s*:\s*",
+        re.IGNORECASE,
+    )
+    noise_prefixes = (
+        "here",
+        "sure",
+        "claro",
+        "segue",
+        "copilot",
+        "analis",
+        "thinking",
+        "working",
+        "generating",
+    )
+
+    candidates: list[str] = []
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        line = line.removeprefix("-").strip()
+        line = line.strip("`\"'")
+        line = label_pattern.sub("", line).strip()
+        line = line.strip("`\"'")
+        if not line or line.lower().startswith(noise_prefixes):
+            continue
+        if conventional_pattern.match(line):
+            candidates.append(line)
+
+    if not candidates:
+        return None
+
+    # A resposta útil costuma ser a última linha válida após logs/status do CLI.
+    return candidates[-1]
+
+
 def copilot_prompt(prompt: str, allow_tools: list[str] | None = None) -> str | None:
     """Executa prompt via gh copilot em modo não-interativo. Retorna resposta ou None."""
     cmd = ["gh", "copilot", "-p", prompt, "-s", "--no-color"]
@@ -224,8 +292,9 @@ def copilot_prompt(prompt: str, allow_tools: list[str] | None = None) -> str | N
         cmd.append("--available-tools=")
     try:
         result = run_cmd(cmd, check=False)
-        if result.returncode == 0 and result.stdout.strip():
-            return _strip_copilot_tool_logs(result.stdout.strip())
+        output = (result.stdout or "").strip()
+        if result.returncode == 0 and output:
+            return _strip_copilot_tool_logs(_strip_ansi(output))
     except FileNotFoundError:
         pass
     return None
@@ -358,28 +427,47 @@ def do_commit(dry_run: bool) -> None:
         diff_stat = run_cmd(
             ["git", "diff", "--cached", "--stat"], check=False
         ).stdout.strip()
-        diff_short = run_cmd(
-            ["git", "diff", "--cached", "--no-ext-diff", "--no-color", "--stat"],
+        changed_files = run_cmd(
+            ["git", "diff", "--cached", "--name-status", "--no-renames"],
+            check=False,
+        ).stdout.strip()
+        diff_context = run_cmd(
+            [
+                "git",
+                "diff",
+                "--cached",
+                "--no-ext-diff",
+                "--no-color",
+                "--unified=1",
+            ],
             check=False,
         ).stdout.strip()
         prompt = (
-            "Generate a concise git commit message in conventional commits format "
-            "(feat/fix/chore/docs/refactor prefix) for the following staged changes. "
-            "Reply ONLY with the commit message, nothing else.\n\n"
-            f"Diff stat:\n{diff_stat}\n\n"
-            f"Changed files:\n{diff_short}"
+            "Generate exactly one git commit message for the staged changes below.\n"
+            "Rules:\n"
+            "- Use Conventional Commits format.\n"
+            "- Start with one of: feat, fix, chore, docs, refactor, test, style, perf, build, ci.\n"
+            "- Use optional scope only if it is obvious from the changed files.\n"
+            "- Keep it concise, imperative, and under 72 characters when possible.\n"
+            "- Reply with ONLY the commit message line.\n"
+            "- Do not include Markdown, quotes, bullets, explanations, or labels.\n\n"
+            f"Diff stat:\n{diff_stat or '(sem estatísticas)'}\n\n"
+            f"Changed files:\n{changed_files or '(sem arquivos listados)'}\n\n"
+            f"Diff context:\n{_truncate_for_prompt(diff_context or '(diff vazio)')}"
         )
         suggested = copilot_prompt(prompt)
         if suggested:
-            # Limpar possíveis backticks ou prefixos da resposta
-            suggested = suggested.strip().strip("`").strip('"').strip("'")
-            # Pegar só a primeira linha se veio multi-linha
-            suggested = suggested.splitlines()[0].strip()
-            print_info(f"Sugestão do Copilot: {_c(Colors.CYAN, suggested)}")
-            if confirm("Usar esta mensagem?", "y"):
-                commit_msg = suggested
+            commit_suggestion = extract_commit_message(suggested)
+            if commit_suggestion:
+                print_info(f"Sugestão do Copilot: {_c(Colors.CYAN, commit_suggestion)}")
+                if confirm("Usar esta mensagem?", "y"):
+                    commit_msg = commit_suggestion
+                else:
+                    print_info("Mensagem recusada. Usando entrada manual.")
             else:
-                print_info("Mensagem recusada. Usando entrada manual.")
+                print_warning(
+                    "Copilot não retornou uma mensagem de commit válida. Usando entrada manual."
+                )
     else:
         print_info("gh copilot não disponível. Usando entrada manual.")
 
