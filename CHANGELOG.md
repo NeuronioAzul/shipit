@@ -16,6 +16,14 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+
+## [1.3.4] — 2026-05-08
+
+### Corrigido
+
+- `userData` de produção foi fixado explicitamente em `%APPDATA%\shipit` para preservar compatibilidade com instalações anteriores, mantendo desenvolvimento em `%APPDATA%\ShipIt!` e E2E em perfil temporário isolado.
+- `APP_ID` em runtime foi alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`), evitando identidade divergente no Windows.
+
 ## [1.3.3] — 2026-05-06
 
 - Enhanced text formatting preservation in DOCX exports.
