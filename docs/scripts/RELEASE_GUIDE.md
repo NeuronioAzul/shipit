@@ -86,6 +86,9 @@ python docs/scripts/release.py --skip-changelog
 # Pular commit de mudanças pendentes
 python docs/scripts/release.py --skip-commit
 
+# Retomar após PR já mergeado em main
+python docs/scripts/release.py --version 1.3.3 --skip-commit --skip-changelog --skip-pull-request
+
 # Combinações
 python docs/scripts/release.py --version 1.3.0 --skip-changelog --dry-run
 ```
@@ -99,8 +102,8 @@ python docs/scripts/release.py --version 1.3.0 --skip-changelog --dry-run
 | 4 | Atualizar CHANGELOG.md | `--skip-changelog` |
 | 5 | Bump de versão no `package.json` | Não |
 | 6 | Push para `origin/dev` | Não |
-| 7 | Criar PR (dev → main) | Não (detecta existente) |
-| 8 | Squash merge do PR | Não |
+| 7 | Criar PR (dev → main) | `--skip-pull-request` se já mergeado |
+| 8 | Squash merge do PR | `--skip-pull-request` se já mergeado |
 | 9 | Criar tag + sincronizar dev | Não (detecta existente) |
 | 10 | Aguardar CI/CD draft release | Não (timeout 5min) |
 | 11 | Publicar release (draft → published) | Não |
@@ -111,6 +114,7 @@ O script detecta estado atual e pula passos já concluídos:
 
 - Se PR já existe → reutiliza
 - Se PR já foi mergeado → pula
+- Se o processo caiu após o merge do PR → use `--skip-pull-request`; o script confirma que `origin/main` já contém a versão antes de criar a tag
 - Se tag já existe → pula criação
 - Se release já está publicada → pula
 

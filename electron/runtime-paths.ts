@@ -3,6 +3,8 @@ import path from 'path'
 
 export const APP_ID = 'com.neuronioazul.shipit'
 export const APP_NAME = 'ShipIt!'
+export const PRODUCTION_USER_DATA_DIR_NAME = 'shipit'
+export const DEVELOPMENT_USER_DATA_DIR_NAME = APP_NAME
 export const TEST_APP_ID = `${APP_ID}.test`
 export const TEST_APP_NAME = `${APP_NAME} Test`
 export const SHIPIT_TEST_PROFILE_MARKER = '.shipit-test-profile'
@@ -21,6 +23,19 @@ export interface RuntimePathAppLike {
 
 export interface TestUserDataAppLike {
   setPath: (name: string, value: string) => void
+}
+
+export interface UserDataDirAppLike {
+  isPackaged: boolean
+  getPath: (name: 'appData') => string
+  setPath: (name: 'userData', value: string) => void
+}
+
+export type UserDataDirMode = 'test' | 'production' | 'development'
+
+export interface UserDataDirResolution {
+  mode: UserDataDirMode
+  path: string
 }
 
 export interface RuntimeNativeImage {
@@ -54,6 +69,43 @@ export function getAppIdentity(env: NodeJS.ProcessEnv = process.env): { appId: s
   }
 
   return { appId: APP_ID, appName: APP_NAME }
+}
+
+export function getProductionUserDataDir(appDataPath: string): string {
+  return path.join(appDataPath, PRODUCTION_USER_DATA_DIR_NAME)
+}
+
+export function getDevelopmentUserDataDir(appDataPath: string): string {
+  return path.join(appDataPath, DEVELOPMENT_USER_DATA_DIR_NAME)
+}
+
+export function resolveUserDataDir(
+  app: Pick<UserDataDirAppLike, 'isPackaged' | 'getPath'>,
+  env: NodeJS.ProcessEnv = process.env,
+): UserDataDirResolution {
+  if (env.SHIPIT_TEST_USER_DATA_DIR) {
+    return { mode: 'test', path: path.resolve(env.SHIPIT_TEST_USER_DATA_DIR) }
+  }
+
+  const appDataPath = app.getPath('appData')
+  if (app.isPackaged) {
+    return { mode: 'production', path: getProductionUserDataDir(appDataPath) }
+  }
+
+  return { mode: 'development', path: getDevelopmentUserDataDir(appDataPath) }
+}
+
+export function configureUserDataDir(
+  app: UserDataDirAppLike,
+  env: NodeJS.ProcessEnv = process.env,
+): UserDataDirResolution {
+  const resolution = resolveUserDataDir(app, env)
+  const userDataPath = resolution.mode === 'test'
+    ? prepareShipItTestProfileDir(resolution.path)
+    : resolution.path
+
+  app.setPath('userData', userDataPath)
+  return { ...resolution, path: userDataPath }
 }
 
 export function getRuntimePathContext(
@@ -124,13 +176,13 @@ export function prepareShipItTestProfileDir(
 ): string {
   const resolvedDir = path.resolve(targetDir)
   if (!path.basename(resolvedDir).startsWith(SHIPIT_TEST_PROFILE_PREFIX)) {
-    throw new Error(`Diretorio de teste recusado: o nome deve iniciar com ${SHIPIT_TEST_PROFILE_PREFIX}`)
+    throw new Error(`Diretório de teste recusado: o nome deve iniciar com ${SHIPIT_TEST_PROFILE_PREFIX}`)
   }
 
   fsLike.mkdirSync(resolvedDir, { recursive: true })
   fsLike.writeFileSync(
     getTestProfileMarkerPath(resolvedDir),
-    'ShipIt test profile. Safe to delete only via guarded test cleanup.\n',
+    'ShipIt perfil de teste. Seguro para excluir apenas via limpeza de teste protegida.\n',
     'utf-8',
   )
   return resolvedDir
@@ -145,7 +197,7 @@ export function isSafeShipItTestProfileDir(targetDir: string, fsLike: Pick<TestP
 export function assertSafeShipItTestProfileDir(targetDir: string, fsLike: Pick<TestProfileFs, 'existsSync'> = fs): string {
   const resolvedDir = path.resolve(targetDir)
   if (!isSafeShipItTestProfileDir(resolvedDir, fsLike)) {
-    throw new Error('Cleanup recusado: perfil de teste sem marcador de seguranca ou prefixo esperado.')
+    throw new Error('Limpeza recusada: perfil de teste sem marcador de segurança ou prefixo esperado.')
   }
 
   return resolvedDir
@@ -155,7 +207,7 @@ export function configureTestUserDataDir(
   app: TestUserDataAppLike,
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
-  if (!isShipItTestMode(env) || !env.SHIPIT_TEST_USER_DATA_DIR) {
+  if (!env.SHIPIT_TEST_USER_DATA_DIR) {
     return null
   }
 

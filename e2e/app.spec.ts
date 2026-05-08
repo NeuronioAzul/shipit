@@ -3,7 +3,7 @@ import { _electron as electron } from 'playwright'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { SHIPIT_TEST_PROFILE_MARKER, SHIPIT_TEST_PROFILE_PREFIX } from '../electron/runtime-paths'
+import { PRODUCTION_USER_DATA_DIR_NAME, SHIPIT_TEST_PROFILE_MARKER, SHIPIT_TEST_PROFILE_PREFIX } from '../electron/runtime-paths'
 import {
   createActivityRecord as createActivityFixtureRecord,
   createActivityThroughForm,
@@ -106,10 +106,11 @@ test('uses isolated test userData profile with safety marker', async () => {
       appData: app.getPath('appData'),
     }
   })
-  const productionUserData = path.join(profile.appData, 'shipit')
+  const productionUserData = path.join(profile.appData, PRODUCTION_USER_DATA_DIR_NAME)
 
   expect(path.resolve(profile.userData)).toBe(path.resolve(testUserDataDir))
   expect(path.basename(profile.userData).startsWith(SHIPIT_TEST_PROFILE_PREFIX)).toBe(true)
+  expect(path.basename(productionUserData)).toBe('shipit')
   expect(fs.existsSync(path.join(profile.userData, SHIPIT_TEST_PROFILE_MARKER))).toBe(true)
   expect(path.resolve(profile.userData).toLowerCase()).not.toBe(path.resolve(productionUserData).toLowerCase())
 })

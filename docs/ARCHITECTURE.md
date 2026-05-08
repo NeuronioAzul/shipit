@@ -49,7 +49,7 @@ Responsável por:
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
 - **IPC Handlers**: 54 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
-- **Identidade runtime**: `runtime-paths.ts` centraliza `appId`, nome, assets públicos, ícones e perfil temporário de testes
+- **Identidade runtime e `userData`**: `runtime-paths.ts` centraliza `appId`, nome visual, diretórios de dados por modo, assets públicos, ícones e perfil temporário de testes
 - **Auto-update controlado**: `update-notifications.ts` usa `checkForUpdates()` com notificações próprias do ShipIt, dedupe e foco da janela existente
 
 #### Prefixos IPC
@@ -122,9 +122,11 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 
 **Bibliotecas usadas**: `jszip` (ZIP), `@xmldom/xmldom` (DOM XML), `xpath` (queries XPath)
 
-### `runtime-paths.ts` — Identidade e Assets
+### `runtime-paths.ts` — Identidade, `userData` e Assets
 
 Centraliza constantes de identidade (`com.neuronioazul.shipit`, `ShipIt!`), variante isolada de teste (`ShipIt! Test`), resolução de assets públicos em dev/asar, ícones de janela/notificação/tray e diretório de sons.
+
+O nome visual (`productName`/`app.setName()`) permanece `ShipIt!`, mas o diretório `userData` é configurado explicitamente antes de qualquer `app.getPath('userData')`: builds empacotados usam a pasta legada `shipit` dentro de `appData`, desenvolvimento usa `ShipIt!`, e E2E usa o diretório temporário informado por `SHIPIT_TEST_USER_DATA_DIR`.
 
 Também expõe helpers de perfil temporário E2E com marcador `.shipit-test-profile`; a limpeza automatizada só aceita diretórios com esse marcador e prefixo `shipit-e2e-`.
 

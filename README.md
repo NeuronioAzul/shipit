@@ -315,11 +315,12 @@ O ShipIt! verifica e baixa atualizações automaticamente em segundo plano. Quan
 <summary><strong>Onde ficam meus dados?</strong></summary>
 
 Todos os dados são armazenados localmente no seu computador, na pasta de dados do usuário do sistema operacional:
-- **Windows**: `%APPDATA%/shipit/`
+
+- **Windows**: `%APPDATA%\shipit\`
 - **macOS**: `~/Library/Application Support/shipit/`
 - **Linux**: `~/.config/shipit/`
 
-O banco de dados é o arquivo `shipit.db`, e as evidências ficam na subpasta `evidences/`.
+O nome visual do app continua sendo **ShipIt!**, mas a pasta de dados da instalação usa `shipit` por compatibilidade com versões anteriores. O banco de dados é o arquivo `shipit.db`, e as evidências ficam na subpasta `evidences/`.
 </details>
 
 <details>

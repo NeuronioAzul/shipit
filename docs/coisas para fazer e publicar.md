@@ -2,7 +2,15 @@
 
 SHIPIT!  
 
+Quando atualizei o ShipIt! algumas coisas indesejadas aconteceram:
+
+- A pasta de instalação mudou de "C:\Users\mauro\AppData\Roaming\shipit" para "C:\Users\mauro\AppData\Roaming\ShipIt!", e isso fez com que o aplicativo não reconhecesse a instalação anterior, e criasse uma nova instalação, e os dados que estão na pasta anterior não estão sendo reconhecidos. configure o instalador para usar a pasta "C:\Users\mauro\AppData\Roaming\shipit" para manter a compatibilidade com a instalação anterior, e para que os dados sejam mantidos e reconhecidos corretamente, e também para evitar que os usuários tenham problemas com a atualização do aplicativo, e quando usar em desenvolvimento `npm run dev` use a pasta "C:\Users\mauro\AppData\Roaming\ShipIt!".
+
+fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros relacionados, porque está carregando um electron como se estivesse instalado iniciando com o windows. pode ser problema na opção iniciar ocm o windows que está marcada em desenvolvimento, ou pode ser algum resquício da instalação anterior que está causando esse problema, para resolver isso, preciso desinstalar completamente o ShipIt! de desenvolvimento, removendo todos os arquivos e registros relacionados, para garantir que o aplicativo seja limpo e organizado, e para evitar que o lixo da instalação anterior cause problemas no desenvolvimento e testes do aplicativo.
+
 ## New features
+
+- 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
 
 - 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 

@@ -7,6 +7,22 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+## [Unreleased]
+
+### Corrigido
+
+- `userData` de produção fixado explicitamente em `%APPDATA%\shipit` para preservar compatibilidade com instalações anteriores, mantendo desenvolvimento em `%APPDATA%\ShipIt!` e E2E em perfil temporário isolado.
+- `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`), evitando identidade divergente no Windows.
+
+---
+
+
+## [1.3.4] — 2026-05-08
+
+### Corrigido
+
+- `userData` de produção foi fixado explicitamente em `%APPDATA%\shipit` para preservar compatibilidade com instalações anteriores, mantendo desenvolvimento em `%APPDATA%\ShipIt!` e E2E em perfil temporário isolado.
+- `APP_ID` em runtime foi alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`), evitando identidade divergente no Windows.
 
 ## [1.3.3] — 2026-05-06
 
@@ -14,8 +30,6 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Introduced user-controlled application updates with notification indicators.
 - Implemented notification system for available updates with user prompts for installation.
 - Created a PowerShell script to clear Windows icon cache for the application.
-
-## [unreleased]
 
 ### Adicionado (Validação TitleBar e Release)
 

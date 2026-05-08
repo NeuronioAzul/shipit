@@ -14,6 +14,7 @@ Uso:
   python docs/scripts/release.py --dry-run                # Simulação sem executar
   python docs/scripts/release.py --skip-changelog          # Pular geração de changelog
   python docs/scripts/release.py --skip-commit             # Pular commit de mudanças pendentes
+  python docs/scripts/release.py --skip-pull-request       # Retomar após PR já mergeado
   python docs/scripts/release.py --ci-timeout 5400         # Timeout em segundos para o workflow CI/CD
   python docs/scripts/release.py --skip-asset-validation   # Pular validação de assets (emergência)
 
@@ -774,6 +775,49 @@ def merge_pr(pr_number: int | None, dry_run: bool) -> None:
     print_success(f"PR #{pr_number} mergeado com squash.")
 
 
+def verify_release_on_main(version: str, dry_run: bool) -> None:
+    """Confirma que origin/main já contém a versão da release antes de pular PR."""
+    print_header("Step 7-8/13 — PR pulado")
+    tag_name = f"v{version}"
+
+    if dry_run:
+        print_dry_run(
+            f"Verificaria se origin/main contém package.json version={version} antes de criar {tag_name}"
+        )
+        return
+
+    print_step("Verificando se a release já está em origin/main...")
+    fetch_result = run_cmd(["git", "fetch", "origin", "main"], check=False)
+    if fetch_result.returncode != 0:
+        error_msg = (fetch_result.stderr or fetch_result.stdout).strip()
+        print_error(f"Não foi possível atualizar origin/main: {error_msg}")
+        sys.exit(1)
+
+    show_result = run_cmd(["git", "show", "origin/main:package.json"], check=False)
+    if show_result.returncode != 0:
+        error_msg = (show_result.stderr or show_result.stdout).strip()
+        print_error(f"Não foi possível ler package.json em origin/main: {error_msg}")
+        sys.exit(1)
+
+    try:
+        main_version = json.loads(show_result.stdout)["version"]
+    except (json.JSONDecodeError, KeyError) as e:
+        print_error(f"package.json inválido em origin/main: {e}")
+        sys.exit(1)
+
+    if main_version != version:
+        print_error(
+            f"origin/main está na versão {main_version}, mas a release solicitada é {version}."
+        )
+        print_info(
+            "Não use --skip-pull-request até o PR da release estar mergeado em main."
+        )
+        sys.exit(1)
+
+    print_success(f"origin/main já contém a versão {version}.")
+    print_info("Criação e merge do PR pulados; continuando a partir da tag.")
+
+
 # ================================================================================================
 # Step 9: Criar e enviar tag
 # ================================================================================================
@@ -1247,6 +1291,8 @@ Exemplos:
   python release.py --dry-run          Simulação sem executar
   python release.py --skip-changelog   Pular geração de changelog
   python release.py --skip-commit      Pular commit de pendências
+  python release.py --skip-pull-request
+                                      Retomar após PR já mergeado em main
         """,
     )
     parser.add_argument(
@@ -1270,6 +1316,17 @@ Exemplos:
         "--skip-commit",
         action="store_true",
         help="Pula o commit de mudanças não commitadas.",
+    )
+    parser.add_argument(
+        "--skip-pull-request",
+        "--skip-pr",
+        "--resume-after-pr",
+        dest="skip_pull_request",
+        action="store_true",
+        help=(
+            "Pula a criação e o merge do PR. Use apenas para retomar uma release "
+            "quando o PR já foi mergeado em main."
+        ),
     )
     parser.add_argument(
         "--ci-timeout",
@@ -1322,11 +1379,14 @@ def main() -> None:
     # Step 6: Push dev
     push_dev(dry_run)
 
-    # Step 7: Criar PR
-    pr_number = create_pr(version, dry_run)
+    if args.skip_pull_request:
+        verify_release_on_main(version, dry_run)
+    else:
+        # Step 7: Criar PR
+        pr_number = create_pr(version, dry_run)
 
-    # Step 8: Merge PR
-    merge_pr(pr_number, dry_run)
+        # Step 8: Merge PR
+        merge_pr(pr_number, dry_run)
 
     # Step 9: Criar e enviar tag
     create_and_push_tag(version, dry_run)

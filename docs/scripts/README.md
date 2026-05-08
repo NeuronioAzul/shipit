@@ -43,6 +43,7 @@ python docs/scripts/release.py --version 1.3.0
 | `--dry-run` | Simula sem executar nada |
 | `--skip-changelog` | Pula atualização do CHANGELOG.md |
 | `--skip-commit` | Pula commit de mudanças pendentes |
+| `--skip-pull-request` | Retoma após PR já mergeado em `main`, pulando criação e merge do PR |
 | `--help` | Exibe ajuda |
 
 ### Pré-requisitos
