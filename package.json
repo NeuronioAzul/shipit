@@ -80,7 +80,7 @@
     "wait-on": "^9.0.4"
   },
   "build": {
-    "appId": "com.neuronioazul.shipit",
+    "appId": "br.com.neuronioazul.shipit",
     "productName": "ShipIt!",
     "copyright": "Copyright © 2026 NeuronioAzul",
     "publish": {
@@ -126,7 +126,7 @@
           ]
         }
       ],
-      "icon": "build\\ShipIt.ico"
+      "icon": "build/ShipIt.ico"
     },
     "nsis": {
       "oneClick": false,

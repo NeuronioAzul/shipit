@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 05/05/2026 (validação TitleBar/release para v1.3.3)
+> Atualizado em: 08/05/2026 (compatibilidade de `userData` para produção/dev/E2E)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -391,6 +391,14 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Cleanup E2E protegido por marcador e prefixo `shipit-e2e-`, recusando diretórios não marcados
 - [x] Script manual dry-run para limpeza opt-in do cache global de ícones do Windows validado sem remoção real
 - [x] Cobertura focada para paths/ícones, update notifications, dedupe e limpeza segura de perfil temporário
+
+### Fase 25: Compatibilidade de `userData` ✅
+
+- [x] `userData` de produção fixado no diretório legado `shipit` dentro de `appData`, preservando banco, settings, evidências e relatórios existentes.
+- [x] Desenvolvimento local mantido separado em `ShipIt!` para não misturar dados reais com `npm run dev`.
+- [x] E2E continua com prioridade para `SHIPIT_TEST_USER_DATA_DIR` e perfil temporário protegido por marcador `.shipit-test-profile`.
+- [x] `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`com.neuronioazul.shipit`).
+- [x] Cobertura Vitest ampliada para produção, desenvolvimento, E2E e alinhamento de identidade.
 
 ---
 

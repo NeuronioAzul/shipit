@@ -4,7 +4,7 @@ import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
 import {
-  configureTestUserDataDir,
+  configureUserDataDir,
   createNativeImageWithFallback,
   getAppIdentity,
   getNotificationFallbackIconPath,
@@ -16,7 +16,7 @@ import {
 } from './runtime-paths'
 import { createUpdateService, type UpdateService } from './update-notifications'
 
-configureTestUserDataDir(app)
+configureUserDataDir(app)
 
 const appIdentity = getAppIdentity()
 app.setName(appIdentity.appName)
