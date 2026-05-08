@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getLastBusinessDay } from './report-generator'
+import { getLastBusinessDay } from './report-generator.ts'
 
 describe('getLastBusinessDay', () => {
   it('returns last day when it is a weekday (Wednesday)', () => {

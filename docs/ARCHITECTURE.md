@@ -124,7 +124,7 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 
 ### `runtime-paths.ts` — Identidade, `userData` e Assets
 
-Centraliza constantes de identidade (`com.neuronioazul.shipit`, `ShipIt!`), variante isolada de teste (`ShipIt! Test`), resolução de assets públicos em dev/asar, ícones de janela/notificação/tray e diretório de sons.
+Centraliza constantes de identidade (`br.com.neuronioazul.shipit`, `ShipIt!`), variante isolada de teste (`ShipIt! Test`), resolução de assets públicos em dev/asar, ícones de janela/notificação/tray e diretório de sons.
 
 O nome visual (`productName`/`app.setName()`) permanece `ShipIt!`, mas o diretório `userData` é configurado explicitamente antes de qualquer `app.getPath('userData')`: builds empacotados usam a pasta legada `shipit` dentro de `appData`, desenvolvimento usa `ShipIt!`, e E2E usa o diretório temporário informado por `SHIPIT_TEST_USER_DATA_DIR`.
 

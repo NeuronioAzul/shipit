@@ -1,10 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 
-export const APP_ID = 'com.neuronioazul.shipit'
+export const APP_ID = 'br.com.neuronioazul.shipit'
 export const APP_NAME = 'ShipIt!'
 export const PRODUCTION_USER_DATA_DIR_NAME = 'shipit'
-export const DEVELOPMENT_USER_DATA_DIR_NAME = APP_NAME
+export const DEVELOPMENT_USER_DATA_DIR_NAME = 'ShipIt!'
 export const TEST_APP_ID = `${APP_ID}.test`
 export const TEST_APP_NAME = `${APP_NAME} Test`
 export const SHIPIT_TEST_PROFILE_MARKER = '.shipit-test-profile'
