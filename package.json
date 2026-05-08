@@ -126,7 +126,7 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "build\\ShipIt.ico"
     },
     "nsis": {
       "oneClick": false,
