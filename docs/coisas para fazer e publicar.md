@@ -10,6 +10,13 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 ## New features
 
+- 🔴 feat: adicionar a tela de perfil os campos a seguir que depois serão usados para preencher no template do DOCX:
+  - Disponibilidade Diária `{{daily_availability}}`
+  - Disponibilidade Mensal `{{monthly_availability}}`
+  - Esforço Mínimo em Horas: `{{minimum_effort_hours}}`
+
+- 🔴 fix: os links de referência não estão sendo incluídos no documento.
+
 - 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
 
 - 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
@@ -27,7 +34,6 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
   - colocar um botão para o usuário escolher quando instalar a nova versão, para permitir que os usuários possam controlar o processo de atualização do aplicativo, garantindo que eles possam escolher um momento conveniente para instalar a nova versão.
 - feat: Ao fazer o download da nova versão, o aplicativo deve exibir uma notificação informando que a nova versão foi baixada e está pronta para ser instalada, com um botão na notificação para instalar a nova versão.
 - feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
-
 
 ------------------------------------------------------------------
 
@@ -207,7 +213,7 @@ Executar o script de publicação `docs\scripts\release.py` para criar uma nova 
 ## validar funcionalidades, corrigir erros e criar testes
 
 Fix: Acontecendo um excesso de notificações de atualização, quando o usuário clica em "Verificar Atualizações" e existe uma nova versão disponível, o aplicativo exibe uma notificação informando que existe uma nova versão disponível, e na sequencia aparece uma outra notificação em inglês com o logo do electron, dizendo "New version available". Quando eu testar o aplicativo novamente eu gostaria que uma rotina fosse executada para remover o lixo que pode ter ficado, deixando o meu conputador mais limpo e organizado, removendo registros e arquivos temporários que possam ter sido criados durante os testes, só não pode mexer no que eu estou usando com a versão instalada na máquina.
-Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! instalada. Não quero que essa versão seja afetada, e também não quero que os arquivos e registros relacionados a essa versão sejam afetados, A rotina também precisa limpar o cache de ícones do aplicativo, para evitar que ícones antigos ou corrompidos sejam exibidos, e o que mais for preciso para garantir o aplicativo em produção que está instalado na minha máquina não seja afetado. Além das mensagens aparecendo duplicadas ainda tem problema onde o ícone da taskbar fica com o ícone do electron, e não o ícone do ShipIt!. Também as mensagens de notificação quando clicadas abrem uma janela do electron com o logo do electron, e não do ShipIt!. 
+Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! instalada. Não quero que essa versão seja afetada, e também não quero que os arquivos e registros relacionados a essa versão sejam afetados, A rotina também precisa limpar o cache de ícones do aplicativo, para evitar que ícones antigos ou corrompidos sejam exibidos, e o que mais for preciso para garantir o aplicativo em produção que está instalado na minha máquina não seja afetado. Além das mensagens aparecendo duplicadas ainda tem problema onde o ícone da taskbar fica com o ícone do electron, e não o ícone do ShipIt!. Também as mensagens de notificação quando clicadas abrem uma janela do electron com o logo do electron, e não do ShipIt!.
 
 - fix: Notificações avaliar, corrigir e criar testes para garantir que as notificações de atualização estejam funcionando corretamente.
 - fix: Verificar se as notificações estão sendo exibidas corretamente, sem mensagens duplicadas, e com o ícone correto do ShipIt!.
