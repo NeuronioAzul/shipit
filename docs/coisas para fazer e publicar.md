@@ -25,16 +25,6 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 - 🟡 Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
 
-## Funcionalidades de atualização do aplicativo
-
-- fix: Não instalar a nova versão baixada do aplicativo automaticamente, para evitar que o aplicativo seja atualizado sem o consentimento do usuário, e para permitir que os usuários possam escolher quando e como atualizar o aplicativo, garantindo uma experiência de usuário mais personalizada e controlada.
-- feat: colocar uma bolinha de notificação no ícone do aplicativo na taskbar, para indicar que existe uma nova versão disponível, e para chamar a atenção dos usuários para a atualização, garantindo que eles estejam cientes das novidades e melhorias disponíveis na nova versão do aplicativo.
-  - colocar uma bolinha no ícone de configurações, para indicar que existe uma nova versão disponível. a bolinha deve ter um efeito do tipo "sonar" para chamar a atenção do usuário, e quando o usuário clicar na bolinha ou no ícone de configurações, deve abrir a tela de configurações, na parte de atualização do aplicativo colocar também a bolinha de notificação, para indicar que existe uma nova versão disponível, remover as bolinhas quando o usuário clicar para abrir a tela de configurações e visualizar o campo de atualização aguarde 10 segundos para remover as bolinhas e para evitar que fiquem aparecendo mesmo depois do usuário ter visto a notificação.
-  - Ao clicar na notificação de que existe uma nova versão disponível, o aplicativo deve abrir a tela de configurações, onde o usuário pode ver as informações da nova versão e escolher quando instalar a nova versão, para permitir que os usuários possam tomar uma decisão informada sobre a atualização do aplicativo.
-  - colocar um botão para o usuário escolher quando instalar a nova versão, para permitir que os usuários possam controlar o processo de atualização do aplicativo, garantindo que eles possam escolher um momento conveniente para instalar a nova versão.
-- feat: Ao fazer o download da nova versão, o aplicativo deve exibir uma notificação informando que a nova versão foi baixada e está pronta para ser instalada, com um botão na notificação para instalar a nova versão.
-- feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
-
 ------------------------------------------------------------------
 
 ```text
@@ -206,10 +196,6 @@ Depois que tudo estiver validado, corrigido e testado, e a documentação estive
 
 Executar o script de publicação `docs\scripts\release.py` para criar uma nova tag no GitHub, seguindo as instruções detalhadas na documentação `docs\scripts\`, para publicar a nova versão do ShipIt! e disponibilizá-la para os usuários.
 
------------------------------------------------------------
-
-## Fazendo
-
 ## validar funcionalidades, corrigir erros e criar testes
 
 Fix: Acontecendo um excesso de notificações de atualização, quando o usuário clica em "Verificar Atualizações" e existe uma nova versão disponível, o aplicativo exibe uma notificação informando que existe uma nova versão disponível, e na sequencia aparece uma outra notificação em inglês com o logo do electron, dizendo "New version available". Quando eu testar o aplicativo novamente eu gostaria que uma rotina fosse executada para remover o lixo que pode ter ficado, deixando o meu conputador mais limpo e organizado, removendo registros e arquivos temporários que possam ter sido criados durante os testes, só não pode mexer no que eu estou usando com a versão instalada na máquina.
@@ -223,3 +209,20 @@ Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! insta
 
 - testes: Caso aconteça algum erro ou seja verificado um cenário que não esteja coberto por testes automatizados, criar testes para validar o comportamento correto, para garantir as funcionalidades sempre corretas.
 - testes: Criar testes automatizados para validar o comportamento das notificações de atualização, garantindo que as mensagens sejam exibidas corretamente, sem duplicação, e com o ícone correto do ShipIt!. Os testes devem incluir cenários para verificar se as notificações estão abrindo a janela correta do ShipIt! quando clicadas, e não uma janela do electron, e também para garantir que o aplicativo esteja limpando corretamente os arquivos e registros temporários relacionados aos testes, sem afetar a versão instalada do ShipIt! na máquina, e garantindo que o cache de ícones do aplicativo seja limpo para evitar problemas de exibição de ícones antigos ou corrompidos.
+
+-----------------------------------------------------------
+
+## Fazendo
+
+## Funcionalidades de atualização do aplicativo
+
+- fix: Impedir a atualização automática, não atualizar sem consentimento do usuário, permitir que os usuário escolham quando atualizar, garantir uma  experiência de usuário mais personalizada e controlada.
+
+- feat: colocar uma bolinha de notificação no ícone do aplicativo na taskbar, para indicar que existe uma nova versão disponível, e para chamar a atenção dos usuários para a atualização, garantindo que eles estejam cientes das novidades e melhorias disponíveis na nova versão do aplicativo.
+  - colocar uma bolinha no ícone de configurações, para indicar que existe uma nova versão disponível. a bolinha deve ter um efeito do tipo "sonar" para chamar a atenção do usuário, e quando o usuário clicar na bolinha ou no ícone de configurações, deve abrir a tela de configurações, na parte de atualização do aplicativo colocar também a bolinha de notificação, para indicar que existe uma nova versão disponível, remover as bolinhas quando o usuário clicar para abrir a tela de configurações e visualizar o campo de atualização aguarde 10 segundos para remover as bolinhas e para evitar que fiquem aparecendo mesmo depois do usuário ter visto a notificação.
+  - Ao clicar na notificação de que existe uma nova versão disponível, o aplicativo deve abrir a tela de configurações, onde o usuário pode ver as informações da nova versão e escolher quando instalar a nova versão, para permitir que os usuários possam tomar uma decisão informada sobre a atualização do aplicativo.
+  - colocar um botão para o usuário escolher quando instalar a nova versão, para permitir que os usuários possam controlar o processo de atualização do aplicativo, garantindo que eles possam escolher um momento conveniente para instalar a nova versão.
+
+- feat: Ao fazer o download da nova versão, o aplicativo deve exibir uma notificação informando que a nova versão foi baixada e está pronta para ser instalada, com um botão na notificação para instalar a nova versão.
+
+- feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
