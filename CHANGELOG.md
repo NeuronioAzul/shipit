@@ -7,6 +7,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+
+## [1.3.7] — 2026-05-13
+
+### Corrigido
+
+- A verificação manual de atualizações agora retorna o estado final corretamente ao concluir a checagem, evitando que a interface permaneça presa em “verificando” quando não há nova versão disponível.
+
 ## [1.3.6] — 2026-05-13
 
 ### Adicionado v1.3.6
