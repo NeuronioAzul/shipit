@@ -383,6 +383,7 @@ function getUpdateService(): UpdateService {
       Notification,
       getNotificationIcon: getNotificationIconFilePath,
       focusSettings: focusUpdateSettings,
+      getCurrentVersion: () => app.getVersion(),
       initialState: currentUpdateState,
       acknowledgedVersion: persistedState.acknowledgedVersion,
       supportsNotificationActions: process.platform !== 'linux',

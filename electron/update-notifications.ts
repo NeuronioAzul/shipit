@@ -27,9 +27,13 @@ export interface AutoUpdaterLike {
     (event: 'update-downloaded', listener: (info: UpdateInfoLike) => void): unknown
     (event: 'error', listener: (error: unknown) => void): unknown
   }
-  checkForUpdates: () => Promise<unknown>
+  checkForUpdates: () => Promise<UpdateCheckOutcomeLike | null | undefined | unknown>
   downloadUpdate: () => Promise<unknown>
   quitAndInstall: () => void
+}
+
+export interface UpdateCheckOutcomeLike {
+  updateInfo?: UpdateInfoLike
 }
 
 export interface UpdateInfoLike {
@@ -69,6 +73,7 @@ export interface UpdateServiceOptions {
   Notification: DesktopNotificationConstructor
   getNotificationIcon: () => string | undefined
   focusSettings: () => void
+  getCurrentVersion?: () => string
   initialState?: UpdateStatusData
   acknowledgedVersion?: string
   supportsNotificationActions?: boolean
@@ -286,7 +291,25 @@ export function createUpdateService(options: UpdateServiceOptions): UpdateServic
 
     try {
       checkInFlight = options.autoUpdater.checkForUpdates()
-      await checkInFlight
+      const outcome = (await checkInFlight) as UpdateCheckOutcomeLike | null | undefined
+
+      if (currentState.status === 'checking') {
+        const remoteVersion = typeof outcome?.updateInfo?.version === 'string' && outcome.updateInfo.version.trim().length > 0
+          ? outcome.updateInfo.version
+          : undefined
+        const installedVersion = options.getCurrentVersion?.()
+
+        if (remoteVersion && (!installedVersion || remoteVersion !== installedVersion)) {
+          const nextState = sendStatus(createState('available', {
+            version: remoteVersion,
+            attentionVisible: shouldShowAttention(remoteVersion),
+          }))
+          notifyOnce('available', remoteVersion, nextState.attentionVisible)
+        } else {
+          sendStatus(createState('not-available'))
+        }
+      }
+
       return createResult(currentState.status, currentState)
     } catch (error) {
       const result = createState('error', {

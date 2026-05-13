@@ -71,6 +71,7 @@ function createService(overrides: Partial<{
   initialState: UpdateStatusData
   acknowledgedVersion: string
   supportsNotificationActions: boolean
+  getCurrentVersion: () => string
 }> = {}) {
   const updater = overrides.updater ?? new FakeAutoUpdater()
   const statuses = overrides.statuses ?? []
@@ -82,6 +83,7 @@ function createService(overrides: Partial<{
     Notification: FakeNotification,
     getNotificationIcon: () => 'shipit-icon',
     focusSettings,
+    getCurrentVersion: overrides.getCurrentVersion,
     initialState: overrides.initialState,
     acknowledgedVersion: overrides.acknowledgedVersion,
     supportsNotificationActions: overrides.supportsNotificationActions,
@@ -126,6 +128,92 @@ describe('update notification service', () => {
 
     expect(result).toEqual({ status: 'not-available', attentionVisible: false })
     expect(service.getCurrentState().status).toBe('not-available')
+  })
+
+  it('settles to not-available when autoUpdater resolves without emitting any terminal event', async () => {
+    const updater = new FakeAutoUpdater()
+    updater.checkForUpdates = vi.fn(() => {
+      // electron-updater fires checking-for-update before resolving; the bug appears
+      // when the terminal event (update-available / update-not-available / error) never fires.
+      updater.emit('checking-for-update')
+      return Promise.resolve(null)
+    })
+    const { service, statuses } = createService({ updater, getCurrentVersion: () => '1.3.6' })
+    service.registerAutoUpdaterHandlers()
+
+    const result = await service.checkForUpdates()
+
+    expect(result).toEqual({ status: 'not-available', attentionVisible: false })
+    expect(service.getCurrentState().status).toBe('not-available')
+    expect(statuses.map((s) => s.status)).toEqual(['checking', 'not-available'])
+  })
+
+  it('settles to available using resolved updateInfo when no terminal event fires (1.3.6 -> 1.3.7 regression)', async () => {
+    const updater = new FakeAutoUpdater()
+    updater.checkForUpdates = vi.fn(() => {
+      updater.emit('checking-for-update')
+      return Promise.resolve({ updateInfo: { version: '1.3.7' } })
+    })
+    const { service, statuses } = createService({ updater, getCurrentVersion: () => '1.3.6' })
+    service.registerAutoUpdaterHandlers()
+
+    const result = await service.checkForUpdates()
+
+    expect(result).toEqual({ status: 'available', version: '1.3.7', attentionVisible: true })
+    expect(service.getCurrentState()).toEqual({ status: 'available', version: '1.3.7', attentionVisible: true })
+    expect(statuses.map((s) => s.status)).toEqual(['checking', 'available'])
+    expect(FakeNotification.instances).toHaveLength(1)
+    expect(FakeNotification.instances[0].options).toMatchObject({
+      title: 'ShipIt! - Atualização disponível',
+      body: 'Versão 1.3.7 encontrada. Abra a área de atualização para baixar quando quiser.',
+    })
+  })
+
+  it('treats resolved updateInfo matching the installed version as not-available', async () => {
+    const updater = new FakeAutoUpdater()
+    updater.checkForUpdates = vi.fn(() => {
+      updater.emit('checking-for-update')
+      return Promise.resolve({ updateInfo: { version: '1.3.6' } })
+    })
+    const { service } = createService({ updater, getCurrentVersion: () => '1.3.6' })
+    service.registerAutoUpdaterHandlers()
+
+    const result = await service.checkForUpdates()
+
+    expect(result.status).toBe('not-available')
+    expect(service.getCurrentState().status).toBe('not-available')
+    expect(FakeNotification.instances).toHaveLength(0)
+  })
+
+  it('preserves available status when update-available event fired during check', async () => {
+    const updater = new FakeAutoUpdater()
+    updater.checkForUpdates = vi.fn(() => {
+      updater.emit('update-available', { version: '1.3.7' })
+      return Promise.resolve({ updateInfo: { version: '1.3.7' } })
+    })
+    const { service } = createService({ updater, getCurrentVersion: () => '1.3.6' })
+    service.registerAutoUpdaterHandlers()
+
+    const result = await service.checkForUpdates()
+
+    expect(result).toEqual({ status: 'available', version: '1.3.7', attentionVisible: true })
+    // The event listener notifies; the post-await fallback must not double-notify.
+    expect(FakeNotification.instances).toHaveLength(1)
+  })
+
+  it('keeps downloaded state and skips re-check when update already downloaded', async () => {
+    const updater = new FakeAutoUpdater()
+    const { service, statuses } = createService({
+      updater,
+      initialState: { status: 'downloaded', version: '1.3.7', progress: 100, attentionVisible: true },
+    })
+
+    const result = await service.checkForUpdates()
+
+    expect(result.status).toBe('downloaded')
+    expect(result.version).toBe('1.3.7')
+    expect(updater.checkForUpdates).not.toHaveBeenCalled()
+    expect(statuses).toEqual([])
   })
 
   it('emits manual update states and deduplicates desktop notifications by version and status', () => {

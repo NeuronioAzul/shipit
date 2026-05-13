@@ -46,17 +46,11 @@ export function UpdateStateProvider({ children }: { children: ReactNode }) {
   async function checkForUpdate(): Promise<UpdateCheckResult | null> {
     if (!window.electronAPI) return null
 
-    const nextState = await window.electronAPI.checkForUpdate()
-    if (nextState.status !== 'already-checking') {
-      setUpdateStatus({
-        status: nextState.status,
-        version: nextState.version,
-        error: nextState.error,
-        progress: nextState.progress,
-        attentionVisible: nextState.attentionVisible,
-      })
-    }
-    return nextState
+    // The main process broadcasts the settled status via `onUpdateStatus`,
+    // so we deliberately do NOT call setUpdateStatus here — doing so could
+    // replay a stale `checking` value over an already-delivered final state
+    // and leave the UI stuck on the spinner.
+    return window.electronAPI.checkForUpdate()
   }
 
   async function downloadUpdate(): Promise<UpdateStatusData | null> {
