@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { UpdateStatusPanel } from '../components/UpdateStatusPanel'
+import { useUpdateState } from '../contexts/UpdateStateContext'
 import { ThemeSelector } from '../components/ThemeSelector'
 import { Select } from '../components/Select'
 import { TimePicker } from '../components/TimePicker'
-import type { AppSettings, UpdateStatusData } from '../vite-env'
+import type { AppSettings } from '../vite-env'
 import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
 
 export function SettingsPage() {
+  const location = useLocation()
   const navigate = useNavigate()
   const [reportsDir, setReportsDir] = useState('')
   const [defaultDir, setDefaultDir] = useState('')
@@ -26,10 +29,17 @@ export function SettingsPage() {
   const [alertSoundEnabled, setAlertSoundEnabled] = useState(true)
   const [alertSaved, setAlertSaved] = useState(false)
   const [savedAlertFingerprint, setSavedAlertFingerprint] = useState('')
-
-  // Update state
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatusData>({ status: 'not-available' })
-  const [isElectron] = useState(() => !!window.electronAPI)
+  const [isUpdateSectionVisible, setIsUpdateSectionVisible] = useState(false)
+  const updateSectionRef = useRef<HTMLElement | null>(null)
+  const {
+    acknowledgeUpdateAttention,
+    checkForUpdate,
+    downloadUpdate,
+    installUpdate,
+    isElectron,
+    updateStatus,
+  } = useUpdateState()
+  const isUpdateFocusRequested = new URLSearchParams(location.search).get('focus') === 'update'
 
   const buildAlertFingerprint = useCallback((input: {
     alertEnabled: boolean
@@ -45,20 +55,6 @@ export function SettingsPage() {
       alertMessage: input.alertMessage.trim(),
       alertSoundEnabled: input.alertSoundEnabled,
     })
-  }, [])
-
-  const handleCheckForUpdate = useCallback(async () => {
-    if (!window.electronAPI) return
-    setUpdateStatus({ status: 'checking' })
-    const result = await window.electronAPI.checkForUpdate()
-    if (result.status === 'dev') {
-      setUpdateStatus({ status: 'dev' })
-    }
-  }, [])
-
-  const handleInstallUpdate = useCallback(async () => {
-    if (!window.electronAPI) return
-    await window.electronAPI.installUpdate()
   }, [])
 
   useEffect(() => {
@@ -114,7 +110,6 @@ export function SettingsPage() {
 
     // Listen for sound data from main process
     let cleanupSound: (() => void) | undefined
-    let cleanupUpdate: (() => void) | undefined
     if (window.electronAPI) {
       cleanupSound = window.electronAPI.onPlaySoundData((dataUrl) => {
         if (audioRef.current) {
@@ -124,20 +119,55 @@ export function SettingsPage() {
         audioRef.current = audio
         audio.play().catch(() => {})
       })
-      cleanupUpdate = window.electronAPI.onUpdateStatus((data) => {
-        setUpdateStatus(data)
-      })
     }
 
     return () => {
       cleanupSound?.()
-      cleanupUpdate?.()
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current = null
       }
     }
   }, [buildAlertFingerprint])
+
+  useEffect(() => {
+    const section = updateSectionRef.current
+    if (!section) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsUpdateSectionVisible(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsUpdateSectionVisible(entry.isIntersecting && entry.intersectionRatio >= 0.35)
+    }, { threshold: [0.35, 0.7] })
+
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!isUpdateFocusRequested) return
+
+    const frame = window.requestAnimationFrame(() => {
+      updateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [isUpdateFocusRequested])
+
+  useEffect(() => {
+    if (!isUpdateFocusRequested || !isUpdateSectionVisible || !updateStatus.attentionVisible || !updateStatus.version) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void acknowledgeUpdateAttention(updateStatus.version)
+    }, 10_000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [acknowledgeUpdateAttention, isUpdateFocusRequested, isUpdateSectionVisible, updateStatus.attentionVisible, updateStatus.version])
 
   async function handleSelectDir() {
     if (!window.electronAPI) return
@@ -271,17 +301,6 @@ export function SettingsPage() {
   useEffect(() => {
     return registerSaveContextHandler(handleContextSave)
   }, [handleContextSave])
-
-  useEffect(() => {
-    function handleMenuCheckUpdates() {
-      void handleCheckForUpdate()
-    }
-
-    window.addEventListener('shipit:menu-check-updates', handleMenuCheckUpdates)
-    return () => {
-      window.removeEventListener('shipit:menu-check-updates', handleMenuCheckUpdates)
-    }
-  }, [handleCheckForUpdate])
 
   return (
     <div id="settings" className="max-w-4xl mx-auto">
@@ -540,60 +559,31 @@ export function SettingsPage() {
         </section>
 
         {/* Atualizações */}
-        <section id="settings-update-section" className="bg-card border border-border rounded-lg p-5">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <i className="fa-solid fa-download text-primary"></i>
-            Atualizações
-          </h2>
-          {!isElectron ? (
-            <p className="text-sm text-muted-foreground italic">
-              Disponível apenas na versão instalada.
+        <section ref={updateSectionRef} id="settings-update-section" className="bg-card border border-border rounded-lg p-5 scroll-mt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <i className="fa-solid fa-download text-primary"></i>
+              Atualizações
+            </h2>
+            {updateStatus.attentionVisible && (
+              <span id="settings-update-attention-badge" className="shipit-attention-badge relative inline-flex h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-card" aria-hidden="true"></span>
+            )}
+          </div>
+
+          {isUpdateFocusRequested && updateStatus.attentionVisible && updateStatus.version && (
+            <p className="text-xs text-muted-foreground mb-3">
+              Esta versão será marcada como visualizada após 10 segundos com esta seção em foco.
             </p>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <button
-                  id="settings-update-btn-check"
-                  onClick={handleCheckForUpdate}
-                  disabled={updateStatus.status === 'checking' || updateStatus.status === 'available'}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <i className={`fa-solid ${updateStatus.status === 'checking' ? 'fa-spinner fa-spin' : 'fa-rotate'}`}></i>
-                  Verificar atualizações
-                </button>
-                {updateStatus.status === 'downloaded' && (
-                  <button
-                    id="settings-update-btn-install"
-                    onClick={handleInstallUpdate}
-                    className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
-                  >
-                    <i className="fa-solid fa-arrow-rotate-right"></i>
-                    Reiniciar e atualizar
-                  </button>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {updateStatus.status === 'checking' && (
-                  <span className="flex items-center gap-1"><i className="fa-solid fa-spinner fa-spin text-xs"></i> Verificando...</span>
-                )}
-                {updateStatus.status === 'not-available' && (
-                  <span className="flex items-center gap-1 text-success"><i className="fa-solid fa-check text-xs"></i> Você está na versão mais recente.</span>
-                )}
-                {updateStatus.status === 'available' && (
-                  <span className="flex items-center gap-1"><i className="fa-solid fa-cloud-arrow-down text-xs"></i> Versão {updateStatus.version} disponível — Baixando...</span>
-                )}
-                {updateStatus.status === 'downloaded' && (
-                  <span className="flex items-center gap-1 text-accent"><i className="fa-solid fa-circle-check text-xs"></i> Versão {updateStatus.version} pronta — Reinicie para instalar.</span>
-                )}
-                {updateStatus.status === 'error' && (
-                  <span className="flex items-center gap-1 text-destructive"><i className="fa-solid fa-circle-xmark text-xs"></i> Erro: {updateStatus.error}</span>
-                )}
-                {updateStatus.status === 'dev' && (
-                  <span className="italic">Disponível apenas na versão instalada.</span>
-                )}
-              </p>
-            </div>
           )}
+
+          <UpdateStatusPanel
+            idPrefix="settings-update"
+            isElectron={isElectron}
+            updateStatus={updateStatus}
+            onCheck={() => { void checkForUpdate() }}
+            onDownload={() => { void downloadUpdate() }}
+            onInstall={() => { void installUpdate() }}
+          />
         </section>
 
         {/* Sobre */}

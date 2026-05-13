@@ -100,10 +100,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveAlert: (data: Record<string, unknown>) => ipcRenderer.invoke('db:saveAlert', data),
 
   // Auto-update
+  getUpdateState: () => ipcRenderer.invoke('app:getUpdateState'),
   checkForUpdate: () => ipcRenderer.invoke('app:checkForUpdate'),
+  downloadUpdate: () => ipcRenderer.invoke('app:downloadUpdate'),
   installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
-  onUpdateStatus: (callback: (data: { status: string; version?: string; error?: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { status: string; version?: string; error?: string }) => callback(data)
+  acknowledgeUpdateAttention: (version?: string) => ipcRenderer.invoke('app:acknowledgeUpdateAttention', version),
+  onUpdateStatus: (callback: (data: { status: string; version?: string; error?: string; progress?: number; attentionVisible: boolean }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { status: string; version?: string; error?: string; progress?: number; attentionVisible: boolean }) => callback(data)
     ipcRenderer.on('app:updateStatus', handler)
     return () => { ipcRenderer.removeListener('app:updateStatus', handler) }
   },

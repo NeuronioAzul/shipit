@@ -75,8 +75,11 @@ export interface ElectronAPI {
   saveAlert: (data: Partial<AlertData>) => Promise<AlertData>
 
   // Auto-update
-  checkForUpdate: () => Promise<{ status: string; error?: string }>
+  getUpdateState: () => Promise<UpdateStatusData>
+  checkForUpdate: () => Promise<UpdateCheckResult>
+  downloadUpdate: () => Promise<UpdateStatusData>
   installUpdate: () => Promise<void>
+  acknowledgeUpdateAttention: (version?: string) => Promise<UpdateStatusData>
   onUpdateStatus: (callback: (data: UpdateStatusData) => void) => () => void
 
   // Navigation (main → renderer)
@@ -91,9 +94,21 @@ export interface ElectronAPI {
 }
 
 export interface UpdateStatusData {
-  status: 'checking' | 'available' | 'not-available' | 'downloaded' | 'error' | 'dev'
+  status: UpdateStatusValue
   version?: string
   error?: string
+  progress?: number
+  attentionVisible: boolean
+}
+
+export type UpdateStatusValue = 'checking' | 'available' | 'downloading' | 'not-available' | 'downloaded' | 'error' | 'dev'
+
+export interface UpdateCheckResult {
+  status: UpdateStatusValue | 'already-checking'
+  version?: string
+  error?: string
+  progress?: number
+  attentionVisible: boolean
 }
 
 export interface AppSettings {

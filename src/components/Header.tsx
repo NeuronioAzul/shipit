@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { UPDATE_SETTINGS_ROUTE, useUpdateState } from '../contexts/UpdateStateContext'
 
 function AboutModal({ onClose }: { onClose: () => void }) {
   const [version, setVersion] = useState('')
@@ -53,8 +54,10 @@ function AboutModal({ onClose }: { onClose: () => void }) {
 }
 
 export function Header() {
+  const navigate = useNavigate()
   const [showAbout, setShowAbout] = useState(false)
   const [trashCount, setTrashCount] = useState(0)
+  const { updateStatus } = useUpdateState()
 
   const loadTrashCount = useCallback(async () => {
     if (window.electronAPI) {
@@ -131,11 +134,24 @@ export function Header() {
           <Link
             id="header-link-settings"
             to="/settings"
-            className="text-header-foreground/80 hover:text-header-foreground transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            onClick={(event) => {
+              if (updateStatus.attentionVisible) {
+                event.preventDefault()
+                navigate(UPDATE_SETTINGS_ROUTE)
+              }
+            }}
+            className="text-header-foreground/80 hover:text-header-foreground transition-colors relative rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             title="Configurações"
             aria-label="Configurações"
           >
             <i className="fa-solid fa-gear text-lg" aria-hidden="true"></i>
+            {updateStatus.attentionVisible && (
+              <span
+                id="header-settings-update-badge"
+                className="shipit-attention-badge pointer-events-none absolute -top-1 -right-1 inline-flex h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-header"
+                aria-hidden="true"
+              ></span>
+            )}
           </Link>
 
           <Link
