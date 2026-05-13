@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Versão-1.3.0-blue" alt="Versão" />
+  <img src="https://img.shields.io/badge/Versão-1.3.7-blue" alt="Versão" />
   <img src="https://img.shields.io/badge/Plataforma-Windows%20|%20macOS%20|%20Linux-brightgreen" alt="Plataformas" />
   <img src="https://img.shields.io/badge/Offline-100%25-orange" alt="Offline" />
   <img src="https://img.shields.io/badge/license-ISC-green" alt="License" />
@@ -274,7 +274,7 @@ Evidências excluídas vão para a **Lixeira** e podem ser restauradas a qualque
 
 ### Atualizações Automáticas
 
-O ShipIt! verifica e baixa atualizações automaticamente em segundo plano. Quando uma nova versão estiver pronta, você será notificado e pode instalar com um clique em **Configurações → Atualizações**.
+O ShipIt! verifica automaticamente se há novas versões ao iniciar. O download e a instalação passaram a depender de consentimento explícito: badges na navegação e na TitleBar avisam quando algo está disponível e você controla todo o fluxo em **Configurações → Atualizações**, com ações separadas para verificar, baixar e instalar e acompanhamento de progresso.
 
 ---
 

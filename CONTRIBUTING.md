@@ -45,7 +45,7 @@ electron/          → Processo principal (CommonJS, tsconfig.electron.json)
 src/               → Renderer / Frontend (ESNext, tsconfig.json)
   ├── pages/       → Componentes de página (uma por rota)
   ├── components/  → Componentes reutilizáveis
-  ├── contexts/    → React Contexts (ThemeContext, NavigationHistoryContext)
+  ├── contexts/    → React Contexts (ThemeContext, NavigationHistoryContext, UpdateStateContext)
   ├── menu/        → Catálogo do menu do app e save-context
   ├── services/    → Serviços auxiliares (localDb para fallback)
   ├── themes/      → Registro, paletas e efeitos de temas

@@ -48,7 +48,7 @@ Responsável por:
 - **Janela principal**: `BrowserWindow` com `contextIsolation: true` e `nodeIntegration: false`
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
-- **IPC Handlers**: 54 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
+- **IPC Handlers**: 57 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
 - **Identidade runtime e `userData`**: `runtime-paths.ts` centraliza `appId`, nome visual, diretórios de dados por modo, assets públicos, ícones e perfil temporário de testes
 - **Auto-update controlado**: `update-notifications.ts` usa `checkForUpdates()` com notificações próprias do ShipIt, dedupe e foco da janela existente
 
@@ -88,7 +88,9 @@ app:zoomReset              app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
 app:generateReport         app:openFileInFolder
-app:checkForUpdate         app:installUpdate
+app:getUpdateState         app:checkForUpdate
+app:downloadUpdate         app:installUpdate
+app:acknowledgeUpdateAttention
 
 window:minimize            window:maximize
 window:close               window:isMaximized
@@ -138,7 +140,7 @@ As notificações usam cópia pt-BR, ícone ShipIt resolvido pelo runtime e cliq
 
 ### `preload.ts` — Context Bridge
 
-Expõe `window.electronAPI` com 54 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
+Expõe `window.electronAPI` com 57 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
 
 ### `entities/` — Modelo de Dados
 
@@ -200,6 +202,8 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | `TextEvidenceModal` | Modal para visualização/edição de evidências de texto |
 | `ActivityNav` | Navegação prev/next entre atividades na tela de detalhes |
 | `ThemeSelector` | Seletor visual de temas em grid com cards por categoria e preview de cores |
+| `UpdateModal` | Modal de atualização disparado na TitleBar (verifica/baixa/instala via `UpdateStateContext`) |
+| `UpdateStatusPanel` | Painel de status de atualização exibido em Configurações → Atualizações |
 | `Skeleton` | Componentes de loading placeholder |
 
 ### Contextos
@@ -208,6 +212,7 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | ---------- | -------- |
 | `ThemeContext` | Gerencia 11 temas, computa `isDark` a partir da base, persiste em `localStorage.shipit-theme` |
 | `NavigationHistoryContext` | Histórico global do HashRouter com botões/atalhos Voltar e Avançar |
+| `UpdateStateContext` | Estado compartilhado do fluxo manual de atualização (verificar, baixar, instalar, badges de atenção) |
 
 ### Menu e Atalhos (`src/menu/`)
 
@@ -323,21 +328,27 @@ Banco principal para todos os dados estruturados. Caminho: `{userData}/shipit.db
 
 ### Auto-Update
 
-O `electron-updater` é integrado ao `main.ts` e executa apenas em builds empacotados:
+O `electron-updater` é integrado ao `main.ts` (via `electron/update-notifications.ts`) e executa apenas em builds empacotados. Desde a v1.3.6, o fluxo é **manual e consentido**:
 
 ```text
 app.whenReady()
   └── app.isPackaged?
-    ├── Sim → updateService.checkForUpdates()
+    ├── Sim → updateService.checkForUpdates()  ← apenas verifica
     │         ├── GET latest*.yml do GitHub Releases
     │         ├── Compara versão remota vs local
-    │         ├── Download automático em background
-    │         ├── app:updateStatus para o renderer
-    │         └── Notificação ShipIt customizada para update disponível/pronto
+    │         ├── Emite `app:updateStatus` para o renderer
+    │         └── Notificação ShipIt customizada apenas em estados que exigem ação
     └── Não → skip (modo dev)
+
+Usuário em Configurações → Atualizações
+  ├── `app:checkForUpdate`           — re-checa sob demanda
+  ├── `app:downloadUpdate`           — inicia download (com progresso)
+  ├── `app:installUpdate`            — aplica update já baixado
+  ├── `app:getUpdateState`           — recupera estado persistido
+  └── `app:acknowledgeUpdateAttention(version?)` — limpa badges/atenção
 ```
 
-O app não usa `checkForUpdatesAndNotify()`, evitando o toast automático em inglês do `electron-updater`. Chamadas manuais via `app:checkForUpdate` são protegidas contra concorrência e notificações repetidas da mesma versão/status.
+O app não usa `checkForUpdatesAndNotify()`, evitando o toast automático em inglês do `electron-updater`. Chamadas de checagem são protegidas contra concorrência e dedupe por versão/status; o estado de atualização pendente é preservado entre reinicializações até a instalação, e badges na TitleBar/menu lateral sinalizam novas versões.
 
 Config de publish no `package.json`:
 

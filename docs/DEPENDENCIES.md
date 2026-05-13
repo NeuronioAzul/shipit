@@ -1,6 +1,6 @@
 # 📦 Dependências do Projeto ShipIt!
 
-> Última atualização: 27/04/2026
+> Última atualização: 13/05/2026
 
 ## Requisitos do Sistema
 
@@ -41,7 +41,7 @@
 
 | Pacote                   | Versão   | Finalidade                                                        |
 | ------------------------ | -------- | ----------------------------------------------------------------- |
-| `@playwright/test`       | 1.59.1   | Framework de testes E2E para Electron (18 cenários declarados).    |
+| `@playwright/test`       | 1.59.1   | Framework de testes E2E para Electron (27 cenários declarados).    |
 | `@tailwindcss/vite`      | 4.2.2    | Plugin Vite oficial do Tailwind CSS v4.                           |
 | `@types/better-sqlite3`  | 7.6.13   | Tipagens TypeScript para better-sqlite3.                          |
 | `@types/react`           | 19.2.14  | Tipagens TypeScript para React.                                   |
@@ -56,7 +56,7 @@
 | `tailwindcss`            | 4.2.2    | Framework CSS utility-first v4 com suporte a temas via variáveis. |
 | `typescript`             | 6.0.2    | Superset tipado de JavaScript para todo o código do projeto.      |
 | `vite`                   | 8.0.5    | Bundler e dev server ultrarrápido para o frontend React.          |
-| `vitest`                 | 4.1.3    | Test runner rápido compatível com Vite (104 testes).              |
+| `vitest`                 | 4.1.3    | Test runner rápido compatível com Vite (120 testes).              |
 | `wait-on`                | 9.0.4    | Aguarda o Vite iniciar antes de lançar o Electron no modo dev.    |
 
 ---
@@ -76,8 +76,8 @@ TipTap       →  Editor rich-text (evidências de texto)
 dnd-kit      →  Drag & drop (reordenação)
 JSZip        →  Geração de relatórios DOCX
 sonner       →  Toasts/notificações na UI
-Vitest       →  Testes unitários e integração (104 testes)
-Playwright   →  Testes E2E (18 cenários declarados)
+Vitest       →  Testes unitários e integração (120 testes)
+Playwright   →  Testes E2E (27 cenários declarados)
 ```
 
 ## Notas Importantes
