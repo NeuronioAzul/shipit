@@ -9,30 +9,30 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [1.3.6] — 2026-05-13
 
-### Adicionado
+### Adicionado v1.3.6
 
 Fluxo manual de atualização em Configurações → Atualizações, com ações separadas para verificar, baixar e instalar, além de acompanhamento de progresso do download.
 Sinalização visual de novas versões com badges na navegação, modal de atualização na TitleBar e indicadores por plataforma (overlay no Windows e badge no macOS/Linux).
 
-### Corrigido
+### Corrigido v1.3.6
 
 O estado de atualização pendente agora é preservado entre reinicializações, mantendo versões disponíveis ou já baixadas visíveis até a instalação.
 O destaque de atualização passou a respeitar melhor a visualização da área de atualizações, reduzindo alertas repetidos para a mesma versão.
 
-### Alterado
+### Alterado v1.3.6
 
 O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a instalação agora dependem de consentimento explícito do usuário.
 
 ## [1.3.5] — 2026-05-08
 
-### Corrigido
+### Corrigido v1.3.5
 
 - `userData` de produção fixado explicitamente em `%APPDATA%\shipit` para preservar compatibilidade com instalações anteriores, mantendo desenvolvimento em `%APPDATA%\ShipIt!` e E2E em perfil temporário isolado.
 - `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`), evitando identidade divergente no Windows.
 
 ## [1.3.4] — 2026-05-08
 
-### Corrigido
+### Corrigido v1.3.4
 
 - `userData` de produção foi fixado explicitamente em `%APPDATA%\shipit` para preservar compatibilidade com instalações anteriores, mantendo desenvolvimento em `%APPDATA%\ShipIt!` e E2E em perfil temporário isolado.
 - `APP_ID` em runtime foi alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`), evitando identidade divergente no Windows.
@@ -65,26 +65,26 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 
 ## [1.3.2] — 2026-05-04
 
-### Alterado
+### Alterado v1.3.2
 
 - Atualização de versão para 1.3.2 e alinhamento dos metadados de release, sem mudanças funcionais adicionais em relação à 1.3.1.
 
 ## [1.3.1] — 2026-05-04
 
-### Adicionado
+### Adicionado v1.3.1
 
 - Cobertura Playwright/Electron ampliada para validar os controles reais da janela na TitleBar, incluindo minimizar, maximizar/restaurar e fechar para a bandeja.
 - Regressão completa da busca na TitleBar, cobrindo foco via `Ctrl+K`, debounce, limite de resultados, destaque, navegação por teclado, filtro avançado, `Escape` e clique fora.
 - Validação automatizada do menu superior customizado, com navegação por mouse/teclado e execução segura dos comandos de **File / Edit / View / Help**.
 
-### Corrigido 1.3.1
+### Corrigido v1.3.1
 
 - Resultados da SearchBar passaram a ter IDs e atributos ARIA (`role="listbox"`, `role="option"`, `aria-selected` e `data-selected`) para tornar a navegação por teclado mais previsível e acessível.
 - O teste E2E do seletor mensal no detalhe da atividade agora usa meses únicos por execução, evitando interferência de dados persistidos entre execuções.
 
 ## [1.3.0] — 2026-04-27
 
-### Corrigido (Fase 22 — Ordenação cronológica de atividades)
+### Corrigido v1.3.0 (Fase 22 — Ordenação cronológica de atividades)
 
 - **Ordenação estável no backend**
   - Novas atividades passam a ser anexadas ao fim do mês de referência em vez de depender de `last_updated`
@@ -95,7 +95,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **Cobertura de testes ampliada**
   - Regressões para criação, normalização de legado, drag-and-drop autoritativo, payload DOCX e busca ordenada
 
-### Corrigido (Fase 21 — Modal de Evidência de Texto)
+### Corrigido v1.3.0 (Fase 21 — Modal de Evidência de Texto)
 
 - **Foco e colagem no editor TipTap**
   - Clique no padding/área vazia do editor agora foca o ProseMirror corretamente
@@ -103,7 +103,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **Limite de evidência textual ampliado**
   - Contador e extensão TipTap atualizados de 2.000 para 20.000 caracteres
 
-### Adicionado (Fase 20 — Detalhe da Atividade: exclusão e seletor de mês)
+### Adicionado v1.3.0 (Fase 20 — Detalhe da Atividade: exclusão e seletor de mês)
 
 - **Seletor de mês no `ActivityNav`**
   - O antigo toggle de modo de navegação foi substituído por um seletor de mês alinhado ao padrão do Dashboard/Atividades
@@ -113,7 +113,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **Cobertura E2E ampliada**
   - Cenários para ausência do toggle antigo, troca de mês no detalhe e exclusão/cancelamento/confirmação
 
-### Adicionado (Fase 19 — Menu do App ao lado do Logo)
+### Adicionado v1.3.0 (Fase 19 — Menu do App ao lado do Logo)
 
 - **Menu customizado na barra superior (TitleBar)**
   - Novo componente `AppTopMenu` com seções **File / Edit / View / Help** ao lado do logo
@@ -135,7 +135,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
   - Testes unitários para helpers de atalhos (`appMenuCatalog`) e registro de save-context
   - Novos cenários E2E para abrir/fechar menu, ações de Help e atalhos principais
 
-### Corrigido (Fase 19.1 — Menu da TitleBar no tema Cyberpunk)
+### Corrigido v1.3.0 (Fase 19.1 — Menu da TitleBar no tema Cyberpunk)
 
 - **Dropdown do menu da barra superior estabilizado no tema cyberpunk**
   - Corrigida colisão de seletor global do tema que forçava `position: relative` no painel do menu
@@ -144,7 +144,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **Regressão automatizada (Playwright/Electron)**
   - Novo cenário E2E para validar ancoragem do menu da titlebar no tema cyberpunk
 
-### Adicionado (Fase 18 — Menu de Contexto e Links Externos)
+### Adicionado v1.3.0 (Fase 18 — Menu de Contexto e Links Externos)
 
 - **Política de links externos no processo principal**
   - Helper centralizado para abertura externa segura com `shell.openExternal`
@@ -162,7 +162,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
   - Novo cenário E2E validando que clique em link externo não altera a rota atual da janela principal
   - Verificação de chamada de abertura externa sem depender de navegador real
 
-### Corrigido (Fase 17.1 — Robustez da Navegação Global)
+### Corrigido v1.3.0 (Fase 17.1 — Robustez da Navegação Global)
 
 - **Histórico da TitleBar estabilizado para pilha profunda**
   - Ajuste no `NavigationHistoryContext` para reconstruir a pilha corretamente em cenários de time-travel inesperado, evitando truncamento prematuro do histórico
@@ -172,7 +172,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **Regressão automatizada (Playwright/Electron)**
   - Novo cenário E2E validando profundidade mínima de histórico (10 entradas) para os botões de navegação da TitleBar
 
-### Adicionado (Fase 17 — Sistema Multi-Tema) 🎨
+### Adicionado v1.3.0 (Fase 17 — Sistema Multi-Tema) 🎨
 
 - **11 temas visuais** organizados em 3 categorias:
   - **Principais**: Claro (modernizado), Escuro (preto profundo com acentos vibrantes)
@@ -195,7 +195,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
   - Barras Gantt com cantos angulares e glow
 - **Integração no SettingsPage** — seção "Aparência" com `ThemeSelector` no topo das configurações
 
-### Corrigido (Fase 16.2 — Busca na TitleBar e Cyberpunk)
+### Corrigido v1.3.0 (Fase 16.2 — Busca na TitleBar e Cyberpunk)
 
 - **Contrato drag/no-drag da TitleBar**
   - Área central da titlebar voltou a ser arrastável (drag)
@@ -210,7 +210,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
   - Novo cenário E2E para busca no tema cyberpunk (foco via `Ctrl+K`, input/ícone visíveis, dropdown ancorado e limite de largura)
   - Nova assertiva estrutural E2E para o contrato drag/no-drag na titlebar/searchbar
 
-### Adicionado (Evidências e navegação)
+### Adicionado v1.3.0 (Evidências e navegação)
 
 - **Evidências de texto** — novo tipo de evidência que permite registrar conteúdo textual formatado (além de imagens)
   - Editor rich-text com TipTap (negrito, itálico, listas, etc.) e contagem de caracteres
@@ -226,7 +226,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
   - Histórico global com `pathname + search + hash`, deduplicação consecutiva, limpeza da forward stack e limite de 100 entradas
   - Atalhos globais `Alt+←` / `Alt+→` com guardas para `input`, `textarea`, `select` e `contenteditable`
 
-### Alterado (Temas e navegação)
+### Alterado v1.3.0 (Temas e navegação)
 
 - **ThemeContext** refatorado de toggle dark/light para suporte multi-tema completo
   - Estado `theme` armazena `ThemeId` (union de 11 IDs)
@@ -242,7 +242,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 
 ## [1.2.2] — 2026-04-14
 
-### Adicionado (release v1.2.2)
+### Adicionado v1.2.2
 
 - Release tag `v1.2.2` consolidando os instaladores multi-formato, busca na TitleBar, UI de auto-update, workflow de release multiplataforma, melhorias de testes/E2E e correções de ícones iniciadas após `v1.2.1`.
 
@@ -254,7 +254,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 
 ## [1.2.1] — 2026-04-13
 
-### Corrigido (Fase 16.1 — Correção de Ícones)
+### Corrigido v1.2.1 (Fase 16.1 — Correção de Ícones)
 
 - **BrowserWindow icon**: caminho alterado de `build/icon.ico` → `public/assets/images/icons/ShipIt.ico` (o diretório `build/` não é incluído no asar empacotado, causava fallback para ícone do Electron)
 - **`signAndEditExecutable`**: removida flag `false` que impedia o electron-builder de injetar o ícone customizado no `.exe`
@@ -263,7 +263,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **Ícones de tray**: atualizados com novas versões em alta qualidade (black, green, yellow, red, orange)
 - **`package.json` author**: atualizado para objeto com `name` + `email` (necessário para campo maintainer do `.deb`)
 
-### Adicionado (Fase 16 — Ícone, Instaladores, Busca, Auto-Update UI)
+### Adicionado v1.2.1 (Fase 16 — Ícone, Instaladores, Busca, Auto-Update UI)
 
 - **Ícone corrigido**: gerado `ShipIt.ico` (multi-size 256px+) a partir do PNG 310×310; `build.win.icon` aponta para `.ico`
 - **Instaladores multi-formato**:
@@ -279,7 +279,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - **IPC auto-update**: handlers `app:checkForUpdate` e `app:installUpdate`; listeners de `autoUpdater` enviam estado para renderer via `app:updateStatus`
 - Token CSS `--titlebar-search` para background do input de busca
 
-### Adicionado (Fase 9.1 — CI/CD & Auto-Update)
+### Adicionado v1.2.1 (Fase 9.1 — CI/CD & Auto-Update)
 
 - Workflow GitHub Actions (`.github/workflows/release.yml`) para build & release multiplataforma
   - Trigger por tag semver (`v*.*.*`)
@@ -290,7 +290,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - Config `publish` (provider: github) no `build` do `package.json`
 - Ícone macOS atualizado para `.icns` (`apple-icon.icns`)
 
-### Adicionado (Fase 15.2 — Testes E2E)
+### Adicionado v1.2.1 (Fase 15.2 — Testes E2E)
 
 - 4 testes E2E com Playwright + Electron:
   - Janela inicia visível
@@ -300,7 +300,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - Cleanup: `app.exit(0)` no teardown para evitar hang do tray
 - `waitForURL` para sincronizar navegação entre rotas
 
-### Adicionado (Fase 14 — Paleta WCAG AA)
+### Adicionado v1.2.1 (Fase 14 — Paleta WCAG AA)
 
 - Nova paleta de cores com conformidade WCAG AA (contraste mínimo 4.5:1)
 - Formato migrado de `hsl()` para `rgb()` em todas as variáveis CSS
@@ -309,7 +309,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 - Token `--sidebar-bg` renomeado para `--sidebar` (consistência)
 - Cor hardcoded `#e81123` substituída por token `destructive` no TitleBar
 
-### Adicionado (Fase 15 — Testes)
+### Adicionado v1.2.1 (Fase 15 — Testes)
 
 - Teste de cascade FK em `deleteActivity`: cria Activity + Evidence + ActivityReport, deleta e verifica remoção em cascata
 - Builds para macOS (.dmg) e Linux (.AppImage)
@@ -456,7 +456,7 @@ O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a in
 
 ### Primeira versão funcional do ShipIt
 
-### Adicionado
+### Adicionado v1.0.0
 
 #### Fundação (Fase 1)
 
