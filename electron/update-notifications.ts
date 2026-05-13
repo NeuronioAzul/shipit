@@ -287,10 +287,7 @@ export function createUpdateService(options: UpdateServiceOptions): UpdateServic
     try {
       checkInFlight = options.autoUpdater.checkForUpdates()
       await checkInFlight
-      return createResult('checking', createState('checking', {
-        version: currentState.version,
-        attentionVisible: currentState.attentionVisible,
-      }))
+      return createResult(currentState.status, currentState)
     } catch (error) {
       const result = createState('error', {
         version: currentState.version,

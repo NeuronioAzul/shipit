@@ -110,7 +110,22 @@ describe('update notification service', () => {
     expect(updater.checkForUpdates).toHaveBeenCalledTimes(1)
 
     resolveCheck()
-    await expect(firstCheck).resolves.toEqual({ status: 'checking', attentionVisible: false })
+    await expect(firstCheck).resolves.toEqual({ status: 'not-available', attentionVisible: false })
+  })
+
+  it('returns settled state after autoUpdater check completes', async () => {
+    const updater = new FakeAutoUpdater()
+    updater.checkForUpdates = vi.fn(() => {
+      updater.emit('update-not-available')
+      return Promise.resolve(null)
+    })
+    const { service } = createService({ updater })
+    service.registerAutoUpdaterHandlers()
+
+    const result = await service.checkForUpdates()
+
+    expect(result).toEqual({ status: 'not-available', attentionVisible: false })
+    expect(service.getCurrentState().status).toBe('not-available')
   })
 
   it('emits manual update states and deduplicates desktop notifications by version and status', () => {
