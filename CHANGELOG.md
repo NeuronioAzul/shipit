@@ -7,6 +7,18 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+
+## [1.3.6] — 2026-05-13
+
+Adicionado
+Fluxo manual de atualização em Configurações → Atualizações, com ações separadas para verificar, baixar e instalar, além de acompanhamento de progresso do download.
+Sinalização visual de novas versões com badges na navegação, modal de atualização na TitleBar e indicadores por plataforma (overlay no Windows e badge no macOS/Linux).
+Corrigido
+O estado de atualização pendente agora é preservado entre reinicializações, mantendo versões disponíveis ou já baixadas visíveis até a instalação.
+O destaque de atualização passou a respeitar melhor a visualização da área de atualizações, reduzindo alertas repetidos para a mesma versão.
+Alterado
+O ShipIt! passou a apenas verificar novas versões ao iniciar; o download e a instalação agora dependem de consentimento explícito do usuário.
+
 ## [1.3.5] — 2026-05-08
 
 ### Corrigido
