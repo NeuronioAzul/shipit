@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
+import { UPDATE_SETTINGS_ROUTE, useUpdateState } from '../contexts/UpdateStateContext'
 
 interface NavItem {
   to: string
@@ -10,8 +12,10 @@ interface NavItem {
 }
 
 export function ActivityBar() {
+  const navigate = useNavigate()
   const [trashCount, setTrashCount] = useState(0)
   const [showAbout, setShowAbout] = useState(false)
+  const { updateStatus } = useUpdateState()
 
   const loadTrashCount = useCallback(async () => {
     if (window.electronAPI) {
@@ -85,6 +89,12 @@ export function ActivityBar() {
               key={item.to}
               id={item.id}
               to={item.to}
+              onClick={(event) => {
+                if (item.id === 'sidebar-link-settings' && updateStatus.attentionVisible) {
+                  event.preventDefault()
+                  navigate(UPDATE_SETTINGS_ROUTE)
+                }
+              }}
               className={({ isActive }) =>
                 `w-12 h-12 flex items-center justify-center relative transition-colors ${
                   isActive
@@ -100,6 +110,13 @@ export function ActivityBar() {
                 <span id={item.to === '/trash' ? 'sidebar-trash-badge' : undefined} className="absolute top-1.5 right-1.5 bg-accent text-accent-foreground text-[9px] font-bold min-w-3.5 h-3.5 flex items-center justify-center rounded-full px-0.5">
                   {item.badge > 99 ? '99+' : item.badge}
                 </span>
+              )}
+              {item.id === 'sidebar-link-settings' && updateStatus.attentionVisible && (
+                <span
+                  id="sidebar-settings-update-badge"
+                  className="shipit-attention-badge pointer-events-none absolute top-2 right-2 inline-flex h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-activitybar"
+                  aria-hidden="true"
+                ></span>
               )}
             </NavLink>
           ))}

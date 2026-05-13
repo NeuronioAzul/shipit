@@ -12,9 +12,10 @@ import {
   getRuntimePathContext,
   getSoundsDir as resolveSoundsDir,
   getTrayIconPath,
+  getUpdateOverlayIconPath,
   getWindowIconPath,
 } from './runtime-paths'
-import { createUpdateService, type UpdateService } from './update-notifications'
+import { createUpdateService, type UpdateService, type UpdateStatusData } from './update-notifications'
 
 configureUserDataDir(app)
 
@@ -47,6 +48,16 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
+const INTERNAL_UPDATE_SETTINGS_KEY = '__internalUpdate'
+
+interface PersistedUpdateState {
+  latestKnownVersion?: string
+  downloadedVersion?: string
+  acknowledgedVersion?: string
+  lastAttentionViewedAt?: string
+}
+
+let currentUpdateState: UpdateStatusData = { status: 'not-available', attentionVisible: false }
 
 function parseUrlSafe(rawUrl: string): URL | null {
   try {
@@ -128,6 +139,199 @@ function getNotificationIconFilePath(): string | undefined {
   return candidates[candidates.length - 1]
 }
 
+function createUpdateOverlayIcon() {
+  const paths = getRuntimePaths()
+  return createNativeImageWithFallback(nativeImage, [
+    getUpdateOverlayIconPath(paths),
+    getNotificationFallbackIconPath(paths),
+  ], { width: 16, height: 16 })
+}
+
+function normalizeStoredVersion(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+
+  const normalized = value.trim()
+  return normalized.length > 0 ? normalized : undefined
+}
+
+function compareVersions(left: string, right: string): number {
+  const leftParts = left.replace(/^v/i, '').split(/[.-]/)
+  const rightParts = right.replace(/^v/i, '').split(/[.-]/)
+  const length = Math.max(leftParts.length, rightParts.length)
+
+  for (let index = 0; index < length; index += 1) {
+    const leftPart = leftParts[index] ?? '0'
+    const rightPart = rightParts[index] ?? '0'
+    const leftNumber = Number(leftPart)
+    const rightNumber = Number(rightPart)
+    const leftIsNumber = Number.isFinite(leftNumber) && leftPart.trim() !== ''
+    const rightIsNumber = Number.isFinite(rightNumber) && rightPart.trim() !== ''
+
+    if (leftIsNumber && rightIsNumber) {
+      if (leftNumber !== rightNumber) {
+        return leftNumber - rightNumber
+      }
+      continue
+    }
+
+    const comparison = leftPart.localeCompare(rightPart)
+    if (comparison !== 0) {
+      return comparison
+    }
+  }
+
+  return 0
+}
+
+function isInstalledVersionAtLeast(version?: string): boolean {
+  if (!version) return false
+  return compareVersions(app.getVersion(), version) >= 0
+}
+
+function normalizePersistedUpdateState(state: PersistedUpdateState): PersistedUpdateState {
+  const latestKnownVersion = normalizeStoredVersion(state.latestKnownVersion)
+  const downloadedVersion = normalizeStoredVersion(state.downloadedVersion)
+  const acknowledgedVersion = normalizeStoredVersion(state.acknowledgedVersion)
+  const lastAttentionViewedAt = typeof state.lastAttentionViewedAt === 'string' && state.lastAttentionViewedAt.trim().length > 0
+    ? state.lastAttentionViewedAt
+    : undefined
+
+  const normalized: PersistedUpdateState = {}
+
+  if (latestKnownVersion && !isInstalledVersionAtLeast(latestKnownVersion)) {
+    normalized.latestKnownVersion = latestKnownVersion
+  }
+
+  if (downloadedVersion && !isInstalledVersionAtLeast(downloadedVersion)) {
+    normalized.downloadedVersion = downloadedVersion
+  }
+
+  const pendingVersion = normalized.downloadedVersion ?? normalized.latestKnownVersion
+  if (acknowledgedVersion && pendingVersion) {
+    normalized.acknowledgedVersion = acknowledgedVersion
+  }
+
+  if (lastAttentionViewedAt && normalized.acknowledgedVersion) {
+    normalized.lastAttentionViewedAt = lastAttentionViewedAt
+  }
+
+  return normalized
+}
+
+function getPublicSettings(settingsData: Record<string, unknown>): Record<string, unknown> {
+  const publicSettings = { ...settingsData }
+  delete publicSettings[INTERNAL_UPDATE_SETTINGS_KEY]
+  return publicSettings
+}
+
+function readPersistedUpdateState(settingsData: Record<string, unknown> = loadSettings()): PersistedUpdateState {
+  const rawValue = settingsData[INTERNAL_UPDATE_SETTINGS_KEY]
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) {
+    return {}
+  }
+
+  return normalizePersistedUpdateState(rawValue as PersistedUpdateState)
+}
+
+function savePersistedUpdateState(state: PersistedUpdateState): PersistedUpdateState {
+  const currentSettings = loadSettings()
+  const nextSettings = { ...currentSettings }
+  const normalized = normalizePersistedUpdateState(state)
+
+  if (Object.keys(normalized).length > 0) {
+    nextSettings[INTERNAL_UPDATE_SETTINGS_KEY] = normalized
+  } else {
+    delete nextSettings[INTERNAL_UPDATE_SETTINGS_KEY]
+  }
+
+  saveSettingsFile(nextSettings)
+  return normalized
+}
+
+function buildInitialUpdateState(persistedState: PersistedUpdateState): UpdateStatusData {
+  if (!app.isPackaged) {
+    return { status: 'dev', attentionVisible: false }
+  }
+
+  if (persistedState.downloadedVersion) {
+    return {
+      status: 'downloaded',
+      version: persistedState.downloadedVersion,
+      progress: 100,
+      attentionVisible: persistedState.downloadedVersion !== persistedState.acknowledgedVersion,
+    }
+  }
+
+  if (persistedState.latestKnownVersion) {
+    return {
+      status: 'available',
+      version: persistedState.latestKnownVersion,
+      attentionVisible: persistedState.latestKnownVersion !== persistedState.acknowledgedVersion,
+    }
+  }
+
+  return { status: 'not-available', attentionVisible: false }
+}
+
+function persistUpdateSnapshot(snapshot: UpdateStatusData): PersistedUpdateState {
+  const currentPersistedState = readPersistedUpdateState()
+  const nextPersistedState: PersistedUpdateState = { ...currentPersistedState }
+
+  switch (snapshot.status) {
+    case 'available':
+    case 'downloading':
+      if (snapshot.version) {
+        nextPersistedState.latestKnownVersion = snapshot.version
+        if (nextPersistedState.downloadedVersion && nextPersistedState.downloadedVersion !== snapshot.version) {
+          nextPersistedState.downloadedVersion = undefined
+        }
+      }
+      break
+    case 'downloaded':
+      if (snapshot.version) {
+        nextPersistedState.latestKnownVersion = snapshot.version
+        nextPersistedState.downloadedVersion = snapshot.version
+      }
+      break
+    case 'not-available':
+      nextPersistedState.latestKnownVersion = undefined
+      nextPersistedState.downloadedVersion = undefined
+      break
+    default:
+      break
+  }
+
+  return savePersistedUpdateState(nextPersistedState)
+}
+
+function applyUpdateAttentionIndicator(snapshot: UpdateStatusData): void {
+  if (process.platform === 'win32') {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setOverlayIcon(
+        snapshot.attentionVisible ? createUpdateOverlayIcon() : null,
+        snapshot.attentionVisible ? 'Nova versão disponível do ShipIt!' : '',
+      )
+    }
+    return
+  }
+
+  if (process.platform === 'darwin' || process.platform === 'linux') {
+    app.setBadgeCount(snapshot.attentionVisible ? 1 : 0)
+  }
+}
+
+function broadcastUpdateState(snapshot: UpdateStatusData, options: { persist?: boolean } = {}): UpdateStatusData {
+  currentUpdateState = snapshot
+
+  if (options.persist !== false) {
+    persistUpdateSnapshot(snapshot)
+  }
+
+  applyUpdateAttentionIndicator(snapshot)
+  mainWindow?.webContents.send('app:updateStatus', snapshot)
+  return snapshot
+}
+
 function createTrayIconImage(status: 'default' | 'green' | 'yellow' | 'red' = 'default') {
   const statusMap: Record<string, string> = {
     default: 'tray-icon-foguete-black.png',
@@ -163,17 +367,25 @@ function focusMainWindow(route?: string): void {
   }
 }
 
+function focusUpdateSettings(): void {
+  focusMainWindow('/settings?focus=update')
+}
+
 function getUpdateService(): UpdateService {
   if (!updateService) {
+    const persistedState = readPersistedUpdateState()
+    currentUpdateState = buildInitialUpdateState(persistedState)
+
     updateService = createUpdateService({
       autoUpdater,
       isPackaged: () => app.isPackaged,
-      sendStatus: (data) => {
-        mainWindow?.webContents.send('app:updateStatus', data)
-      },
+      sendStatus: (data) => { broadcastUpdateState(data) },
       Notification,
       getNotificationIcon: getNotificationIconFilePath,
-      focusSettings: () => focusMainWindow('/settings'),
+      focusSettings: focusUpdateSettings,
+      initialState: currentUpdateState,
+      acknowledgedVersion: persistedState.acknowledgedVersion,
+      supportsNotificationActions: process.platform !== 'linux',
     })
   }
 
@@ -207,6 +419,7 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+    applyUpdateAttentionIndicator(currentUpdateState)
   })
 
   mainWindow.on('close', (event) => {
@@ -271,6 +484,11 @@ function createWindow() {
   })
 
   // Notify renderer of maximize/unmaximize changes
+  webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('app:updateStatus', currentUpdateState)
+    applyUpdateAttentionIndicator(currentUpdateState)
+  })
+
   mainWindow.on('maximize', () => {
     mainWindow?.webContents.send('window:maximized-change', true)
   })
@@ -397,11 +615,12 @@ app.whenReady().then(async () => {
 
   // Auto-update: check for updates only in packaged builds
   if (app.isPackaged) {
-    autoUpdater.autoDownload = true
-    autoUpdater.autoInstallOnAppQuit = true
+    autoUpdater.autoDownload = false
+    autoUpdater.autoInstallOnAppQuit = false
 
     const service = getUpdateService()
     service.registerAutoUpdaterHandlers()
+    applyUpdateAttentionIndicator(service.getCurrentState())
     void service.checkForUpdates()
   }
 })
@@ -631,14 +850,22 @@ function runZoomCommand(command: 'in' | 'out' | 'reset'): boolean {
 }
 
 ipcMain.handle('app:getSettings', () => {
-  return loadSettings()
+  return getPublicSettings(loadSettings())
 })
 
 ipcMain.handle('app:saveSettings', (_event, partial: Record<string, unknown>) => {
   const current = loadSettings()
-  const merged = { ...current, ...partial }
-  saveSettingsFile(merged)
-  return merged
+  const merged = {
+    ...getPublicSettings(current),
+    ...getPublicSettings(partial),
+  }
+  const persistedUpdateState = readPersistedUpdateState(current)
+  const nextSettings = Object.keys(persistedUpdateState).length > 0
+    ? { ...merged, [INTERNAL_UPDATE_SETTINGS_KEY]: persistedUpdateState }
+    : merged
+
+  saveSettingsFile(nextSettings)
+  return getPublicSettings(nextSettings)
 })
 
 ipcMain.handle('app:selectDirectory', async () => {
@@ -946,12 +1173,38 @@ function stopSchedulers(): void {
 
 // ──── Auto-Update IPC ────
 
+ipcMain.handle('app:getUpdateState', () => {
+  return getUpdateService().getCurrentState()
+})
+
 ipcMain.handle('app:checkForUpdate', async () => {
   return getUpdateService().checkForUpdates()
 })
 
+ipcMain.handle('app:downloadUpdate', async () => {
+  return getUpdateService().downloadUpdate()
+})
+
 ipcMain.handle('app:installUpdate', () => {
   getUpdateService().installUpdate()
+})
+
+ipcMain.handle('app:acknowledgeUpdateAttention', (_event, version?: string) => {
+  const normalizedVersion = normalizeStoredVersion(version)
+  const nextState = getUpdateService().acknowledgeAttention(normalizedVersion)
+
+  if (normalizedVersion) {
+    const persistedState = readPersistedUpdateState()
+    savePersistedUpdateState({
+      ...persistedState,
+      acknowledgedVersion: normalizedVersion,
+      lastAttentionViewedAt: new Date().toISOString(),
+    })
+  }
+
+  currentUpdateState = nextState
+  applyUpdateAttentionIndicator(nextState)
+  return nextState
 })
 
 // ──── Window Controls IPC ────

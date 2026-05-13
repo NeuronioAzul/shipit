@@ -7,17 +7,6 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
-## [Unreleased]
-
-### Corrigido
-
-- `userData` de produção fixado explicitamente em `%APPDATA%\shipit` para preservar compatibilidade com instalações anteriores, mantendo desenvolvimento em `%APPDATA%\ShipIt!` e E2E em perfil temporário isolado.
-- `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`), evitando identidade divergente no Windows.
-
----
-
-
-
 ## [1.3.5] — 2026-05-08
 
 ### Corrigido

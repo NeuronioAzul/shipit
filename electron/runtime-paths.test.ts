@@ -19,6 +19,7 @@ import {
   getProductionUserDataDir,
   getPublicRootPath,
   getSoundsDir,
+  getUpdateOverlayIconPath,
   getWindowIconPath,
   isSafeShipItTestProfileDir,
   prepareShipItTestProfileDir,
@@ -130,6 +131,7 @@ describe('runtime path helpers', () => {
     expect(getPublicRootPath(devContext)).toBe(path.join(repoRoot, 'public'))
     expect(getWindowIconPath(devContext)).toBe(path.join(repoRoot, 'public', 'assets', 'images', 'icons', 'ShipIt.ico'))
     expect(getNotificationIconPath(devContext)).toBe(getWindowIconPath(devContext))
+    expect(getUpdateOverlayIconPath(devContext)).toBe(path.join(repoRoot, 'public', 'assets', 'images', 'icons', 'favicon-16x16.png'))
     expect(getPublicRootPath(packagedContext)).toBe(path.join(repoRoot, 'resources', 'app.asar', 'public'))
     expect(getSoundsDir(packagedContext)).toBe(path.join(repoRoot, 'resources', 'app.asar', 'public', 'assets', 'sounds'))
   })

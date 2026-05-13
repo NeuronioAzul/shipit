@@ -139,6 +139,10 @@ export function getNotificationIconPath(context: RuntimePathContext): string {
   return getPublicAssetPath(context, 'assets', 'images', 'icons', 'ShipIt.ico')
 }
 
+export function getUpdateOverlayIconPath(context: RuntimePathContext): string {
+  return getPublicAssetPath(context, 'assets', 'images', 'icons', 'favicon-16x16.png')
+}
+
 export function getNotificationFallbackIconPath(context: RuntimePathContext): string {
   return getPublicAssetPath(context, 'assets', 'images', 'icons', 'favicon-96x96.png')
 }
