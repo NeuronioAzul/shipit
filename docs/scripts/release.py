@@ -46,6 +46,8 @@ TIMEOUT_WORKFLOW_SECONDS = 5400  # 90 minutos para builds Windows + macOS + Linu
 WORKFLOW_POLL_INTERVAL_SECONDS = 30
 WORKFLOW_NAME = "Build & Release"
 COPILOT_PROMPT_MAX_CHARS = 12000
+COMMIT_DIFF_CONTEXT_MAX_CHARS = 9000
+COMMIT_DIFF_PER_FILE_MAX_CHARS = 3000
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -227,6 +229,131 @@ def _truncate_for_prompt(text: str, max_chars: int = COPILOT_PROMPT_MAX_CHARS) -
     return (
         text[:max_chars]
         + f"\n\n[conteúdo truncado: {omitted} caracteres omitidos para caber no prompt]"
+    )
+
+
+def _truncate_diff_for_prompt(text: str, max_chars: int) -> str:
+    """Limita um diff preservando início e fim para não esconder hunks relevantes."""
+    if len(text) <= max_chars:
+        return text
+
+    marker_template = "\n\n[diff truncado: {omitted} caracteres omitidos]\n\n"
+    estimated_omitted = len(text) - max_chars
+    marker = marker_template.format(omitted=estimated_omitted)
+    if max_chars <= len(marker) + 20:
+        small_marker = "\n[diff truncado]"
+        if max_chars <= len(small_marker) + 20:
+            return text[:max_chars].rstrip()
+        return text[: max_chars - len(small_marker)].rstrip() + small_marker
+
+    available_chars = max_chars - len(marker)
+    head_chars = available_chars // 2
+    tail_chars = available_chars - head_chars
+    omitted = len(text) - head_chars - tail_chars
+    return (
+        text[:head_chars].rstrip()
+        + marker_template.format(omitted=omitted)
+        + text[-tail_chars:].lstrip()
+    )
+
+
+def _get_staged_file_paths() -> list[str]:
+    """Lista arquivos staged de forma segura para caminhos com espaços."""
+    result = run_cmd(
+        ["git", "diff", "--cached", "--name-only", "-z"],
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout:
+        return []
+    return [path for path in result.stdout.split("\0") if path]
+
+
+def _build_staged_diff_context(
+    file_paths: list[str],
+    max_chars: int = COMMIT_DIFF_CONTEXT_MAX_CHARS,
+    per_file_max_chars: int = COMMIT_DIFF_PER_FILE_MAX_CHARS,
+) -> str:
+    """Monta contexto de diff balanceado por arquivo para a mensagem de commit."""
+    if not file_paths:
+        result = run_cmd(
+            [
+                "git",
+                "diff",
+                "--cached",
+                "--no-ext-diff",
+                "--no-color",
+                "--unified=2",
+            ],
+            check=False,
+        )
+        return _truncate_diff_for_prompt(result.stdout.strip(), max_chars)
+
+    chunks: list[str] = []
+    included_files = 0
+    effective_per_file_max_chars = min(
+        per_file_max_chars,
+        max(300, max_chars // max(len(file_paths), 1)),
+    )
+
+    for file_path in file_paths:
+        current_context = "\n\n".join(chunks)
+        separator_chars = 2 if chunks else 0
+        remaining_chars = max_chars - len(current_context) - separator_chars
+        if remaining_chars <= 0:
+            break
+
+        result = run_cmd(
+            [
+                "git",
+                "diff",
+                "--cached",
+                "--no-ext-diff",
+                "--no-color",
+                "--unified=2",
+                "--",
+                file_path,
+            ],
+            check=False,
+        )
+        diff = result.stdout.strip()
+        if result.returncode != 0 or not diff:
+            continue
+
+        budget = min(effective_per_file_max_chars, remaining_chars)
+        chunks.append(_truncate_diff_for_prompt(diff, budget))
+        included_files += 1
+
+    omitted_files = len(file_paths) - included_files
+    if omitted_files > 0:
+        chunks.append(
+            f"[diff truncado: {omitted_files} arquivo(s) omitido(s) por limite do prompt]"
+        )
+
+    return "\n\n".join(chunks).strip()
+
+
+def build_commit_message_prompt(
+    diff_stat: str,
+    changed_files: str,
+    diff_context: str,
+) -> str:
+    """Cria o prompt usado para gerar uma mensagem de commit aderente ao diff."""
+    return (
+        "Generate exactly one git commit message for the staged changes below.\n"
+        "The message must describe the actual code/documentation changes and their "
+        "main impact, not just list files or say that files were updated.\n"
+        "Rules:\n"
+        "- Use Conventional Commits format.\n"
+        "- Start with one of: feat, fix, chore, docs, refactor, test, style, perf, build, ci.\n"
+        "- Use optional scope only if it is obvious from the changed files.\n"
+        "- Prefer the most specific behavior, bug fix, feature, test, or documentation change shown in the diff.\n"
+        "- Avoid generic messages like 'update files', 'misc changes', or 'release changes'.\n"
+        "- Keep it concise, imperative, and under 72 characters when possible.\n"
+        "- Reply with ONLY the commit message line.\n"
+        "- Do not include Markdown, quotes, bullets, explanations, or labels.\n\n"
+        f"Diff stat:\n{diff_stat or '(sem estatísticas)'}\n\n"
+        f"Changed files:\n{changed_files or '(sem arquivos listados)'}\n\n"
+        f"Balanced diff context:\n{diff_context or '(diff vazio)'}"
     )
 
 
@@ -431,30 +558,9 @@ def do_commit(dry_run: bool) -> None:
             ["git", "diff", "--cached", "--name-status", "--no-renames"],
             check=False,
         ).stdout.strip()
-        diff_context = run_cmd(
-            [
-                "git",
-                "diff",
-                "--cached",
-                "--no-ext-diff",
-                "--no-color",
-                "--unified=1",
-            ],
-            check=False,
-        ).stdout.strip()
-        prompt = (
-            "Generate exactly one git commit message for the staged changes below.\n"
-            "Rules:\n"
-            "- Use Conventional Commits format.\n"
-            "- Start with one of: feat, fix, chore, docs, refactor, test, style, perf, build, ci.\n"
-            "- Use optional scope only if it is obvious from the changed files.\n"
-            "- Keep it concise, imperative, and under 72 characters when possible.\n"
-            "- Reply with ONLY the commit message line.\n"
-            "- Do not include Markdown, quotes, bullets, explanations, or labels.\n\n"
-            f"Diff stat:\n{diff_stat or '(sem estatísticas)'}\n\n"
-            f"Changed files:\n{changed_files or '(sem arquivos listados)'}\n\n"
-            f"Diff context:\n{_truncate_for_prompt(diff_context or '(diff vazio)')}"
-        )
+        staged_files = _get_staged_file_paths()
+        diff_context = _build_staged_diff_context(staged_files)
+        prompt = build_commit_message_prompt(diff_stat, changed_files, diff_context)
         suggested = copilot_prompt(prompt)
         if suggested:
             commit_suggestion = extract_commit_message(suggested)
@@ -558,7 +664,7 @@ def update_changelog(version: str, dry_run: bool) -> None:
         print_info("Commits desde a última tag:")
         print(commits)
         print()
-        print_info("Escreva a entrada do CHANGELOG (termine com linha vazia):")
+        print_info("Escreva a entrada do CHANGELOG, com foco no usuário final (termine com linha vazia):")
         lines = []
         try:
             while True:
