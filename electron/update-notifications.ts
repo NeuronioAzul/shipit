@@ -86,6 +86,8 @@ export interface UpdateService {
   installUpdate: () => void
   getCurrentState: () => UpdateStatusData
   acknowledgeAttention: (version?: string) => UpdateStatusData
+  /** Test-only helper. Resets internal state so E2E tests can run in isolation. */
+  resetForTests: () => void
 }
 
 function getErrorMessage(error: unknown): string {
@@ -401,5 +403,12 @@ export function createUpdateService(options: UpdateServiceOptions): UpdateServic
     installUpdate,
     getCurrentState,
     acknowledgeAttention,
+    resetForTests: () => {
+      checkInFlight = null
+      downloadInFlight = null
+      notifiedKeys.clear()
+      acknowledgedVersion = options.acknowledgedVersion
+      sendStatus(createState('not-available'))
+    },
   }
 }

@@ -16,6 +16,7 @@ import {
   getWindowIconPath,
 } from './runtime-paths'
 import { createUpdateService, type UpdateService, type UpdateStatusData } from './update-notifications'
+import { createFakeAutoUpdater, type FakeAutoUpdaterControl } from './test-fake-updater'
 
 configureUserDataDir(app)
 
@@ -38,6 +39,8 @@ if (!hasSingleInstanceLock) {
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let updateService: UpdateService | null = null
+let fakeUpdater: FakeAutoUpdaterControl | null = null
+const isE2EFakeUpdaterEnabled = process.env.SHIPIT_E2E_FAKE_UPDATER === '1'
 let alertIntervalId: ReturnType<typeof setInterval> | null = null
 let trayIntervalId: ReturnType<typeof setInterval> | null = null
 const isDev = !app.isPackaged
@@ -371,14 +374,25 @@ function focusUpdateSettings(): void {
   focusMainWindow('/settings?focus=update')
 }
 
+function getEffectiveAutoUpdater() {
+  if (isE2EFakeUpdaterEnabled) {
+    if (!fakeUpdater) {
+      fakeUpdater = createFakeAutoUpdater()
+      ;(globalThis as typeof globalThis & { __shipitFakeUpdater?: FakeAutoUpdaterControl }).__shipitFakeUpdater = fakeUpdater
+    }
+    return fakeUpdater
+  }
+  return autoUpdater
+}
+
 function getUpdateService(): UpdateService {
   if (!updateService) {
     const persistedState = readPersistedUpdateState()
     currentUpdateState = buildInitialUpdateState(persistedState)
 
     updateService = createUpdateService({
-      autoUpdater,
-      isPackaged: () => app.isPackaged,
+      autoUpdater: getEffectiveAutoUpdater(),
+      isPackaged: () => isE2EFakeUpdaterEnabled || app.isPackaged,
       sendStatus: (data) => { broadcastUpdateState(data) },
       Notification,
       getNotificationIcon: getNotificationIconFilePath,
@@ -614,15 +628,23 @@ app.whenReady().then(async () => {
   createTray()
   startSchedulers()
 
-  // Auto-update: check for updates only in packaged builds
-  if (app.isPackaged) {
-    autoUpdater.autoDownload = false
-    autoUpdater.autoInstallOnAppQuit = false
+  // Auto-update: check for updates only in packaged builds (or under the
+  // E2E fake updater).
+  if (app.isPackaged || isE2EFakeUpdaterEnabled) {
+    const updater = getEffectiveAutoUpdater()
+    updater.autoDownload = false
+    updater.autoInstallOnAppQuit = false
 
     const service = getUpdateService()
     service.registerAutoUpdaterHandlers()
     applyUpdateAttentionIndicator(service.getCurrentState())
-    void service.checkForUpdates()
+    if (!isE2EFakeUpdaterEnabled) {
+      void service.checkForUpdates()
+    } else {
+      ;(globalThis as typeof globalThis & { __shipitResetUpdateService?: () => void }).__shipitResetUpdateService = () => {
+        service.resetForTests()
+      }
+    }
   }
 })
 

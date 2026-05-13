@@ -126,7 +126,8 @@ refactor: separa lógica de validação em módulo
 | `npm run build` | Compila tudo (checa erros TS) |
 | `npm run dist` | Build + empacotamento |
 | `npm run test` | Testes unitários e de integração (Vitest) |
-| `npm run test:e2e` | Testes end-to-end com Playwright |
+| `npm run test:e2e` | Testes end-to-end com Playwright (faz build antes via `pretest:e2e`) |
+| `npm run test:all` | Suíte completa: Vitest + build + Playwright |
 | `npm run test:watch` | Vitest em modo watch |
 | `npx tsc -p tsconfig.electron.json` | Compila só o electron |
 | `npx vite build` | Compila só o renderer |
