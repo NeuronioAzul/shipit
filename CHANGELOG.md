@@ -7,6 +7,24 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+
+## [1.5.0] — 2026-05-14
+
+### Adicionado
+
+- Novos campos de **horários de disponibilidade** no perfil do usuário, com suporte completo na interface, persistência em banco e tipagem da API interna.
+- Cobertura automatizada para a **ProfilePage**, incluindo cenários de carregamento, envio do formulário e validações.
+
+### Alterado
+
+- A geração do relatório DOCX e as regras de validação passaram a considerar os novos campos de disponibilidade do perfil.
+- A configuração de testes do frontend foi ampliada para incluir cenários em `.tsx`, com atualização das dependências de teste.
+- O script de release foi aprimorado para gerar entradas de changelog com mais consistência.
+
+### Corrigido
+
+- Ajuste de tipagem nos testes da **ProfilePage** para evitar incompatibilidades com `setTimeoutSpy` no TypeScript/Vitest.
+
 ## [1.4.0] — 2026-05-14
 
 - Atualização para versão 1.4.0
