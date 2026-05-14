@@ -126,6 +126,9 @@ export interface UserProfileData {
   correlating_activities: string
   attendance_type: string
   project_scope: string
+  daily_availability?: number | null
+  monthly_availability?: number | null
+  minimum_effort_hours?: number | null
   last_updated?: string
 }
 

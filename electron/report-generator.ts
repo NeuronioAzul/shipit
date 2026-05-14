@@ -66,6 +66,22 @@ function formatDateBR(dateStr: string | null): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+function formatAvailabilityValue(
+  value: number | null | undefined,
+  suffix: string,
+  fallback: string,
+): string {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
+    ? `${value} ${suffix}`
+    : fallback
+}
+
+function formatMinimumEffortHours(value: number | null | undefined): string {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
+    ? String(value)
+    : '168'
+}
+
 function getTemplatePath(): string {
   const isDev = !app.isPackaged
   if (isDev) {
@@ -366,11 +382,11 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
     '{{seniority_level}}': profile.seniority_level || '',
     '{{report_generated_date_long}}': dateLong,
     '{{month_reference}}': monthReference,
-    '{{daily_availability}}': '8 horas/dia',
-    '{{monthly_availability}}': '168 horas/mês',
+    '{{daily_availability}}': formatAvailabilityValue(profile.daily_availability, 'horas/dia', '8 horas/dia'),
+    '{{monthly_availability}}': formatAvailabilityValue(profile.monthly_availability, 'horas/mês', '168 horas/mês'),
     '{{profile_type}}': profile.profile_type || '',
     '{{correlating_activities}}': profile.correlating_activities || '',
-    '{{minimum_effort_hours}}': '168',
+    '{{minimum_effort_hours}}': formatMinimumEffortHours(profile.minimum_effort_hours),
   }
 
   // Apply simple replacements to all text nodes

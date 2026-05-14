@@ -48,6 +48,9 @@ WORKFLOW_NAME = "Build & Release"
 COPILOT_PROMPT_MAX_CHARS = 12000
 COMMIT_DIFF_CONTEXT_MAX_CHARS = 9000
 COMMIT_DIFF_PER_FILE_MAX_CHARS = 3000
+COPILOT_TIMEOUT_SECONDS = 90
+CHANGELOG_COMMIT_LIMIT = 40
+CHANGELOG_COMMITS_MAX_CHARS = 6000
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -408,22 +411,59 @@ def extract_commit_message(copilot_output: str) -> str | None:
     return candidates[-1]
 
 
-def copilot_prompt(prompt: str, allow_tools: list[str] | None = None) -> str | None:
-    """Executa prompt via gh copilot em modo não-interativo. Retorna resposta ou None."""
+def copilot_prompt(
+    prompt: str,
+    allow_tools: list[str] | None = None,
+    disable_tools: bool = True,
+    timeout: int = COPILOT_TIMEOUT_SECONDS,
+) -> str | None:
+    """Executa prompt via gh copilot em modo não-interativo. Retorna resposta ou None.
+
+    Em caso de falha (returncode != 0, stdout vazio, ou timeout), imprime um
+    aviso com diagnóstico — em vez de engolir o erro — para que o usuário
+    saiba por que está caindo no fallback manual.
+    """
     cmd = ["gh", "copilot", "-p", prompt, "-s", "--no-color"]
     if allow_tools:
         for tool in allow_tools:
             cmd.extend(["--allow-tool", tool])
-    else:
-        # Sem tools = output mais limpo
+    elif disable_tools:
+        # Sem tools = output mais limpo (mas algumas versões do gh copilot
+        # respondem vazio com essa flag — daí o parâmetro disable_tools).
         cmd.append("--available-tools=")
     try:
-        result = run_cmd(cmd, check=False)
-        output = (result.stdout or "").strip()
-        if result.returncode == 0 and output:
-            return _strip_copilot_tool_logs(_strip_ansi(output))
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=PROJECT_ROOT,
+            check=False,
+            timeout=timeout,
+        )
     except FileNotFoundError:
-        pass
+        print_warning("gh CLI não encontrado ao chamar Copilot.")
+        return None
+    except subprocess.TimeoutExpired:
+        print_warning(
+            f"gh copilot excedeu o timeout de {timeout}s "
+            f"(prompt com {len(prompt)} caracteres)."
+        )
+        return None
+
+    output = (result.stdout or "").strip()
+    if result.returncode == 0 and output:
+        return _strip_copilot_tool_logs(_strip_ansi(output))
+
+    stderr = (result.stderr or "").strip()
+    stderr_excerpt = stderr.splitlines()[-3:] if stderr else []
+    print_warning(
+        f"gh copilot falhou (exit={result.returncode}, "
+        f"prompt={len(prompt)} chars, stdout={len(output)} chars)."
+    )
+    if stderr_excerpt:
+        for line in stderr_excerpt:
+            print(f"  {_c(Colors.YELLOW, '│')} {line}")
     return None
 
 
@@ -598,9 +638,225 @@ def do_commit(dry_run: bool) -> None:
 # ================================================================================================
 
 
+def build_changelog_prompt(version: str, commits: str) -> str:
+    """Prompt em inglês (resposta em PT-BR) — Copilot CLI segue instruções em inglês
+    com mais fidelidade do que em português."""
+    return (
+        f"Generate a CHANGELOG entry in Brazilian Portuguese (pt-BR) following the "
+        f"Keep a Changelog format for version {version}. Output rules:\n"
+        f"- Use ONLY these section headings when applicable: '### Adicionado', "
+        f"'### Corrigido', '### Alterado'.\n"
+        f"- Each item must be a single bullet starting with '- '.\n"
+        f"- Focus on user-facing impact, not implementation details. Group related "
+        f"commits into a single bullet when possible.\n"
+        f"- Skip purely internal changes (version bumps, doc-only releases, lint).\n"
+        f"- Do NOT include the version header (## [x.y.z]).\n"
+        f"- Reply with ONLY the markdown content — no explanations, no code fences, "
+        f"no preamble.\n\n"
+        f"Commits since the last release (most recent first):\n{commits}"
+    )
+
+
+def extract_changelog_entry(raw: str) -> str | None:
+    """Extrai uma entrada de CHANGELOG válida do output do Copilot.
+
+    Tolera variações comuns: ``**Adicionado**`` em vez de ``### Adicionado``,
+    ``Adicionado:`` em vez de heading, headings em inglês (``### Added``),
+    code fences soltos, prosa antes do conteúdo, e bullets sem heading.
+    """
+    if not raw:
+        return None
+
+    text = _strip_ansi(_strip_copilot_tool_logs(raw)).strip()
+    if not text:
+        return None
+
+    # Remover code fences (em qualquer linha, não só início/fim).
+    text = re.sub(r"^\s*```[a-zA-Z0-9_-]*\s*$", "", text, flags=re.MULTILINE)
+
+    # Normalizar variações de heading para o formato canônico.
+    heading_map = {
+        "added": "Adicionado",
+        "adicionado": "Adicionado",
+        "fixed": "Corrigido",
+        "corrigido": "Corrigido",
+        "changed": "Alterado",
+        "alterado": "Alterado",
+        "modificado": "Alterado",
+    }
+
+    def _normalize_heading(line: str) -> str | None:
+        stripped = line.strip()
+        # ### Heading, ## Heading, **Heading**, Heading:
+        m = re.match(
+            r"^(?:#{1,6}\s+|\*\*\s*)([A-Za-zÀ-ú]+)(?:\s*\*\*|:)?\s*$",
+            stripped,
+        )
+        if m:
+            key = m.group(1).lower()
+            if key in heading_map:
+                return f"### {heading_map[key]}"
+        return None
+
+    lines: list[str] = []
+    seen_heading = False
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            if lines and lines[-1] != "":
+                lines.append("")
+            continue
+        normalized_heading = _normalize_heading(line)
+        if normalized_heading is not None:
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.append(normalized_heading)
+            seen_heading = True
+            continue
+        # Bullet (- foo / * foo / • foo)
+        bullet_match = re.match(r"^\s*[-*•]\s+(.+)$", line)
+        if bullet_match:
+            lines.append(f"- {bullet_match.group(1).strip()}")
+            continue
+        # Linha de prosa: descarta se ainda não vimos heading nem bullet.
+        if not seen_heading and not any(l.startswith("- ") for l in lines):
+            continue
+        # Caso contrário, ignora (evita "explicações" do Copilot misturadas).
+
+    # Limpar linhas vazias do início/fim.
+    while lines and lines[0] == "":
+        lines.pop(0)
+    while lines and lines[-1] == "":
+        lines.pop()
+
+    if not lines:
+        return None
+
+    has_bullet = any(l.startswith("- ") for l in lines)
+    if not has_bullet:
+        return None
+
+    # Se houver bullets mas nenhum heading, agrupar tudo sob "### Alterado".
+    has_heading = any(l.startswith("### ") for l in lines)
+    if not has_heading:
+        lines = ["### Alterado", ""] + lines
+
+    return "\n".join(lines)
+
+
+def _collect_changelog_via_editor() -> str | None:
+    """Abre um editor externo com um template Keep a Changelog e devolve o
+    conteúdo escrito. Retorna None se o editor não puder ser iniciado."""
+    import tempfile
+
+    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL")
+    if not editor:
+        editor = "notepad" if sys.platform == "win32" else "nano"
+
+    template = (
+        "### Adicionado\n"
+        "- \n"
+        "\n"
+        "### Corrigido\n"
+        "- \n"
+        "\n"
+        "### Alterado\n"
+        "- \n"
+        "\n"
+        "# Remova as seções não aplicáveis e as linhas iniciadas com '#'.\n"
+        "# Salve e feche o editor para confirmar.\n"
+    )
+
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".md", delete=False, encoding="utf-8"
+    )
+    try:
+        tmp.write(template)
+        tmp.close()
+        try:
+            subprocess.run([editor, tmp.name], check=False)
+        except FileNotFoundError:
+            print_warning(f"Editor '{editor}' não encontrado.")
+            return None
+        with open(tmp.name, "r", encoding="utf-8") as f:
+            content = f.read()
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
+
+    # Remover linhas de comentário (começando com '#' que NÃO sejam headings markdown).
+    cleaned_lines: list[str] = []
+    for line in content.splitlines():
+        stripped = line.lstrip()
+        # Headings markdown começam com '#' seguido de espaço e texto. Comentários
+        # do template começam com '# ' mas em coluna 0 também — diferenciamos
+        # pelo conteúdo: se a linha começar com '###' é heading; '# ' isolado é comentário.
+        if stripped.startswith("#") and not stripped.startswith("###"):
+            continue
+        cleaned_lines.append(line)
+    cleaned = "\n".join(cleaned_lines).strip()
+    if not cleaned:
+        return None
+    return cleaned
+
+
+def _collect_changelog_inline() -> str:
+    """Coleta entrada do CHANGELOG via stdin. Encerra ao receber uma linha vazia."""
+    print_info(
+        "Digite a entrada do CHANGELOG (com foco no usuário final). "
+        "Pressione Enter em uma linha vazia para finalizar."
+    )
+    lines: list[str] = []
+    try:
+        while True:
+            line = input()
+            if line == "":
+                break
+            lines.append(line)
+    except (EOFError, KeyboardInterrupt):
+        print()
+    return "\n".join(lines).strip()
+
+
+def _prompt_changelog_fallback(version: str, commits: str) -> str:
+    """UX do fallback manual: oferece editor externo, inline ou abortar."""
+    print()
+    print_info("Commits considerados:")
+    for line in commits.splitlines()[:20]:
+        print(f"  {line}")
+    if len(commits.splitlines()) > 20:
+        print(f"  ... (+{len(commits.splitlines()) - 20} commits)")
+    print()
+    print_info("Como deseja criar a entrada do CHANGELOG?")
+    print(f"  {_c(Colors.GREEN, 'e')}) Abrir editor externo (recomendado)")
+    print(f"  {_c(Colors.YELLOW, 'm')}) Digitar inline no terminal")
+    print(f"  {_c(Colors.RED, 'a')}) Abortar release")
+    try:
+        choice = (
+            input(f"{_c(Colors.YELLOW, '❯')} Escolha [e/m/a] (padrão: e): ")
+            .strip()
+            .lower()
+        )
+    except (EOFError, KeyboardInterrupt):
+        print()
+        print_error("Release cancelada.")
+        sys.exit(1)
+    if choice == "a":
+        print_error("Release cancelada pelo usuário.")
+        sys.exit(1)
+    if choice in ("", "e"):
+        result = _collect_changelog_via_editor()
+        if result:
+            return result
+        print_warning("Editor não retornou conteúdo. Caindo para entrada inline.")
+    return _collect_changelog_inline() or f"- Atualização para versão {version}"
+
+
 def update_changelog(version: str, dry_run: bool) -> None:
     """Atualiza CHANGELOG.md com entrada para a nova versão."""
-    print_header("Step 4/13 — Atualizar CHANGELOG.md")
+    print_header("Step 5/13 — Atualizar CHANGELOG.md")
 
     today = datetime.now().strftime("%Y-%m-%d")
     section_header = f"## [{version}] — {today}"
@@ -611,75 +867,62 @@ def update_changelog(version: str, dry_run: bool) -> None:
         print_success(f"CHANGELOG já contém entrada para [{version}]. Pulando.")
         return
 
-    # Obter diff desde última tag
-    result = run_cmd(["git", "describe", "--tags", "--abbrev=0"], check=False)
-    last_tag = result.stdout.strip() if result.returncode == 0 else ""
-
-    diff_range = f"{last_tag}..HEAD" if last_tag else "HEAD~20..HEAD"
+    # Listar commits recentes (limitando para não estourar o prompt do Copilot).
+    # Preferimos `-n LIMIT` ao range `last_tag..HEAD` porque em branches longos
+    # essa última faixa pode trazer dezenas de commits e exceder o budget.
     diff_result = run_cmd(
-        ["git", "log", diff_range, "--oneline", "--no-merges"], check=False
+        [
+            "git",
+            "log",
+            f"-n{CHANGELOG_COMMIT_LIMIT}",
+            "--oneline",
+            "--no-merges",
+        ],
+        check=False,
     )
     commits = (
         diff_result.stdout.strip() if diff_result.returncode == 0 else "(sem commits)"
     )
+    commits_for_prompt = _truncate_for_prompt(commits, CHANGELOG_COMMITS_MAX_CHARS)
 
     # Tentar usar gh copilot para gerar entry
-    changelog_entry = None
+    changelog_entry: str | None = None
     if copilot_available():
         print_step("Gerando entrada do CHANGELOG via gh copilot...")
-        prompt = (
-            f"Gere uma entrada de CHANGELOG em português (pt-BR) no formato Keep a Changelog "
-            f"para a versão {version}. Use SOMENTE as seções aplicáveis entre: "
-            f"### Adicionado, ### Corrigido, ### Alterado. "
-            f"Cada item deve ser um bullet point com '- '. "
-            f"NÃO inclua cabeçalho de versão (## [x.y.z]), apenas as seções e bullets. "
-            f"Responda SOMENTE com o conteúdo markdown, sem explicações.\n\n"
-            f"Commits desde a última release:\n{commits}"
-        )
+        prompt = build_changelog_prompt(version, commits_for_prompt)
         suggested = copilot_prompt(prompt)
+        # Retry sem `--available-tools=` (algumas versões do gh copilot 2.x
+        # respondem vazio com essa flag para prompts estruturados).
+        if not suggested:
+            print_info("Tentando novamente com tools habilitadas...")
+            suggested = copilot_prompt(prompt, disable_tools=False)
         if suggested:
-            # Limpar possíveis code fences da resposta
-            suggested = re.sub(r"^```[a-z]*\n?", "", suggested)
-            suggested = re.sub(r"\n?```$", "", suggested)
-            # Remover texto de "raciocínio" do copilot antes do conteúdo real
-            # O conteúdo real começa com "### " (seção Keep a Changelog)
-            section_match = re.search(r"^### ", suggested, re.MULTILINE)
-            if section_match:
-                suggested = suggested[section_match.start() :]
-            suggested = suggested.strip()
-            print()
-            print_info("Entrada gerada pelo Copilot:")
-            print(f"{_c(Colors.CYAN, '─' * 50)}")
-            print(suggested)
-            print(f"{_c(Colors.CYAN, '─' * 50)}")
-            print()
-            if confirm("Usar esta entrada no CHANGELOG?", "y"):
-                changelog_entry = suggested
+            parsed = extract_changelog_entry(suggested)
+            if parsed:
+                print()
+                print_info("Entrada gerada pelo Copilot:")
+                print(f"{_c(Colors.CYAN, '─' * 50)}")
+                print(parsed)
+                print(f"{_c(Colors.CYAN, '─' * 50)}")
+                print()
+                if confirm("Usar esta entrada no CHANGELOG?", "y"):
+                    changelog_entry = parsed
+                else:
+                    print_info("Entrada recusada.")
             else:
-                print_info("Entrada recusada. Usando entrada manual.")
+                print_warning(
+                    "Copilot retornou resposta, mas não foi possível extrair "
+                    "uma entrada de CHANGELOG válida."
+                )
     else:
-        print_info("gh copilot não disponível. Usando entrada manual.")
+        print_info("gh copilot não disponível.")
 
     if changelog_entry is None:
-        print_info("Commits desde a última tag:")
-        print(commits)
-        print()
-        print_info("Escreva a entrada do CHANGELOG, com foco no usuário final (termine com linha vazia):")
-        lines = []
-        try:
-            while True:
-                line = input()
-                if line == "":
-                    break
-                lines.append(line)
-        except (EOFError, KeyboardInterrupt):
-            pass
-        changelog_entry = (
-            "\n".join(lines) if lines else f"- Atualização para versão {version}"
-        )
+        changelog_entry = _prompt_changelog_fallback(version, commits)
 
     # Montar nova seção
     new_section = f"\n{section_header}\n\n{changelog_entry}\n"
+
 
     if dry_run:
         print_dry_run(f"Inseriria no CHANGELOG:\n{new_section}")
@@ -726,13 +969,13 @@ def update_changelog(version: str, dry_run: bool) -> None:
 
 
 # ================================================================================================
-# Step 5: Bump version
+# Step 4: Bump version
 # ================================================================================================
 
 
 def bump_version(version: str, dry_run: bool) -> str:
     """Atualiza a versão no package.json."""
-    print_header("Step 5/13 — Bump de Versão")
+    print_header("Step 4/13 — Bump de Versão")
 
     current = get_current_version()
     print_info(f"Versão atual: {current}")
@@ -1561,10 +1804,10 @@ def main() -> None:
     else:
         print_info("Commit pulado (--skip-commit).")
 
-    # Step 5: Bump version (antes do changelog para ter a versão definida)
+    # Step 4: Bump version (antes do changelog para ter a versão definida)
     version = bump_version(args.version, dry_run)
 
-    # Step 4: Atualizar CHANGELOG (depois do bump para saber a versão)
+    # Step 5: Atualizar CHANGELOG (depois do bump para saber a versão)
     if not args.skip_changelog:
         update_changelog(version, dry_run)
     else:

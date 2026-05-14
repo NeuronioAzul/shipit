@@ -72,6 +72,9 @@ describe('validateProfile', () => {
     attendance_type: 'Remoto',
     project_scope: 'Squad Alpha',
     correlating_activities: 'Desenvolvimento de software',
+    daily_availability: 8,
+    monthly_availability: 168,
+    minimum_effort_hours: 40,
   }
 
   it('returns no errors for a valid profile', () => {
@@ -80,10 +83,11 @@ describe('validateProfile', () => {
 
   it('requires all mandatory fields', () => {
     const errors = validateProfile({})
-    expect(errors.length).toBe(8)
+    expect(errors.length).toBe(11)
     expect(errors.map(e => e.field)).toEqual([
       'full_name', 'role', 'seniority_level', 'contract_identifier',
       'profile_type', 'attendance_type', 'project_scope', 'correlating_activities',
+      'daily_availability', 'monthly_availability', 'minimum_effort_hours',
     ])
   })
 
@@ -95,6 +99,37 @@ describe('validateProfile', () => {
   it('rejects full_name containing numbers', () => {
     const errors = validateProfile({ ...validProfile, full_name: 'MARIA 123 SILVA' })
     expect(errors).toContainEqual({ field: 'full_name', message: 'Nome completo não pode conter números' })
+  })
+
+  it('accepts numeric profile fields provided as form strings', () => {
+    expect(validateProfile({
+      ...validProfile,
+      daily_availability: '8',
+      monthly_availability: '168',
+      minimum_effort_hours: '40',
+    })).toEqual([])
+  })
+
+  it('rejects invalid availability fields', () => {
+    const errors = validateProfile({
+      ...validProfile,
+      daily_availability: 0,
+      monthly_availability: '12.5',
+      minimum_effort_hours: 'abc',
+    })
+
+    expect(errors).toContainEqual({
+      field: 'daily_availability',
+      message: 'Disponibilidade diária deve ser um número inteiro maior que zero',
+    })
+    expect(errors).toContainEqual({
+      field: 'monthly_availability',
+      message: 'Disponibilidade mensal deve ser um número inteiro maior que zero',
+    })
+    expect(errors).toContainEqual({
+      field: 'minimum_effort_hours',
+      message: 'Esforço mínimo em horas deve ser um número inteiro maior que zero',
+    })
   })
 })
 

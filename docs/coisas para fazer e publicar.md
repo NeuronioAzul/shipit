@@ -10,11 +10,6 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 ## New features
 
-- 🔴 feat: adicionar a tela de perfil os campos a seguir que depois serão usados para preencher no template do DOCX:
-  - Disponibilidade Diária `{{daily_availability}}`
-  - Disponibilidade Mensal `{{monthly_availability}}`
-  - Esforço Mínimo em Horas: `{{minimum_effort_hours}}`
-
 - 🔴 fix: os links de referência não estão sendo incluídos no documento.
 
 - 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
@@ -210,11 +205,9 @@ Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! insta
 - testes: Caso aconteça algum erro ou seja verificado um cenário que não esteja coberto por testes automatizados, criar testes para validar o comportamento correto, para garantir as funcionalidades sempre corretas.
 - testes: Criar testes automatizados para validar o comportamento das notificações de atualização, garantindo que as mensagens sejam exibidas corretamente, sem duplicação, e com o ícone correto do ShipIt!. Os testes devem incluir cenários para verificar se as notificações estão abrindo a janela correta do ShipIt! quando clicadas, e não uma janela do electron, e também para garantir que o aplicativo esteja limpando corretamente os arquivos e registros temporários relacionados aos testes, sem afetar a versão instalada do ShipIt! na máquina, e garantindo que o cache de ícones do aplicativo seja limpo para evitar problemas de exibição de ícones antigos ou corrompidos.
 
------------------------------------------------------------
+## Update do app
 
-## Fazendo
-
-## Funcionalidades de atualização do aplicativo
+### Funcionalidades de atualização do aplicativo
 
 - fix: Impedir a atualização automática, não atualizar sem consentimento do usuário, permitir que os usuário escolham quando atualizar, garantir uma  experiência de usuário mais personalizada e controlada.
 
@@ -226,3 +219,14 @@ Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! insta
 - feat: Ao fazer o download da nova versão, o aplicativo deve exibir uma notificação informando que a nova versão foi baixada e está pronta para ser instalada, com um botão na notificação para instalar a nova versão.
 
 - feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
+
+-----------------------------------------------------------
+
+## Fazendo
+
+## New features for the next release 1.5.0
+
+- 🔴 feat: adicionar a tela de perfil os campos a seguir que depois serão usados para preencher no template do DOCX:
+  - Disponibilidade Diária `{{daily_availability}}`
+  - Disponibilidade Mensal `{{monthly_availability}}`
+  - Esforço Mínimo em Horas: `{{minimum_effort_hours}}`

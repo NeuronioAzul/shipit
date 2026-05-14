@@ -24,7 +24,37 @@ export function validateActivity(activity: Partial<ActivityData>): ValidationErr
   return errors
 }
 
-export function validateProfile(profile: Partial<UserProfileData>): ValidationError[] {
+type ProfileValidationTarget = Partial<
+  Omit<UserProfileData, 'daily_availability' | 'monthly_availability' | 'minimum_effort_hours'>
+> & {
+  daily_availability?: number | string | null
+  monthly_availability?: number | string | null
+  minimum_effort_hours?: number | string | null
+}
+
+function addRequiredPositiveIntegerValidation(
+  errors: ValidationError[],
+  field: 'daily_availability' | 'monthly_availability' | 'minimum_effort_hours',
+  label: string,
+  value: unknown,
+): void {
+  if (value === null || value === undefined || (typeof value === 'string' && !value.trim())) {
+    errors.push({ field, message: `${label} é obrigatória` })
+    return
+  }
+
+  const parsedValue = typeof value === 'string'
+    ? (/^\d+$/.test(value.trim()) ? Number.parseInt(value.trim(), 10) : Number.NaN)
+    : typeof value === 'number'
+      ? value
+      : Number.NaN
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    errors.push({ field, message: `${label} deve ser um número inteiro maior que zero` })
+  }
+}
+
+export function validateProfile(profile: ProfileValidationTarget): ValidationError[] {
   const errors: ValidationError[] = []
 
   if (!profile.full_name?.trim()) {
@@ -53,6 +83,25 @@ export function validateProfile(profile: Partial<UserProfileData>): ValidationEr
   if (!profile.correlating_activities?.trim()) {
     errors.push({ field: 'correlating_activities', message: 'Atividades correlatas é obrigatório' })
   }
+
+  addRequiredPositiveIntegerValidation(
+    errors,
+    'daily_availability',
+    'Disponibilidade diária',
+    profile.daily_availability,
+  )
+  addRequiredPositiveIntegerValidation(
+    errors,
+    'monthly_availability',
+    'Disponibilidade mensal',
+    profile.monthly_availability,
+  )
+  addRequiredPositiveIntegerValidation(
+    errors,
+    'minimum_effort_hours',
+    'Esforço mínimo em horas',
+    profile.minimum_effort_hours,
+  )
 
   return errors
 }

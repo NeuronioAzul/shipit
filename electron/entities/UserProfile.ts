@@ -60,6 +60,15 @@ export class UserProfile {
   @Column({ type: 'text', nullable: true })
   project_scope!: string
 
+  @Column({ type: 'integer', nullable: true })
+  daily_availability!: number
+
+  @Column({ type: 'integer', nullable: true })
+  monthly_availability!: number
+
+  @Column({ type: 'integer', nullable: true })
+  minimum_effort_hours!: number
+
   @UpdateDateColumn()
   last_updated!: Date
 

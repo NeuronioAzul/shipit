@@ -45,6 +45,9 @@ function makeProfile(overrides?: Partial<UserProfile>): UserProfile {
     correlating_activities: 'Desenvolvimento de software',
     attendance_type: 'Remoto',
     project_scope: 'Squad Alpha',
+    daily_availability: 8,
+    monthly_availability: 168,
+    minimum_effort_hours: 40,
     last_updated: new Date(),
     alert: null as any,
     ...overrides,
@@ -103,7 +106,11 @@ describe('generateDocxReport', () => {
 
   it('produces a valid ZIP (DOCX) with document.xml containing replaced placeholders', async () => {
     const result = await generateDocxReport({
-      profile: makeProfile(),
+      profile: makeProfile({
+        daily_availability: 13,
+        monthly_availability: 211,
+        minimum_effort_hours: 9973,
+      }),
       activities: [makeActivity()],
       monthReference: '03/2026',
       templatePath: TEMPLATE_PATH,
@@ -123,8 +130,36 @@ describe('generateDocxReport', () => {
     expect(docXml).not.toContain('{{full_name}}')
     expect(docXml).not.toContain('{{contract_number}}')
     expect(docXml).not.toContain('{{role}}')
+    expect(docXml).not.toContain('{{daily_availability}}')
+    expect(docXml).not.toContain('{{monthly_availability}}')
+    expect(docXml).not.toContain('{{minimum_effort_hours}}')
     expect(docXml).toContain('MAURO ROCHA TAVARES')
     expect(docXml).toContain('CT-001/2026')
+    expect(docXml).toContain('13 horas/dia')
+    expect(docXml).toContain('211 horas/mês')
+    expect(docXml).toMatch(/>9973<\/w:t>/)
+  })
+
+  it('falls back to legacy DOCX availability defaults when profile fields are missing', async () => {
+    const result = await generateDocxReport({
+      profile: makeProfile({
+        daily_availability: null as any,
+        monthly_availability: 222,
+        minimum_effort_hours: null as any,
+      }),
+      activities: [makeActivity()],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    expect(docXml).toContain('8 horas/dia')
+    expect(docXml).toContain('222 horas/mês')
+    expect(docXml).toMatch(/>168<\/w:t>/)
   })
 
   it('handles multiple activities from different projects', async () => {
