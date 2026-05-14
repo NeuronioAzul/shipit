@@ -66,6 +66,11 @@ async function clickMenuCommand(sectionId: string, commandId: string) {
   await page.click(menuItemSelector(commandId))
 }
 
+async function selectComboboxOption(triggerSelector: string, optionLabel: string) {
+  await page.locator(triggerSelector).click()
+  await page.getByRole('option', { name: optionLabel }).click()
+}
+
 async function restoreMainWindow() {
   await app.evaluate(({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows()[0]
@@ -215,6 +220,42 @@ test('shows EmptyState on fresh DB and navigates to all screens', async () => {
   await page.click('[title="Dashboard"]')
   await page.waitForURL(/#\/$/)
   await expect(page.locator('text=Bem-vindo')).toBeVisible({ timeout: 5_000 })
+})
+
+test('saves and reloads availability fields on the profile page', async () => {
+  await page.click('[title="Perfil"]')
+  await page.waitForURL(/#\/profile/)
+
+  await page.locator('#full_name').fill('MARIA SILVA')
+  await selectComboboxOption('#role', 'ENGENHEIRO DE SOFTWARE')
+  await selectComboboxOption('#seniority_level', 'Pleno')
+  await page.locator('#contract_identifier').fill('CT-AVAIL-001')
+  await selectComboboxOption('#profile_type', 'DEV-03')
+  await selectComboboxOption('#attendance_type', 'Remoto')
+  await page.locator('#project_scope').fill('Squad Alpha')
+  await page.locator('#correlating_activities').fill('Desenvolvimento de software e sustentação.')
+  await page.locator('#daily_availability').fill('8')
+  await page.locator('#monthly_availability').fill('168')
+  await page.locator('#minimum_effort_hours').fill('40')
+
+  await page.locator('#profile-btn-submit').click()
+  await page.waitForURL(/#\/$/)
+
+  await page.click('[title="Perfil"]')
+  await page.waitForURL(/#\/profile/)
+
+  await expect(page.locator('h1')).toHaveText('Editar Perfil')
+  await expect(page.locator('#daily_availability')).toHaveValue('8')
+  await expect(page.locator('#monthly_availability')).toHaveValue('168')
+  await expect(page.locator('#minimum_effort_hours')).toHaveValue('40')
+
+  const profile = await page.evaluate(async () => {
+    return window.electronAPI?.getUserProfile() ?? null
+  })
+
+  expect(profile?.daily_availability).toBe(8)
+  expect(profile?.monthly_availability).toBe(168)
+  expect(profile?.minimum_effort_hours).toBe(40)
 })
 
 test('opens external links outside the app without changing current route', async () => {

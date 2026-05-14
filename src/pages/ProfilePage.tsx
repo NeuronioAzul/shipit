@@ -37,6 +37,14 @@ const PROFILE_TYPES = [
 
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
 
+const NUMERIC_PROFILE_FIELDS = [
+  'daily_availability',
+  'monthly_availability',
+  'minimum_effort_hours',
+] as const
+
+type NumericProfileField = (typeof NUMERIC_PROFILE_FIELDS)[number]
+
 interface ProfileForm {
   full_name: string
   role: string
@@ -46,6 +54,9 @@ interface ProfileForm {
   correlating_activities: string
   attendance_type: string
   project_scope: string
+  daily_availability: string
+  monthly_availability: string
+  minimum_effort_hours: string
 }
 
 const initialForm: ProfileForm = {
@@ -57,6 +68,33 @@ const initialForm: ProfileForm = {
   correlating_activities: '',
   attendance_type: '',
   project_scope: '',
+  daily_availability: '',
+  monthly_availability: '',
+  minimum_effort_hours: '',
+}
+
+function parseProfileInteger(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const parsedValue = Number.parseInt(trimmed, 10)
+  return Number.isNaN(parsedValue) ? null : parsedValue
+}
+
+function serializeProfileForm(form: ProfileForm): UserProfileData {
+  return {
+    full_name: form.full_name,
+    role: form.role,
+    seniority_level: form.seniority_level,
+    contract_identifier: form.contract_identifier,
+    profile_type: form.profile_type,
+    correlating_activities: form.correlating_activities,
+    attendance_type: form.attendance_type,
+    project_scope: form.project_scope,
+    daily_availability: parseProfileInteger(form.daily_availability),
+    monthly_availability: parseProfileInteger(form.monthly_availability),
+    minimum_effort_hours: parseProfileInteger(form.minimum_effort_hours),
+  }
 }
 
 export function ProfilePage() {
@@ -77,14 +115,19 @@ export function ProfilePage() {
       correlating_activities: nextForm.correlating_activities.trim(),
       attendance_type: nextForm.attendance_type,
       project_scope: nextForm.project_scope.trim(),
+      daily_availability: nextForm.daily_availability.trim(),
+      monthly_availability: nextForm.monthly_availability.trim(),
+      minimum_effort_hours: nextForm.minimum_effort_hours.trim(),
     })
   }, [])
 
   const persistProfile = useCallback(async (nextForm: ProfileForm) => {
+    const normalizedProfile = serializeProfileForm(nextForm)
+
     if (window.electronAPI) {
-      await window.electronAPI.saveUserProfile(nextForm)
+      await window.electronAPI.saveUserProfile(normalizedProfile)
     } else {
-      localStorage.setItem('shipit-profile', JSON.stringify(nextForm))
+      localStorage.setItem('shipit-profile', JSON.stringify(normalizedProfile))
     }
     savedFingerprintRef.current = buildProfileFingerprint(nextForm)
   }, [buildProfileFingerprint])
@@ -109,6 +152,9 @@ export function ProfilePage() {
           correlating_activities: profile.correlating_activities || '',
           attendance_type: profile.attendance_type || '',
           project_scope: profile.project_scope || '',
+          daily_availability: profile.daily_availability != null ? String(profile.daily_availability) : '',
+          monthly_availability: profile.monthly_availability != null ? String(profile.monthly_availability) : '',
+          minimum_effort_hours: profile.minimum_effort_hours != null ? String(profile.minimum_effort_hours) : '',
         }
         setForm(loadedForm)
         savedFingerprintRef.current = buildProfileFingerprint(loadedForm)
@@ -173,7 +219,11 @@ export function ProfilePage() {
   ) {
     const { name, value } = e.target
     // Nome completo sempre em maiúsculas e sem números
-    const finalValue = name === 'full_name' ? value.replace(/\d/g, '').toUpperCase() : value
+    const finalValue = name === 'full_name'
+      ? value.replace(/\d/g, '').toUpperCase()
+      : NUMERIC_PROFILE_FIELDS.includes(name as NumericProfileField)
+        ? value.replace(/\D/g, '')
+        : value
     setForm((prev) => ({ ...prev, [name]: finalValue }))
   }
 
@@ -436,6 +486,89 @@ export function ProfilePage() {
           <p className="text-xs text-muted-foreground mt-1">
             Copie do arquivo modelo que você recebeu.
           </p>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Disponibilidade e esforço</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Esses valores são usados na geração do relatório DOCX.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="daily_availability" className={labelClass}>
+                Disponibilidade Diária <span className="text-destructive">*</span>
+              </label>
+              <div className={frameClass('daily_availability')}>
+                <input
+                  id="daily_availability"
+                  name="daily_availability"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  required
+                  value={form.daily_availability}
+                  onChange={handleChange}
+                  placeholder="Ex: 8"
+                  className={fieldClass('daily_availability')}
+                />
+              </div>
+              {fieldError('daily_availability') && (
+                <p className="text-xs text-destructive mt-1">{fieldError('daily_availability')}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="monthly_availability" className={labelClass}>
+                Disponibilidade Mensal <span className="text-destructive">*</span>
+              </label>
+              <div className={frameClass('monthly_availability')}>
+                <input
+                  id="monthly_availability"
+                  name="monthly_availability"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  required
+                  value={form.monthly_availability}
+                  onChange={handleChange}
+                  placeholder="Ex: 168"
+                  className={fieldClass('monthly_availability')}
+                />
+              </div>
+              {fieldError('monthly_availability') && (
+                <p className="text-xs text-destructive mt-1">{fieldError('monthly_availability')}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="minimum_effort_hours" className={labelClass}>
+                Esforço Mínimo em Horas <span className="text-destructive">*</span>
+              </label>
+              <div className={frameClass('minimum_effort_hours')}>
+                <input
+                  id="minimum_effort_hours"
+                  name="minimum_effort_hours"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  required
+                  value={form.minimum_effort_hours}
+                  onChange={handleChange}
+                  placeholder="Ex: 40"
+                  className={fieldClass('minimum_effort_hours')}
+                />
+              </div>
+              {fieldError('minimum_effort_hours') && (
+                <p className="text-xs text-destructive mt-1">{fieldError('minimum_effort_hours')}</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Submit */}

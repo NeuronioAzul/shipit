@@ -69,6 +69,9 @@ describe('UserProfile CRUD', () => {
       attendance_type: 'Remoto' as any,
       project_scope: 'Squad Alpha',
       correlating_activities: 'Desenvolvimento de software',
+      daily_availability: 8,
+      monthly_availability: 168,
+      minimum_effort_hours: 40,
     })
 
     const profile = await getUserProfile()
@@ -76,6 +79,9 @@ describe('UserProfile CRUD', () => {
     expect(profile!.full_name).toBe('MARIA SILVA')
     expect(profile!.role).toBe('ENGENHEIRO DE SOFTWARE')
     expect(profile!.seniority_level).toBe('Pleno')
+    expect(profile!.daily_availability).toBe(8)
+    expect(profile!.monthly_availability).toBe(168)
+    expect(profile!.minimum_effort_hours).toBe(40)
   })
 
   it('updates an existing profile', async () => {
@@ -88,16 +94,52 @@ describe('UserProfile CRUD', () => {
       attendance_type: 'Remoto' as any,
       project_scope: 'Squad Alpha',
       correlating_activities: 'Desenvolvimento de software',
+      daily_availability: 8,
+      monthly_availability: 168,
+      minimum_effort_hours: 40,
     })
 
     await saveUserProfile({
       full_name: 'MARIA SANTOS SILVA',
+      daily_availability: 6,
     })
 
     const profile = await getUserProfile()
     expect(profile!.full_name).toBe('MARIA SANTOS SILVA')
     // Original fields preserved
     expect(profile!.role).toBe('ENGENHEIRO DE SOFTWARE')
+    expect(profile!.daily_availability).toBe(6)
+    expect(profile!.monthly_availability).toBe(168)
+    expect(profile!.minimum_effort_hours).toBe(40)
+  })
+
+  it('includes availability fields in report payload profile', async () => {
+    await saveUserProfile({
+      full_name: 'MARIA SILVA',
+      role: 'ENGENHEIRO DE SOFTWARE' as any,
+      seniority_level: 'Pleno' as any,
+      contract_identifier: 'CT-001',
+      profile_type: 'Técnico',
+      attendance_type: 'Remoto' as any,
+      project_scope: 'Squad Alpha',
+      correlating_activities: 'Desenvolvimento de software',
+      daily_availability: 8,
+      monthly_availability: 168,
+      minimum_effort_hours: 40,
+    })
+
+    await saveActivity({
+      description: 'Atividade relatório disponibilidade',
+      status: 'Concluído',
+      month_reference: '03/2026',
+      order: 1,
+    })
+
+    const payload = await getReportPayload('03/2026')
+
+    expect(payload.profile?.daily_availability).toBe(8)
+    expect(payload.profile?.monthly_availability).toBe(168)
+    expect(payload.profile?.minimum_effort_hours).toBe(40)
   })
 })
 
