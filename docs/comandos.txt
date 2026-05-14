@@ -47,3 +47,13 @@ git checkout main ; git pull origin main
 git tag v1.2.1-beta.1 ; git push origin v1.2.1-beta.1
 
 gh run list --limit 3
+
+
+---
+
+
+npx playwright test e2e 
+
+npx playwright test e2e/app.spec.ts --reporter=line
+
+npx playwright test e2e/app.spec.ts -g "runs help menu actions for manual and report issue" --reporter=line
