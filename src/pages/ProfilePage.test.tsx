@@ -96,7 +96,7 @@ function fillRequiredProfileFields() {
 }
 
 function triggerProfileNavigationTimeout(setTimeoutSpy: ReturnType<typeof vi.spyOn>) {
-  const timeoutIndex = setTimeoutSpy.mock.calls.findLastIndex((call) => call[1] === 800)
+  const timeoutIndex = setTimeoutSpy.mock.calls.findLastIndex((call: unknown[]) => call[1] === 800)
   expect(timeoutIndex).toBeGreaterThanOrEqual(0)
 
   const timeoutCallback = setTimeoutSpy.mock.calls[timeoutIndex]?.[0]
