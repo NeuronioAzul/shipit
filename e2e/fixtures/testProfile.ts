@@ -31,6 +31,7 @@ export function createShipItTestProfileEnv(
     NODE_ENV: 'test',
     PLAYWRIGHT: '1',
     SHIPIT_TEST_USER_DATA_DIR: testDir,
+    SHIPIT_E2E_FAKE_UPDATER: '1',
   }
 }
 

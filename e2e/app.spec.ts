@@ -622,8 +622,12 @@ test('runs help menu actions for manual and report issue', async () => {
     await expect(page.locator('#sidebar-about-modal')).toHaveCount(0)
 
     await clickMenuCommand('help', 'help.check-updates')
-    await page.waitForURL(/#\/settings$/)
-    await expect(page.locator('#settings-update-section')).toContainText('Disponível apenas na versão instalada.', { timeout: 5_000 })
+    // help.check-updates opens the titlebar update modal instead of navigating.
+    const updateModal = page.locator('#titlebar-update-modal')
+    await expect(updateModal).toBeVisible({ timeout: 5_000 })
+    await expect(updateModal.locator('#update-modal-btn-check')).toBeVisible({ timeout: 5_000 })
+    await page.keyboard.press('Escape')
+    await expect(updateModal).toHaveCount(0, { timeout: 5_000 })
 
     await page.click('#titlebar-menu-btn-help')
     await page.click('#titlebar-menu-item-help-user-manual')
@@ -662,7 +666,7 @@ test('runs help menu actions for manual and report issue', async () => {
       globalState.__shipitRestoreOpenExternal?.()
       delete globalState.__shipitRestoreOpenExternal
       delete globalState.__shipitOpenExternalCalls
-    })
+    }).catch(() => { /* main process may already be torn down on timeout */ })
   }
 })
 
@@ -1038,6 +1042,152 @@ test('keeps searchbar stable and anchored in cyberpunk theme', async () => {
   expect(metrics!.leftDelta).toBeLessThanOrEqual(1)
   expect(metrics!.searchbarWidth).toBeLessThanOrEqual(metrics!.expectedMaxWidth + 1)
   expect(metrics!.dropdownWidth).toBeLessThanOrEqual(metrics!.expectedMaxWidth + 1)
+})
+
+// ──── Update Flow ────
+
+type FakeCheckOutcome = 'not-available' | 'available' | 'error' | 'silent'
+type FakeDownloadOutcome = 'downloaded' | 'error'
+
+async function configureFakeUpdaterCheck(behavior: {
+  outcome: FakeCheckOutcome
+  version?: string
+  error?: string
+}) {
+  await app.evaluate((_electron, payload) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitFakeUpdater?: {
+        __setCheckBehavior: (b: typeof payload) => void
+      }
+    }
+    globalState.__shipitFakeUpdater?.__setCheckBehavior(payload)
+  }, behavior)
+}
+
+async function configureFakeUpdaterDownload(behavior: {
+  outcome: FakeDownloadOutcome
+  version?: string
+  error?: string
+  progress?: number[]
+}) {
+  await app.evaluate((_electron, payload) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitFakeUpdater?: {
+        __setDownloadBehavior: (b: typeof payload) => void
+      }
+    }
+    globalState.__shipitFakeUpdater?.__setDownloadBehavior(payload)
+  }, behavior)
+}
+
+async function resetFakeUpdater() {
+  await app.evaluate(() => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitFakeUpdater?: { __reset: () => void }
+      __shipitResetUpdateService?: () => void
+    }
+    globalState.__shipitFakeUpdater?.__reset()
+    globalState.__shipitResetUpdateService?.()
+  })
+}
+
+async function getFakeUpdaterQuitInstallCalls(): Promise<number> {
+  return app.evaluate(() => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitFakeUpdater?: { __getQuitAndInstallCalls: () => number }
+    }
+    return globalState.__shipitFakeUpdater?.__getQuitAndInstallCalls() ?? 0
+  })
+}
+
+async function openUpdateSection() {
+  await page.click('[title="Configurações"]')
+  await page.waitForURL(/#\/settings/)
+  await expect(page.locator('#settings-update-section')).toBeVisible({ timeout: 5_000 })
+}
+
+test('fake updater is wired up under SHIPIT_E2E_FAKE_UPDATER', async () => {
+  const isWired = await app.evaluate(() => {
+    const globalState = globalThis as typeof globalThis & { __shipitFakeUpdater?: unknown }
+    return Boolean(globalState.__shipitFakeUpdater)
+  })
+  expect(isWired).toBe(true)
+})
+
+test('settles to not-available without leaving the spinner stuck', async () => {
+  await resetFakeUpdater()
+  await configureFakeUpdaterCheck({ outcome: 'not-available' })
+  await openUpdateSection()
+
+  const checkButton = page.locator('#settings-update-btn-check')
+  const status = page.locator('#settings-update-status')
+
+  await checkButton.click()
+  await expect(checkButton).toBeEnabled({ timeout: 5_000 })
+  await expect(checkButton.locator('i.fa-spin')).toHaveCount(0)
+  await expect(status).toContainText('Você está na versão mais recente.')
+})
+
+test('settles to available, downloads and exposes install action through the real IPC path', async () => {
+  await resetFakeUpdater()
+  await configureFakeUpdaterCheck({ outcome: 'available', version: '9.9.9' })
+  await configureFakeUpdaterDownload({ outcome: 'downloaded', version: '9.9.9', progress: [40, 100] })
+  await openUpdateSection()
+
+  await page.locator('#settings-update-btn-check').click()
+
+  const downloadButton = page.locator('#settings-update-btn-download')
+  await expect(downloadButton).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#settings-update-status')).toContainText('Versão 9.9.9 pronta para download.')
+  await expect(page.locator('#settings-update-attention-badge')).toBeVisible()
+
+  await downloadButton.click()
+
+  const installButton = page.locator('#settings-update-btn-install')
+  await expect(installButton).toBeVisible({ timeout: 5_000 })
+  await expect(installButton).toContainText('Instalar agora')
+  await expect(page.locator('#settings-update-status')).toContainText('Versão 9.9.9 baixada.')
+
+  await installButton.click()
+  await expect.poll(() => getFakeUpdaterQuitInstallCalls()).toBeGreaterThanOrEqual(1)
+})
+
+test('surfaces error state when the autoUpdater emits an error event', async () => {
+  await resetFakeUpdater()
+  await configureFakeUpdaterCheck({ outcome: 'error', error: 'Falha simulada de rede' })
+  await openUpdateSection()
+
+  await page.locator('#settings-update-btn-check').click()
+
+  const checkButton = page.locator('#settings-update-btn-check')
+  await expect(checkButton).toBeEnabled({ timeout: 5_000 })
+  await expect(checkButton.locator('i.fa-spin')).toHaveCount(0)
+  await expect(page.locator('#settings-update-status')).toContainText('Falha simulada de rede')
+})
+
+test('regression: silent check resolution still settles the UI (1.3.6 → 1.3.7 stuck spinner)', async () => {
+  await resetFakeUpdater()
+  // 'silent' resolves the checkForUpdates promise without emitting a terminal
+  // event. The service's post-await fallback must broadcast 'available' based
+  // on the resolved updateInfo so the UI does not get stuck on "Verificando".
+  await configureFakeUpdaterCheck({ outcome: 'silent', version: '9.9.9' })
+  await openUpdateSection()
+
+  await page.locator('#settings-update-btn-check').click()
+
+  const downloadButton = page.locator('#settings-update-btn-download')
+  await expect(downloadButton).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#settings-update-status')).toContainText('Versão 9.9.9 pronta para download.')
+})
+
+test('regression: silent resolution with no remote version settles to not-available', async () => {
+  await resetFakeUpdater()
+  await configureFakeUpdaterCheck({ outcome: 'silent' })
+  await openUpdateSection()
+
+  await page.locator('#settings-update-btn-check').click()
+  await expect(page.locator('#settings-update-status')).toContainText('Você está na versão mais recente.', { timeout: 5_000 })
+  await expect(page.locator('#settings-update-btn-check')).toBeEnabled()
 })
 
 test('routes quit menu command through Electron without ending the suite', async () => {

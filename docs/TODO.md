@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 08/05/2026 (compatibilidade de `userData` para produção/dev/E2E)
+> Atualizado em: 13/05/2026 (sincronização documental pós-v1.3.7)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -399,6 +399,17 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] E2E continua com prioridade para `SHIPIT_TEST_USER_DATA_DIR` e perfil temporário protegido por marcador `.shipit-test-profile`.
 - [x] `APP_ID` runtime alinhado ao `build.appId` do `package.json` (`br.com.neuronioazul.shipit`).
 - [x] Cobertura Vitest ampliada para produção, desenvolvimento, E2E e alinhamento de identidade.
+
+### Fase 26: Fluxo Manual de Atualização ✅
+
+- [x] Seção "Atualizações" em Configurações com ações separadas para verificar, baixar e instalar, e acompanhamento do progresso de download (v1.3.6).
+- [x] Sinalização visual de novas versões via badges na navegação, modal de atualização na TitleBar e indicadores por plataforma (overlay Windows, badge macOS/Linux) (v1.3.6).
+- [x] Verificação manual de atualização agora retorna o estado final corretamente, evitando UI travada em “verificando” (v1.3.7).
+- [x] Estado de atualização pendente persiste entre reinicializações até a instalação (v1.3.6).
+- [x] Auto-update passou a apenas verificar ao iniciar; download e instalação dependem de consentimento explícito (v1.3.6).
+- [x] Novos handlers IPC: `app:getUpdateState`, `app:downloadUpdate`, `app:acknowledgeUpdateAttention` + contexto `UpdateStateContext` no renderer.
+- [x] Componentes `UpdateModal` e `UpdateStatusPanel` adicionados a `src/components/`.
+- [x] Cobertura Vitest ampliada (120 testes em 10 arquivos) cobrindo a finalização do estado de checagem manual.
 
 ---
 

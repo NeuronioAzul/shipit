@@ -375,19 +375,21 @@ Observações:
 
 > Atualize esta seção ao final de cada execução real do plano. Não use esta seção como fonte da verdade sem reconferir o código.
 
-- **Última execução do plano**: 2026-04-27 — Full sync documental
-- **Versão em `package.json`**: 1.3.0 após execução do `release.py` (1.2.2 antes do bump)
-- **Último release documentado**: v1.3.0 (preparado em 2026-04-27)
-- **Data da execução**: 2026-04-27
-- **IPC exposto no preload**: 54 chamadas `ipcRenderer.invoke` + 4 listeners `ipcRenderer.on`
-- **IPC registrado no main**: 54 handlers `ipcMain.handle`
-- **Componentes**: 17 arquivos `.tsx` em `src/components/`
+- **Última execução do plano**: 2026-05-13 — Full sync documental pós-v1.3.7
+- **Versão em `package.json`**: 1.3.7
+- **Último release documentado**: v1.3.7 (publicado em 2026-05-13)
+- **Data da execução**: 2026-05-13
+- **IPC exposto no preload**: 57 chamadas `ipcRenderer.invoke` + 4 listeners `ipcRenderer.on`
+- **IPC registrado no main**: 57 handlers `ipcMain.handle`
+- **Componentes**: 19 arquivos `.tsx` em `src/components/` (adicionados `UpdateModal`, `UpdateStatusPanel`)
 - **Páginas/rotas**: 9 arquivos em `src/pages/`; 9 rotas em `src/App.tsx` incluindo `/manual`
+- **Contextos**: 3 (`ThemeContext`, `NavigationHistoryContext`, `UpdateStateContext`)
 - **Entidades**: 6 (`UserProfile`, `Activity`, `Evidence`, `Report`, `ActivityReport`, `Alert`)
 - **Temas**: 11 temas registrados (`light`, `dark`, `colorful`, `rose-violet`, `minimalist`, `futuristic`, `ocean`, `sunset`, `high-contrast`, `high-contrast-dark`, `cyberpunk`)
 - **Dependências prod/dev**: 21 produção / 17 desenvolvimento
 - **Scripts npm**: 8 scripts
-- **Testes**: `npm run test` — 8 arquivos, 104 testes passando
+- **Testes**: `npm run test` — 10 arquivos, 120 testes passando
+- **E2E declarados**: 27 cenários Playwright (`e2e/app.spec.ts`)
 - **Build**: não executado; alteração foi documental e `npm run test` bastou para a contagem verificada
-- **Documentos alterados**: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md`, `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`, este plano
-- **Problemas encontrados**: `rg` não disponível no PowerShell; Playwright E2E não executado nesta auditoria
+- **Documentos alterados**: `README.md`, `.github/copilot-instructions.md`, `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`, `CONTRIBUTING.md`, este plano. `CHANGELOG.md` já estava em dia (entradas 1.3.6 e 1.3.7).
+- **Problemas encontrados**: Playwright E2E não executado nesta auditoria; algumas referências em planos antigos (`docs/plan-shipit*.md`) ainda mencionam contagens históricas — preservadas como registro de planejamento.

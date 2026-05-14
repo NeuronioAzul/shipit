@@ -1,6 +1,6 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app (package version 1.3.0, latest release tag: v1.3.0; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (package version 1.3.7, latest release tag: v1.3.7; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@ Electron desktop app (package version 1.3.0, latest release tag: v1.3.0; `dev` m
 | Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
 | Toasts | sonner 2 | Non-blocking notifications |
 | Auto-update | electron-updater 6 | GitHub Releases integration |
-| Testing | Vitest + Playwright | 104 unit/integration tests, 18 declared E2E scenarios |
+| Testing | Vitest + Playwright | 120 unit/integration tests, 27 declared E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -55,7 +55,7 @@ Renderer (React/Vite)          Preload Bridge              Main (Electron/Node)
 - **Security**: `contextIsolation: true`, `nodeIntegration: false` — never change these
 - **Custom protocols**: `shipit-evidence://` and `shipit-sfx://` for safe file serving from userData
 
-### IPC Handlers (54 invoke handlers + 4 renderer events)
+### IPC Handlers (57 invoke handlers + 4 renderer events)
 
 | Group | Prefix | Key Handlers |
 |-------|--------|-------------|
@@ -70,7 +70,7 @@ Renderer (React/Vite)          Preload Bridge              Main (Electron/Node)
 | Sounds | `app:` | `listSounds`, `playSound` |
 | Auto-launch | `app:` | `getAutoLaunch`, `setAutoLaunch` |
 | Alerts | `db:` | `getAlert`, `saveAlert` |
-| Auto-update | `app:` | `checkForUpdate`, `installUpdate` |
+| Auto-update | `app:` | `getUpdateState`, `checkForUpdate`, `downloadUpdate`, `installUpdate`, `acknowledgeUpdateAttention` |
 | Renderer events | `app:` / `window:` | `playSoundData`, `updateStatus`, `navigate`, `maximized-change` |
 | Window | `window:` | `minimize`, `maximize`, `close`, `isMaximized` |
 
@@ -144,14 +144,14 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 ```
 electron/                   # Main process (CommonJS)
   main.ts                   # App lifecycle, IPC handlers, schedulers, tray
-  preload.ts                # contextBridge API (54 invoke handlers + 4 event subscriptions)
+  preload.ts                # contextBridge API (57 invoke handlers + 4 event subscriptions)
   database.ts               # DataSource, CRUD, soft-delete, search
   report-generator.ts       # DOCX generation (JSZip + xmldom)
   entities/                 # TypeORM entity definitions (6 files)
 src/                        # Renderer (ESNext, Vite)
   pages/                    # 9 page files / 9 routed views (including UserManualPage)
-  components/               # 17 reusable components (ActivityBar, ActivityNav, AppLayout, AppTopMenu, DatePicker, EmptyState, EvidenceLightbox, EvidenceUpload, Header, SearchBar, Select, Skeleton, TextEvidenceEditor, TextEvidenceModal, ThemeSelector, TimePicker, TitleBar)
-  contexts/                 # ThemeContext + NavigationHistoryContext
+  components/               # 19 reusable components (ActivityBar, ActivityNav, AppLayout, AppTopMenu, DatePicker, EmptyState, EvidenceLightbox, EvidenceUpload, Header, SearchBar, Select, Skeleton, TextEvidenceEditor, TextEvidenceModal, ThemeSelector, TimePicker, TitleBar, UpdateModal, UpdateStatusPanel)
+  contexts/                 # ThemeContext + NavigationHistoryContext + UpdateStateContext
   menu/                     # appMenuCatalog + saveContextRegistry
   services/                 # localDb.ts (browser fallback)
   themes/                   # Theme system (themes.ts registry, themes.css palettes, cyberpunk-effects.css)
@@ -196,4 +196,4 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** through Phase 23: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 104 Vitest tests, 18 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Auto-update, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, and chronological activity ordering. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.
+All core phases are **complete** through Phase 26: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 120 Vitest tests across 10 files, 27 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, and **manual update flow** (consent-based check/download/install with attention badges and persisted state). Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.

@@ -37,9 +37,9 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm test`         | Executa 104 testes unitários e de integração (Vitest) |
+| `npm test`         | Executa 120 testes unitários e de integração (Vitest, 10 arquivos)   |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 25 cenários end-to-end com Playwright/Electron |
+| `npm run test:e2e` | Executa 27 cenários end-to-end com Playwright/Electron |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
 
 ---
@@ -126,6 +126,8 @@ shipit/
 │   ├── database.ts            # DataSource, CRUD, queries
 │   ├── preload.ts             # Context bridge (contextIsolation)
 │   ├── report-generator.ts    # Motor de geração DOCX
+│   ├── runtime-paths.ts       # Identidade runtime, userData e assets
+│   ├── update-notifications.ts # Auto-update testável (electron-updater)
 │   └── entities/              # Entidades TypeORM
 │       ├── UserProfile.ts
 │       ├── Activity.ts
@@ -155,7 +157,9 @@ shipit/
 │   │   ├─ TextEvidenceModal.tsx
 │   │   ├─ ThemeSelector.tsx
 │   │   ├─ TimePicker.tsx
-│   │   └─ TitleBar.tsx
+│   │   ├─ TitleBar.tsx
+│   │   ├─ UpdateModal.tsx
+│   │   └─ UpdateStatusPanel.tsx
 │   ├── pages/                 # Páginas/rotas
 │   │   ├── HomePage.tsx       # Router → Dashboard ou EmptyState
 │   │   ├── DashboardPage.tsx  # Resumo mensal + Gantt
@@ -168,7 +172,8 @@ shipit/
 │   │   └── UserManualPage.tsx # Manual e ajuda
 │   ├── contexts/
 │   │   ├── ThemeContext.tsx    # 11 temas visuais
-│   │   └── NavigationHistoryContext.tsx # Histórico global da navegação
+│   │   ├── NavigationHistoryContext.tsx # Histórico global da navegação
+│   │   └── UpdateStateContext.tsx       # Estado do fluxo manual de atualização
 │   ├── menu/
 │   │   ├── appMenuCatalog.ts   # Catálogo de comandos/atalhos do menu
 │   │   └── saveContextRegistry.ts # Save-context para Ctrl+S/menu
@@ -309,12 +314,13 @@ Cada job executa: `npm ci` → `npm test` (gate) → `npm run build` → `electr
 
 ### Auto-Update (`electron-updater`)
 
-Em builds empacotados (`app.isPackaged`), o app verifica atualizações automaticamente ao iniciar:
+Em builds empacotados (`app.isPackaged`), o app **verifica** atualizações automaticamente ao iniciar, mas o download e a instalação dependem de consentimento explícito do usuário (a partir da v1.3.6):
 
 1. Consulta o `latest*.yml` correspondente à plataforma no GitHub Releases
-2. Se houver versão mais recente, baixa automaticamente em background
-3. Notifica o usuário via `Notification` nativa ("Atualização disponível" / "Atualização pronta")
-4. Instala ao reiniciar o app — **não força restart**
+2. Se houver versão mais recente, exibe badges na TitleBar/menu lateral e modal opt-in (sem download automático)
+3. Em **Configurações → Atualizações**, o usuário pode verificar, baixar (com progresso) e instalar manualmente
+4. O estado da atualização persiste entre reinicializações até a instalação
+5. Instalação aplicada ao reiniciar o app — **não força restart**
 
 ### Pré-requisitos
 
@@ -326,7 +332,7 @@ Em builds empacotados (`app.isPackaged`), o app verifica atualizações automati
 
 - **Sem code signing**: macOS pede "Abrir mesmo assim" manualmente; Windows pode exibir SmartScreen
 - **Minutes do GitHub Actions**: macOS consome 10x mais minutos. Free tier = 2000 min/mês
-- **Testes como gate**: se os 104 testes Vitest falharem, o build não é publicado
+- **Testes como gate**: se os 120 testes Vitest falharem, o build não é publicado
 
 ---
 
