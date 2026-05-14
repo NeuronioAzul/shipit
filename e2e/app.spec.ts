@@ -622,10 +622,12 @@ test('runs help menu actions for manual and report issue', async () => {
     await expect(page.locator('#sidebar-about-modal')).toHaveCount(0)
 
     await clickMenuCommand('help', 'help.check-updates')
-    await page.waitForURL(/#\/settings$/)
-    // Under the E2E fake updater the panel exposes the real button instead of
-    // the dev-mode fallback message.
-    await expect(page.locator('#settings-update-btn-check')).toBeVisible({ timeout: 5_000 })
+    // help.check-updates opens the titlebar update modal instead of navigating.
+    const updateModal = page.locator('#titlebar-update-modal')
+    await expect(updateModal).toBeVisible({ timeout: 5_000 })
+    await expect(updateModal.locator('#update-modal-btn-check')).toBeVisible({ timeout: 5_000 })
+    await page.keyboard.press('Escape')
+    await expect(updateModal).toHaveCount(0, { timeout: 5_000 })
 
     await page.click('#titlebar-menu-btn-help')
     await page.click('#titlebar-menu-item-help-user-manual')
@@ -664,7 +666,7 @@ test('runs help menu actions for manual and report issue', async () => {
       globalState.__shipitRestoreOpenExternal?.()
       delete globalState.__shipitRestoreOpenExternal
       delete globalState.__shipitOpenExternalCalls
-    })
+    }).catch(() => { /* main process may already be torn down on timeout */ })
   }
 })
 
