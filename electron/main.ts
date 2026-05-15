@@ -252,15 +252,18 @@ function savePersistedUpdateState(state: PersistedUpdateState): PersistedUpdateS
 }
 
 function buildInitialUpdateState(persistedState: PersistedUpdateState): UpdateStatusData {
-  if (!app.isPackaged) {
+  if (!app.isPackaged && !isE2EFakeUpdaterEnabled) {
     return { status: 'dev', attentionVisible: false }
   }
 
+  // `downloadedVersion` foi salvo numa sessão anterior. Ao reiniciar,
+  // electron-updater perde o caminho do arquivo em memória — quitAndInstall()
+  // falharia com "No update filepath provided". Degrada para `available` para
+  // o usuário re-baixar e então instalar com segurança.
   if (persistedState.downloadedVersion) {
     return {
-      status: 'downloaded',
+      status: 'available',
       version: persistedState.downloadedVersion,
-      progress: 100,
       attentionVisible: persistedState.downloadedVersion !== persistedState.acknowledgedVersion,
     }
   }
@@ -643,6 +646,16 @@ app.whenReady().then(async () => {
     } else {
       ;(globalThis as typeof globalThis & { __shipitResetUpdateService?: () => void }).__shipitResetUpdateService = () => {
         service.resetForTests()
+      }
+      ;(globalThis as typeof globalThis & {
+        __shipitSimulateRestart?: () => UpdateStatusData
+      }).__shipitSimulateRestart = () => {
+        // Simulates an app restart for E2E: drops the cached service so the
+        // next access re-reads persisted state via buildInitialUpdateState.
+        updateService = null
+        const next = getUpdateService()
+        broadcastUpdateState(next.getCurrentState(), { persist: false })
+        return next.getCurrentState()
       }
     }
   }

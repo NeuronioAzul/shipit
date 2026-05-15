@@ -298,6 +298,35 @@ describe('update notification service', () => {
     })
   })
 
+  it('catches quitAndInstall error and broadcasts available state', () => {
+    const updater = new FakeAutoUpdater()
+    updater.quitAndInstall = vi.fn(() => {
+      throw new Error('No update filepath provided, can\'t quit and install')
+    })
+    const { service, statuses } = createService({
+      updater,
+      initialState: { status: 'downloaded', version: '1.3.7', progress: 100, attentionVisible: true },
+    })
+
+    service.installUpdate()
+
+    expect(updater.quitAndInstall).toHaveBeenCalledTimes(1)
+    expect(statuses).toEqual([
+      {
+        status: 'available',
+        version: '1.3.7',
+        error: 'No update filepath provided, can\'t quit and install',
+        attentionVisible: true,
+      },
+    ])
+    expect(service.getCurrentState()).toEqual({
+      status: 'available',
+      version: '1.3.7',
+      error: 'No update filepath provided, can\'t quit and install',
+      attentionVisible: true,
+    })
+  })
+
   it('returns dev status without checking remote updates outside packaged builds', async () => {
     const { updater, statuses, service } = createService({ isPackaged: false })
 
