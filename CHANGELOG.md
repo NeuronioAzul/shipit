@@ -8,6 +8,14 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ---
 
 
+## [1.5.1] — 2026-05-15
+
+### Corrigido
+
+- O estado de atualização agora é restaurado com mais segurança após reiniciar o aplicativo. Quando havia uma versão marcada como baixada em sessão anterior, o ShipIt! passa a tratá-la como **disponível** para novo download, evitando a falha `No update filepath provided` ao tentar instalar.
+- A persistência do estado de atualização foi refinada para manter os indicadores de atenção e a versão pendente consistentes entre reinicializações.
+
+
 ## [1.5.0] — 2026-05-14
 
 ### Adicionado
