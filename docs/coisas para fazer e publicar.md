@@ -2,13 +2,10 @@
 
 SHIPIT!  
 
-Quando atualizei o ShipIt! algumas coisas indesejadas aconteceram:
 
-- Analise e veja o que houve. A pasta de instalação mudou de "C:\Users\mauro\AppData\Roaming\shipit" para "C:\Users\mauro\AppData\Roaming\ShipIt!", e isso fez com que o aplicativo não reconhecesse a instalação anterior, e criasse uma nova instalação, e os dados que estão na pasta anterior não estão sendo reconhecidos. configure o instalador para usar a pasta "C:\Users\mauro\AppData\Roaming\shipit" para manter a compatibilidade com a instalação anterior, e para que os dados sejam mantidos e reconhecidos corretamente, e também para evitar que os usuários tenham problemas com a atualização do aplicativo, e quando usar em desenvolvimento `npm run dev` use a pasta "C:\Users\mauro\AppData\Roaming\ShipIt!".
-
-fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros relacionados, porque está carregando um electron como se estivesse instalado iniciando com o windows. pode ser problema na opção iniciar ocm o windows que está marcada em desenvolvimento, ou pode ser algum resquício da instalação anterior que está causando esse problema, para resolver isso, preciso desinstalar completamente o ShipIt! de desenvolvimento, removendo todos os arquivos e registros relacionados, para garantir que o aplicativo seja limpo e organizado, e para evitar que o lixo da instalação anterior cause problemas no desenvolvimento e testes do aplicativo.
 
 ## New features
+
 
 - 🔴 fix: os links de referência não estão sendo incluídos no documento.
 
@@ -220,9 +217,13 @@ Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! insta
 
 - feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
 
------------------------------------------------------------
+## fix: last update
+Quando atualizei o ShipIt! algumas coisas indesejadas aconteceram:
 
-## Fazendo
+- Analise e veja o que houve. A pasta de instalação mudou de "C:\Users\mauro\AppData\Roaming\shipit" para "C:\Users\mauro\AppData\Roaming\ShipIt!", e isso fez com que o aplicativo não reconhecesse a instalação anterior, e criasse uma nova instalação, e os dados que estão na pasta anterior não estão sendo reconhecidos. configure o instalador para usar a pasta "C:\Users\mauro\AppData\Roaming\shipit" para manter a compatibilidade com a instalação anterior, e para que os dados sejam mantidos e reconhecidos corretamente, e também para evitar que os usuários tenham problemas com a atualização do aplicativo, e quando usar em desenvolvimento `npm run dev` use a pasta "C:\Users\mauro\AppData\Roaming\ShipIt!".
+
+fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros relacionados, porque está carregando um electron como se estivesse instalado iniciando com o windows. pode ser problema na opção iniciar ocm o windows que está marcada em desenvolvimento, ou pode ser algum resquício da instalação anterior que está causando esse problema, para resolver isso, preciso desinstalar completamente o ShipIt! de desenvolvimento, removendo todos os arquivos e registros relacionados, para garantir que o aplicativo seja limpo e organizado, e para evitar que o lixo da instalação anterior cause problemas no desenvolvimento e testes do aplicativo.
+
 
 ## New features for the next release 1.5.0
 
@@ -230,3 +231,14 @@ Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! insta
   - Disponibilidade Diária `{{daily_availability}}`
   - Disponibilidade Mensal `{{monthly_availability}}`
   - Esforço Mínimo em Horas: `{{minimum_effort_hours}}`
+
+
+-----------------------------------------------------------
+
+## Fazendo
+
+- 🔴 fix: ao tentar instalar a ultima versão da atualização do app que fiz download, apareceu uma mensagem de erro: `Erro: No update filepath provided, can't quit and install`
+  - Eu fiz o download da atualização
+  - Encerrei o aplicativo completamente
+  - Abri o aplicativo novamente ainda sem instalar a atualização
+  - Ao clicar no botão para instalar a atualização, apareceu a mensagem de erro: `Erro: No update filepath provided, can't quit and install`
