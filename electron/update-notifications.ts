@@ -372,7 +372,18 @@ export function createUpdateService(options: UpdateServiceOptions): UpdateServic
   }
 
   function installUpdate(): void {
-    options.autoUpdater.quitAndInstall()
+    try {
+      options.autoUpdater.quitAndInstall()
+    } catch (error) {
+      // Ocorre quando o app é reiniciado antes de instalar: electron-updater
+      // perde o caminho do arquivo em memória. Degrada para `available` para
+      // que o usuário possa fazer o download novamente.
+      sendStatus(createState('available', {
+        version: currentState.version,
+        error: getErrorMessage(error),
+        attentionVisible: currentState.attentionVisible,
+      }))
+    }
   }
 
   function getCurrentState(): UpdateStatusData {

@@ -1231,6 +1231,38 @@ test('regression: silent resolution with no remote version settles to not-availa
   await expect(page.locator('#settings-update-btn-check')).toBeEnabled()
 })
 
+test('regression: shows download button (not install) when restarting with stale downloaded state', async () => {
+  // Use a version above Electron's runtime version (app.getVersion() returns
+  // Electron's version in unpackaged builds, and normalizePersistedUpdateState
+  // strips any stored version <= installed).
+  const FUTURE_VERSION = '999.0.0'
+  await resetFakeUpdater()
+  await configureFakeUpdaterCheck({ outcome: 'available', version: FUTURE_VERSION })
+  await configureFakeUpdaterDownload({ outcome: 'downloaded', version: FUTURE_VERSION, progress: [50, 100] })
+  await openUpdateSection()
+
+  await page.locator('#settings-update-btn-check').click()
+  const downloadButton = page.locator('#settings-update-btn-download')
+  await expect(downloadButton).toBeVisible({ timeout: 5_000 })
+  await downloadButton.click()
+  await expect(page.locator('#settings-update-btn-install')).toBeVisible({ timeout: 5_000 })
+
+  // Simulate the app being restarted with the persisted `downloadedVersion`
+  // still set. electron-updater would have lost the in-memory filepath, so
+  // the UI must degrade to "Baixar atualização" instead of "Instalar agora".
+  const restoredState = await app.evaluate(() => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitSimulateRestart?: () => unknown
+    }
+    return globalState.__shipitSimulateRestart?.() ?? null
+  })
+  expect(restoredState).toMatchObject({ status: 'available', version: FUTURE_VERSION })
+
+  await expect(page.locator('#settings-update-btn-download')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#settings-update-btn-install')).toHaveCount(0)
+  await expect(page.locator('#settings-update-status')).toContainText(`Versão ${FUTURE_VERSION} pronta para download.`)
+})
+
 test('routes quit menu command through Electron without ending the suite', async () => {
   await app.evaluate(({ app }) => {
     const globalState = globalThis as typeof globalThis & {
