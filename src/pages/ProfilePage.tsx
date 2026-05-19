@@ -489,13 +489,6 @@ export function ProfilePage() {
         </div>
 
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Disponibilidade e esforço</h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Esses valores são usados na geração do relatório DOCX.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label htmlFor="daily_availability" className={labelClass}>
