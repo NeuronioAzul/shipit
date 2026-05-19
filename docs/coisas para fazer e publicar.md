@@ -231,14 +231,13 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
   - Disponibilidade Mensal `{{monthly_availability}}`
   - Esforço Mínimo em Horas: `{{minimum_effort_hours}}`
 
-
-## Fazendo
-
 - 🔴 fix: ao tentar instalar a ultima versão da atualização do app que fiz download, apareceu uma mensagem de erro: `Erro: No update filepath provided, can't quit and install`
   - Eu fiz o download da atualização
   - Encerrei o aplicativo completamente
   - Abri o aplicativo novamente ainda sem instalar a atualização
   - Ao clicar no botão para instalar a atualização, apareceu a mensagem de erro: `Erro: No update filepath provided, can't quit and install`
+
+## Fazendo
 
 -----------------------------------------------------------
 
