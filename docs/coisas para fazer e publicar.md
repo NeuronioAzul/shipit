@@ -7,7 +7,6 @@ SHIPIT!
 ## New features
 
 
-- 🔴 fix: os links de referência não estão sendo incluídos no documento.
 
 - 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
 
@@ -232,13 +231,18 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
   - Disponibilidade Mensal `{{monthly_availability}}`
   - Esforço Mínimo em Horas: `{{minimum_effort_hours}}`
 
-
------------------------------------------------------------
-
-## Fazendo
-
 - 🔴 fix: ao tentar instalar a ultima versão da atualização do app que fiz download, apareceu uma mensagem de erro: `Erro: No update filepath provided, can't quit and install`
   - Eu fiz o download da atualização
   - Encerrei o aplicativo completamente
   - Abri o aplicativo novamente ainda sem instalar a atualização
   - Ao clicar no botão para instalar a atualização, apareceu a mensagem de erro: `Erro: No update filepath provided, can't quit and install`
+
+## Fazendo
+
+-----------------------------------------------------------
+
+- 🔴 fix: os links de referência não estão sendo incluídos no documento.
+  - No mesmo lugar onde são colocadas as referencias com as páginas para as evidências, também é colocado junto os links que foram adicionados um por linha no campo `Links de Referência`
+  - Esses links precisam ser clicáveis no documento, para que os usuários possam acessar facilmente as referências relacionadas às atividades. não exiba o link url inteira porque ficaria muito grande para o espaço determinado, exiba apenas o nome link, por exemplo, link 01, link 02, etc, e quando o usuário clicar no nome do link, ele deve ser redirecionado para a url correspondente.
+  - Abaixo dos links pulando linha do ultimo link, exiba as referências das evidências com as páginas como já é feito hoje.
+

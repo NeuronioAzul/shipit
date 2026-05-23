@@ -352,4 +352,86 @@ describe('generateDocxReport', () => {
     expect(docXml).toContain('Bold note')
     expect(docXml).toContain('italic')
   })
+
+  it('renders clickable reference links even when activity has no evidences', async () => {
+    const activity = makeActivity({
+      link_ref: 'https://jira.example.com/browse/SHIP-31\nhttps://gitlab.example.com/merge_requests/99',
+    })
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [activity],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+    const relsXml = await zip.file('word/_rels/document.xml.rels')!.async('string')
+
+    expect(docXml).toContain('link 01')
+    expect(docXml).toContain('link 02')
+    expect(docXml).toContain('<w:hyperlink')
+    expect(docXml).not.toContain('https://jira.example.com/browse/SHIP-31')
+    expect(docXml).not.toContain('https://gitlab.example.com/merge_requests/99')
+    expect(relsXml).toContain('Target="https://jira.example.com/browse/SHIP-31"')
+    expect(relsXml).toContain('Target="https://gitlab.example.com/merge_requests/99"')
+    expect(relsXml).toContain('TargetMode="External"')
+  })
+
+  it('renders reference links before evidence page references', async () => {
+    const pngHeader = Buffer.from([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE,
+      0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54,
+      0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01,
+      0xE2, 0x21, 0xBC, 0x33,
+      0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44,
+      0xAE, 0x42, 0x60, 0x82,
+    ])
+
+    const imgPath = path.join(outDir, 'test-evidence-with-links.png')
+    fs.writeFileSync(imgPath, pngHeader)
+
+    const activity = makeActivity({
+      link_ref: 'https://docs.example.com/spec\n\nhttps://tracker.example.com/issue/31',
+      evidences: [{
+        id: '019746ab-0000-7000-8000-ev0000000003',
+        activity_id: '019746ab-0000-7000-8000-000000000001',
+        file_path: imgPath,
+        type: 'image' as any,
+        text_content: null,
+        caption: 'Evidência com links',
+        sort_index: 0,
+        date_added: new Date(),
+        deleted_at: null,
+        activity: null as any,
+      }],
+    })
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [activity],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    const firstLinkIndex = docXml.indexOf('link 01')
+    const pageLabelIndex = docXml.indexOf('Página ')
+    const blankLineIndex = docXml.indexOf('<w:br/>', firstLinkIndex)
+
+    expect(firstLinkIndex).toBeGreaterThan(-1)
+    expect(pageLabelIndex).toBeGreaterThan(firstLinkIndex)
+    expect(blankLineIndex).toBeGreaterThan(firstLinkIndex)
+    expect(docXml).toContain('PAGEREF ev_019746ab000070008000000000000001_0')
+  })
 })
