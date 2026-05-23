@@ -4,7 +4,7 @@
 ShipIt — Script Automatizado de Release (Python)
 
 Automatiza o fluxo completo de release:
-  validar ambiente → commit → CHANGELOG via Copilot CLI → bump version →
+  validar ambiente → commit → bump version → CHANGELOG via Copilot CLI →
   push → PR (dev → main) → squash merge → tag → aguardar draft → aguardar workflow →
   validar assets → publicar release
 
@@ -12,6 +12,7 @@ Uso:
   python docs/scripts/release.py                          # Modo interativo
   python docs/scripts/release.py --version 1.3.0          # Versão específica
   python docs/scripts/release.py --dry-run                # Simulação sem executar
+  python docs/scripts/release.py --resume-from tag --version 1.5.2    # Retomar a partir da tag
   python docs/scripts/release.py --skip-changelog          # Pular geração de changelog
   python docs/scripts/release.py --skip-commit             # Pular commit de mudanças pendentes
   python docs/scripts/release.py --skip-pull-request       # Retomar após PR já mergeado
@@ -27,7 +28,10 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
+import textwrap
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -51,6 +55,8 @@ COMMIT_DIFF_PER_FILE_MAX_CHARS = 3000
 COPILOT_TIMEOUT_SECONDS = 90
 CHANGELOG_COMMIT_LIMIT = 40
 CHANGELOG_COMMITS_MAX_CHARS = 6000
+RESUME_CHECKPOINTS = ("tag", "draft", "workflow", "publish")
+WORKTREE_WARNING_TEXT = "NAO SALVE NADA ATE O SCRIPT TERMINAR"
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -66,6 +72,7 @@ class Colors:
     MAGENTA = "\033[0;35m"
     NC = "\033[0m"
     BOLD = "\033[1m"
+    BLINK = "\033[5m"
 
 
 def supports_color() -> bool:
@@ -78,6 +85,15 @@ def supports_color() -> bool:
 
 
 USE_COLOR = supports_color()
+
+
+def supports_blink() -> bool:
+    """Verifica se o terminal provavelmente suporta blink ANSI."""
+    if not USE_COLOR:
+        return False
+    if sys.platform == "win32":
+        return False
+    return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
 def _c(color: str, text: str) -> str:
@@ -465,6 +481,288 @@ def copilot_prompt(
         for line in stderr_excerpt:
             print(f"  {_c(Colors.YELLOW, '│')} {line}")
     return None
+
+
+def _get_current_branch_name() -> str:
+    """Obtém o nome da branch atual para mensagens de recuperação."""
+    result = run_cmd(["git", "branch", "--show-current"], check=False)
+    branch = result.stdout.strip()
+    return branch or "(desconhecida)"
+
+
+def _summarize_worktree_changes() -> dict[str, list[str]]:
+    """Resume staged, unstaged e untracked da worktree atual."""
+    result = run_cmd(
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+        check=False,
+    )
+    summary = {
+        "raw_lines": [],
+        "staged": [],
+        "unstaged": [],
+        "untracked": [],
+    }
+    if result.returncode != 0:
+        return summary
+
+    for raw_line in result.stdout.splitlines():
+        if not raw_line:
+            continue
+        summary["raw_lines"].append(raw_line)
+        if raw_line.startswith("?? "):
+            summary["untracked"].append(raw_line[3:])
+            continue
+        index_status = raw_line[0]
+        worktree_status = raw_line[1]
+        file_path = raw_line[3:]
+        if index_status != " ":
+            summary["staged"].append(file_path)
+        if worktree_status != " ":
+            summary["unstaged"].append(file_path)
+
+    return summary
+
+
+def _print_critical_worktree_warning() -> None:
+    """Exibe um aviso muito visível antes de guardar mudanças locais."""
+    banner = "!" * max(72, len(WORKTREE_WARNING_TEXT) + 12)
+    style = Colors.BOLD + Colors.RED
+    if supports_blink():
+        style += Colors.BLINK
+        banner_lines = [banner, f"!!! {WORKTREE_WARNING_TEXT} !!!", banner]
+    else:
+        banner_lines = [
+            banner,
+            banner,
+            f"!!! {WORKTREE_WARNING_TEXT} !!!",
+            banner,
+            banner,
+        ]
+
+    print()
+    for line in banner_lines:
+        print(_c(style, line))
+    print()
+
+
+def _write_recovery_metadata(metadata: dict[str, object]) -> str:
+    """Persiste metadados de recuperação em arquivo temporário."""
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        delete=False,
+        encoding="utf-8",
+        suffix=".json",
+        prefix="shipit-release-recovery-",
+    ) as temp_file:
+        json.dump(metadata, temp_file, ensure_ascii=False, indent=2)
+        temp_file.write("\n")
+        return temp_file.name
+
+
+def _resolve_stash_reference(expected_message: str) -> tuple[str | None, str | None]:
+    """Localiza a referência e o commit do stash recém-criado."""
+    result = run_cmd(
+        ["git", "stash", "list", "--format=%gd%x09%gs", "-n", "1"],
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return None, None
+
+    first_line = result.stdout.splitlines()[0]
+    parts = first_line.split("\t", 1)
+    stash_ref = parts[0].strip()
+    stash_subject = parts[1].strip() if len(parts) > 1 else ""
+    if expected_message not in stash_subject:
+        return None, None
+
+    sha_result = run_cmd(["git", "rev-parse", stash_ref], check=False)
+    stash_commit = sha_result.stdout.strip() if sha_result.returncode == 0 else None
+    return stash_ref, stash_commit
+
+
+def _print_manual_stash_recovery(metadata: dict[str, object]) -> None:
+    """Imprime comandos prontos para restaurar manualmente o stash salvo."""
+    recovery_target = str(metadata.get("stash_commit") or metadata.get("stash_ref"))
+    print_info("Restauração manual disponível com os comandos abaixo:")
+    print(f"  git stash list --date=local")
+    print(f"  git stash show -p \"{recovery_target}\"")
+    print(f"  git stash apply --index \"{recovery_target}\"")
+
+
+def _stash_worktree_for_git_region(reason: str) -> dict[str, object] | None:
+    """Guarda staged/unstaged/untracked antes de operações Git sensíveis."""
+    summary = _summarize_worktree_changes()
+    if not summary["raw_lines"]:
+        return None
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    current_branch = _get_current_branch_name()
+    stash_message = f"shipit-release-safeguard-{timestamp}-{reason}"
+
+    _print_critical_worktree_warning()
+    print_warning(
+        "Mudanças locais detectadas antes de uma operação Git que exige worktree limpa."
+    )
+    print_warning(
+        "As alterações serão guardadas temporariamente em um stash nomeado e restauradas ao final."
+    )
+    print_info(f"Branch atual: {current_branch}")
+    print_info(
+        "Resumo: "
+        f"staged={len(summary['staged'])}, "
+        f"unstaged={len(summary['unstaged'])}, "
+        f"untracked={len(summary['untracked'])}"
+    )
+    for line in summary["raw_lines"][:10]:
+        print(f"  {line}")
+    omitted = len(summary["raw_lines"]) - min(len(summary["raw_lines"]), 10)
+    if omitted > 0:
+        print(f"  ... (+{omitted} arquivo(s))")
+
+    run_cmd(["git", "stash", "push", "-u", "-m", stash_message])
+    stash_ref, stash_commit = _resolve_stash_reference(stash_message)
+    if not stash_ref:
+        print_error("Não foi possível localizar o stash de proteção recém-criado.")
+        sys.exit(1)
+
+    recovery_metadata: dict[str, object] = {
+        "timestamp": datetime.now().isoformat(),
+        "reason": reason,
+        "branch": current_branch,
+        "stash_message": stash_message,
+        "stash_ref": stash_ref,
+        "stash_commit": stash_commit,
+        "worktree": summary,
+    }
+    recovery_file = _write_recovery_metadata(recovery_metadata)
+    recovery_metadata["recovery_file"] = recovery_file
+
+    print_success(f"Mudanças locais guardadas em {stash_ref}.")
+    print_info(f"Arquivo de recuperação: {recovery_file}")
+    print_warning("Nao salve novos arquivos ate a restauracao automatica terminar.")
+    return recovery_metadata
+
+
+def _restore_stashed_worktree(metadata: dict[str, object]) -> None:
+    """Restaura automaticamente o stash salvo; mantém o stash se a restauração falhar."""
+    stash_ref = str(metadata["stash_ref"])
+    apply_target = str(metadata.get("stash_commit") or stash_ref)
+
+    print_step("Restaurando mudanças locais guardadas...")
+    apply_result = run_cmd(
+        ["git", "stash", "apply", "--index", apply_target],
+        check=False,
+    )
+    if apply_result.returncode != 0:
+        error_msg = (apply_result.stderr or apply_result.stdout).strip()
+        print_error(
+            f"Falha ao restaurar automaticamente as mudanças locais: {error_msg}"
+        )
+        print_warning("O stash de proteção foi preservado para restauração manual.")
+        recovery_file = metadata.get("recovery_file")
+        if recovery_file:
+            print_info(f"Arquivo de recuperação: {recovery_file}")
+        _print_manual_stash_recovery(metadata)
+        sys.exit(1)
+
+    drop_result = run_cmd(["git", "stash", "drop", stash_ref], check=False)
+    if drop_result.returncode != 0:
+        error_msg = (drop_result.stderr or drop_result.stdout).strip()
+        print_warning(
+            "As mudanças foram restauradas, mas o stash de proteção nao foi removido. "
+            f"Remova manualmente se desejar: {error_msg}"
+        )
+    print_success("Mudanças locais restauradas com sucesso.")
+
+
+def _run_git_region_with_worktree_safeguard(
+    reason: str,
+    git_region: Callable[[], None],
+    dry_run: bool,
+) -> None:
+    """Executa uma região Git sensível protegendo a worktree quando necessário."""
+    if dry_run:
+        git_region()
+        return
+
+    recovery_metadata = _stash_worktree_for_git_region(reason)
+    try:
+        git_region()
+    except Exception:
+        if recovery_metadata is not None:
+            print_warning(
+                "A operacao protegida falhou; o stash de protecao foi mantido intacto."
+            )
+            recovery_file = recovery_metadata.get("recovery_file")
+            if recovery_file:
+                print_info(f"Arquivo de recuperação: {recovery_file}")
+            _print_manual_stash_recovery(recovery_metadata)
+        raise
+
+    if recovery_metadata is not None:
+        _restore_stashed_worktree(recovery_metadata)
+
+
+def _print_release_summary(
+    version: str,
+    workflow_summary: dict | None,
+    release_data: dict | None,
+) -> None:
+    """Imprime o resumo final da release, independente do checkpoint de entrada."""
+    print_header("Release Concluída!")
+    print_success(f"Versão: v{version}")
+    if release_data:
+        assets = release_data.get("assets", []) or []
+        url = release_data.get("url", "")
+        is_draft = bool(release_data.get("isDraft"))
+        status_label = "draft" if is_draft else "published"
+        print_info(f"Status no momento da validação: {status_label}")
+        print_info(f"Assets anexados: {len(assets)}")
+        for asset in assets:
+            name = asset.get("name", "?")
+            print(f"  • {name}")
+        if url:
+            print_info(f"Release URL: {url}")
+    if workflow_summary and workflow_summary.get("url"):
+        print_info(f"Workflow run:  {workflow_summary['url']}")
+    print_success("Todos os passos concluídos com sucesso.")
+    print()
+
+
+def run_release_from_checkpoint(
+    version: str,
+    checkpoint: str,
+    dry_run: bool,
+    ci_timeout: int,
+    skip_asset_validation: bool,
+) -> tuple[dict | None, dict | None]:
+    """Retoma a release a partir de um checkpoint explícito."""
+    print_info(f"Retomando release v{version} a partir do checkpoint '{checkpoint}'.")
+
+    workflow_summary: dict | None = None
+    release_data: dict | None = None
+
+    if checkpoint == "tag":
+        verify_release_on_main(version, dry_run)
+        create_and_push_tag(version, dry_run)
+
+    if checkpoint in ("tag", "draft"):
+        wait_for_draft_release(version, dry_run)
+
+    if checkpoint in ("tag", "draft", "workflow"):
+        workflow_summary = wait_for_release_workflow_completion(
+            version,
+            ci_timeout,
+            dry_run,
+        )
+
+    release_data = validate_release_assets(
+        version,
+        skip_asset_validation,
+        dry_run,
+    )
+    publish_release(version, dry_run)
+    return workflow_summary, release_data
 
 
 # ================================================================================================
@@ -1291,25 +1589,32 @@ def create_and_push_tag(version: str, dry_run: bool) -> None:
         print_dry_run("Faria: git checkout dev && git merge main")
         return
 
-    # Checkout main e pull
-    print_step("Atualizando branch main...")
-    run_cmd(["git", "checkout", "main"])
-    run_cmd(["git", "pull", "origin", "main"])
+    def _tag_sync_region() -> None:
+        # Checkout main e pull
+        print_step("Atualizando branch main...")
+        run_cmd(["git", "checkout", "main"])
+        run_cmd(["git", "pull", "origin", "main"])
 
-    # Criar tag
-    print_step(f"Criando tag {tag_name}...")
-    run_cmd(["git", "tag", "-a", tag_name, "-m", f"Release {tag_name}"])
-    run_cmd(["git", "push", "origin", tag_name])
-    print_success(f"Tag {tag_name} criada e enviada.")
+        # Criar tag
+        print_step(f"Criando tag {tag_name}...")
+        run_cmd(["git", "tag", "-a", tag_name, "-m", f"Release {tag_name}"])
+        run_cmd(["git", "push", "origin", tag_name])
+        print_success(f"Tag {tag_name} criada e enviada.")
 
-    # Sincronizar dev com main
-    print_step("Sincronizando dev com main...")
-    run_cmd(["git", "checkout", "dev"])
-    run_cmd(
-        ["git", "merge", "main", "-m", f"chore: sync dev with main after {tag_name}"]
+        # Sincronizar dev com main
+        print_step("Sincronizando dev com main...")
+        run_cmd(["git", "checkout", "dev"])
+        run_cmd(
+            ["git", "merge", "main", "-m", f"chore: sync dev with main after {tag_name}"]
+        )
+        run_cmd(["git", "push", "origin", "dev"])
+        print_success("Branch dev sincronizada com main.")
+
+    _run_git_region_with_worktree_safeguard(
+        reason="step9-tag-sync",
+        git_region=_tag_sync_region,
+        dry_run=dry_run,
     )
-    run_cmd(["git", "push", "origin", "dev"])
-    print_success("Branch dev sincronizada com main.")
 
 
 # ================================================================================================
@@ -1721,16 +2026,20 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="ShipIt — Script Automatizado de Release",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Exemplos:
-  python release.py                    Modo interativo
-  python release.py --version 1.3.0    Versão específica
-  python release.py --dry-run          Simulação sem executar
-  python release.py --skip-changelog   Pular geração de changelog
-  python release.py --skip-commit      Pular commit de pendências
-  python release.py --skip-pull-request
-                                      Retomar após PR já mergeado em main
-        """,
+        epilog=textwrap.dedent(
+            """
+            Exemplos:
+              python release.py                    Modo interativo
+              python release.py --version 1.3.0    Versão específica
+              python release.py --dry-run          Simulação sem executar
+              python release.py --resume-from tag --version 1.5.2
+                                                  Retomar a partir da criação da tag
+              python release.py --skip-changelog   Pular geração de changelog
+              python release.py --skip-commit      Pular commit de pendências
+              python release.py --skip-pull-request
+                                                  Retomar após PR já mergeado em main
+            """
+        ).strip(),
     )
     parser.add_argument(
         "--version",
@@ -1743,6 +2052,16 @@ Exemplos:
         "--dry-run",
         action="store_true",
         help="Simula todos os passos sem executar comandos destrutivos.",
+    )
+    parser.add_argument(
+        "--resume-from",
+        choices=RESUME_CHECKPOINTS,
+        default="",
+        help=(
+            "Retoma a release a partir de um checkpoint explícito "
+            f"({', '.join(RESUME_CHECKPOINTS)}). Requer --version e não pode ser "
+            "combinado com --skip-commit, --skip-changelog ou --skip-pull-request."
+        ),
     )
     parser.add_argument(
         "--skip-changelog",
@@ -1779,7 +2098,31 @@ Exemplos:
         action="store_true",
         help="Pula a validação de assets antes de publicar (uso emergencial).",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.version:
+        args.version = args.version.lstrip("v")
+        if not validate_version(args.version):
+            parser.error("--version deve seguir o formato X.Y.Z.")
+
+    if args.resume_from:
+        if not args.version:
+            parser.error("--resume-from requer --version X.Y.Z.")
+        incompatible_flags = []
+        if args.skip_commit:
+            incompatible_flags.append("--skip-commit")
+        if args.skip_changelog:
+            incompatible_flags.append("--skip-changelog")
+        if args.skip_pull_request:
+            incompatible_flags.append("--skip-pull-request")
+        if incompatible_flags:
+            parser.error(
+                "--resume-from não pode ser combinado com "
+                + ", ".join(incompatible_flags)
+                + "."
+            )
+
+    return args
 
 
 def main() -> None:
@@ -1797,6 +2140,17 @@ def main() -> None:
             "Validação de ambiente falhou. Corrija os erros acima e tente novamente."
         )
         sys.exit(1)
+
+    if args.resume_from:
+        workflow_summary, release_data = run_release_from_checkpoint(
+            version=args.version,
+            checkpoint=args.resume_from,
+            dry_run=dry_run,
+            ci_timeout=args.ci_timeout,
+            skip_asset_validation=args.skip_asset_validation,
+        )
+        _print_release_summary(args.version, workflow_summary, release_data)
+        return
 
     # Step 2-3: Commit (condicional)
     if not args.skip_commit:
@@ -1843,26 +2197,7 @@ def main() -> None:
 
     # Step 13: Publicar release
     publish_release(version, dry_run)
-
-    # Resumo final
-    print_header("Release Concluída!")
-    print_success(f"Versão: v{version}")
-    if release_data:
-        assets = release_data.get("assets", []) or []
-        url = release_data.get("url", "")
-        is_draft = bool(release_data.get("isDraft"))
-        status_label = "draft" if is_draft else "published"
-        print_info(f"Status no momento da validação: {status_label}")
-        print_info(f"Assets anexados: {len(assets)}")
-        for asset in assets:
-            name = asset.get("name", "?")
-            print(f"  • {name}")
-        if url:
-            print_info(f"Release URL: {url}")
-    if workflow_summary and workflow_summary.get("url"):
-        print_info(f"Workflow run:  {workflow_summary['url']}")
-    print_success("Todos os passos concluídos com sucesso.")
-    print()
+    _print_release_summary(version, workflow_summary, release_data)
 
 
 if __name__ == "__main__":
