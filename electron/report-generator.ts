@@ -37,6 +37,11 @@ interface ProjectGroup {
   activities: Activity[]
 }
 
+interface ActivityReferenceContent {
+  bookmarks: string[]
+  links: string[]
+}
+
 // ─── Month names in Portuguese ───
 
 const MONTH_NAMES: Record<string, string> = {
@@ -208,6 +213,31 @@ function replaceTextInNode(node: any, search: string, replacement: string): void
 
 function cloneNode(node: Node): Node {
   return node.cloneNode(true)
+}
+
+function parseReferenceLinks(linkRef: string | null): string[] {
+  if (!linkRef) return []
+
+  return linkRef
+    .split(/\r?\n/)
+    .map((link) => link.trim())
+    .filter((link) => /^https?:\/\//i.test(link))
+}
+
+function addExternalHyperlinkRelationship(
+  relsDom: any,
+  target: string,
+  nextRId: number,
+): { rId: string; nextRId: number } {
+  const rId = `rId${nextRId}`
+  const relEl = relsDom.createElementNS(REL_NS, 'Relationship')
+  relEl.setAttribute('Id', rId)
+  relEl.setAttribute('Type', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink')
+  relEl.setAttribute('Target', target)
+  relEl.setAttribute('TargetMode', 'External')
+  relsDom.documentElement!.appendChild(relEl)
+
+  return { rId, nextRId: nextRId + 1 }
 }
 
 /** Ensure a table row has w:cantSplit to prevent it from breaking across pages */
@@ -461,7 +491,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   // Group activities and build rows
   const groups = groupByProject(activities)
   let actOrderGlobal = 0
-  const activityPageRefs: Map<string, string[]> = new Map() // activityId -> bookmark names
+  const activityReferences: Map<string, ActivityReferenceContent> = new Map()
 
   for (const group of groups) {
     // Clone and populate project row
@@ -491,8 +521,9 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
       for (let i = 0; i < evidences.length; i++) {
         bookmarks.push(`ev_${actIdClean}_${i}`)
       }
-      if (bookmarks.length > 0) {
-        activityPageRefs.set(act.id, bookmarks)
+      const links = parseReferenceLinks(act.link_ref)
+      if (bookmarks.length > 0 || links.length > 0) {
+        activityReferences.set(act.id, { bookmarks, links })
       }
     }
   }
@@ -525,6 +556,16 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
         }
       }
     }
+  }
+  const hyperlinkRelationshipIds = new Map<string, string>()
+  function getOrCreateHyperlinkRelationshipId(target: string): string {
+    const existingId = hyperlinkRelationshipIds.get(target)
+    if (existingId) return existingId
+
+    const relation = addExternalHyperlinkRelationship(relsDom, target, nextRId)
+    nextRId = relation.nextRId
+    hyperlinkRelationshipIds.set(target, relation.rId)
+    return relation.rId
   }
   let bookmarkIdCounter = 100
   let evidenceGlobalIdx = 0
@@ -606,15 +647,15 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
   // For each activity with evidences, fill the reference cell with bookmark-based PAGEREF fields
   // We know exactly which rows we appended: for each group, 1 project row + N activity rows
   // Row layout after header rows (0..2): [projRow, actRow, actRow, ..., projRow, actRow, ...]
-  if (activityPageRefs.size > 0) {
+  if (activityReferences.size > 0) {
     const updatedRows = sel('//w:tbl[3]/w:tr', doc as any) as any[]
     const headerRowCount = 3 // rows 0,1,2 are headers
     let rowOffset = headerRowCount
     for (const group of groups) {
       rowOffset++ // skip project scope row
       for (const act of group.activities) {
-        const bookmarks = activityPageRefs.get(act.id)
-        if (bookmarks && bookmarks.length > 0 && rowOffset < updatedRows.length) {
+        const referenceContent = activityReferences.get(act.id)
+        if (referenceContent && rowOffset < updatedRows.length) {
           const actRow = updatedRows[rowOffset]
           const cells = sel('./w:tc', actRow) as any[]
           // Reference cell is index 2 (0=order, 1=description, 2=reference, 3=start, 4=end, 5=status)
@@ -623,12 +664,21 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
             const refParas = sel('./w:p', refCell) as any[]
             if (refParas.length > 0) {
               const refPara = refParas[0]
-              const existingRuns = sel('./w:r', refPara) as any[]
-              existingRuns.forEach((run: any) => refPara.removeChild(run))
+              const childNodes = Array.from(refPara.childNodes)
+              childNodes.forEach((node: any) => {
+                if (node.localName !== 'pPr') {
+                  refPara.removeChild(node)
+                }
+              })
 
-              const pageRefXml = buildPageRefRuns(bookmarks)
+              const hyperlinkEntries = referenceContent.links.map((link, index) => ({
+                label: `link ${String(index + 1).padStart(2, '0')}`,
+                rId: getOrCreateHyperlinkRelationshipId(link),
+              }))
+
+              const pageRefXml = buildActivityReferenceRuns(hyperlinkEntries, referenceContent.bookmarks)
               const fragDoc = new DOMParser().parseFromString(
-                `<w:p xmlns:w="${W_NS}">${pageRefXml}</w:p>`,
+                `<w:p xmlns:w="${W_NS}" xmlns:r="${R_NS}">${pageRefXml}</w:p>`,
                 'application/xml'
               )
               const fragRuns = fragDoc.documentElement!.childNodes
@@ -732,6 +782,43 @@ function buildPageRefRuns(bookmarks: string[]): string {
       xml += `<w:r xmlns:w="${W_NS}"><w:rPr><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve"> e </w:t></w:r>`
     }
   })
+
+  return xml
+}
+
+function buildReferenceLineBreakRun(): string {
+  return `<w:r xmlns:w="${W_NS}"><w:rPr><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:br/></w:r>`
+}
+
+function buildHyperlinkRun(label: string, rId: string): string {
+  return `<w:hyperlink xmlns:w="${W_NS}" xmlns:r="${R_NS}" r:id="${rId}" w:history="1">` +
+    `<w:r><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr>` +
+    `<w:t xml:space="preserve">${escapeXml(label)}</w:t></w:r></w:hyperlink>`
+}
+
+function buildActivityReferenceRuns(
+  links: Array<{ label: string; rId: string }>,
+  bookmarks: string[],
+): string {
+  if (links.length === 0 && bookmarks.length === 0) return ''
+
+  let xml = ''
+
+  links.forEach((link, index) => {
+    xml += buildHyperlinkRun(link.label, link.rId)
+
+    const isLastLink = index === links.length - 1
+    if (!isLastLink || bookmarks.length > 0) {
+      xml += buildReferenceLineBreakRun()
+    }
+    if (isLastLink && bookmarks.length > 0) {
+      xml += buildReferenceLineBreakRun()
+    }
+  })
+
+  if (bookmarks.length > 0) {
+    xml += buildPageRefRuns(bookmarks)
+  }
 
   return xml
 }
