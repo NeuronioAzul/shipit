@@ -14,6 +14,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Os links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis (`link 01`, `link 02`, etc.), preservando a ordem digitada e mantendo as referências de evidências por página logo abaixo, inclusive quando a atividade não possui evidências anexadas.
 
 
+
+## [1.5.2] — 2026-05-23
+
+### Corrigido
+
+- Os links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis (`link 01`, `link 02`, etc.), preservando a ordem digitada e mantendo as referências de evidências por página logo abaixo, inclusive quando a atividade não possui evidências anexadas.
+
 ## [1.5.1] — 2026-05-15
 
 ### Corrigido
