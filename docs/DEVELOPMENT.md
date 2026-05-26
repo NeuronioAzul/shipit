@@ -37,9 +37,11 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm test`         | Executa 120 testes unitários e de integração (Vitest, 10 arquivos)   |
+| `npm run test`     | Executa 137 testes unitários e de integração (Vitest, 11 arquivos verificados em 26/05/2026) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 27 cenários end-to-end com Playwright/Electron |
+| `npm run test:e2e` | Executa 35 cenários declarados end-to-end com Playwright/Electron (precedido por `pretest:e2e`) |
+| `npm run test:all` | Executa a suíte completa: Vitest + build + Playwright |
+| `npm run pretest:e2e` | Hook automático que roda `npm run build` antes do Playwright |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
 
 ---
@@ -78,7 +80,7 @@ O app usa dois arquivos `.ico` com papéis distintos:
 
 | Arquivo | Uso | Incluído no asar? |
 |---------|-----|-------------------|
-| `build/icon.ico` | Embutido no `.exe` pelo electron-builder (File Explorer, instalador, Add/Remove Programs) | Não |
+| `build/ShipIt.ico` | Embutido no `.exe` pelo electron-builder (File Explorer, instalador, Add/Remove Programs) | Não |
 | `public/assets/images/icons/ShipIt.ico` | `BrowserWindow.icon` em runtime (taskbar quando app aberto) | Sim |
 
 Ambos são idênticos (9 tamanhos: 16–256px, 32bpp RGBA). O diretório `build/` é o `buildResources` do electron-builder e **não** é empacotado no asar — por isso o ícone de runtime deve apontar para `public/`.
@@ -189,9 +191,14 @@ shipit/
 │       ├── monthReference.ts
 │       ├── statusColors.ts
 │       └── validation.ts      # Validação de campos obrigatórios
-├── assets/                    # Recursos estáticos
-│   ├── images/                # Logos, ícones, tray icons
-│   └── sounds/                # Sons de alerta (14 MP3s)
+├── build/                     # Build resources do electron-builder
+│   ├── ShipIt.ico             # Ícone Windows usado no empacotamento
+│   └── icon.ico               # Variante adicional mantida no repositório
+├── public/                    # Assets servidos/empacotados com o app
+│   ├── assets/
+│   │   ├── images/            # Logos, ícones, favicon e tray icons
+│   │   └── sounds/            # Sons de alerta
+│   └── RELATÓRIO DE SERVIÇO - TEMPLATE.docx
 ├── docs/                      # Documentação e templates
 │   ├── ARCHITECTURE.md
 │   ├── DEPENDENCIES.md
@@ -215,11 +222,14 @@ erDiagram
         string full_name
         string role
         string seniority_level
-        string contract_id
+        string contract_identifier
         string profile_type
+        string correlating_activities
         string attendance_type
         string project_scope
-        string correlating_act
+        int daily_availability
+        int monthly_availability
+        int minimum_effort_hours
     }
     Alert {
         int id PK
@@ -228,7 +238,9 @@ erDiagram
         boolean alert_enabled
         string alert_time
         string alert_message
+        boolean alert_sound_enabled
         string alert_sound_file
+        datetime last_alert_sent
     }
 
     Activity ||--o{ Evidence : has
@@ -252,6 +264,7 @@ erDiagram
         string caption
         int sort_index
         datetime date_added
+        datetime deleted_at
     }
 
     Report ||--o{ ActivityReport : contains
@@ -283,20 +296,21 @@ O projeto usa GitHub Actions para build automatizado e publicação de releases.
 1. Faça suas alterações na branch `dev`
 2. Crie um PR de `dev` → `main` e faça merge
 3. Crie uma tag semver na `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`
-4. O workflow dispara automaticamente e publica no GitHub Releases
+4. O workflow dispara automaticamente, cria o draft no GitHub Releases e anexa os artefatos gerados
 
 ### Workflow `.github/workflows/release.yml`
 
-- **Trigger**: push de tag `v*.*.*` (ex: `v1.2.2`, `v1.3.0-beta.1`)
-- **3 jobs paralelos**:
+- **Trigger**: push de tag `v*.*.*` (ex: `v1.5.2`, `v2.0.0`)
+- **1 job inicial de release + 3 jobs de build/publicação no draft**:
 
 | Job | Runner | Artefato | Formato |
 | --- | ------ | -------- | ------- |
+| `create-release` | `ubuntu-latest` | GitHub Release draft | Release metadata |
 | `build-windows` | `windows-latest` | `ShipIt-X.Y.Z-Windows-x64-Setup.exe`, `ShipIt-X.Y.Z-Windows-x64-Portable.exe`, `ShipIt-X.Y.Z-Windows-x64.msi` | NSIS, Portable, MSI |
 | `build-macos` | `macos-latest` | `ShipIt-X.Y.Z-macOS-arm64.dmg`, `ShipIt-X.Y.Z-macOS-x64.dmg` | Disk image |
 | `build-linux` | `ubuntu-latest` | `ShipIt-X.Y.Z-Linux-*.AppImage`, `.deb`, `.rpm` | AppImage, deb, rpm |
 
-Cada job executa: `npm ci` → `npm test` (gate) → `npm run build` → `electron-builder --publish always`
+Cada job de build executa: `npm ci` → `npm run test` (gate) → `npm run build` → `electron-builder --publish always`
 
 ### Artefatos gerados no GitHub Release
 
@@ -308,9 +322,7 @@ Cada job executa: `npm ci` → `npm test` (gate) → `npm run build` → `electr
 | `ShipIt-X.Y.Z-macOS-*.dmg` | Instalador macOS arm64/x64 |
 | `ShipIt-X.Y.Z-Linux-*` | AppImage, `.deb` e `.rpm` Linux |
 | `*.blockmap` | Mapas de blocos para delta updates (só os blocos alterados são baixados) |
-| `latest.yml` | Manifesto auto-update Windows — contém versão, sha512 e URL do .exe |
-| `latest-mac.yml` | Manifesto auto-update macOS |
-| `latest-linux.yml` | Manifesto auto-update Linux |
+| `latest*.yml` | Manifestos de auto-update gerados pelo electron-builder para as plataformas aplicáveis |
 
 ### Auto-Update (`electron-updater`)
 
@@ -332,7 +344,7 @@ Em builds empacotados (`app.isPackaged`), o app **verifica** atualizações auto
 
 - **Sem code signing**: macOS pede "Abrir mesmo assim" manualmente; Windows pode exibir SmartScreen
 - **Minutes do GitHub Actions**: macOS consome 10x mais minutos. Free tier = 2000 min/mês
-- **Testes como gate**: se os 120 testes Vitest falharem, o build não é publicado
+- **Testes como gate**: se os 137 testes Vitest falharem, o build não é publicado
 
 ---
 

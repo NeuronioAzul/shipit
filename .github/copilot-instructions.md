@@ -1,6 +1,6 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app (package version 1.3.7, latest release tag: v1.3.7; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (package version 1.5.2, latest release tag: v1.5.2; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@ Electron desktop app (package version 1.3.7, latest release tag: v1.3.7; `dev` m
 | Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
 | Toasts | sonner 2 | Non-blocking notifications |
 | Auto-update | electron-updater 6 | GitHub Releases integration |
-| Testing | Vitest + Playwright | 120 unit/integration tests, 27 declared E2E scenarios |
+| Testing | Vitest + Playwright | 137 unit/integration tests, 35 declared E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -95,12 +95,12 @@ When `window.electronAPI` is unavailable (browser dev), components fall back to 
 
 | Entity | PK | Key Fields | Relations |
 |--------|----|-----------|-----------|
-| `UserProfile` | auto-inc | `full_name`, `role`, `seniority_level`, `attendance_type`, `project_scope` | 1:1 → Alert |
+| `UserProfile` | auto-inc | `full_name`, `role`, `seniority_level`, `contract_identifier`, `profile_type`, `correlating_activities`, `attendance_type`, `project_scope`, disponibilidade (`daily_availability`, `monthly_availability`, `minimum_effort_hours`) | 1:1 → Alert |
 | `Activity` | UUID v7 | `description`, `date_start/end`, `status`, `project_scope`, `link_ref`, `month_reference`, `order` | 1:N → Evidence, M:N → Report |
 | `Evidence` | UUID v7 | `type` (enum: 'image'\|'text'), `file_path`, `text_content`, `caption`, `sort_index`, `date_added`, `deleted_at` (soft-delete) | N:1 → Activity |
 | `Report` | UUID v7 | `month_reference`, `file_path`, `report_name`, `date_generated`, `status` | M:N → Activity |
 | `ActivityReport` | UUID v7 | Junction table (`activities_report`) | Activity ↔ Report |
-| `Alert` | auto-inc | `alert_enabled`, `alert_time`, `alert_days_before` (JSON), `alert_frequency`, `alert_sound_file`, `last_alert_sent` | 1:1 → UserProfile |
+| `Alert` | auto-inc | `alert_enabled`, `alert_time`, `alert_days_before` (JSON), `alert_frequency`, `alert_message`, `alert_sound_enabled`, `alert_sound_file`, `last_alert_sent` | 1:1 → UserProfile |
 
 ### Routes
 
@@ -122,6 +122,7 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 
 - Template-based OpenXML manipulation via JSZip + xmldom
 - **Encarte A**: activities grouped by `project_scope`, checkboxes per attendance type
+- `link_ref` entries are exported as clickable hyperlinks in the DOCX payload
 - **Encarte B**: evidence images (one per page) with captions and PAGEREF bookmarks
 - Image auto-scaling to fit page area (~15.5cm × 22cm), converted to EMU
 - Output: `RELATÓRIO DE SERVIÇO - {CARGO}_{NAME}_{MONTH}.docx`
@@ -196,4 +197,6 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** through Phase 26: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 120 Vitest tests across 10 files, 27 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, and **manual update flow** (consent-based check/download/install with attention badges and persisted state). Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.
+All core phases are **complete** through Phase 26: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 137 Vitest tests across 11 files, 35 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, and **manual update flow** (consent-based check/download/install with attention badges and persisted state).
+
+Subsequent releases on top of that baseline added user profile availability fields plus dedicated ProfilePage coverage (v1.5.0), safer update-state recovery after restart (v1.5.1), and clickable DOCX hyperlink export for reference links (v1.5.2). Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.

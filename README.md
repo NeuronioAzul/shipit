@@ -31,7 +31,7 @@ O app fica no **System Tray** para fácil acesso — basta clicar, registrar a a
 - **Relatório pronto em segundos** — gere o DOCX no padrão MEC automaticamente, com encarte de atividades e páginas de evidências
 - **Nunca perca dados** — salvamento automático contínuo, tudo armazenado localmente no seu computador
 - **100% offline** — funciona sem conexão com a internet, seus dados nunca saem da sua máquina
-- **Atualizações automáticas** — receba novas versões sem esforço
+- **Atualizações sob seu controle** — o app avisa quando há nova versão, mas você decide quando baixar e instalar
 
 ---
 
@@ -91,8 +91,9 @@ Baixe o instalador para sua plataforma na página de [**Releases**](https://gith
 Na primeira vez que abrir o ShipIt!, você verá a tela de boas-vindas. Clique em **"Criar Perfil"** e preencha suas informações:
 
 - Nome completo, cargo, nível de senioridade
+- Identificador do contrato, tipo de perfil e atividades correlatas
 - Tipo de atendimento (Presencial, Remoto ou Híbrido)
-- Escopo do projeto/squad e atividades correlatas
+- Escopo do projeto/squad e disponibilidade diária, mensal e esforço mínimo
 
 <!-- Screenshot: Tela de cadastro do perfil do usuário -->
 
@@ -180,6 +181,7 @@ Documento formatado automaticamente seguindo o modelo oficial do MEC, com:
 
 - Dados do perfil na capa
 - Encarte A com atividades agrupadas por projeto
+- Links de referência exportados como hyperlinks clicáveis quando preenchidos
 - Encarte B com evidências (uma por página) e referências cruzadas de páginas
 
 ### 11 Temas Visuais 🎨
@@ -272,7 +274,7 @@ Links externos e e-mails abrem fora da janela do ShipIt!, preservando a rota atu
 
 Evidências excluídas vão para a **Lixeira** e podem ser restauradas a qualquer momento. Itens na lixeira são automaticamente removidos após 3 meses.
 
-### Atualizações Automáticas
+### Atualizações sob seu controle
 
 O ShipIt! verifica automaticamente se há novas versões ao iniciar. O download e a instalação passaram a depender de consentimento explícito: badges na navegação e na TitleBar avisam quando algo está disponível e você controla todo o fluxo em **Configurações → Atualizações**, com ações separadas para verificar, baixar e instalar e acompanhamento de progresso.
 
