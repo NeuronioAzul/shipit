@@ -4,13 +4,13 @@ SHIPIT!
 
 ## New features
 
-- 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
+- 🟢 feat: quando exibir a quantidade de evidências na lista de atividades ou em outros lugares, separar por ícone as imagens e textos. Quero que na lista de atividades seja da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
 
-- 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
+- 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
 ## Verificação, correção e criação de testes
 
-- 🟡 Remover o link do perfil de dentro da configuração.
+
 - 🟡 Verificar se as imagens estão ocupando o tamanho máximo da página em altura ou largura considerando o tamanho da legenda que pode ter até duas linha de altura no máximo.
 - 🟡 Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
 
@@ -244,3 +244,4 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 ## Fazendo
 
+- 🟡 Remover a seção com o botão que tem o link do perfil de dentro da configuração.

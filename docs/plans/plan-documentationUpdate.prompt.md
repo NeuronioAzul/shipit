@@ -1,5 +1,5 @@
 ---
-description: "Audite e sincronize a documentação do ShipIt com o estado real do código, sem alterar funcionalidades. Use após releases, features grandes ou mudanças em arquitetura, IPC, dependências, rotas, temas ou testes."
+description: "Audite e sincronize a documentação do ShipIt com o estado real do código, sem alterar funcionalidades, atualize os arquivos de documentação. Use após releases, features grandes ou mudanças em arquitetura, IPC, dependências, rotas, temas ou testes."
 agent: "agent"
 argument-hint: "Escopo opcional: full sync, release docs, quick audit, docs específicos"
 ---
