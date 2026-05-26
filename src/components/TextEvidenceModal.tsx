@@ -96,7 +96,7 @@ export function TextEvidenceModal({
         </div>
 
         {/* Body */}
-        <div id="text-evidence-modal-body" className="px-6 py-4 space-y-4 overflow-y-auto flex-1">
+        <div id="text-evidence-modal-body" className="px-6 py-4 space-y-4 overflow-y-auto scrollbar-stable flex-1">
           {/* Caption */}
           {!isReadOnly ? (
             <div>

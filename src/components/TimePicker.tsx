@@ -210,7 +210,7 @@ export function TimePicker({
             {/* Hour column */}
             <div
               ref={hourListRef}
-              className="timepicker-column flex-1 border-r border-border"
+              className="timepicker-column scrollbar-stable flex-1 border-r border-border"
               style={{ maxHeight: '200px', overflowY: 'auto' }}
             >
               <div className="timepicker-column-label text-[10px] font-medium text-muted-foreground uppercase text-center py-1 sticky top-0 bg-popover/95 backdrop-blur-sm z-10 border-b border-border/50">
@@ -243,7 +243,7 @@ export function TimePicker({
             {/* Minute column */}
             <div
               ref={minuteListRef}
-              className="timepicker-column flex-1"
+              className="timepicker-column scrollbar-stable flex-1"
               style={{ maxHeight: '200px', overflowY: 'auto' }}
             >
               <div className="timepicker-column-label text-[10px] font-medium text-muted-foreground uppercase text-center py-1 sticky top-0 bg-popover/95 backdrop-blur-sm z-10 border-b border-border/50">

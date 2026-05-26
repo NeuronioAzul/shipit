@@ -482,29 +482,7 @@
   box-shadow: 0 0 0 2px rgb(57 255 20 / 0.3), 0 0 8px rgb(57 255 20 / 0.2) !important;
 }
 
-/* ===== Scrollbar ===== */
-.cyberpunk ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-  background-color: rgb(5 5 12);
-}
-
-.cyberpunk ::-webkit-scrollbar-track {
-  background: rgb(12 12 24);
-}
-
-.cyberpunk ::-webkit-scrollbar-thumb {
-  background: rgb(57 255 20 / 0.6);
-  border: 1px solid rgb(248 239 2 / 0.2);
-}
-
-.cyberpunk ::-webkit-scrollbar-thumb:hover {
-  background: rgb(248 239 2);
-}
-
-.cyberpunk ::-webkit-scrollbar-corner {
-  background: rgb(5 5 12);
-}
+/* Scrollbars are centralized in src/themes/scrollbars.css via theme tokens. */
 
 /* ===== Sidebar neon accent line ===== */
 .cyberpunk [class*="bg-sidebar"][class*="border"] {
@@ -1140,16 +1118,20 @@
 
 /* Scrollbar inside dropdown */
 .cyberpunk .select-dropdown::-webkit-scrollbar {
-  width: 4px;
+  width: calc(var(--scrollbar-size) - 2px);
 }
 
 .cyberpunk .select-dropdown::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
 .cyberpunk .select-dropdown::-webkit-scrollbar-thumb {
-  background: rgb(57 255 20 / 0.3);
-  border-radius: 0;
+  background: var(--scrollbar-thumb);
+  border-radius: var(--scrollbar-radius);
+}
+
+.cyberpunk .select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 @keyframes cyber-select-fade-in {
@@ -1284,16 +1266,20 @@
 
 /* Column scrollbar */
 .cyberpunk .timepicker-column::-webkit-scrollbar {
-  width: 4px;
+  width: calc(var(--scrollbar-size) - 2px);
 }
 
 .cyberpunk .timepicker-column::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
 .cyberpunk .timepicker-column::-webkit-scrollbar-thumb {
-  background: rgb(57 255 20 / 0.3);
-  border-radius: 0;
+  background: var(--scrollbar-thumb);
+  border-radius: var(--scrollbar-radius);
+}
+
+.cyberpunk .timepicker-column::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 @keyframes cyber-timepicker-fade-in {

@@ -773,6 +773,69 @@ test('toggles dark/light theme', async () => {
   await expect(html).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
 })
 
+test('applies themed scrollbar tokens and stable gutters in scroll hosts', async () => {
+  await page.click('[title="Configurações"]')
+  await page.waitForSelector('h1:has-text("Configurações")', { timeout: 5_000 })
+
+  const html = page.locator('html')
+
+  await page.click('button[aria-label="Tema Claro"]')
+  await expect(html).toHaveClass(/(?:^|\s)light(?:\s|$)/)
+
+  const lightScrollbar = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement)
+    return {
+      size: style.getPropertyValue('--scrollbar-size').trim(),
+      track: style.getPropertyValue('--scrollbar-track').trim(),
+      thumb: style.getPropertyValue('--scrollbar-thumb').trim(),
+      hover: style.getPropertyValue('--scrollbar-thumb-hover').trim(),
+    }
+  })
+
+  await page.click('button[aria-label="Tema Cyberpunk"]')
+  await expect(html).toHaveClass(/(?:^|\s)cyberpunk(?:\s|$)/)
+
+  const cyberpunkScrollbar = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement)
+    return {
+      size: style.getPropertyValue('--scrollbar-size').trim(),
+      track: style.getPropertyValue('--scrollbar-track').trim(),
+      thumb: style.getPropertyValue('--scrollbar-thumb').trim(),
+      hover: style.getPropertyValue('--scrollbar-thumb-hover').trim(),
+    }
+  })
+
+  expect(lightScrollbar.size).toBe('8px')
+  expect(cyberpunkScrollbar.size).toBe('8px')
+  expect(lightScrollbar.track).not.toBe('')
+  expect(lightScrollbar.thumb).not.toBe('')
+  expect(lightScrollbar.hover).not.toBe('')
+  expect(cyberpunkScrollbar.track).not.toBe(lightScrollbar.track)
+  expect(cyberpunkScrollbar.thumb).not.toBe(lightScrollbar.thumb)
+
+  await page.click('[title="Atividades"]')
+  await page.waitForURL(/#\/activities/)
+
+  const appMainGutter = await page.evaluate(() => {
+    const main = document.getElementById('app-main')
+    if (!main) return ''
+    return getComputedStyle(main).getPropertyValue('scrollbar-gutter').trim()
+  })
+
+  expect(appMainGutter).toContain('stable')
+
+  await page.keyboard.press('Control+k')
+  const searchInput = page.locator('#searchbar-input')
+  await expect(searchInput).toBeFocused()
+
+  await searchInput.fill('zz')
+  const results = page.locator('#searchbar-results')
+  await expect(results).toBeVisible({ timeout: 5_000 })
+
+  const dropdownClass = await results.getAttribute('class')
+  expect(dropdownClass ?? '').toContain('scrollbar-stable')
+})
+
 // ──── Titlebar Drag Contract ────
 
 test('maintains drag/no-drag contract in titlebar search area', async () => {

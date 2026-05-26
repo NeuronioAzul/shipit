@@ -157,7 +157,7 @@ export function SearchBar() {
           id="searchbar-results"
           role="listbox"
           aria-label="Resultados da busca"
-          className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto scrollbar-stable"
         >
           {results.length === 0 && !loading && (
             <div id="searchbar-empty" className="px-4 py-3 text-sm text-muted-foreground text-center">
