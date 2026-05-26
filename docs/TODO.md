@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 13/05/2026 (sincronização documental pós-v1.3.7)
+> Atualizado em: 26/05/2026 (sincronização documental pós-v1.5.2)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -93,7 +93,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Cards de resumo (total, concluídas, em andamento, canceladas)
 - [x] Gráfico de Gantt com atividades × dias do mês
 - [x] Listagem de atividades com: número, descrição resumida, período, status, atendimento, referência de páginas
-- [x] Botão "Gerar PDF" do mês selecionado
+- [x] Botão "Gerar Relatório DOCX" do mês selecionado
 - [x] Troca de mês atualiza todos os dados
 
 ---
@@ -181,7 +181,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Refatoração: `initDatabase()` aceita overrides de `DataSourceOptions`
 - [x] Refatoração: `generateDocxReport()` aceita `templatePath` no payload
 - [x] Exclusão de `dist-electron/` do Vitest config
-- [x] Total: 54 testes passando (16 validation + 9 report unit + 9 report integration + 20 database)
+- [x] Marco histórico da fase: 54 testes passando (16 validation + 9 report unit + 9 report integration + 20 database)
 
 ### Fase 11: Revisão UI/UX ✅
 
@@ -365,7 +365,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] `reorderActivities` permanece como fonte autoritativa para drag-and-drop
 - [x] Fallback browser (`localDb.ts`) alinhado com a mesma regra de ordenação
 - [x] Cobertura Vitest ampliada para criação, legado, reorder, payload DOCX e busca
-- [x] Suíte atual: 113 testes Vitest passando (10 arquivos)
+- [x] Na conclusão da fase: 113 testes Vitest passando (10 arquivos)
 
 ### Fase 23.1: Validação TitleBar e Release ✅
 
@@ -376,7 +376,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Menu superior validado por mouse, teclado e todos os command IDs de File/Edit/View/Help com instrumentação segura
 - [x] Teste mensal do detalhe isolado com meses únicos por execução para evitar dados persistidos entre runs
 - [x] Fixtures E2E de atividades centralizadas em `e2e/fixtures/activityFixtures.ts`
-- [x] Suíte E2E atual: 27 cenários Playwright/Electron
+- [x] Baseline E2E declarada à época: 27 cenários Playwright/Electron
 - [x] Dry-run oficial de release `1.3.3` concluído sem ações remotas destrutivas
 
 ### Fase 24: Atualizações, Ícones e Limpeza Segura ✅
@@ -409,7 +409,29 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Auto-update passou a apenas verificar ao iniciar; download e instalação dependem de consentimento explícito (v1.3.6).
 - [x] Novos handlers IPC: `app:getUpdateState`, `app:downloadUpdate`, `app:acknowledgeUpdateAttention` + contexto `UpdateStateContext` no renderer.
 - [x] Componentes `UpdateModal` e `UpdateStatusPanel` adicionados a `src/components/`.
-- [x] Cobertura Vitest ampliada (120 testes em 10 arquivos) cobrindo a finalização do estado de checagem manual.
+- [x] Cobertura Vitest da fase ampliada (naquele momento, 120 testes em 10 arquivos) cobrindo a finalização do estado de checagem manual.
+
+### Fase 27: Perfil com Disponibilidade ✅
+
+- [x] `UserProfile` ganhou campos de disponibilidade diária, mensal e esforço mínimo, com persistência tipada no Electron e no renderer.
+- [x] A tela de perfil passou a coletar `contract_identifier`, `profile_type`, `correlating_activities` e os novos campos numéricos de disponibilidade.
+- [x] A validação e a geração do relatório DOCX passaram a considerar os novos campos do perfil quando preenchidos.
+- [x] Cobertura automatizada dedicada para `ProfilePage` adicionada ao projeto.
+
+### Fase 28: Ajustes Pós-release 1.5.x ✅
+
+- [x] Estado de atualização restaurado com segurança após reinício, degradando updates baixados para novo download quando o caminho do arquivo não está mais disponível.
+- [x] Indicadores de atenção e versão pendente de update foram refinados para se manterem consistentes entre reinicializações.
+- [x] Links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis.
+- [x] Estado atual validado em 26/05/2026: 147 testes Vitest passando (12 arquivos) e 35 cenários Playwright declarados em `e2e/app.spec.ts`.
+
+### Fase 29: Evidências por Tipo e Layout DOCX ✅
+
+- [x] Contagem de evidências separada por tipo (imagem e texto) aplicada na lista de atividades, no detalhe e no Dashboard.
+- [x] Contadores de evidência passaram a exibir ambos os tipos mesmo quando um deles está com valor zero.
+- [x] Motor DOCX ajustado para usar área livre de imagem de até 27 cm × 15 cm, com escala proporcional.
+- [x] Legenda de evidência no DOCX limitada a duas linhas com truncamento em reticências quando exceder o limite.
+- [x] Cobertura automatizada ampliada para validar regras de fit da imagem e truncamento de legenda no gerador DOCX.
 
 ---
 

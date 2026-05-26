@@ -65,6 +65,34 @@ git checkout dev
 git stash pop
 ```
 
+### `git checkout main` bloqueado por mudanças locais
+
+Erro típico:
+
+```text
+error: Your local changes to the following files would be overwritten by checkout:
+	CHANGELOG.md
+Please commit your changes or stash them before you switch branches.
+```
+
+Nas versões novas do script, o Step 9 detecta esse cenário e cria automaticamente um stash temporário antes de trocar de branch. Ao final, o script tenta restaurar tudo com `git stash apply --index`.
+
+Se o banner vermelho de proteção aparecer, **não salve nada até a restauração terminar**.
+
+Se você estiver usando uma versão antiga do script ou quiser destravar manualmente:
+
+```bash
+git stash push -u -m "shipit-release-manual-resume-vX.Y.Z"
+python docs/scripts/release.py --resume-from tag --version X.Y.Z
+git stash pop --index "stash@{0}"
+```
+
+Se a restauração automática falhar, o próprio script deixa o stash intacto e imprime:
+
+- O caminho do arquivo JSON temporário com os metadados de recuperação
+- O `stash`/SHA salvo
+- Os comandos `git stash show -p ...` e `git stash apply --index ...`
+
 ### Merge conflicts ao sincronizar dev com main
 
 Se o merge de `main` em `dev` (Step 9) falhar:
@@ -235,18 +263,31 @@ py docs/scripts/release.py --help
 
 ### Script falhou no meio — como continuar?
 
-O script é **resumível**. Simplesmente re-execute:
+O script agora suporta retomada explícita por checkpoint:
 
 ```bash
-python docs/scripts/release.py --version X.Y.Z
+python docs/scripts/release.py --resume-from tag --version X.Y.Z
 ```
 
-Ele detecta:
+Checkpoints disponíveis:
+
+- `tag` → valida `origin/main`, cria/envia tag e continua dali em diante
+- `draft` → aguarda a draft release e continua
+- `workflow` → aguarda apenas o workflow CI/CD e continua
+- `publish` → valida assets e publica
+
+O script continua detectando automaticamente:
 
 - PR existente → reutiliza
 - PR já mergeado → pula merge
 - Tag existente → pula criação
 - Release publicada → pula publicação
+
+Se você ainda estiver em um fluxo legado, os flags antigos continuam válidos:
+
+```bash
+python docs/scripts/release.py --version X.Y.Z --skip-commit --skip-changelog --skip-pull-request
+```
 
 ### Encoding/caracteres estranhos no Windows
 

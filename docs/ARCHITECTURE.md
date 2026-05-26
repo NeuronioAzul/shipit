@@ -117,10 +117,13 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 1. Carrega o template `.docx` (é um ZIP com XMLs internos)
 2. Substitui placeholders no `document.xml` (nome, cargo, contrato, mês, etc.)
 3. Monta **Encarte A**: tabela de atividades agrupada por `project_scope`
-4. Monta **Encarte B**: uma página por evidência com imagem ou texto formatado + legenda + bookmark
-5. Insere campos PAGEREF para referência cruzada de páginas
-6. Atualiza `[Content_Types].xml` com os tipos MIME das imagens
-7. Salva o DOCX na pasta configurada ou padrão (`userData/reports/`)
+4. Exporta entradas de `link_ref` como hyperlinks clicáveis, preservando a ordem digitada
+5. Monta **Encarte B**: uma página por evidência com imagem ou texto formatado + legenda + bookmark
+  - Evidências de imagem usam área livre máxima de até **27 cm × 15 cm** com escala proporcional
+  - Legendas de imagem são limitadas a duas linhas com truncamento em reticências quando necessário
+6. Insere campos PAGEREF para referência cruzada de páginas
+7. Atualiza `[Content_Types].xml` com os tipos MIME das imagens
+8. Salva o DOCX na pasta configurada ou padrão (`userData/reports/`)
 
 **Bibliotecas usadas**: `jszip` (ZIP), `@xmldom/xmldom` (DOM XML), `xpath` (queries XPath)
 
@@ -146,12 +149,12 @@ Expõe `window.electronAPI` com 57 métodos tipados que chamam `ipcRenderer.invo
 
 | Entidade | Tabela | PK | Descrição |
 | ---------- | -------- | ----- | ----------- |
-| `UserProfile` | `user_profile` | Auto-increment | Perfil do usuário (cargo, contrato, etc.) |
-| `Alert` | `alerts` | Auto-increment | Configuração de alertas (1:1 com UserProfile) |
+| `UserProfile` | `user_profile` | Auto-increment | Perfil do usuário com identificação contratual, tipo de perfil, atividades correlatas e disponibilidade (`contract_identifier`, `profile_type`, `correlating_activities`, `daily_availability`, `monthly_availability`, `minimum_effort_hours`) |
+| `Alert` | `alerts` | Auto-increment | Configuração de alertas com frequência, mensagem, som e último disparo (`alert_days_before`, `alert_frequency`, `alert_message`, `alert_sound_enabled`, `alert_sound_file`, `last_alert_sent`) |
 | `Activity` | `activities` | UUID v7 | Atividade registrada com período e status |
-| `Evidence` | `evidences` | UUID v7 | Evidência (imagem ou texto) vinculada a uma atividade |
+| `Evidence` | `evidences` | UUID v7 | Evidência (imagem ou texto) vinculada a uma atividade, com ordenação e soft-delete via `deleted_at` |
 | `Report` | `reports` | UUID v7 | Relatório DOCX gerado |
-| `ActivityReport` | `activities_report` | UUID v7 | Junction table: atividade ↔ relatório |
+| `ActivityReport` | `activities_report` | UUID v7 | Junction table: atividade ↔ relatório, com `date_added` para rastrear a vinculação |
 
 **Relacionamentos**:
 

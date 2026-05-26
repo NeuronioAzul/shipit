@@ -7,6 +7,7 @@ import { isActivityComplete } from '../utils/validation'
 import { SkeletonStats, Skeleton } from '../components/Skeleton'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { isTypingTarget } from '../utils/keyboardGuards'
+import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -293,17 +294,28 @@ export function DashboardPage() {
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Status</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Atendimento</th>
                     <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">
-                      <i className="fa-solid fa-image"></i>
+                      <span className="sr-only">Evidências</span>
+                      <span className="inline-flex items-center gap-2" aria-hidden="true">
+                        <span title="Imagens">
+                          <i className="fa-solid fa-image"></i>
+                        </span>
+                        <span title="Textos">
+                          <i className="fa-solid fa-file-lines"></i>
+                        </span>
+                      </span>
                     </th>
                     <th className="px-4 py-2.5"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {activities.map((activity, idx) => (
-                    <tr
-                      key={activity.id}
-                      className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
-                    >
+                  {activities.map((activity, idx) => {
+                    const evidenceCounts = getEvidenceTypeCounts(activity.evidences)
+
+                    return (
+                      <tr
+                        key={activity.id}
+                        className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
+                      >
                       <td className="px-4 py-2.5 text-muted-foreground">
                         {idx + 1}
                         {!isActivityComplete(activity) && (
@@ -335,8 +347,20 @@ export function DashboardPage() {
                       <td className="px-4 py-2.5 text-muted-foreground">
                         {activity.attendance_type || '—'}
                       </td>
-                      <td className="px-4 py-2.5 text-center text-muted-foreground">
-                        {activity.evidences?.length || 0}
+                      <td
+                        className="px-4 py-2.5 text-center text-muted-foreground"
+                        aria-label={`${evidenceCounts.imageCount} imagens e ${evidenceCounts.textCount} evidências de texto`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1" title="Imagens">
+                            <i className="fa-solid fa-image text-[10px]" aria-hidden="true"></i>
+                            {evidenceCounts.imageCount}
+                          </span>
+                          <span className="inline-flex items-center gap-1" title="Textos">
+                            <i className="fa-solid fa-file-lines text-[10px]" aria-hidden="true"></i>
+                            {evidenceCounts.textCount}
+                          </span>
+                        </span>
                       </td>
                       <td className="px-4 py-2.5">
                         <button
@@ -347,8 +371,9 @@ export function DashboardPage() {
                           <i className="fa-solid fa-pen-to-square text-xs"></i>
                         </button>
                       </td>
-                    </tr>
-                  ))}
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

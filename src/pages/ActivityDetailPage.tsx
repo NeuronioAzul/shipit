@@ -24,6 +24,7 @@ import { TextEvidenceModal } from '../components/TextEvidenceModal'
 import { ActivityNav } from '../components/ActivityNav'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { shiftMonthReference } from '../utils/monthReference'
+import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import {
   resolveMonthNavigation,
   shouldSyncSelectedMonthToActivity,
@@ -149,6 +150,7 @@ export function ActivityDetailPage() {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   )
+  const evidenceCounts = getEvidenceTypeCounts(activity?.evidences)
 
   const loadActivity = useCallback(async () => {
     if (!id) return
@@ -660,8 +662,21 @@ export function ActivityDetailPage() {
           onDragLeave={() => setDropActive(false)}
           onDrop={handleFileDrop}
         >
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">
-            Evidências ({activity.evidences?.length || 0})
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex flex-wrap items-center gap-2">
+            <span>Evidências</span>
+            <span
+              className="text-xs font-normal inline-flex items-center gap-2"
+              aria-label={`${evidenceCounts.imageCount} imagens e ${evidenceCounts.textCount} evidências de texto`}
+            >
+              <span className="inline-flex items-center gap-1" title="Imagens">
+                <i className="fa-solid fa-image text-[10px]" aria-hidden="true"></i>
+                {evidenceCounts.imageCount}
+              </span>
+              <span className="inline-flex items-center gap-1" title="Textos">
+                <i className="fa-solid fa-file-lines text-[10px]" aria-hidden="true"></i>
+                {evidenceCounts.textCount}
+              </span>
+            </span>
           </h3>
 
           {(!activity.evidences || activity.evidences.length === 0) ? (

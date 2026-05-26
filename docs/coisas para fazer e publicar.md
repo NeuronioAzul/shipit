@@ -2,15 +2,14 @@
 
 SHIPIT!  
 
-
-
 ## New features
 
 
+- 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
+- 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app
+- 🟢 feat: Implementar opção de backup do app com 2 botões, um para salvar as evidências, e outro para salvar o banco de dados e informações de configurações do app.
 
-- 🟢 feat: quando exibir a quantidade de evidências, separar por ícone as imagens e textos. Quero que na lista da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
-
-- 🟢 feat: Escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
+- 🟢 feat: Quando criar uma nova atividade, criar e associar uma pasta para cada atividade dentro da pasta de evidências, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
 ## Verificação, correção e criação de testes
 
@@ -237,8 +236,6 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
   - Abri o aplicativo novamente ainda sem instalar a atualização
   - Ao clicar no botão para instalar a atualização, apareceu a mensagem de erro: `Erro: No update filepath provided, can't quit and install`
 
-## Fazendo
-
 -----------------------------------------------------------
 
 - 🔴 fix: os links de referência não estão sendo incluídos no documento.
@@ -246,3 +243,24 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
   - Esses links precisam ser clicáveis no documento, para que os usuários possam acessar facilmente as referências relacionadas às atividades. não exiba o link url inteira porque ficaria muito grande para o espaço determinado, exiba apenas o nome link, por exemplo, link 01, link 02, etc, e quando o usuário clicar no nome do link, ele deve ser redirecionado para a url correspondente.
   - Abaixo dos links pulando linha do ultimo link, exiba as referências das evidências com as páginas como já é feito hoje.
 
+----
+
+- 🟡 Remover a seção com o botão que tem o link do perfil de dentro da configuração.
+
+---
+
+## New features
+
+- 🟢 feat: quando exibir a quantidade de evidências na lista de atividades ou em outros lugares, separar por ícone as imagens e textos. Quero que na lista de atividades seja da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
+
+----
+
+## Verificação, correção e criação de testes
+
+- 🟡 Verificar se as imagens estão ocupando o tamanho máximo da página em altura ou largura considerando o tamanho da legenda que pode ter até duas linha de altura no máximo.
+
+
+
+## Fazendo
+## Fazendo
+## Fazendo

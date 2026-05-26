@@ -540,24 +540,6 @@ export function SettingsPage() {
           )}
         </section>
 
-        {/* Link para Perfil */}
-        <section className="bg-card border border-border rounded-lg p-5">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <i className="fa-solid fa-user text-primary"></i>
-            Perfil do Usuário
-          </h2>
-          <p className="text-sm text-muted-foreground mb-3">
-            Gerencie seus dados pessoais, cargo, contrato e informações usadas no relatório.
-          </p>
-          <button
-            onClick={() => navigate('/profile')}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
-          >
-            <i className="fa-solid fa-pen-to-square"></i>
-            Editar Perfil
-          </button>
-        </section>
-
         {/* Atualizações */}
         <section ref={updateSectionRef} id="settings-update-section" className="bg-card border border-border rounded-lg p-5 scroll-mt-6">
           <div className="flex items-center gap-2 mb-3">

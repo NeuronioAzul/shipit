@@ -7,23 +7,25 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
-## [Unreleased]
+## [1.6.0] — 2026-05-26
 
-### Corrigido
+### Alterado
 
-- Os links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis (`link 01`, `link 02`, etc.), preservando a ordem digitada e mantendo as referências de evidências por página logo abaixo, inclusive quando a atividade não possui evidências anexadas.
+- A contagem de evidências passou a ser exibida separadamente por tipo (**imagem** e **texto**) na lista de atividades, no detalhe da atividade e no Dashboard, sempre mostrando ambos os contadores, inclusive quando um dos tipos está zerado.
+- O layout das evidências de imagem no relatório DOCX foi ajustado para uma área útil de até **27 cm × 15 cm**, com escala proporcional e legenda limitada a **duas linhas**, aplicando truncamento com reticências quando necessário.
+- O processo interno de release foi aprimorado com **checkpoints explícitos de retomada** e proteção contra **worktree sujo**, reduzindo o risco de publicações inconsistentes.
 
-
+- A tela de **Configurações** deixou de exibir a seção redundante de **Perfil do Usuário**, concentrando a edição desses dados exclusivamente na página **Perfil**.
 
 ## [1.5.2] — 2026-05-23
 
-### Corrigido
+### Corrigido v1.5.2
 
 - Os links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis (`link 01`, `link 02`, etc.), preservando a ordem digitada e mantendo as referências de evidências por página logo abaixo, inclusive quando a atividade não possui evidências anexadas.
 
 ## [1.5.1] — 2026-05-15
 
-### Corrigido
+### Corrigido v1.5.1
 
 - O estado de atualização agora é restaurado com mais segurança após reiniciar o aplicativo. Quando havia uma versão marcada como baixada em sessão anterior, o ShipIt! passa a tratá-la como **disponível** para novo download, evitando a falha `No update filepath provided` ao tentar instalar.
 - A persistência do estado de atualização foi refinada para manter os indicadores de atenção e a versão pendente consistentes entre reinicializações.
@@ -31,18 +33,18 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [1.5.0] — 2026-05-14
 
-### Adicionado
+### Adicionado v1.5.0
 
 - Novos campos de **horários de disponibilidade** no perfil do usuário, com suporte completo na interface, persistência em banco e tipagem da API interna.
 - Cobertura automatizada para a **ProfilePage**, incluindo cenários de carregamento, envio do formulário e validações.
 
-### Alterado
+### Alterado v1.5.0
 
 - A geração do relatório DOCX e as regras de validação passaram a considerar os novos campos de disponibilidade do perfil.
 - A configuração de testes do frontend foi ampliada para incluir cenários em `.tsx`, com atualização das dependências de teste.
 - O script de release foi aprimorado para gerar entradas de changelog com mais consistência.
 
-### Corrigido
+### Corrigido v1.5.0
 
 - Ajuste de tipagem nos testes da **ProfilePage** para evitar incompatibilidades com `setTimeoutSpy` no TypeScript/Vitest.
 
@@ -52,7 +54,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [1.3.7] — 2026-05-13
 
-### Corrigido
+### Corrigido v1.3.7
 
 - A verificação manual de atualizações agora retorna o estado final corretamente ao concluir a checagem, evitando que a interface permaneça presa em “verificando” quando não há nova versão disponível.
 
