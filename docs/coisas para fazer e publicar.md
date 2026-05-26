@@ -242,6 +242,8 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
   - Esses links precisam ser clicáveis no documento, para que os usuários possam acessar facilmente as referências relacionadas às atividades. não exiba o link url inteira porque ficaria muito grande para o espaço determinado, exiba apenas o nome link, por exemplo, link 01, link 02, etc, e quando o usuário clicar no nome do link, ele deve ser redirecionado para a url correspondente.
   - Abaixo dos links pulando linha do ultimo link, exiba as referências das evidências com as páginas como já é feito hoje.
 
-## Fazendo
+----
 
 - 🟡 Remover a seção com o botão que tem o link do perfil de dentro da configuração.
+
+## Fazendo
