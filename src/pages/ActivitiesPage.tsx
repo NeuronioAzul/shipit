@@ -24,6 +24,7 @@ import { isActivityComplete } from '../utils/validation'
 import { SkeletonActivityItem } from '../components/Skeleton'
 import { Select } from '../components/Select'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
+import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 
 function formatDateShort(d: string | null): string {
   if (!d) return '—'
@@ -52,6 +53,7 @@ function SortableActivityItem({
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 10 : undefined,
   }
+  const evidenceCounts = getEvidenceTypeCounts(activity.evidences)
 
   return (
     <div ref={setNodeRef} style={style} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow group">
@@ -90,12 +92,19 @@ function SortableActivityItem({
               <i className={`fa-solid ${STATUS_ICONS[activity.status] || ''} text-[10px]`}></i>
               {activity.status}
             </span>
-            {activity.evidences && activity.evidences.length > 0 && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <i className="fa-solid fa-image text-[10px]"></i>
-                {activity.evidences.length}
+            <span
+              className="text-xs text-muted-foreground flex items-center gap-2 whitespace-nowrap"
+              aria-label={`${evidenceCounts.imageCount} imagens e ${evidenceCounts.textCount} evidências de texto`}
+            >
+              <span className="inline-flex items-center gap-1" title="Imagens">
+                <i className="fa-solid fa-image text-[10px]" aria-hidden="true"></i>
+                {evidenceCounts.imageCount}
               </span>
-            )}
+              <span className="inline-flex items-center gap-1" title="Textos">
+                <i className="fa-solid fa-file-lines text-[10px]" aria-hidden="true"></i>
+                {evidenceCounts.textCount}
+              </span>
+            </span>
           </div>
           <p className="text-foreground line-clamp-2">
             {activity.description || <span className="text-muted-foreground italic">Sem descrição</span>}

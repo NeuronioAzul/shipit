@@ -4,7 +4,6 @@ SHIPIT!
 
 ## New features
 
-- 🟢 feat: quando exibir a quantidade de evidências na lista de atividades ou em outros lugares, separar por ícone as imagens e textos. Quero que na lista de atividades seja da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
 
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e criar uma pasta para cada atividade, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
@@ -247,3 +246,7 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 - 🟡 Remover a seção com o botão que tem o link do perfil de dentro da configuração.
 
 ## Fazendo
+
+## New features
+
+- 🟢 feat: quando exibir a quantidade de evidências na lista de atividades ou em outros lugares, separar por ícone as imagens e textos. Quero que na lista de atividades seja da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
