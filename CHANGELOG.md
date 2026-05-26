@@ -14,6 +14,17 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - A visualização de quantidade de evidências passou a exibir contagem separada por tipo (imagem e texto) na lista de atividades, no detalhe da atividade e no Dashboard, sempre mostrando ambos os contadores inclusive quando um dos tipos está em zero.
 - O layout de evidências de imagem no DOCX foi ajustado para área livre de até **27 cm × 15 cm**, mantendo escala proporcional e legenda limitada a duas linhas com truncamento por reticências quando necessário.
 
+
+## [1.6.0] — 2026-05-26
+
+### Alterado
+
+- A contagem de evidências passou a ser exibida separadamente por tipo (**imagem** e **texto**) na lista de atividades, no detalhe da atividade e no Dashboard, sempre mostrando ambos os contadores, inclusive quando um dos tipos está zerado.
+- O layout das evidências de imagem no relatório DOCX foi ajustado para uma área útil de até **27 cm × 15 cm**, com escala proporcional e legenda limitada a **duas linhas**, aplicando truncamento com reticências quando necessário.
+- O processo interno de release foi aprimorado com **checkpoints explícitos de retomada** e proteção contra **worktree sujo**, reduzindo o risco de publicações inconsistentes.
+
+- A tela de **Configurações** deixou de exibir a seção redundante de **Perfil do Usuário**, concentrando a edição desses dados exclusivamente na página **Perfil**.
+
 ## [1.5.2] — 2026-05-23
 
 ### Corrigido v1.5.2
