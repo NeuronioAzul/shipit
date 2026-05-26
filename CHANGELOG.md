@@ -7,6 +7,13 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+## [Unreleased]
+
+### Alterado [Unreleased]
+
+- A visualização de quantidade de evidências passou a exibir contagem separada por tipo (imagem e texto) na lista de atividades, no detalhe da atividade e no Dashboard, sempre mostrando ambos os contadores inclusive quando um dos tipos está em zero.
+- O layout de evidências de imagem no DOCX foi ajustado para área livre de até **27 cm × 15 cm**, mantendo escala proporcional e legenda limitada a duas linhas com truncamento por reticências quando necessário.
+
 ## [1.5.2] — 2026-05-23
 
 ### Corrigido v1.5.2

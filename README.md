@@ -182,7 +182,7 @@ Documento formatado automaticamente seguindo o modelo oficial do MEC, com:
 - Dados do perfil na capa
 - Encarte A com atividades agrupadas por projeto
 - Links de referência exportados como hyperlinks clicáveis quando preenchidos
-- Encarte B com evidências (uma por página) e referências cruzadas de páginas
+- Encarte B com evidências (uma por página), referências cruzadas de páginas, imagem ajustada para área livre de até 27 cm × 15 cm e legenda limitada a duas linhas (com reticências quando necessário)
 
 ### 11 Temas Visuais 🎨
 

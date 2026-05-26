@@ -119,6 +119,8 @@ Gera relatórios DOCX manipulando diretamente o XML do template OpenXML:
 3. Monta **Encarte A**: tabela de atividades agrupada por `project_scope`
 4. Exporta entradas de `link_ref` como hyperlinks clicáveis, preservando a ordem digitada
 5. Monta **Encarte B**: uma página por evidência com imagem ou texto formatado + legenda + bookmark
+  - Evidências de imagem usam área livre máxima de até **27 cm × 15 cm** com escala proporcional
+  - Legendas de imagem são limitadas a duas linhas com truncamento em reticências quando necessário
 6. Insere campos PAGEREF para referência cruzada de páginas
 7. Atualiza `[Content_Types].xml` com os tipos MIME das imagens
 8. Salva o DOCX na pasta configurada ou padrão (`userData/reports/`)

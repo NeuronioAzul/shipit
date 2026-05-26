@@ -20,7 +20,7 @@ Electron desktop app (package version 1.5.2, latest release tag: v1.5.2; `dev` m
 | Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
 | Toasts | sonner 2 | Non-blocking notifications |
 | Auto-update | electron-updater 6 | GitHub Releases integration |
-| Testing | Vitest + Playwright | 137 unit/integration tests, 35 declared E2E scenarios |
+| Testing | Vitest + Playwright | 147 unit/integration tests, 35 declared E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -124,7 +124,8 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 - **Encarte A**: activities grouped by `project_scope`, checkboxes per attendance type
 - `link_ref` entries are exported as clickable hyperlinks in the DOCX payload
 - **Encarte B**: evidence images (one per page) with captions and PAGEREF bookmarks
-- Image auto-scaling to fit page area (~15.5cm × 22cm), converted to EMU
+- Image auto-scaling to fit free area (up to 27cm × 15cm), converted to EMU
+- Captions are constrained to two lines with ellipsis truncation when needed
 - Output: `RELATÓRIO DE SERVIÇO - {CARGO}_{NAME}_{MONTH}.docx`
 
 ### Theming
@@ -197,6 +198,6 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** through Phase 26: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 137 Vitest tests across 11 files, 35 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, and **manual update flow** (consent-based check/download/install with attention badges and persisted state).
+All core phases are **complete** through Phase 29: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 147 Vitest tests across 12 files, 35 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, manual update flow (consent-based check/download/install with attention badges and persisted state), split evidence counters by type, and DOCX evidence layout refinements (27cm × 15cm with two-line caption cap).
 
 Subsequent releases on top of that baseline added user profile availability fields plus dedicated ProfilePage coverage (v1.5.0), safer update-state recovery after restart (v1.5.1), and clickable DOCX hyperlink export for reference links (v1.5.2). Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.

@@ -423,7 +423,15 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Estado de atualização restaurado com segurança após reinício, degradando updates baixados para novo download quando o caminho do arquivo não está mais disponível.
 - [x] Indicadores de atenção e versão pendente de update foram refinados para se manterem consistentes entre reinicializações.
 - [x] Links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis.
-- [x] Estado atual validado em 26/05/2026: 137 testes Vitest passando (11 arquivos) e 35 cenários Playwright declarados em `e2e/app.spec.ts`.
+- [x] Estado atual validado em 26/05/2026: 147 testes Vitest passando (12 arquivos) e 35 cenários Playwright declarados em `e2e/app.spec.ts`.
+
+### Fase 29: Evidências por Tipo e Layout DOCX ✅
+
+- [x] Contagem de evidências separada por tipo (imagem e texto) aplicada na lista de atividades, no detalhe e no Dashboard.
+- [x] Contadores de evidência passaram a exibir ambos os tipos mesmo quando um deles está com valor zero.
+- [x] Motor DOCX ajustado para usar área livre de imagem de até 27 cm × 15 cm, com escala proporcional.
+- [x] Legenda de evidência no DOCX limitada a duas linhas com truncamento em reticências quando exceder o limite.
+- [x] Cobertura automatizada ampliada para validar regras de fit da imagem e truncamento de legenda no gerador DOCX.
 
 ---
 

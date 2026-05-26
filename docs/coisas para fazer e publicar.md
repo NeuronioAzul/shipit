@@ -253,8 +253,14 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 - 🟢 feat: quando exibir a quantidade de evidências na lista de atividades ou em outros lugares, separar por ícone as imagens e textos. Quero que na lista de atividades seja da mesma forma que é hoje mas separados por tipo texto e imagens, as quantidades precisam estar separadas, e nos detalhes da atividade também.
 
-## Fazendo
+----
 
 ## Verificação, correção e criação de testes
 
 - 🟡 Verificar se as imagens estão ocupando o tamanho máximo da página em altura ou largura considerando o tamanho da legenda que pode ter até duas linha de altura no máximo.
+
+
+
+## Fazendo
+## Fazendo
+## Fazendo
