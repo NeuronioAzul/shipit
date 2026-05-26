@@ -41,7 +41,7 @@
 
 | Pacote                   | Versão   | Finalidade                                                        |
 | ------------------------ | -------- | ----------------------------------------------------------------- |
-| `@playwright/test`       | 1.59.1   | Framework de testes E2E para Electron (35 cenários declarados em `e2e/app.spec.ts`). |
+| `@playwright/test`       | 1.59.1   | Framework de testes E2E para Electron (36 cenários declarados em `e2e/app.spec.ts`). |
 | `@tailwindcss/vite`      | 4.2.2    | Plugin Vite oficial do Tailwind CSS v4.                           |
 | `@testing-library/react` | 16.3.2   | Testes de componentes React no renderer com queries orientadas à UI. |
 | `@types/better-sqlite3`  | 7.6.13   | Tipagens TypeScript para better-sqlite3.                          |
@@ -58,7 +58,7 @@
 | `tailwindcss`            | 4.2.2    | Framework CSS utility-first v4 com suporte a temas via variáveis. |
 | `typescript`             | 6.0.2    | Superset tipado de JavaScript para todo o código do projeto.      |
 | `vite`                   | 8.0.5    | Bundler e dev server ultrarrápido para o frontend React.          |
-| `vitest`                 | 4.1.3    | Test runner rápido compatível com Vite (137 testes verificados em 26/05/2026). |
+| `vitest`                 | 4.1.3    | Test runner rápido compatível com Vite (147 testes verificados em 26/05/2026). |
 | `wait-on`                | 9.0.4    | Aguarda o Vite iniciar antes de lançar o Electron no modo dev.    |
 
 ---
@@ -78,8 +78,8 @@ TipTap       →  Editor rich-text (evidências de texto)
 dnd-kit      →  Drag & drop (reordenação)
 JSZip        →  Geração de relatórios DOCX
 sonner       →  Toasts/notificações na UI
-Vitest       →  Testes unitários e integração (137 testes verificados em 26/05/2026)
-Playwright   →  Testes E2E (35 cenários declarados)
+Vitest       →  Testes unitários e integração (147 testes verificados em 26/05/2026)
+Playwright   →  Testes E2E (36 cenários declarados)
 ```
 
 ## Notas Importantes

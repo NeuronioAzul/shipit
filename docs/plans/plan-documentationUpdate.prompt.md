@@ -375,9 +375,9 @@ Observações:
 
 > Atualize esta seção ao final de cada execução real do plano. Não use esta seção como fonte da verdade sem reconferir o código.
 
-- **Última execução do plano**: 2026-05-26 — Full sync documental pós-v1.5.2
-- **Versão em `package.json`**: 1.5.2
-- **Último release documentado**: v1.5.2 (publicado em 2026-05-23)
+- **Última execução do plano**: 2026-05-26 — Full sync documental pós-v1.6.0
+- **Versão em `package.json`**: 1.6.0
+- **Último release documentado**: v1.6.0 (publicado em 2026-05-26)
 - **Data da execução**: 2026-05-26
 - **IPC exposto no preload**: 57 chamadas `ipcRenderer.invoke` + 4 listeners `ipcRenderer.on`
 - **IPC registrado no main**: 57 handlers `ipcMain.handle`
@@ -388,8 +388,8 @@ Observações:
 - **Temas**: 11 temas registrados (`light`, `dark`, `colorful`, `rose-violet`, `minimalist`, `futuristic`, `ocean`, `sunset`, `high-contrast`, `high-contrast-dark`, `cyberpunk`)
 - **Dependências prod/dev**: 21 produção / 19 desenvolvimento
 - **Scripts npm**: 10 scripts
-- **Testes**: `npm run test` — 11 arquivos, 137 testes passando
-- **E2E declarados**: 35 cenários Playwright (`e2e/app.spec.ts`)
+- **Testes**: `npm run test` — 12 arquivos, 147 testes passando
+- **E2E declarados**: 36 cenários Playwright (`e2e/app.spec.ts`)
 - **Build**: não executado; alteração foi documental e `npm run test` bastou para a contagem verificada
-- **Documentos alterados**: `README.md`, `.github/copilot-instructions.md`, `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`, este plano. `CHANGELOG.md` já estava em dia até `1.5.2`.
+- **Documentos alterados**: `CHANGELOG.md`, `README.md`, `.github/copilot-instructions.md`, `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`, este plano.
 - **Problemas encontrados**: Playwright E2E não executado nesta auditoria; alguns planos históricos em `docs/plans/` ainda preservam contagens antigas como registro de execução, sem afetar a documentação principal.

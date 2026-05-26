@@ -245,7 +245,8 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | Arquivo | Função |
 | -------- | -------- |
 | `themes.ts` | Registro de 11 temas com `ThemeMetadata` (id, label, description, icon, category, base, preview) |
-| `themes.css` | 60+ variáveis CSS por tema via seletores `[data-theme="id"]` |
+| `themes.css` | 60+ variáveis CSS por tema via `:root` + classes (`.dark`, `.ocean`, `.cyberpunk`, etc.) |
+| `scrollbars.css` | Scrollbar global temática via tokens CSS + helper `.scrollbar-stable` com `scrollbar-gutter: stable` |
 | `cyberpunk-effects.css` | Efeitos especiais do tema Cyberpunk (scanlines CRT, neon glow, glitch, clip-path angular) |
 
 ---
@@ -256,7 +257,7 @@ O sistema de temas usa uma cascata de 3 camadas:
 
 ```text
 1. Registro (themes.ts)           → ThemeMetadata[] com 11 temas tipados
-2. Paletas CSS (themes.css)       → [data-theme="id"] define 60+ variáveis CSS
+2. Paletas CSS (themes.css)       → `:root` + classes de tema definem 60+ variáveis CSS
 3. Mapeamento Tailwind (index.css) → @theme inline mapeia variáveis para tokens Tailwind
 ```
 
@@ -264,7 +265,7 @@ O sistema de temas usa uma cascata de 3 camadas:
 
 ```text
 ThemeSelector (click)  →  ThemeContext.setTheme(id)  →  localStorage.shipit-theme = id
-                                                       →  <html data-theme="id" class="dark?"> 
+                                                       →  <html class="theme-id ..."> 
                                                        →  CSS variables recalculadas
                                                        →  Tailwind tokens atualizados
                                                        →  Transição suave (200ms)
@@ -453,7 +454,7 @@ npm run dist
 | SQLite (não PostgreSQL/MySQL) | 100% offline, sem servidor externo, um único arquivo |
 | DOCX via OpenXML (não Puppeteer PDF) | O modelo do MEC é DOCX; manipulação direta garante fidelidade ao template |
 | UUID v7 (não auto-increment) | Ordenação cronológica natural + unicidade global |
-| Tailwind v4 `@theme inline` | Sem arquivo de config; variáveis CSS permitem multi-tema via `[data-theme]` |
+| Tailwind v4 `@theme inline` | Sem arquivo de config; variáveis CSS permitem multi-tema via `:root` + classes de tema |
 | Multi-tema via CSS variables | Zero custo em runtime; integração total com Tailwind v4; 11 temas sem CSS-in-JS |
 | Sistema de categorias de temas | Organização visual no seletor: principais, personalidade, acessibilidade |
 | Temas WCAG AAA de alto contraste | Design inclusivo para usuários com baixa visão (contraste 7:1+) |
