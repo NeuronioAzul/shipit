@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { getLastBusinessDay } from './report-generator.ts'
+import {
+  DOCX_EVIDENCE_LAYOUT,
+  fitImageToEvidencePage,
+  formatImageCaptionForDocx,
+  getLastBusinessDay,
+} from './report-generator.ts'
 
 describe('getLastBusinessDay', () => {
   it('returns last day when it is a weekday (Wednesday)', () => {
@@ -68,5 +73,58 @@ describe('getLastBusinessDay', () => {
       expect(day).toBeGreaterThanOrEqual(1) // Monday
       expect(day).toBeLessThanOrEqual(5) // Friday
     }
+  })
+})
+
+describe('fitImageToEvidencePage', () => {
+  it('scales wide images proportionally by max width', () => {
+    const result = fitImageToEvidencePage(4000, 2000)
+
+    expect(result.cx).toBe(DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CX)
+    expect(result.cy).toBe(Math.round(DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CX / 2))
+    expect(result.cy).toBeLessThanOrEqual(DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CY)
+  })
+
+  it('limits very tall images by max image height with caption reserve applied', () => {
+    const result = fitImageToEvidencePage(1000, 5000)
+
+    expect(result.cy).toBe(DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CY)
+    expect(result.cx).toBeLessThan(DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CX)
+  })
+})
+
+describe('formatImageCaptionForDocx', () => {
+  it('keeps short captions in one line without truncation', () => {
+    const result = formatImageCaptionForDocx('Legenda curta para evidência')
+
+    expect(result.line1).toBe('Legenda curta para evidência')
+    expect(result.line2).toBeNull()
+    expect(result.truncated).toBe(false)
+  })
+
+  it('truncates long captions to two lines with ellipsis', () => {
+    const longCaption = [
+      'Esta legenda foi escrita para testar truncamento automático em duas linhas',
+      'mantendo o documento legível e sem overflow visual na página do relatório',
+      'mesmo quando o texto original é maior do que o espaço reservado.',
+    ].join(' ')
+
+    const result = formatImageCaptionForDocx(longCaption)
+
+    expect(result.line1.length).toBeLessThanOrEqual(DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE)
+    expect(result.line2).not.toBeNull()
+    expect(result.line2!.length).toBeLessThanOrEqual(DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE)
+    expect(result.line2!.endsWith('...')).toBe(true)
+    expect(result.truncated).toBe(true)
+  })
+
+  it('handles long uninterrupted tokens by hard-splitting and truncating', () => {
+    const longToken = 'A'.repeat(DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE * 3)
+    const result = formatImageCaptionForDocx(longToken)
+
+    expect(result.line1.length).toBe(DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE)
+    expect(result.line2).not.toBeNull()
+    expect(result.line2!.endsWith('...')).toBe(true)
+    expect(result.truncated).toBe(true)
   })
 })

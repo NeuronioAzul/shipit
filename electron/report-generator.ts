@@ -50,6 +50,34 @@ const MONTH_NAMES: Record<string, string> = {
   '09': 'SETEMBRO', '10': 'OUTUBRO', '11': 'NOVEMBRO', '12': 'DEZEMBRO',
 }
 
+const DOCX_PT_TO_EMU = 12700
+const DOCX_TWIP_TO_EMU = 635
+const DOCX_CM_TO_EMU = 360000
+const DOCX_IMAGE_PX_TO_EMU = 9525
+const DOCX_CAPTION_SPACING_BEFORE_TWIP = 120
+const DOCX_CAPTION_MAX_LINES = 2
+const DOCX_CAPTION_MAX_CHARS_PER_LINE = 68
+const DOCX_CAPTION_LINE_HEIGHT_PT = 11
+const DOCX_EVIDENCE_IMAGE_MAX_WIDTH_CM = 27
+const DOCX_EVIDENCE_IMAGE_MAX_HEIGHT_CM = 15
+const DOCX_CAPTION_RESERVED_CY =
+  (DOCX_CAPTION_SPACING_BEFORE_TWIP * DOCX_TWIP_TO_EMU) +
+  (DOCX_CAPTION_MAX_LINES * DOCX_CAPTION_LINE_HEIGHT_PT * DOCX_PT_TO_EMU)
+const DOCX_EVIDENCE_IMAGE_MAX_CX = DOCX_EVIDENCE_IMAGE_MAX_WIDTH_CM * DOCX_CM_TO_EMU
+const DOCX_EVIDENCE_IMAGE_MAX_CY = DOCX_EVIDENCE_IMAGE_MAX_HEIGHT_CM * DOCX_CM_TO_EMU
+const DOCX_EVIDENCE_PAGE_MAX_CY = DOCX_EVIDENCE_IMAGE_MAX_CY + DOCX_CAPTION_RESERVED_CY
+
+export const DOCX_EVIDENCE_LAYOUT = {
+  MAX_IMAGE_CX: DOCX_EVIDENCE_IMAGE_MAX_CX,
+  MAX_PAGE_CY: DOCX_EVIDENCE_PAGE_MAX_CY,
+  CAPTION_RESERVED_CY: DOCX_CAPTION_RESERVED_CY,
+  MAX_IMAGE_CY: DOCX_EVIDENCE_IMAGE_MAX_CY,
+  PX_TO_EMU: DOCX_IMAGE_PX_TO_EMU,
+  CAPTION_MAX_LINES: DOCX_CAPTION_MAX_LINES,
+  CAPTION_MAX_CHARS_PER_LINE: DOCX_CAPTION_MAX_CHARS_PER_LINE,
+  CAPTION_SPACING_BEFORE_TWIP: DOCX_CAPTION_SPACING_BEFORE_TWIP,
+} as const
+
 // ─── Helpers ───
 
 function stripAccents(str: string): string {
@@ -171,27 +199,113 @@ function getImageDimensions(filePath: string): { width: number; height: number }
   }
 }
 
-/** Calculate proportional EMU dimensions to fit page usable area (max ~15.5cm x 22cm) */
-function fitToPage(width: number, height: number): { cx: number; cy: number } {
-  const MAX_CX = 5_900_000 // ~15.5cm in EMU
-  const MAX_CY = 8_300_000 // ~22cm in EMU
-  const PX_TO_EMU = 9525 // 1px = 9525 EMU at 96dpi
+/**
+ * Calculate proportional EMU dimensions to fit evidence image area.
+ * This always reserves fixed vertical space for two caption lines.
+ */
+export function fitImageToEvidencePage(width: number, height: number): { cx: number; cy: number } {
+  let cx = width * DOCX_EVIDENCE_LAYOUT.PX_TO_EMU
+  let cy = height * DOCX_EVIDENCE_LAYOUT.PX_TO_EMU
 
-  let cx = width * PX_TO_EMU
-  let cy = height * PX_TO_EMU
-
-  // Scale down proportionally
-  if (cx > MAX_CX) {
-    const ratio = MAX_CX / cx
-    cx = MAX_CX
+  // Scale down proportionally by width.
+  if (cx > DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CX) {
+    const ratio = DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CX / cx
+    cx = DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CX
     cy = Math.round(cy * ratio)
   }
-  if (cy > MAX_CY) {
-    const ratio = MAX_CY / cy
-    cy = MAX_CY
+
+  // Then scale down proportionally by effective height (already discounting caption reserve).
+  if (cy > DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CY) {
+    const ratio = DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CY / cy
+    cy = DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CY
     cx = Math.round(cx * ratio)
   }
+
   return { cx, cy }
+}
+
+function takeCaptionLine(input: string, maxChars: number): { line: string; rest: string } {
+  if (input.length <= maxChars) {
+    return { line: input, rest: '' }
+  }
+
+  const candidate = input.slice(0, maxChars + 1)
+  let breakIndex = candidate.lastIndexOf(' ')
+
+  // Fallback for long uninterrupted tokens.
+  if (breakIndex <= 0) {
+    breakIndex = maxChars
+  }
+
+  const line = input.slice(0, breakIndex).trimEnd()
+  const rest = input.slice(breakIndex).trimStart()
+
+  return { line, rest }
+}
+
+function appendEllipsis(text: string, maxChars: number): string {
+  const suffix = '...'
+  if (maxChars <= suffix.length) return suffix.slice(0, maxChars)
+
+  const trimmed = text.trimEnd()
+  if (trimmed.length + suffix.length <= maxChars) {
+    return `${trimmed}${suffix}`
+  }
+
+  return `${trimmed.slice(0, maxChars - suffix.length).trimEnd()}${suffix}`
+}
+
+export function formatImageCaptionForDocx(caption: string): {
+  line1: string
+  line2: string | null
+  truncated: boolean
+} {
+  const normalized = caption.replace(/\s+/g, ' ').trim()
+  if (!normalized) {
+    return {
+      line1: '',
+      line2: null,
+      truncated: false,
+    }
+  }
+
+  const first = takeCaptionLine(normalized, DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE)
+  if (!first.rest) {
+    return {
+      line1: first.line,
+      line2: null,
+      truncated: false,
+    }
+  }
+
+  const second = takeCaptionLine(first.rest, DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE)
+  if (!second.rest) {
+    return {
+      line1: first.line,
+      line2: second.line,
+      truncated: false,
+    }
+  }
+
+  return {
+    line1: first.line,
+    line2: appendEllipsis(second.line, DOCX_EVIDENCE_LAYOUT.CAPTION_MAX_CHARS_PER_LINE),
+    truncated: true,
+  }
+}
+
+function buildCaptionRunXml(caption: string): string {
+  const formatted = formatImageCaptionForDocx(caption)
+  const firstLine = escapeXml(formatted.line1)
+
+  if (!formatted.line2) {
+    return `<w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:i/></w:rPr>` +
+      `<w:t xml:space="preserve">${firstLine}</w:t></w:r>`
+  }
+
+  return `<w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:i/></w:rPr>` +
+    `<w:t xml:space="preserve">${firstLine}</w:t><w:br/>` +
+    `<w:t xml:space="preserve">${escapeXml(formatted.line2)}</w:t></w:r>`
 }
 
 // ─── XML manipulation helpers ───
@@ -268,6 +382,8 @@ function buildEvidencePageXml(
   caption: string,
   imageIdx: number
 ): string {
+  const captionRunXml = buildCaptionRunXml(caption)
+
   // Page break + bookmark start + image paragraph + caption + bookmark end
   return `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/></w:pPr><w:r><w:br w:type="page"/></w:r></w:p>` +
     `<w:bookmarkStart xmlns:w="${W_NS}" w:id="${bookmarkId}" w:name="${bookmarkName}"/>` +
@@ -287,9 +403,9 @@ function buildEvidencePageXml(
     `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>` +
     `</pic:pic></a:graphicData></a:graphic>` +
     `</wp:inline></w:drawing></w:r></w:p>` +
-    `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:jc w:val="center"/><w:spacing w:before="120"/></w:pPr>` +
-    `<w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:i/></w:rPr>` +
-    `<w:t xml:space="preserve">${escapeXml(caption)}</w:t></w:r></w:p>` +
+    `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:jc w:val="center"/>` +
+    `<w:spacing w:before="${DOCX_EVIDENCE_LAYOUT.CAPTION_SPACING_BEFORE_TWIP}"/></w:pPr>` +
+    `${captionRunXml}</w:p>` +
     `<w:bookmarkEnd xmlns:w="${W_NS}" w:id="${bookmarkId}"/>`
 }
 
@@ -613,9 +729,11 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
           relEl.setAttribute('Target', `media/${mediaName}`)
           relsDom.documentElement!.appendChild(relEl)
 
-          // Calculate dimensions
+          // Calculate dimensions (using effective page height with reserved caption area)
           const dims = getImageDimensions(filePath)
-          const { cx, cy } = dims ? fitToPage(dims.width, dims.height) : { cx: 5_000_000, cy: 3_500_000 }
+          const { cx, cy } = dims
+            ? fitImageToEvidencePage(dims.width, dims.height)
+            : fitImageToEvidencePage(1600, 900)
 
           // Build evidence page
           evidenceFragments.push(

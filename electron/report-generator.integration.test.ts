@@ -19,7 +19,12 @@ vi.mock('electron', () => ({
   },
 }))
 
-import { generateDocxReport } from './report-generator.ts'
+import {
+  DOCX_EVIDENCE_LAYOUT,
+  fitImageToEvidencePage,
+  formatImageCaptionForDocx,
+  generateDocxReport,
+} from './report-generator.ts'
 import type { UserProfile } from './entities/UserProfile'
 import type { Activity } from './entities/Activity'
 
@@ -70,6 +75,25 @@ function makeActivity(overrides?: Partial<Activity>): Activity {
     evidences: [],
     ...overrides,
   } as Activity
+}
+
+function createPngEvidenceBuffer(width: number, height: number): Buffer {
+  const png = Buffer.from([
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE,
+    0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54,
+    0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01,
+    0xE2, 0x21, 0xBC, 0x33,
+    0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44,
+    0xAE, 0x42, 0x60, 0x82,
+  ])
+
+  png.writeUInt32BE(width, 16)
+  png.writeUInt32BE(height, 20)
+
+  return png
 }
 
 describe('generateDocxReport', () => {
@@ -266,6 +290,91 @@ describe('generateDocxReport', () => {
     // Verify document contains evidence caption
     const docXml = await zip.file('word/document.xml')!.async('string')
     expect(docXml).toContain('Evidência de teste')
+  })
+
+  it('limits image extent using max height discounted by caption reserve', async () => {
+    const imgPath = path.join(outDir, 'test-evidence-tall.png')
+    fs.writeFileSync(imgPath, createPngEvidenceBuffer(1000, 5000))
+
+    const activity = makeActivity({
+      evidences: [{
+        id: '019746ab-0000-7000-8000-ev0000000010',
+        activity_id: '019746ab-0000-7000-8000-000000000001',
+        file_path: imgPath,
+        type: 'image' as any,
+        text_content: null,
+        caption: 'Legenda curta',
+        sort_index: 0,
+        date_added: new Date(),
+        deleted_at: null,
+        activity: null as any,
+      }],
+    })
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [activity],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    const expected = fitImageToEvidencePage(1000, 5000)
+
+    expect(expected.cy).toBe(DOCX_EVIDENCE_LAYOUT.MAX_IMAGE_CY)
+    expect(docXml).toContain(`<wp:extent cx="${expected.cx}" cy="${expected.cy}"/>`)
+  })
+
+  it('renders image caption in at most two lines with ellipsis on overflow', async () => {
+    const imgPath = path.join(outDir, 'test-evidence-long-caption.png')
+    fs.writeFileSync(imgPath, createPngEvidenceBuffer(1600, 900))
+
+    const longCaption = [
+      'Legenda extremamente longa para validar truncamento com reticências no relatório',
+      'quando o texto ultrapassa duas linhas de forma previsível e sem quebrar layout',
+      'mesmo em páginas com imagem grande na área de evidências.',
+    ].join(' ')
+
+    const expectedCaption = formatImageCaptionForDocx(longCaption)
+    expect(expectedCaption.truncated).toBe(true)
+    expect(expectedCaption.line2).not.toBeNull()
+    expect(expectedCaption.line2!.endsWith('...')).toBe(true)
+
+    const activity = makeActivity({
+      evidences: [{
+        id: '019746ab-0000-7000-8000-ev0000000011',
+        activity_id: '019746ab-0000-7000-8000-000000000001',
+        file_path: imgPath,
+        type: 'image' as any,
+        text_content: null,
+        caption: longCaption,
+        sort_index: 0,
+        date_added: new Date(),
+        deleted_at: null,
+        activity: null as any,
+      }],
+    })
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [activity],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    expect(docXml).toContain(expectedCaption.line1)
+    expect(docXml).toContain(expectedCaption.line2!)
+    expect(docXml).not.toContain(longCaption.replace(/\s+/g, ' ').trim())
+    expect(docXml).toContain('<w:br/>')
   })
 
   it('throws error when template is not found', async () => {
