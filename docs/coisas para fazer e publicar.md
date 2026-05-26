@@ -4,7 +4,6 @@ SHIPIT!
 
 ## New features
 
-
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app
 - 🟢 feat: Implementar opção de backup do app com 2 botões, um para salvar as evidências, e outro para salvar o banco de dados e informações de configurações do app.
@@ -264,3 +263,6 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 ## Fazendo
 ## Fazendo
 ## Fazendo
+
+
+- 🟢 feat: Ajustar a barra de rolagem para usar um padrão igual do vscode e acompanhar as cores do tema escolhido, e sempre visível quando necessário.

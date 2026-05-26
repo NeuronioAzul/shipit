@@ -1,6 +1,6 @@
 # ShipIt — Project Guidelines
 
-Electron desktop app (package version 1.5.2, latest release tag: v1.5.2; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
+Electron desktop app (package version 1.6.0, latest release tag: v1.6.0; `dev` may contain `[Unreleased]` changes) for software engineers to track activities, generate service reports (DOCX), and manage evidence. Built with Electron 41 + React 19 + Vite 8 + TypeORM + better-sqlite3.
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@ Electron desktop app (package version 1.5.2, latest release tag: v1.5.2; `dev` m
 | Desktop | Electron 41 (CommonJS) | Context isolation, preload bridge, system tray |
 | UI | React 19 + React Router 7 | SPA with `AppLayout` wrapper, `HashRouter` |
 | Styling | Tailwind CSS 4 | `@theme inline` in `src/index.css`, no config file |
-| Theming | 11 themes (CSS variables) | `src/themes/themes.ts` registry + `themes.css` palettes + `ThemeContext` |
+| Theming | 11 themes (CSS variables) | `src/themes/themes.ts` registry + `themes.css` palettes + `scrollbars.css` + `ThemeContext` |
 | ORM | TypeORM 0.3 + better-sqlite3 | SQLite stored in `userData/shipit.db` |
 | Build | Vite 8 | `@vitejs/plugin-react` + `@tailwindcss/vite` |
 | Language | TypeScript 6 | Strict mode everywhere |
@@ -20,7 +20,7 @@ Electron desktop app (package version 1.5.2, latest release tag: v1.5.2; `dev` m
 | Lightbox | yet-another-react-lightbox 3 | Full-screen image viewing with navigation |
 | Toasts | sonner 2 | Non-blocking notifications |
 | Auto-update | electron-updater 6 | GitHub Releases integration |
-| Testing | Vitest + Playwright | 147 unit/integration tests, 35 declared E2E scenarios |
+| Testing | Vitest + Playwright | 147 unit/integration tests, 36 declared E2E scenarios |
 
 ## Build & Dev Commands
 
@@ -133,11 +133,12 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 - **11 themes** across 3 categories: main (Light, Dark), personality (Colorful, Rose & Violet, Minimalist, Futuristic, Ocean, Sunset), accessibility (High Contrast, High Contrast Dark), bonus (Cyberpunk)
 - `ThemeId` union type: `'light' | 'dark' | 'colorful' | 'rose-violet' | 'minimalist' | 'futuristic' | 'ocean' | 'sunset' | 'high-contrast' | 'high-contrast-dark' | 'cyberpunk'`
 - `ThemeMetadata` interface in `src/themes/themes.ts`: id, label, description, icon, category, base (`'dark'`|`'light'`), preview colors
-- CSS variables (60+ per theme) defined in `src/themes/themes.css` via `[data-theme="id"]` selectors
+- CSS variables (60+ per theme) defined in `src/themes/themes.css` via `:root` + classes de tema (`.dark`, `.ocean`, `.cyberpunk`, etc.)
 - `@theme inline` in `src/index.css` maps CSS variables to Tailwind tokens
-- `ThemeContext` stores full theme ID, computes `isDark` from base property, applies theme class + data attribute to `<html>`
+- `ThemeContext` stores full theme ID, computes `isDark` from base property, applies the active theme class to `<html>`
 - Smooth 200ms transitions on theme switch
 - Persist theme choice in `localStorage.shipit-theme` (stores theme ID string, e.g. `"cyberpunk"`)
+- Global themed scrollbar styles in `src/themes/scrollbars.css` use theme tokens and `scrollbar-gutter: stable` helper class for stable layout when overflow appears
 - Cyberpunk special effects in `src/themes/cyberpunk-effects.css` (CRT scanlines, neon glow, glitch animations, angular clip-paths)
 - `ThemeSelector` component in SettingsPage with visual grid picker by category
 
@@ -156,7 +157,7 @@ src/                        # Renderer (ESNext, Vite)
   contexts/                 # ThemeContext + NavigationHistoryContext + UpdateStateContext
   menu/                     # appMenuCatalog + saveContextRegistry
   services/                 # localDb.ts (browser fallback)
-  themes/                   # Theme system (themes.ts registry, themes.css palettes, cyberpunk-effects.css)
+  themes/                   # Theme system (themes.ts registry, themes.css palettes, scrollbars.css, cyberpunk-effects.css)
   utils/                    # validation, status colors, month refs, keyboard guards, activity month navigation
 e2e/                        # Playwright E2E tests
 docs/                       # Architecture, roadmap, plans, guides
@@ -173,7 +174,7 @@ docs/                       # Architecture, roadmap, plans, guides
 - **Form pattern**: typed interface for form state, `useEffect` to load, handler to save via IPC
 - **Browser fallback**: when `electronAPI` unavailable, uses `localStorage` via `localDb` service
 - **Tailwind classes**: use CSS variable tokens (`bg-background`, `text-foreground`, `bg-primary`) — not raw color values
-- **Theme files**: theme metadata in `src/themes/themes.ts`, CSS palettes in `src/themes/themes.css`, special effects in `src/themes/cyberpunk-effects.css`
+- **Theme files**: theme metadata in `src/themes/themes.ts`, CSS palettes in `src/themes/themes.css`, global scrollbar theming in `src/themes/scrollbars.css`, special effects in `src/themes/cyberpunk-effects.css`
 - **Draggable title bar**: Header uses `WebkitAppRegion: 'drag'`, interactive elements use `'no-drag'`
 - **Language**: UI strings and comments in Portuguese (pt-BR); code identifiers in English
 - **Testing**: unit tests in `*.test.ts` colocated with source, E2E in `e2e/`, use `sql.js` for in-memory DB in tests
@@ -198,6 +199,6 @@ docs/                       # Architecture, roadmap, plans, guides
 
 ## Roadmap Context
 
-All core phases are **complete** through Phase 29: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 147 Vitest tests across 12 files, 35 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, manual update flow (consent-based check/download/install with attention badges and persisted state), split evidence counters by type, and DOCX evidence layout refinements (27cm × 15cm with two-line caption cap).
+All core phases are **complete** through Phase 29: Foundation, Activity CRUD, Evidence management, Validation, Auto-save, Dashboard, DOCX reports, Settings, Alerts & notifications, Drag & drop reorder, navigation and menus, UI/UX polish, CI/CD multiplatform builds, 147 Vitest tests across 12 files, 36 declared E2E scenarios, WCAG AA audit, Icons & installers, Search bar, Multi-theme system (11 themes), documentation syncs, text evidence (TipTap), evidence lightbox, activity navigation, activity detail delete/month selector, text evidence modal fixes, chronological activity ordering, TitleBar/release validation, runtime identity & safe icon cleanup, `userData` compatibility for production/dev/E2E, manual update flow (consent-based check/download/install with attention badges and persisted state), split evidence counters by type, and DOCX evidence layout refinements (27cm × 15cm with two-line caption cap).
 
-Subsequent releases on top of that baseline added user profile availability fields plus dedicated ProfilePage coverage (v1.5.0), safer update-state recovery after restart (v1.5.1), and clickable DOCX hyperlink export for reference links (v1.5.2). Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.
+Subsequent releases on top of that baseline added user profile availability fields plus dedicated ProfilePage coverage (v1.5.0), safer update-state recovery after restart (v1.5.1), clickable DOCX hyperlink export for reference links (v1.5.2), and the current stable baseline v1.6.0 with split evidence counters by type plus DOCX image area/caption refinements. The current `dev` branch also includes global themed scrollbars tied to theme tokens, with stable gutter behavior across key scroll hosts. Pending backlog: custom data storage directory (optional, deferred), macOS/Linux tray adjustments and platform path validation.

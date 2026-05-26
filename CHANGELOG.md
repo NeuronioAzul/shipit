@@ -7,6 +7,31 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ---
 
+## [Unreleased]
+
+### Alterado
+
+- Barra de rolagem temática aplicada globalmente para acompanhar o tema ativo, com tokens por tema e estilo unificado no renderer.
+- Principais áreas com overflow receberam gutter estável (`scrollbar-gutter: stable`) para reduzir saltos de layout quando a rolagem aparece.
+- Tema Cyberpunk deixou de depender de hardcode global de scrollbar e passou a reutilizar os tokens de tema com overrides pontuais em dropdowns.
+
+### Adicionado
+
+- Novo cenário E2E Playwright para validar tokens de scrollbar por tema e comportamento de gutter estável nos hosts de rolagem.
+
+
+## [1.6.1] — 2026-05-26
+
+### Adicionado
+
+- Novo cenário E2E Playwright para validar tokens de scrollbar por tema e comportamento de gutter estável nos hosts de rolagem.
+
+### Alterado
+
+- Barra de rolagem temática aplicada globalmente para acompanhar o tema ativo, com tokens CSS por tema e estilo unificado no renderer.
+- Principais áreas com overflow receberam gutter estável (`scrollbar-gutter: stable`) para reduzir saltos de layout quando a rolagem aparece.
+- Tema **Cyberpunk** deixou de depender de hardcode global de scrollbar e passou a reutilizar os tokens de tema, com overrides pontuais em dropdowns.
+
 ## [1.6.0] — 2026-05-26
 
 ### Alterado

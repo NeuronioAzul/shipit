@@ -154,7 +154,7 @@ export function Select({
   const dropdown = open ? createPortal(
     <div
       ref={listRef}
-      className="select-dropdown bg-popover text-popover-foreground border border-border rounded-lg shadow-lg"
+      className="select-dropdown scrollbar-stable bg-popover text-popover-foreground border border-border rounded-lg shadow-lg"
       style={{
         position: 'fixed',
         zIndex: 9999,

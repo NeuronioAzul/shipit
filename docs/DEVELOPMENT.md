@@ -37,9 +37,9 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm run test`     | Executa 137 testes unitários e de integração (Vitest, 11 arquivos verificados em 26/05/2026) |
+| `npm run test`     | Executa 147 testes unitários e de integração (Vitest, 12 arquivos verificados em 26/05/2026) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 35 cenários declarados end-to-end com Playwright/Electron (precedido por `pretest:e2e`) |
+| `npm run test:e2e` | Executa 36 cenários declarados end-to-end com Playwright/Electron (precedido por `pretest:e2e`) |
 | `npm run test:all` | Executa a suíte completa: Vitest + build + Playwright |
 | `npm run pretest:e2e` | Hook automático que roda `npm run build` antes do Playwright |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
@@ -184,6 +184,7 @@ shipit/
 │   ├── themes/                # Registro/paletas/efeitos dos temas
 │   │   ├── themes.ts
 │   │   ├── themes.css
+│   │   ├── scrollbars.css
 │   │   └── cyberpunk-effects.css
 │   └── utils/
 │       ├── activityMonthNavigation.ts
@@ -344,7 +345,7 @@ Em builds empacotados (`app.isPackaged`), o app **verifica** atualizações auto
 
 - **Sem code signing**: macOS pede "Abrir mesmo assim" manualmente; Windows pode exibir SmartScreen
 - **Minutes do GitHub Actions**: macOS consome 10x mais minutos. Free tier = 2000 min/mês
-- **Testes como gate**: se os 137 testes Vitest falharem, o build não é publicado
+- **Testes como gate**: se os 147 testes Vitest falharem, o build não é publicado
 
 ---
 

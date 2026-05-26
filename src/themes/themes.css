@@ -99,6 +99,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(8 20 39 / 0.18);
   --shadow-card: 0 10px 30px -16px rgb(12 53 109 / 0.18);
   --shadow-modal: 0 20px 60px -20px rgb(8 20 39 / 0.28);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(229 237 246);
+  --scrollbar-thumb: rgb(97 124 160 / 0.55);
+  --scrollbar-thumb-hover: rgb(74 91 117 / 0.75);
 }
 
 /* ===== 2. Dark ===== */
@@ -177,6 +184,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.35);
   --shadow-card: 0 12px 32px -16px rgb(0 0 0 / 0.45);
   --shadow-modal: 0 24px 72px -24px rgb(0 0 0 / 0.55);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(17 37 68);
+  --scrollbar-thumb: rgb(146 164 189 / 0.55);
+  --scrollbar-thumb-hover: rgb(232 110 33 / 0.75);
 }
 
 /* ===== 3. Colorful ===== */
@@ -255,6 +269,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(124 58 237 / 0.12);
   --shadow-card: 0 10px 30px -16px rgb(124 58 237 / 0.14);
   --shadow-modal: 0 20px 60px -20px rgb(30 27 75 / 0.25);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(243 232 255);
+  --scrollbar-thumb: rgb(124 58 237 / 0.5);
+  --scrollbar-thumb-hover: rgb(88 26 223 / 0.72);
 }
 
 /* ===== 4. Rose & Violet ===== */
@@ -333,6 +354,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(124 58 237 / 0.12);
   --shadow-card: 0 10px 30px -16px rgb(168 85 247 / 0.15);
   --shadow-modal: 0 20px 60px -20px rgb(46 16 101 / 0.25);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(245 208 254);
+  --scrollbar-thumb: rgb(168 85 247 / 0.55);
+  --scrollbar-thumb-hover: rgb(124 58 237 / 0.75);
 }
 
 /* ===== 5. Minimalist ===== */
@@ -411,6 +439,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.08);
   --shadow-card: 0 10px 30px -16px rgb(0 0 0 / 0.10);
   --shadow-modal: 0 20px 60px -20px rgb(0 0 0 / 0.18);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(228 228 231);
+  --scrollbar-thumb: rgb(113 113 122 / 0.55);
+  --scrollbar-thumb-hover: rgb(63 63 70 / 0.72);
 }
 
 /* ===== 6. Futuristic (dark base) ===== */
@@ -489,6 +524,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.4);
   --shadow-card: 0 12px 32px -16px rgb(6 182 212 / 0.15);
   --shadow-modal: 0 24px 72px -24px rgb(0 0 0 / 0.6);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(30 41 59);
+  --scrollbar-thumb: rgb(6 182 212 / 0.55);
+  --scrollbar-thumb-hover: rgb(168 85 247 / 0.75);
 }
 
 /* ===== 7. Ocean ===== */
@@ -567,6 +609,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(3 105 161 / 0.12);
   --shadow-card: 0 10px 30px -16px rgb(3 105 161 / 0.14);
   --shadow-modal: 0 20px 60px -20px rgb(12 74 110 / 0.22);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(224 242 254);
+  --scrollbar-thumb: rgb(3 105 161 / 0.55);
+  --scrollbar-thumb-hover: rgb(13 148 136 / 0.72);
 }
 
 /* ===== 8. Sunset ===== */
@@ -645,6 +694,13 @@
   --shadow-soft: 0 8px 24px -12px rgb(194 65 12 / 0.12);
   --shadow-card: 0 10px 30px -16px rgb(194 65 12 / 0.14);
   --shadow-modal: 0 20px 60px -20px rgb(67 20 7 / 0.22);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(255 237 213);
+  --scrollbar-thumb: rgb(194 65 12 / 0.55);
+  --scrollbar-thumb-hover: rgb(217 119 6 / 0.75);
 }
 
 /* ===== 9. High Contrast (light base, WCAG AAA 7:1+) ===== */
@@ -723,6 +779,13 @@
   --shadow-soft: 0 4px 12px -4px rgb(0 0 0 / 0.25);
   --shadow-card: 0 6px 18px -8px rgb(0 0 0 / 0.30);
   --shadow-modal: 0 12px 36px -12px rgb(0 0 0 / 0.40);
+
+  /* Scrollbar */
+  --scrollbar-size: 10px;
+  --scrollbar-radius: 0;
+  --scrollbar-track: rgb(255 255 255);
+  --scrollbar-thumb: rgb(0 0 0);
+  --scrollbar-thumb-hover: rgb(0 0 170);
 }
 
 /* ===== 10. High Contrast Dark (dark base, WCAG AAA 7:1+) ===== */
@@ -801,6 +864,13 @@
   --shadow-soft: none;
   --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.2);
   --shadow-modal: 0 0 0 2px rgb(255 255 255 / 0.3);
+
+  /* Scrollbar */
+  --scrollbar-size: 10px;
+  --scrollbar-radius: 0;
+  --scrollbar-track: rgb(0 0 0);
+  --scrollbar-thumb: rgb(255 255 255);
+  --scrollbar-thumb-hover: rgb(255 255 0);
 }
 
 /* ===== 11. Cyberpunk (dark base) ===== */
@@ -880,4 +950,11 @@
   --shadow-soft: 0 0 12px -4px rgb(248 239 2 / 0.15);
   --shadow-card: 0 0 20px -8px rgb(57 255 20 / 0.2);
   --shadow-modal: 0 0 40px -12px rgb(248 239 2 / 0.3);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 0;
+  --scrollbar-track: rgb(12 12 24);
+  --scrollbar-thumb: rgb(57 255 20 / 0.6);
+  --scrollbar-thumb-hover: rgb(248 239 2);
 }

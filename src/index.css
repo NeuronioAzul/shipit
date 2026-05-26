@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "./themes/themes.css";
+@import "./themes/scrollbars.css";
 @import "./themes/cyberpunk-effects.css";
 
 /* ===== ShipIt! WCAG AA Palette ===== */
@@ -76,6 +77,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  --size-scrollbar: var(--scrollbar-size);
+  --radius-scrollbar: var(--scrollbar-radius);
+  --color-scrollbar-track: var(--scrollbar-track);
+  --color-scrollbar-thumb: var(--scrollbar-thumb);
+  --color-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
 
   /* Brand colors for one-off usage */
   --color-brand-blue: rgb(12, 53, 109);

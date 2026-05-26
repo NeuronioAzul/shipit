@@ -1,6 +1,6 @@
 # ShipIt! — Roadmap de Desenvolvimento
 
-> Atualizado em: 26/05/2026 (sincronização documental pós-v1.5.2)
+> Atualizado em: 26/05/2026 (sincronização documental pós-v1.6.0)
 >
 > Este documento serve como roadmap do projeto. Cada fase é um milestone de desenvolvimento.
 > Itens marcados com `[x]` estão concluídos. Itens com `[ ]` estão pendentes.
@@ -423,7 +423,7 @@ Ao clicar no ícone, a janela para registrar uma nova atividade ou continuar edi
 - [x] Estado de atualização restaurado com segurança após reinício, degradando updates baixados para novo download quando o caminho do arquivo não está mais disponível.
 - [x] Indicadores de atenção e versão pendente de update foram refinados para se manterem consistentes entre reinicializações.
 - [x] Links preenchidos em `Links de Referência` agora são exportados no DOCX como hyperlinks clicáveis.
-- [x] Estado atual validado em 26/05/2026: 147 testes Vitest passando (12 arquivos) e 35 cenários Playwright declarados em `e2e/app.spec.ts`.
+- [x] Estado atual validado em 26/05/2026: 147 testes Vitest passando (12 arquivos) e 36 cenários Playwright declarados em `e2e/app.spec.ts`.
 
 ### Fase 29: Evidências por Tipo e Layout DOCX ✅
 

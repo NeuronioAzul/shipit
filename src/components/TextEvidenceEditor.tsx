@@ -124,7 +124,7 @@ export function TextEvidenceEditor({ content, onChange, readOnly = false }: Text
       <div
         id="text-evidence-editor-content"
         onMouseDown={handleContentMouseDown}
-        className="cyber-input p-3 min-h-[150px] max-h-[400px] overflow-y-auto cursor-text"
+        className="cyber-input p-3 min-h-[150px] max-h-[400px] overflow-y-auto scrollbar-stable cursor-text"
       >
         <EditorContent
         editor={editor}
