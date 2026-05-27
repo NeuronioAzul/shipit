@@ -110,6 +110,8 @@ export function AboutPage() {
         </div>
 
         <p className="text-sm text-muted-foreground">
+          Está gostando do {APP_NAME}? Considere apoiar o projeto com uma doação via Pix. <br />
+          Qualquer valor é bem-vindo e faz uma grande diferença!<br />
           Sua contribuição ajuda a manter o ShipIt ativo, evoluindo com novos recursos e melhorias para toda a comunidade.
         </p>
 
@@ -122,7 +124,7 @@ export function AboutPage() {
               className="w-full max-w-64 mx-auto rounded-md"
             />
             <p className="text-xs text-muted-foreground text-center">
-              Escaneie o QR Code para doar de forma rápida pelo app do seu banco.
+              Escaneie o QR Code do PIX para doar de forma rápida pelo app do seu banco.
             </p>
           </div>
 
