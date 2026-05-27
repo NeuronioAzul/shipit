@@ -381,7 +381,7 @@ export function DashboardPage() {
             <div className="text-center py-16">
               <i className="fa-solid fa-clipboard-list text-5xl text-muted-foreground/30 mb-4"></i>
               <p className="text-muted-foreground text-lg">
-                Nenhuma atividade registrada neste mês.
+                Nenhuma atividade registrada ainda. Que tal começar a construir o seu próximo grande relatório hoje?
               </p>
               <button
                 onClick={() => navigate(`/activities/new?month=${monthRef}`)}
@@ -437,7 +437,7 @@ export function DashboardPage() {
                     <span>Confirmar geração do relatório</span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Gerar relatório DOCX para <strong className="text-foreground capitalize">{monthName}</strong>?
+                    Gerar Relatório DOCX para <strong className="text-foreground capitalize">{monthName}</strong> & ShipIt! <i className="fa-solid fa-rocket"></i>?
                     {' '}O arquivo será salvo na pasta de relatórios do app.
                   </p>
                   <div className="flex gap-2 justify-end">

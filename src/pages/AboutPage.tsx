@@ -67,26 +67,57 @@ export function AboutPage() {
         <h1 id="about-title" className="text-2xl font-bold">Sobre o ShipIt!</h1>
       </div>
 
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <i className="fa-solid fa-circle-info text-primary" aria-hidden="true"></i>
-          Aplicativo
+      <section className="bg-card border border-border rounded-lg p-5 space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <img
+            src="./assets/images/icons/favicon-96x96.png"
+            alt=""
+            aria-hidden="true"
+            className="w-5 h-5 object-contain"
+            draggable={false}
+          />
+          Por que ShipIt!?
         </h2>
 
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          O <span className="text-foreground font-medium">{APP_NAME}</span> ajuda você a registrar atividades do mês,
-          anexar evidências e gerar o relatório de serviço pronto para envio em poucos cliques.
-        </p>
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold text-foreground">A Origem do Nome</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            No universo da tecnologia, "Ship it!" é uma expressão usada quando um projeto finalmente fica pronto
+            e ganha o mundo. É o momento de orgulho em que o trabalho duro se transforma em entrega real.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Nós trouxemos esse conceito para a sua rotina. O <span className="text-foreground font-medium">{APP_NAME}</span> nasceu
+            para transformar a forma como você documenta a sua jornada profissional e consolida os seus resultados.
+          </p>
+        </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
-          <div className="bg-background border border-border/70 rounded-md p-3">
-            <p className="text-foreground font-medium">Nome</p>
-            <p>{APP_NAME}</p>
-          </div>
-          <div className="bg-background border border-border/70 rounded-md p-3">
-            <p className="text-foreground font-medium">Versão</p>
-            <p id="about-version">{version || 'Carregando...'}</p>
-          </div>
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold text-foreground">A Nossa História e Propósito</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Sabemos que o final do mês costuma ser sinônimo de correria. Lembrar de tudo o que foi feito nas últimas
+            semanas, recuperar prints de telas e organizar descrições de atividades pode se tornar um desafio exaustivo.
+            Muitas vezes, o valor do seu esforço diário se perde na falta de registro.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            O <span className="text-foreground font-medium">{APP_NAME}</span> foi criado para mudar essa dinâmica. Ele é o seu diário
+            de bordo profissional. Dia após dia, atividade por atividade, você centraliza suas entregas, anexa suas evidências
+            e organiza seu progresso de forma simples e intuitiva.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold text-foreground">O Seu Momento "ShipIt!"</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            No final do mês, a mágica acontece. Em vez de gastar horas montando apresentações ou relatórios do zero,
+            você está a apenas um clique de distância da sua entrega.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            O app consolida todas as suas descrições e prints em um relatório impecável, profissional e pronto para os
+            seus gestores ou clientes.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Registrar é construir. Gerar o relatório é celebrar. Trabalho concluído, evidências salvas e... ShipIt!
+          </p>
         </div>
       </section>
 
@@ -222,6 +253,24 @@ export function AboutPage() {
             <p className="text-foreground font-medium">Contato</p>
             <p>mauro.rocha.t@gmail.com</p>
           </a>
+        </div>
+      </section>
+
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <i className="fa-solid fa-circle-info text-primary" aria-hidden="true"></i>
+          Aplicativo
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
+          <div className="bg-background border border-border/70 rounded-md p-3">
+            <p className="text-foreground font-medium">Nome</p>
+            <p>{APP_NAME}</p>
+          </div>
+          <div className="bg-background border border-border/70 rounded-md p-3">
+            <p className="text-foreground font-medium">Versão</p>
+            <p id="about-version">{version || 'Carregando...'}</p>
+          </div>
         </div>
       </section>
 

@@ -281,11 +281,13 @@ test('opens external links outside the app without changing current route', asyn
   })
 
   try {
-    await page.click('[title="Configurações"]')
-    await page.waitForURL(/#\/settings/)
+    await page.evaluate(() => {
+      window.location.hash = '#/about'
+    })
+    await page.waitForURL(/#\/about/)
     const currentUrl = page.url()
 
-    await page.locator('a[href^="mailto:"]').first().click()
+    await page.locator('#about-link-contact').click()
 
     await expect(page).toHaveURL(currentUrl)
     await expect.poll(async () => {

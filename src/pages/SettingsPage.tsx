@@ -13,7 +13,6 @@ export function SettingsPage() {
   const navigate = useNavigate()
   const [reportsDir, setReportsDir] = useState('')
   const [defaultDir, setDefaultDir] = useState('')
-  const [version, setVersion] = useState('')
   const [dirSaved, setDirSaved] = useState(false)
   const [sounds, setSounds] = useState<string[]>([])
   const [selectedSound, setSelectedSound] = useState('')
@@ -60,17 +59,15 @@ export function SettingsPage() {
   useEffect(() => {
     async function load() {
       if (!window.electronAPI) return
-      const [settings, defDir, ver, soundList, isAutoLaunch, alertData] = await Promise.all([
+      const [settings, defDir, soundList, isAutoLaunch, alertData] = await Promise.all([
         window.electronAPI.getSettings(),
         window.electronAPI.getDefaultReportsDir(),
-        window.electronAPI.getVersion(),
         window.electronAPI.listSounds(),
         window.electronAPI.getAutoLaunch(),
         window.electronAPI.getAlert(),
       ])
       setDefaultDir(defDir)
       setReportsDir((settings as AppSettings).reportsDirectory || defDir)
-      setVersion(ver)
       setSounds(soundList)
       setSelectedSound((settings as AppSettings).alertSound || '')
       setAutoLaunch(isAutoLaunch)
@@ -570,33 +567,23 @@ export function SettingsPage() {
 
         {/* Sobre */}
         <section className="bg-card border border-border rounded-lg p-5">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <i className="fa-solid fa-circle-info text-primary"></i>
             Sobre o ShipIt!
           </h2>
-          <div className="text-sm text-muted-foreground space-y-3">
-            <p className="leading-relaxed">
-              O <span className="text-foreground font-medium">ShipIt!</span> foi criado para facilitar a vida de quem precisa
-              entregar relatórios mensais de atividades. Em vez de perder tempo formatando documentos,
-              você registra suas atividades ao longo do mês, anexa evidências e, quando precisar,
-              gera o relatório pronto com um clique. Simples assim.
-            </p>
-            {version && (
-              <p id="settings-version">
-                <span className="text-foreground font-medium">Versão</span> {version}
-              </p>
-            )}
-            <div className="pt-2 border-t border-border/50">
-              <p className="text-foreground font-medium">Mauro Rocha Tavares</p>
-              <a
-                href="mailto:mauro.rocha.t@gmail.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                mauro.rocha.t@gmail.com
-              </a>
-            </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Ir para a tela Sobre para ver detalhes do projeto, links úteis e informações de contato.
+          </p>
+          <div className="flex">
+            <button
+              id="settings-btn-about"
+              type="button"
+              onClick={() => navigate('/about')}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm inline-flex items-center gap-2"
+            >
+              <i className="fa-solid fa-lightbulb" aria-hidden="true"></i>
+              Abrir tela Sobre
+            </button>
           </div>
         </section>
       </div>
