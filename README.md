@@ -84,7 +84,7 @@ Qualquer valor é bem-vindo e ajuda diretamente na manutenção, melhorias e nov
 00020126780014BR.GOV.BCB.PIX01363536a7e9-0d0c-4532-9a52-30ca23b268fb0216Valeu, obrigado!520400005303986540525.005802BR5919Mauro Rocha Tavares6009SAO PAULO62140510yg0o2mR2AO6304DE4F
 ```
 
-Se você curtir o app, manda um Pix e ajuda o ShipIt! a continuar evoluindo. 🚀
+Se você curtir o app, manda um Pix e ajuda o ShipIt! a continuar evoluindo. <img src="public/assets/images/icon-foguete-logo-tons-cinza.svg" alt="" width="24" />
 
 ---
 
