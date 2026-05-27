@@ -258,11 +258,31 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 - 🟡 Verificar se as imagens estão ocupando o tamanho máximo da página em altura ou largura considerando o tamanho da legenda que pode ter até duas linha de altura no máximo.
 
-
-
-## Fazendo
-## Fazendo
-## Fazendo
-
+----
 
 - 🟢 feat: Ajustar a barra de rolagem para usar um padrão igual do vscode e acompanhar as cores do tema escolhido, e sempre visível quando necessário.
+
+
+## Fazendo
+## Fazendo
+## Fazendo
+
+
+modifique o botão `sobre` para ao invés de abrir uma janela com as informações do aplicativo, ele deve abrir uma página com as informações do aplicativo, como por exemplo a versão, o nome do aplicativo, o site do projeto, as redes sociais, etc, para que os usuários possam acessar facilmente as informações do aplicativo e conhecer mais sobre o projeto, e também para melhorar a experiência do usuário.
+
+Depois dos dados sobre o aplicativo, exiba um botão "Doar" ou "Support Us" que, ao ser clicado, redireciona os usuários para a página de pagamento do Pix, onde eles podem fazer uma doação para apoiar o desenvolvimento do ShipIt! e ajudar a manter o projeto ativo e atualizado, e também para mostrar que o projeto é aberto a contribuições e apoio da comunidade. Inclua também um QR code do Pix para facilitar o processo de doação, permitindo que os usuários possam escanear o código com seus smartphones e fazer a doação de forma rápida e conveniente. Inclua também a chave Pix aleatória para aqueles que preferem fazer a doação manualmente, incluir o url da página do Pix.
+
+
+
+URL página do pix:
+https://nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8
+
+Imagem QR code do pix:
+public/assets/images/qrpixnu.png
+
+Código do QR code do pix:
+00020126780014BR.GOV.BCB.PIX01363536a7e9-0d0c-4532-9a52-30ca23b268fb0216Valeu, obrigado!520400005303986540525.005802BR5919Mauro Rocha Tavares6009SAO PAULO62140510yg0o2mR2AO6304DE4F
+
+Chave pix aleatória:
+3536a7e9-0d0c-4532-9a52-30ca23b268fb
+

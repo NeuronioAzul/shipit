@@ -121,7 +121,7 @@ export function TitleBar() {
         return
 
       case 'help.about':
-        window.dispatchEvent(new Event('shipit:open-about'))
+        navigate('/about')
         return
       case 'help.check-updates':
         setShowUpdateModal(true)

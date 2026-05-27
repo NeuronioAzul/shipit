@@ -1,5 +1,4 @@
-import { NavLink } from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { UPDATE_SETTINGS_ROUTE, useUpdateState } from '../contexts/UpdateStateContext'
 
@@ -14,7 +13,6 @@ interface NavItem {
 export function ActivityBar() {
   const navigate = useNavigate()
   const [trashCount, setTrashCount] = useState(0)
-  const [showAbout, setShowAbout] = useState(false)
   const { updateStatus } = useUpdateState()
 
   const loadTrashCount = useCallback(async () => {
@@ -31,15 +29,6 @@ export function ActivityBar() {
     return () => window.removeEventListener('shipit:trash-changed', handleTrashChange)
   }, [loadTrashCount])
 
-  useEffect(() => {
-    const handleOpenAbout = () => setShowAbout(true)
-    window.addEventListener('shipit:open-about', handleOpenAbout)
-
-    return () => {
-      window.removeEventListener('shipit:open-about', handleOpenAbout)
-    }
-  }, [])
-
   const mainNav: NavItem[] = [
     { to: '/', icon: 'fa-chart-line', title: 'Dashboard', id: 'sidebar-link-dashboard' },
     { to: '/activities', icon: 'fa-list-check', title: 'Atividades', id: 'sidebar-link-activities' },
@@ -52,8 +41,7 @@ export function ActivityBar() {
   ]
 
   return (
-    <>
-      <aside id="sidebar" className="w-12 bg-activitybar flex flex-col items-center py-2 shrink-0">
+    <aside id="sidebar" className="w-12 bg-activitybar flex flex-col items-center py-2 shrink-0">
         {/* Main navigation */}
         <nav id="sidebar-nav-main" className="flex-1 flex flex-col items-center gap-1">
           {mainNav.map((item) => (
@@ -124,7 +112,7 @@ export function ActivityBar() {
           {/* About button */}
           <button
             id="sidebar-btn-about"
-            onClick={() => setShowAbout(true)}
+            onClick={() => navigate('/about')}
             className="w-12 h-12 flex items-center justify-center text-activitybar-foreground hover:text-activitybar-foreground-active transition-colors cursor-pointer"
             title="Sobre o ShipIt!"
             aria-label="Sobre o ShipIt!"
@@ -132,74 +120,6 @@ export function ActivityBar() {
             <i className="fa-solid fa-circle-info text-xl" aria-hidden="true"></i>
           </button>
         </nav>
-      </aside>
-
-      {/* About Modal */}
-      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
-    </>
-  )
-}
-
-function AboutModal({ onClose }: { onClose: () => void }) {
-  const [version, setVersion] = useState('')
-
-  useEffect(() => {
-    window.electronAPI?.getVersion().then(setVersion)
-  }, [])
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
-  return (
-    <div id="sidebar-about-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="about-modal-title-sidebar">
-      <div
-        className="bg-card border border-border rounded-lg p-6 shadow-xl max-w-md w-full mx-4 animate-modal-in"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="about-modal-title-sidebar" className="text-lg font-semibold flex items-center gap-2">
-            <i className="fa-solid fa-circle-info text-primary" aria-hidden="true"></i>
-            Sobre o ShipIt!
-          </h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label="Fechar">
-            <i className="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div className="flex items-center gap-4 mb-4">
-          <img
-            src="./assets/images/logo-composto-colorido.svg"
-            alt="ShipIt! Logo"
-            className="h-12 bg-white/90 rounded-md p-1"
-          />
-          <div>
-            <p className="text-foreground font-medium text-base">ShipIt!</p>
-            <p className="text-muted-foreground text-sm">Relatório Mensal de Atividades</p>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-          Registre suas atividades ao longo do mês, anexe evidências e gere
-          o relatório pronto com um clique. Simples assim.
-        </p>
-        <div className="text-sm text-muted-foreground space-y-1">
-          {version && <p><span className="text-foreground font-medium">Versão</span> {version}</p>}
-          <div className="pt-2 border-t border-border/50">
-            <p className="text-foreground font-medium">Mauro Rocha Tavares</p>
-            <a
-              href="mailto:mauro.rocha.t@gmail.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline text-xs"
-            >
-              mauro.rocha.t@gmail.com
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
+    </aside>
   )
 }

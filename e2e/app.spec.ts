@@ -20,6 +20,8 @@ import {
 let app: ElectronApplication
 let page: Page
 let testUserDataDir: string
+const PIX_DONATION_URL = 'https://nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8'
+const REPORT_ISSUE_URL = 'https://github.com/NeuronioAzul/shipit/issues/new'
 
 test.beforeAll(async () => {
   testUserDataDir = createShipItTestProfileDir()
@@ -636,7 +638,7 @@ test('runs view menu zoom and window commands', async () => {
   await restoreMainWindow()
 })
 
-test('runs help menu actions for manual and report issue', async () => {
+test('runs help menu actions for about, manual and report issue', async () => {
   await app.evaluate(({ shell }) => {
     const globalState = globalThis as typeof globalThis & {
       __shipitOpenExternalCalls?: string[]
@@ -658,9 +660,18 @@ test('runs help menu actions for manual and report issue', async () => {
 
   try {
     await clickMenuCommand('help', 'help.about')
-    await expect(page.locator('#sidebar-about-modal')).toBeVisible({ timeout: 5_000 })
-    await page.keyboard.press('Escape')
-    await expect(page.locator('#sidebar-about-modal')).toHaveCount(0)
+    await page.waitForURL(/#\/about$/)
+    await expect(page.locator('#about-page')).toBeVisible({ timeout: 5_000 })
+    await expect(page.locator('#about-pix-qr')).toBeVisible({ timeout: 5_000 })
+
+    const aboutUrl = page.url()
+    await page.click('#about-btn-donate')
+    await expect(page).toHaveURL(aboutUrl)
+
+    await page.click('#sidebar-link-dashboard')
+    await page.waitForURL(/#\/$/)
+    await page.click('#sidebar-btn-about')
+    await page.waitForURL(/#\/about$/)
 
     await clickMenuCommand('help', 'help.check-updates')
     // help.check-updates opens the titlebar update modal instead of navigating.
@@ -697,7 +708,8 @@ test('runs help menu actions for manual and report issue', async () => {
       return globalState.__shipitOpenExternalCalls ?? []
     })
 
-    expect(openExternalCalls).toContain('https://github.com/NeuronioAzul/shipit/issues/new')
+    expect(openExternalCalls).toContain(PIX_DONATION_URL)
+    expect(openExternalCalls).toContain(REPORT_ISSUE_URL)
   } finally {
     await app.evaluate(() => {
       const globalState = globalThis as typeof globalThis & {
