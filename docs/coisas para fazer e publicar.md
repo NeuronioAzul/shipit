@@ -4,6 +4,7 @@ SHIPIT!
 
 ## New features
 
+- 🟢 feat: Adicionar um campo para colocar as releases que fazem parte daquela atividade; Essas releases são usadas depois para fazer a publicação da atividade concluida e homologada em homologação ou produção. Essas releases não serão incluidas para a geração do relatório (deixar explícito) colocar esse campo em uma seção separada.
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app
 - 🟢 feat: Implementar opção de backup do app com 2 botões, um para salvar as evidências, e outro para salvar o banco de dados e informações de configurações do app.
@@ -262,17 +263,11 @@ fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros 
 
 - 🟢 feat: Ajustar a barra de rolagem para usar um padrão igual do vscode e acompanhar as cores do tema escolhido, e sempre visível quando necessário.
 
-
-## Fazendo
-## Fazendo
-## Fazendo
-
+## Sobre e Doação
 
 modifique o botão `sobre` para ao invés de abrir uma janela com as informações do aplicativo, ele deve abrir uma página com as informações do aplicativo, como por exemplo a versão, o nome do aplicativo, o site do projeto, as redes sociais, etc, para que os usuários possam acessar facilmente as informações do aplicativo e conhecer mais sobre o projeto, e também para melhorar a experiência do usuário.
 
 Depois dos dados sobre o aplicativo, exiba um botão "Doar" ou "Support Us" que, ao ser clicado, redireciona os usuários para a página de pagamento do Pix, onde eles podem fazer uma doação para apoiar o desenvolvimento do ShipIt! e ajudar a manter o projeto ativo e atualizado, e também para mostrar que o projeto é aberto a contribuições e apoio da comunidade. Inclua também um QR code do Pix para facilitar o processo de doação, permitindo que os usuários possam escanear o código com seus smartphones e fazer a doação de forma rápida e conveniente. Inclua também a chave Pix aleatória para aqueles que preferem fazer a doação manualmente, incluir o url da página do Pix.
-
-
 
 URL página do pix:
 https://nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8
@@ -285,4 +280,6 @@ Código do QR code do pix:
 
 Chave pix aleatória:
 3536a7e9-0d0c-4532-9a52-30ca23b268fb
+
+## Fazendo
 
