@@ -9,35 +9,88 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/NeuronioAzul/shipit?label=Versão&color=blue" alt="Versão" />
+  <img src="https://img.shields.io/github/v/release/NeuronioAzul/shipit?label=Versão" alt="Versão" />
   <img src="https://img.shields.io/badge/Plataforma-Windows%20|%20macOS%20|%20Linux-brightgreen" alt="Plataformas" />
   <img src="https://img.shields.io/badge/Offline-100%25-orange" alt="Offline" />
   <img src="https://img.shields.io/badge/license-ISC-green" alt="License" />
+  <img src="https://img.shields.io/badge/Testes-Passou-brightgreen" alt="Testes" />
 </p>
 
-<!-- Screenshot: Captura do Dashboard do ShipIt! mostrando o gráfico de Gantt e cards de resumo mensal -->
+![url=https://freeimage.host/](https://iili.io/CdGb0il.png)
 
 ---
 
-## Sobre
+# <img src="public/assets/images/icon-foguete-logo-tons-cinza.svg" alt="" width="32" /> ShipIt!
 
-O **ShipIt!** é uma aplicação desktop gratuita e multiplataforma para profissionais de TI que precisam documentar suas atividades mensais e gerar relatórios no padrão institucional do **MEC** (Ministério da Educação).
+Uma aplicação desktop leve, gratuita e multiplataforma projetada para profissionais de TI que precisam documentar suas atividades mensais e gerar relatórios no padrão institucional do **MEC (Ministério da Educação)**.
 
-O app fica no **System Tray** para fácil acesso — basta clicar, registrar a atividade com evidências (prints, links), e deixar o resto com o ShipIt!
+O **ShipIt!** roda discretamente na sua barra de tarefas (*System Tray*). Com um clique, você registra o que fez, anexa as evidências (prints ou links) e continua seu trabalho. O app cuida de todo o resto.
 
-### Por que usar o ShipIt?
+---
 
-- **Chega de planilhas** — registre atividades com poucos cliques em uma interface intuitiva
-- **Relatório pronto em segundos** — gere o DOCX no padrão MEC automaticamente, com encarte de atividades e páginas de evidências
-- **Nunca perca dados** — salvamento automático contínuo, tudo armazenado localmente no seu computador
-- **100% offline** — funciona sem conexão com a internet, seus dados nunca saem da sua máquina
-- **Atualizações sob seu controle** — o app avisa quando há nova versão, mas você decide quando baixar e instalar
+## 🔍 Por que usar o ShipIt!?
+
+* **Foco no que importa:** Registre suas atividades em tempo real, sem perder o ritmo do seu trabalho formatando documentos de forma manual.
+* **Adeus Planilhas:** Interface intuitiva que permite registrar tarefas diárias em poucos segundos.
+* **Padrão MEC Prontinho:** Gere um arquivo `.docx` formatado automaticamente com encarte de atividades e páginas de evidências integradas.
+* **Segurança Total (Zero Data Loss):** Salvamento automático contínuo para você nunca perder uma linha de digitação.
+* **Privacidade Absoluta (100% Offline):** Seus dados são armazenados localmente. Nada é enviado para a nuvem. Suas evidências pertencem a você.
+* **Atualizações Transparentes:** Você é notificado sobre novas versões, mas tem controle total de quando baixar e instalar.
+
+---
+
+## 💡 A História por trás do Nome
+
+### ⚙️ A Origem do "ShipIt!"
+No universo do desenvolvimento de software, **"ShipIt!"** (Pode enviar!) é o grito de guerra quando um projeto finalmente fica pronto e vai para produção. É o momento exato em que o esforço técnico se transforma em valor real para o mundo. 
+
+Trouxemos essa cultura para a sua rotina administrativa. O ShipIt! transforma a obrigação de documentar o mês em um processo de entrega contínua de alta performance.
+
+### 🏃🏻‍➡️ O Fim da Correria de Fim de Mês
+Todo profissional de TI já passou por isso: o mês acaba e começa a corrida caótica para vasculhar o histórico do Git, lembrar de reuniões, caçar prints perdidos e formatar documentos complexos. Nesse processo, muitas entregas valiosas acabam esquecidas.
+
+O ShipIt! funciona como seu **diário de bordo automatizado**. Você documenta seu progresso em tempo real, sem fricção e sem interromper seu fluxo de trabalho principal, sem preocupações com a formatação ou organização das evidências.
+
+### 🎯 O Seu Momento "ShipIt!"
+No último dia do mês, a mágica acontece. Em vez de iniciar um documento do zero e perder horas formatando tabelas, você está a **um único clique** da sua entrega. 
+
+O aplicativo compila todas as descrições e evidências diretamente no padrão exigido pelo MEC. É só clicar, exportar e... **ShipIt!** <img src="public/assets/images/icons/favicon-32x32.png" alt="" width="24" />
+
+---
+
+### Projeto e Comunidade
+
+- **Site do projeto**: [github.com/NeuronioAzul/shipit#readme](https://github.com/NeuronioAzul/shipit#readme)
+- **Repositório oficial**: [github.com/NeuronioAzul/shipit](https://github.com/NeuronioAzul/shipit)
+- **Contribuições e suporte**: [github.com/NeuronioAzul/shipit/issues](https://github.com/NeuronioAzul/shipit/issues)
+- **Contato**: [mauro.rocha.t@gmail.com](mailto:mauro.rocha.t@gmail.com)
+
+---
+
+## 💛 Gostou do ShipIt? Mande um Pix
+
+Se o ShipIt! te ajuda no dia a dia e economiza seu tempo, considere enviar um Pix para apoiar o projeto.
+
+Qualquer valor é bem-vindo e ajuda diretamente na manutenção, melhorias e novas funcionalidades.
+
+![QR Code Pix para apoiar o projeto ShipIt](public/assets/images/qrpixnu.png)
+
+- **Página Pix**: [nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8](https://nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8)
+- **Chave Pix (aleatória)**: `3536a7e9-0d0c-4532-9a52-30ca23b268fb`
+
+**Código Pix (copia e cola):**
+
+```text
+00020126780014BR.GOV.BCB.PIX01363536a7e9-0d0c-4532-9a52-30ca23b268fb0216Valeu, obrigado!520400005303986540525.005802BR5919Mauro Rocha Tavares6009SAO PAULO62140510yg0o2mR2AO6304DE4F
+```
+
+Se você curtir o app, manda um Pix e ajuda o ShipIt! a continuar evoluindo. <img src="public/assets/images/icon-foguete-logo-tons-cinza.svg" alt="" width="24" />
 
 ---
 
 ## Download
 
-Baixe o instalador para sua plataforma na página de [**Releases**](https://github.com/NeuronioAzul/shipit/releases/latest):
+Baixe o instalador para sua plataforma na página de [**Releases**](https://github.com/NeuronioAzul/shipit/releases/latest): [https://github.com/NeuronioAzul/shipit/releases/latest](https://github.com/NeuronioAzul/shipit/releases/latest)
 
 | Plataforma | Formato | Descrição |
 |------------|---------|-----------|
@@ -393,5 +446,5 @@ Este projeto está licenciado sob a [Licença ISC](LICENSE).
 ---
 
 <p align="center">
-  Feito com ☕ por <a href="https://github.com/NeuronioAzul">NeuronioAzul</a>
+  Feito com muito ☕ por <a href="https://github.com/NeuronioAzul">NeuronioAzul</a>
 </p>
