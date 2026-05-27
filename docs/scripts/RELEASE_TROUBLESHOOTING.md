@@ -213,8 +213,9 @@ gh run list --workflow=release.yml --limit 3
 # Ver status do run
 gh run view <RUN_ID>
 
-# Criar release manualmente
-gh release create vX.Y.Z --draft --generate-notes
+# Criar release manualmente com notas amigáveis
+# (extraia do CHANGELOG.md a seção da versão e salve em release-notes.md)
+gh release create vX.Y.Z --draft --notes-file release-notes.md
 ```
 
 ### Build falhou em uma plataforma

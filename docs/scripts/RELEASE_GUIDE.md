@@ -131,7 +131,7 @@ Os flags antigos `--skip-commit`, `--skip-changelog` e `--skip-pull-request` con
 | 10 | Aguardar a draft release aparecer | Não |
 | 11 | Aguardar o workflow CI/CD concluir | Não |
 | 12 | Validar assets da release | `--skip-asset-validation` |
-| 13 | Publicar release (draft → published) | Não |
+| 13 | Publicar release com notas amigáveis (draft → published) | Não |
 
 ### Resumibilidade
 
@@ -154,6 +154,43 @@ Comportamentos idempotentes atuais:
 - Se o processo caiu após o merge do PR → use `--resume-from tag --version X.Y.Z`; o script confirma que `origin/main` já contém a versão antes de criar a tag
 - Se tag já existe → pula criação
 - Se release já está publicada → pula
+
+### Notas da release publicadas
+
+No Step 13, o script publica a release com um corpo amigável em Markdown:
+
+- Título da versão (`ShipIt vX.Y.Z`)
+- Bloco de mudanças extraído da seção correspondente no `CHANGELOG.md`
+- Instruções rápidas de atualização para usuário final
+- Referências de documentação (`CHANGELOG.md` e `README.md`)
+
+Com isso, a release publicada deixa de depender apenas do texto automático `What's Changed`.
+
+### Remover releases anteriores
+
+Para remover releases antigas no GitHub, apague a release e, se quiser limpar completamente, também a tag.
+
+```bash
+# 1) Listar releases
+gh release list --limit 20
+
+# 2) Excluir uma release específica
+gh release delete vX.Y.Z --yes
+
+# 3) (Opcional, recomendado) Excluir a tag remota
+git push --delete origin vX.Y.Z
+
+# 4) (Opcional) Excluir a tag local
+git tag -d vX.Y.Z
+```
+
+Exemplo real:
+
+```bash
+gh release delete v1.5.0 --yes
+git push --delete origin v1.5.0
+git tag -d v1.5.0
+```
 
 ### Proteção automática de worktree
 
