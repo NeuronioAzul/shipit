@@ -30,6 +30,9 @@ export class Activity {
   @Column({ type: 'text', nullable: true })
   link_ref!: string | null // JSON array of URLs
 
+  @Column({ type: 'text', nullable: true })
+  svn_releases!: string | null // CSV de releases SVN (uso interno, nao exportado no DOCX)
+
   @Column({ type: 'text', default: 'Pendente' })
   status!: ActivityStatus
 

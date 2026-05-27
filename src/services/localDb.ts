@@ -62,6 +62,7 @@ export const localDb = {
       date_start: null,
       date_end: null,
       link_ref: null,
+      svn_releases: null,
       status: 'Pendente',
       attendance_type: null,
       project_scope: null,

@@ -252,8 +252,15 @@ test('saves and reloads availability fields on the profile page', async () => {
   await expect(page.locator('#minimum_effort_hours')).toHaveValue('40')
 
   const profile = await page.evaluate(async () => {
-    return window.electronAPI?.getUserProfile() ?? null
-  })
+    const api = (window as unknown as {
+      electronAPI?: { getUserProfile?: () => Promise<unknown> }
+    }).electronAPI
+    return api?.getUserProfile?.() ?? null
+  }) as {
+    daily_availability?: number
+    monthly_availability?: number
+    minimum_effort_hours?: number
+  } | null
 
   expect(profile?.daily_availability).toBe(8)
   expect(profile?.monthly_availability).toBe(168)
@@ -903,6 +910,58 @@ test('creates an activity', async () => {
 
   // Verify the created activity appears
   await expect(page.locator('text=Atividade E2E Playwright').first()).toBeVisible({ timeout: 5_000 })
+})
+
+test('creates activity with svn releases tags and finds it through global search', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId, 1)
+  const description = `Atividade SVN Releases ${runId}`
+  const releaseA = `${runId}01`
+  const releaseB = `${runId}02`
+
+  await page.click('[title="Atividades"]')
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthRef)
+  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${monthRef}`))
+
+  await page.click('button:has-text("Nova Atividade")')
+  await page.waitForURL(/#\/activities\/new(?:\?.*)?$/)
+
+  await page.locator('textarea#description').fill(description)
+  await page.locator('input#month_reference').fill(monthRef)
+
+  const svnInput = page.locator('#activity-form-svn-releases')
+  await svnInput.fill(`${releaseA},${releaseB}`)
+  await svnInput.press('Tab')
+
+  const svnSection = page.locator('#activity-form-svn-releases-section')
+  await expect(svnSection).toContainText(`#${releaseA}`)
+  await expect(svnSection).toContainText(`#${releaseB}`)
+
+  await svnInput.fill('abc,')
+  await svnInput.press('Tab')
+  await expect(svnSection).toContainText('Use apenas numeros de release SVN')
+
+  await page.click('button[type="submit"]')
+  await page.waitForURL(new RegExp(`#/activities\\?month=${monthRef.replace('/', '\\/')}$`), { timeout: 10_000 })
+
+  await expect(page.locator('#activities-list')).toContainText(`#${releaseA}`)
+  await expect(page.locator('#activities-list')).toContainText(`#${releaseB}`)
+
+  await page.locator('.flex-1.cursor-pointer', { hasText: description }).first().click()
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+  await expect(page.locator('#activity-detail-svn-releases')).toContainText(`#${releaseA}`)
+  await expect(page.locator('#activity-detail-svn-releases')).toContainText(`#${releaseB}`)
+
+  await page.keyboard.press('Control+k')
+  const searchInput = page.locator('#searchbar-input')
+  await expect(searchInput).toBeFocused()
+  await searchInput.fill(releaseA)
+  await expect(page.locator('#searchbar-results')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('#searchbar-results')).toContainText(description)
 })
 
 test('uses local ArrowLeft/ArrowRight navigation on activity detail page', async () => {

@@ -21,6 +21,26 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 
 
+
+## [1.7.0] — 2026-05-27
+
+### Adicionado
+
+- Novo campo **Releases SVN** na entidade `Activity` (`svn_releases`) — armazena números de releases SVN como lista CSV, de uso interno, sem exportação para o relatório DOCX.
+- Novo componente reutilizável `InputTags` — campo de entrada com tags visuais, separadores automáticos (vírgula, ponto-e-vírgula e quebra de linha), validação, normalização e deduplicação de tokens.
+- Módulo utilitário `svnReleases.ts` com funções de parse, normalização, serialização e validação de tokens de release SVN (aceita apenas números inteiros).
+- Seção **Releases SVN (uso interno)** no formulário de atividade, com `InputTags` e validação que rejeita tokens não-numéricos.
+- Exibição de releases SVN como badges estilizados (`#<número>`) na tela de detalhe da atividade.
+- Exibição compacta de releases SVN na lista de atividades (máximo de 4 badges visíveis + contador de itens ocultos).
+- Filtro de busca textual da lista de atividades estendido para incluir o campo `svn_releases`.
+- Testes unitários para os utilitários de SVN releases (`svnReleases.test.ts`) e cobertura do novo campo nos testes de banco de dados.
+- Novos cenários E2E Playwright cobrindo criação, exibição e validação do campo de releases SVN.
+
+### Alterado
+
+- Script de release aprimorado com notas descritivas ao usuário e referências diretas à documentação durante a execução.
+- Guia de release (`RELEASE_GUIDE.md`) e documentação de troubleshooting (`RELEASE_TROUBLESHOOTING.md`) atualizados para refletir o novo fluxo.
+
 ## [1.6.2] — 2026-05-27
 
 ### Adicionado

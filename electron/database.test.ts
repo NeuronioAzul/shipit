@@ -325,6 +325,52 @@ describe('Activity CRUD', () => {
     ])
   })
 
+  it('persists and updates svn_releases on activities', async () => {
+    const saved = await saveActivity({
+      description: 'Atividade com releases SVN',
+      status: 'Pendente',
+      month_reference: '03/2026',
+      svn_releases: '12345,67890',
+    })
+
+    expect(saved.svn_releases).toBe('12345,67890')
+
+    const created = await getActivity(saved.id)
+    expect(created).not.toBeNull()
+    expect(created!.svn_releases).toBe('12345,67890')
+
+    await saveActivity({
+      id: saved.id,
+      description: 'Atividade com releases SVN',
+      status: 'Concluído',
+      month_reference: '03/2026',
+      svn_releases: '77777',
+    })
+
+    const updated = await getActivity(saved.id)
+    expect(updated).not.toBeNull()
+    expect(updated!.svn_releases).toBe('77777')
+  })
+
+  it('searches activities by svn_releases value', async () => {
+    const target = await saveActivity({
+      description: 'Atividade alvo release',
+      status: 'Pendente',
+      month_reference: '03/2026',
+      svn_releases: '99112233,44556677',
+    })
+
+    await saveActivity({
+      description: 'Outra atividade sem match',
+      status: 'Pendente',
+      month_reference: '03/2026',
+      svn_releases: '111222',
+    })
+
+    const results = await searchActivities('44556677')
+    expect(results.some((activity) => activity.id === target.id)).toBe(true)
+  })
+
   it('updates an existing activity', async () => {
     const saved = await saveActivity({
       description: 'Original',

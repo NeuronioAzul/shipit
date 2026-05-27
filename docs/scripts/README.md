@@ -22,6 +22,8 @@ validar ambiente → commit → CHANGELOG → bump version → push →
 PR (dev → main) → squash merge → tag → aguardar CI/CD → publicar release
 ```
 
+No passo final, a publicação usa notas amigáveis baseadas na seção da versão em `CHANGELOG.md`.
+
 ### Quick Start
 
 ```bash

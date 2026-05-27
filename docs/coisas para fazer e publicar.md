@@ -4,7 +4,6 @@ SHIPIT!
 
 ## New features
 
-- 🟢 feat: Adicionar um campo para colocar as releases que fazem parte daquela atividade; Essas releases são usadas depois para fazer a publicação da atividade concluida e homologada em homologação ou produção. Essas releases não serão incluidas para a geração do relatório (deixar explícito) colocar esse campo em uma seção separada.
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app
 - 🟢 feat: Implementar opção de backup do app com 2 botões, um para salvar as evidências, e outro para salvar o banco de dados e informações de configurações do app.
@@ -283,3 +282,20 @@ Chave pix aleatória:
 
 ## Fazendo
 
+- 🟢 feat: Adicionar um campo no cadastro de atividades onde eu possa colocar os números  das releases do SVN que fazem parte daquela atividade; Essas releases são usadas depois para fazer a publicação da atividade concluída e homologada que pode estar no repositório de homologação ou produção. Essas releases não serão incluidas para a geração do relatório (deixar explícito) colocar esse campo em uma seção separada do formulário.
+
+
+## Scripts para remover as releases antigas e manter apenas a última release publicada:
+
+<!-- Lista as releases e confirma o que será excluído -->
+$releases = gh release list --json tagName,isLatest --limit 200 | ConvertFrom-Json
+$latest = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1).tagName
+"Manter: $latest"
+$releases | Where-Object { $_.tagName -ne $latest } | Select-Object -ExpandProperty tagName
+
+<!-- Exclui as releases antigas, deixando apenas a última -->
+$releases = gh release list --json tagName,isLatest --limit 200 | ConvertFrom-Json
+$latest = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1).tagName
+$releases | Where-Object { $_.tagName -ne $latest } | ForEach-Object {
+gh release delete $_.tagName --yes
+}

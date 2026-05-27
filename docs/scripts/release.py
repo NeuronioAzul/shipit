@@ -1950,6 +1950,92 @@ def validate_release_assets(
 
 
 # ================================================================================================
+# Helpers: notas amigáveis da release
+# ================================================================================================
+
+
+def _extract_changelog_block_for_version(version: str) -> tuple[str | None, str | None]:
+    """Extrai o bloco de markdown da versão no CHANGELOG e a data do cabeçalho.
+
+    Retorna (bloco_markdown, data_yyyy_mm_dd).
+    """
+    changelog_content = CHANGELOG_FILE.read_text(encoding="utf-8")
+    header_pattern = re.compile(
+        rf"^## \[{re.escape(version)}\](?:\s*[—-]\s*(\d{{4}}-\d{{2}}-\d{{2}}))?\s*$",
+        re.MULTILINE,
+    )
+
+    header_match = header_pattern.search(changelog_content)
+    if not header_match:
+        return None, None
+
+    release_date = header_match.group(1)
+    section_start = header_match.end()
+
+    next_section_match = re.search(
+        r"^## \[[^\]]+\]",
+        changelog_content[section_start:],
+        flags=re.MULTILINE,
+    )
+    if next_section_match:
+        section_end = section_start + next_section_match.start()
+    else:
+        section_end = len(changelog_content)
+
+    section_body = changelog_content[section_start:section_end].strip()
+    if not section_body:
+        return None, release_date
+
+    return section_body, release_date
+
+
+def build_release_notes(version: str) -> str:
+    """Monta um corpo de release amigável para usuário final com referência de docs."""
+    changelog_block, release_date = _extract_changelog_block_for_version(version)
+
+    release_title = f"## ShipIt v{version}"
+    if release_date:
+        release_title = f"{release_title} — {release_date}"
+
+    if changelog_block:
+        changes_markdown = changelog_block
+    else:
+        changes_markdown = textwrap.dedent(
+            """
+            ### Alterado
+            - Atualização geral do aplicativo para a versão atual.
+            - Consulte o CHANGELOG para detalhes técnicos completos.
+            """
+        ).strip()
+
+    return "\n\n".join(
+        [
+            release_title,
+            (
+                "Esta versão foi preparada para melhorar a experiência de uso no dia a dia,\n"
+                "com foco em clareza para usuário final e registro técnico resumido."
+            ),
+            changes_markdown.strip(),
+            textwrap.dedent(
+                """
+                ### Como atualizar
+                - Baixe o instalador adequado ao seu sistema na lista de Assets desta release.
+                - Feche o ShipIt antes de executar o instalador.
+                - Abra o app após a instalação para concluir a atualização.
+                """
+            ).strip(),
+            textwrap.dedent(
+                """
+                ### Documentação rápida
+                - Histórico completo das mudanças: CHANGELOG.md
+                - Guia geral de instalação e uso: README.md
+                """
+            ).strip(),
+        ]
+    )
+
+
+# ================================================================================================
 # Step 13: Publicar release
 # ================================================================================================
 
@@ -1959,9 +2045,11 @@ def publish_release(version: str, dry_run: bool) -> None:
     print_header("Step 13/13 — Publicar Release")
 
     tag_name = f"v{version}"
+    release_notes = build_release_notes(version)
 
     if dry_run:
-        print_dry_run(f"Faria: gh release edit {tag_name} --draft=false --latest")
+        print_dry_run("Geraria notas amigáveis da release a partir do CHANGELOG.")
+        print_dry_run(f"Faria: gh release edit {tag_name} --notes-file <arquivo.md> --draft=false --latest")
         return
 
     # Verificar se release existe
@@ -1972,7 +2060,7 @@ def publish_release(version: str, dry_run: bool) -> None:
     if result.returncode != 0:
         print_error(f"Release {tag_name} não encontrada.")
         print_info(
-            f"Crie manualmente: gh release create {tag_name} --draft --generate-notes"
+            f"Crie manualmente: gh release create {tag_name} --draft --notes-file <arquivo.md>"
         )
         sys.exit(1)
 
@@ -1984,30 +2072,58 @@ def publish_release(version: str, dry_run: bool) -> None:
         print_info(f"URL: {release_url}")
         return
 
+    print_step("Montando notas amigáveis da release...")
+    print_info("Prévia das notas que serão publicadas:")
+    print(f"{_c(Colors.CYAN, '─' * 50)}")
+    print(release_notes)
+    print(f"{_c(Colors.CYAN, '─' * 50)}")
+
     if not confirm(f"Publicar release {tag_name}? (draft → published)", "y"):
         print_warning("Publicação cancelada.")
         print_info(
-            f"Publique manualmente: gh release edit {tag_name} --draft=false --latest"
+            f"Publique manualmente: gh release edit {tag_name} --notes-file <arquivo.md> --draft=false --latest"
         )
         return
 
-    result = run_cmd(
-        [
-            "gh",
-            "release",
-            "edit",
-            tag_name,
-            "--draft=false",
-            "--latest",
-        ],
-        check=False,
-    )
+    notes_file_path: str | None = None
+    try:
+        notes_file = tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".md",
+            delete=False,
+            encoding="utf-8",
+        )
+        notes_file.write(release_notes)
+        notes_file.close()
+        notes_file_path = notes_file.name
+
+        result = run_cmd(
+            [
+                "gh",
+                "release",
+                "edit",
+                tag_name,
+                "--notes-file",
+                notes_file_path,
+                "--draft=false",
+                "--latest",
+            ],
+            check=False,
+        )
+    finally:
+        if notes_file_path and result.returncode == 0:
+            try:
+                os.unlink(notes_file_path)
+            except OSError:
+                pass
 
     if result.returncode != 0:
         error_msg = (result.stderr or result.stdout).strip()
         print_error(f"Falha ao publicar: {error_msg}")
+        if notes_file_path:
+            print_info(f"Arquivo de notas preservado para retry manual: {notes_file_path}")
         print_info(
-            f"Tente manualmente: gh release edit {tag_name} --draft=false --latest"
+            f"Tente manualmente: gh release edit {tag_name} --notes-file <arquivo.md> --draft=false --latest"
         )
         sys.exit(1)
 
