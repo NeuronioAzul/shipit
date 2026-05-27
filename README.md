@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/license-ISC-green" alt="License" />
 </p>
 
-<!-- Screenshot: Captura do Dashboard do ShipIt! mostrando o gráfico de Gantt e cards de resumo mensal -->
+![url=https://freeimage.host/](https://iili.io/CdGb0il.png)
 
 ---
 
@@ -393,5 +393,5 @@ Este projeto está licenciado sob a [Licença ISC](LICENSE).
 ---
 
 <p align="center">
-  Feito com ☕ por <a href="https://github.com/NeuronioAzul">NeuronioAzul</a>
+  Feito com muito ☕ por <a href="https://github.com/NeuronioAzul">NeuronioAzul</a>
 </p>
