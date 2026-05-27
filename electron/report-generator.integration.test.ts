@@ -72,6 +72,7 @@ function makeActivity(overrides?: Partial<Activity>): Activity {
     project_scope: 'Squad Alpha',
     last_updated: new Date(),
     link_ref: null,
+    svn_releases: null,
     evidences: [],
     ...overrides,
   } as Activity
@@ -184,6 +185,30 @@ describe('generateDocxReport', () => {
     expect(docXml).toContain('8 horas/dia')
     expect(docXml).toContain('222 horas/mês')
     expect(docXml).toMatch(/>168<\/w:t>/)
+  })
+
+  it('does not include svn_releases internal metadata in DOCX output', async () => {
+    const releaseA = '991122334455'
+    const releaseB = '667788990011'
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [makeActivity({
+        description: 'Atividade com releases internos',
+        svn_releases: `${releaseA},${releaseB}`,
+      })],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    expect(docXml).not.toContain(releaseA)
+    expect(docXml).not.toContain(releaseB)
+    expect(docXml).not.toContain('{{activity_svn_releases}}')
   })
 
   it('handles multiple activities from different projects', async () => {

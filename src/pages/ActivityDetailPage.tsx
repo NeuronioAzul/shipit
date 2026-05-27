@@ -25,6 +25,7 @@ import { ActivityNav } from '../components/ActivityNav'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { shiftMonthReference } from '../utils/monthReference'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
+import { parseSvnReleasesStored } from '../utils/svnReleases'
 import {
   resolveMonthNavigation,
   shouldSyncSelectedMonthToActivity,
@@ -516,6 +517,7 @@ export function ActivityDetailPage() {
   }
 
   const links = parseLinks(activity.link_ref)
+  const svnReleases = parseSvnReleasesStored(activity.svn_releases)
   const activeMonthReference = selectedMonth || activity.month_reference
   const showEmptyMonthState = monthWithoutActivities === activeMonthReference
   const showMonthLoadingState = siblingsLoading && activeMonthReference !== activity.month_reference
@@ -652,6 +654,28 @@ export function ActivityDetailPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Releases SVN */}
+        {svnReleases.length > 0 && (
+          <div id="activity-detail-svn-releases">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              Releases SVN (uso interno)
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {svnReleases.map((release) => (
+                <span
+                  key={release}
+                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30"
+                >
+                  #{release}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Este campo nao e exportado para o relatorio DOCX.
+            </p>
           </div>
         )}
 

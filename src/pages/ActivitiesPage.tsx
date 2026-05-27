@@ -25,11 +25,24 @@ import { SkeletonActivityItem } from '../components/Skeleton'
 import { Select } from '../components/Select'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
+import { parseSvnReleasesStored } from '../utils/svnReleases'
 
 function formatDateShort(d: string | null): string {
   if (!d) return '—'
   const date = new Date(d + 'T00:00:00')
   return date.toLocaleDateString('pt-BR')
+}
+
+function getCompactSvnReleases(raw: string | null, maxVisible = 4): { visible: string[]; hiddenCount: number } {
+  const tags = parseSvnReleasesStored(raw)
+  if (tags.length <= maxVisible) {
+    return { visible: tags, hiddenCount: 0 }
+  }
+
+  return {
+    visible: tags.slice(0, maxVisible),
+    hiddenCount: tags.length - maxVisible,
+  }
 }
 
 function SortableActivityItem({
@@ -54,6 +67,7 @@ function SortableActivityItem({
     zIndex: isDragging ? 10 : undefined,
   }
   const evidenceCounts = getEvidenceTypeCounts(activity.evidences)
+  const compactSvnReleases = getCompactSvnReleases(activity.svn_releases)
 
   return (
     <div ref={setNodeRef} style={style} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow group">
@@ -109,6 +123,26 @@ function SortableActivityItem({
           <p className="text-foreground line-clamp-2">
             {activity.description || <span className="text-muted-foreground italic">Sem descrição</span>}
           </p>
+
+          {compactSvnReleases.visible.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1">
+              {compactSvnReleases.visible.map((release) => (
+                <span
+                  key={release}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/30"
+                  title={`Release SVN ${release}`}
+                >
+                  #{release}
+                </span>
+              ))}
+              {compactSvnReleases.hiddenCount > 0 && (
+                <span className="text-[11px] text-muted-foreground">
+                  +{compactSvnReleases.hiddenCount}
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
             <span>
               <i className="fa-regular fa-calendar mr-1"></i>
@@ -248,7 +282,8 @@ export function ActivitiesPage() {
       const lower = filterText.toLowerCase()
       const match = a.description?.toLowerCase().includes(lower) ||
         a.project_scope?.toLowerCase().includes(lower) ||
-        a.link_ref?.toLowerCase().includes(lower)
+        a.link_ref?.toLowerCase().includes(lower) ||
+        a.svn_releases?.toLowerCase().includes(lower)
       if (!match) return false
     }
     if (filterStatus && a.status !== filterStatus) return false

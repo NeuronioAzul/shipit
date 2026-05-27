@@ -7,7 +7,13 @@ import { EvidenceUpload } from '../components/EvidenceUpload'
 import { validateActivity, type ValidationError } from '../utils/validation'
 import { DatePicker } from '../components/DatePicker'
 import { Select } from '../components/Select'
+import { InputTags } from '../components/InputTags'
 import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
+import {
+  normalizeSvnReleaseToken,
+  parseSvnReleasesStored,
+  serializeSvnReleases,
+} from '../utils/svnReleases'
 
 const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
@@ -18,6 +24,7 @@ interface ActivityForm {
   date_end: string
   status: string
   link_ref: string
+  svn_releases: string
   attendance_type: string
   month_reference: string
   project_scope: string
@@ -37,6 +44,7 @@ export function ActivityFormPage() {
     date_end: '',
     status: 'Pendente',
     link_ref: '',
+    svn_releases: '',
     attendance_type: '',
     month_reference: defaultMonth,
     project_scope: '',
@@ -58,6 +66,7 @@ export function ActivityFormPage() {
       date_end: nextForm.date_end || null,
       status: nextForm.status as ActivityData['status'],
       link_ref: nextForm.link_ref || null,
+      svn_releases: nextForm.svn_releases || null,
       attendance_type: (nextForm.attendance_type as ActivityData['attendance_type']) || null,
       month_reference: nextForm.month_reference,
       project_scope: nextForm.project_scope || null,
@@ -77,6 +86,7 @@ export function ActivityFormPage() {
       date_end: nextForm.date_end || null,
       status: nextForm.status,
       link_ref: nextForm.link_ref.trim(),
+      svn_releases: nextForm.svn_releases.trim(),
       attendance_type: nextForm.attendance_type,
       month_reference: nextForm.month_reference,
       project_scope: nextForm.project_scope.trim(),
@@ -123,6 +133,7 @@ export function ActivityFormPage() {
         date_end: activity.date_end || '',
         status: activity.status,
         link_ref: activity.link_ref || '',
+        svn_releases: activity.svn_releases || '',
         attendance_type: activity.attendance_type || '',
         month_reference: activity.month_reference,
         project_scope: activity.project_scope || '',
@@ -355,6 +366,22 @@ export function ActivityFormPage() {
 
   function frameClass(field: string): string {
     return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+  }
+
+  const svnReleaseTags = parseSvnReleasesStored(form.svn_releases)
+
+  function validateSvnReleaseTag(rawTag: string): string | null {
+    return normalizeSvnReleaseToken(rawTag)
+      ? null
+      : 'Use apenas numeros de release SVN, separados por virgula.'
+  }
+
+  function handleSvnReleasesChange(nextTags: string[]) {
+    setForm((prev) => ({
+      ...prev,
+      svn_releases: serializeSvnReleases(nextTags) || '',
+    }))
+    setAutoSaveStatus('idle')
   }
 
   return (
@@ -608,6 +635,25 @@ export function ActivityFormPage() {
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Insira um link por linha. GitLab, Jira, etc.
+          </p>
+        </div>
+
+        {/* Releases SVN (uso interno) */}
+        <div id="activity-form-svn-releases-section" className="border border-border/60 rounded-lg p-4 bg-muted/20">
+          <label htmlFor="activity-form-svn-releases" className={labelClass}>
+            Releases SVN (uso interno)
+          </label>
+          <InputTags
+            id="activity-form-svn-releases"
+            name="svn_releases"
+            value={svnReleaseTags}
+            onChange={handleSvnReleasesChange}
+            validateTag={validateSvnReleaseTag}
+            normalizeTag={(tag) => normalizeSvnReleaseToken(tag) || ''}
+            placeholder="Ex: 12345, 12346, 12347"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Campo usado para apoiar publicacoes e homologacao. Nao sera incluido no relatorio DOCX.
           </p>
         </div>
 

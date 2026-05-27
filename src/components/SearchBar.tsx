@@ -61,7 +61,8 @@ export function SearchBar() {
         data = all.filter(a =>
           a.description?.toLowerCase().includes(lower) ||
           a.project_scope?.toLowerCase().includes(lower) ||
-          a.link_ref?.toLowerCase().includes(lower)
+          a.link_ref?.toLowerCase().includes(lower) ||
+          a.svn_releases?.toLowerCase().includes(lower)
         )
       }
       setResults(data.slice(0, 10))

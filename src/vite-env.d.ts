@@ -143,6 +143,7 @@ export interface ActivityData {
   date_start: string | null
   date_end: string | null
   link_ref: string | null
+  svn_releases: string | null
   status: ActivityStatus
   month_reference: string
   attendance_type: AttendanceType | null

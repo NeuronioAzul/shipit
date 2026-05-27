@@ -623,6 +623,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
       replaceTextInNode(actRow, '{{activity_order}}', String(actOrderGlobal))
       replaceTextInNode(actRow, '{{activity_description}}', act.description || '')
       replaceTextInNode(actRow, '{{activity_reference}}', '')
+      // svn_releases is internal metadata for publication workflow and must not be exported to DOCX.
       replaceTextInNode(actRow, '{{activity_date_start}}', formatDateBR(act.date_start))
       replaceTextInNode(actRow, '{{activity_date_end}}', formatDateBR(act.date_end))
       replaceTextInNode(actRow, '{{activity_status}}', act.status || '')

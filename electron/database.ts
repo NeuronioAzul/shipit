@@ -556,6 +556,7 @@ export async function searchActivities(query: string): Promise<Activity[]> {
     .where('activity.description LIKE :like', { like })
     .orWhere('activity.project_scope LIKE :like', { like })
     .orWhere('activity.link_ref LIKE :like', { like })
+    .orWhere('activity.svn_releases LIKE :like', { like })
     .orWhere('evidence.caption LIKE :like', { like })
     .orderBy('activity.month_reference', 'ASC')
     .addOrderBy('activity.order', 'ASC')
