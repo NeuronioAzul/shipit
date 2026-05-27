@@ -20,6 +20,20 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Novo cenário E2E Playwright para validar tokens de scrollbar por tema e comportamento de gutter estável nos hosts de rolagem.
 
 
+
+## [1.6.2] — 2026-05-27
+
+### Adicionado
+
+- Nova página **Sobre** com informações do projeto, créditos e opção de apoio voluntário via PIX (QR code integrado).
+- Cobertura E2E Playwright para a nova página Sobre, validando conteúdo e navegação.
+
+### Alterado
+
+- Textos de orientação revisados nas páginas **Dashboard** e **Configurações** para maior clareza e consistência.
+- Componente **ActivityBar** refatorado: responsabilidades redistribuídas para melhorar legibilidade e manutenibilidade do código.
+- README atualizado com seção de apoio ao projeto, informações de doação PIX e detalhes de uso.
+
 ## [1.6.1] — 2026-05-26
 
 ### Adicionado
