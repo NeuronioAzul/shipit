@@ -2,6 +2,13 @@
 
 SHIPIT!  
 
+
+## FIX
+
+- 🔴 fix: Ao Criar atividade, e inserir um texto no campo de descrição, o texto aparece corretamente com os pulos de linha, inclusive quando eu quero alterar a descrição abrindo a edição/alteração da atividade os textos aparecem corretamente, respeitando os pulos de linha. Agora quando eu clico em gerar um relatório/arquivo DOCX, a descrição da atividade não está respeitando os pulos de linha, deixando tudo em uma linha só.
+
+- 🔴 feat: Adicionar o formatador de texto igual ao do campo inserir evidência texto
+
 ## New features
 
 - 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
@@ -299,3 +306,5 @@ $latest = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1).ta
 $releases | Where-Object { $_.tagName -ne $latest } | ForEach-Object {
 gh release delete $_.tagName --yes
 }
+
+
