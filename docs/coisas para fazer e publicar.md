@@ -2,26 +2,44 @@
 
 SHIPIT!  
 
+## Definição de urgência
+
+- n1 🔴 urgente
+  - O n1 urgente é para as coisas que precisam ser feitas o mais rápido possível, porque estão causando um grande impacto negativo no projeto, ou porque são bloqueadores para outras tarefas importantes, ou porque são correções críticas de bugs que estão afetando muitos usuários, ou porque são melhorias essenciais para a experiência do usuário, ou porque são requisitos legais ou de segurança que precisam ser atendidos imediatamente.
+- n2 🟠 importante
+  - O n2 importante é para as coisas que são importantes para o projeto, podem ser feitas assim que possível.
+- n3 🟡 desejável
+  - O n3 desejável, mas pode ser feito depois.
 
 ## FIX
 
-- 🔴 fix: Ao Criar atividade, e inserir um texto no campo de descrição, o texto aparece corretamente com os pulos de linha, inclusive quando eu quero alterar a descrição abrindo a edição/alteração da atividade os textos aparecem corretamente, respeitando os pulos de linha. Agora quando eu clico em gerar um relatório/arquivo DOCX, a descrição da atividade não está respeitando os pulos de linha, deixando tudo em uma linha só.
+- n1
+  - 🔴 fix: Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
 
-- 🔴 feat: Adicionar o formatador de texto igual ao do campo inserir evidência texto
+- n1
+  - 🔴 fix: Ao Criar atividade, e inserir um texto no campo de descrição,
+    - O texto aparece corretamente com os pulos de linha dentro do app,
+    - Inclusive quando eu quero alterar a descrição abrindo a edição/alteração da atividade os textos aparecem corretamente dentro do app, respeitando os pulos de linha.
+    - Quando eu clico em gerar um relatório/arquivo DOCX, a descrição da atividade não está respeitando os pulos de linha, deixando tudo em uma linha só.
+
+- n2
+  - 🟠 feat: Adicionar o formatador de texto igual ao do campo inserir evidência texto
 
 ## New features
 
-- 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
-- 🟢 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app
-- 🟢 feat: Implementar opção de backup do app com 2 botões, um para salvar as evidências, e outro para salvar o banco de dados e informações de configurações do app.
+- n3
+  - 🟡 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
+  - 🟡 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app
+  - 🟡 feat: Implementar opção de backup do app com 2 botões, um para salvar as evidências, e outro para salvar o banco de dados e informações de configurações do app.
 
-- 🟢 feat: Quando criar uma nova atividade, criar e associar uma pasta para cada atividade dentro da pasta de evidências, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
+- ⁉️ Não sei se precisa disso.
+  - ⁉️ feat: Quando criar uma nova atividade, criar e associar uma pasta para cada atividade dentro da pasta de evidências, para organizar melhor as evidências e facilitar a localização das evidências relacionadas a cada atividade, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
 
 ## Verificação, correção e criação de testes
 
-- 🟡 Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
-
 ------------------------------------------------------------------
+
+## Daqui para baixo tudo o que já foi feito, corrigido, testado, e publicado.
 
 ```text
  _____     _   _   
@@ -222,12 +240,12 @@ Hoje estou desenvolvendo no windows 11 e tenho a ultima versão do ShipIt! insta
 - feat: Ao clicar no menu `Help/Verificar Atualizações`, exibir uma modal para o usuário, onde o aplicativo deve verificar se existe uma nova versão disponível igual como faz na tela de configurações, e caso exista uma nova versão, informar que existe uma nova versão disponível botão se deseja fazer o download e um botão para instalar a nova versão após o download.
 
 ## fix: last update
+
 Quando atualizei o ShipIt! algumas coisas indesejadas aconteceram:
 
 - Analise e veja o que houve. A pasta de instalação mudou de "C:\Users\mauro\AppData\Roaming\shipit" para "C:\Users\mauro\AppData\Roaming\ShipIt!", e isso fez com que o aplicativo não reconhecesse a instalação anterior, e criasse uma nova instalação, e os dados que estão na pasta anterior não estão sendo reconhecidos. configure o instalador para usar a pasta "C:\Users\mauro\AppData\Roaming\shipit" para manter a compatibilidade com a instalação anterior, e para que os dados sejam mantidos e reconhecidos corretamente, e também para evitar que os usuários tenham problemas com a atualização do aplicativo, e quando usar em desenvolvimento `npm run dev` use a pasta "C:\Users\mauro\AppData\Roaming\ShipIt!".
 
 fix: preciso desinstalar completamente o ShipIt! de desenvolvimento e registros relacionados, porque está carregando um electron como se estivesse instalado iniciando com o windows. pode ser problema na opção iniciar ocm o windows que está marcada em desenvolvimento, ou pode ser algum resquício da instalação anterior que está causando esse problema, para resolver isso, preciso desinstalar completamente o ShipIt! de desenvolvimento, removendo todos os arquivos e registros relacionados, para garantir que o aplicativo seja limpo e organizado, e para evitar que o lixo da instalação anterior cause problemas no desenvolvimento e testes do aplicativo.
-
 
 ## New features for the next release 1.5.0
 
@@ -276,7 +294,7 @@ modifique o botão `sobre` para ao invés de abrir uma janela com as informaçõ
 Depois dos dados sobre o aplicativo, exiba um botão "Doar" ou "Support Us" que, ao ser clicado, redireciona os usuários para a página de pagamento do Pix, onde eles podem fazer uma doação para apoiar o desenvolvimento do ShipIt! e ajudar a manter o projeto ativo e atualizado, e também para mostrar que o projeto é aberto a contribuições e apoio da comunidade. Inclua também um QR code do Pix para facilitar o processo de doação, permitindo que os usuários possam escanear o código com seus smartphones e fazer a doação de forma rápida e conveniente. Inclua também a chave Pix aleatória para aqueles que preferem fazer a doação manualmente, incluir o url da página do Pix.
 
 URL página do pix:
-https://nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8
+<https://nubank.com.br/cobrar/2w3xk/6a164c4f-fd89-47de-92bf-4bae2c2d90b8>
 
 Imagem QR code do pix:
 public/assets/images/qrpixnu.png
@@ -291,8 +309,7 @@ Chave pix aleatória:
 
 - 🟢 feat: Adicionar um campo no cadastro de atividades onde eu possa colocar os números  das releases do SVN que fazem parte daquela atividade; Essas releases são usadas depois para fazer a publicação da atividade concluída e homologada que pode estar no repositório de homologação ou produção. Essas releases não serão incluidas para a geração do relatório (deixar explícito) colocar esse campo em uma seção separada do formulário.
 
-
-## Scripts para remover as releases antigas e manter apenas a última release publicada:
+## Scripts para remover as releases antigas e manter apenas a última release publicada
 
 <!-- Lista as releases e confirma o que será excluído -->
 $releases = gh release list --json tagName,isLatest --limit 200 | ConvertFrom-Json
@@ -306,5 +323,3 @@ $latest = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1).ta
 $releases | Where-Object { $_.tagName -ne $latest } | ForEach-Object {
 gh release delete $_.tagName --yes
 }
-
-

@@ -57,3 +57,7 @@ npx playwright test e2e
 npx playwright test e2e/app.spec.ts --reporter=line
 
 npx playwright test e2e/app.spec.ts -g "runs help menu actions for manual and report issue" --reporter=line
+
+--- Python
+
+(Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& d:\Programacao\Electron\ship-it\.venv\Scripts\Activate.ps1)

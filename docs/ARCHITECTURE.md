@@ -463,3 +463,4 @@ npm run dist
 | `contextIsolation: true` | Segurança: renderer não tem acesso ao Node.js |
 | `electron-updater` + GitHub Releases | Auto-update sem servidor próprio; blockmaps para delta updates |
 | CI/CD via GitHub Actions | Build multiplataforma paralelo; testes como gate; sem code signing por agora |
+| playwright para E2E | Testes de fluxo completo com controle total do ambiente; simula interações reais |
