@@ -2,6 +2,10 @@
 
 SHIPIT!  
 
+> 📝 **Este é o arquivo de RASCUNHO.** Anote aqui livremente tudo que precisa fazer, corrigir, testar ou publicar — sem se preocupar com formatação.
+> Depois, mova só o que realmente será feito para o [TODO.md](TODO.md), e o que já foi concluído para o [DONE.md](DONE.md).
+> Fluxo: **rascunho (aqui)** → `TODO.md` (pendências reais) → `DONE.md` (histórico por versão).
+
 ## Definição de urgência
 
 - n1 🔴 urgente

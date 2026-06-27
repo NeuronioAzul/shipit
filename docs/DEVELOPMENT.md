@@ -119,8 +119,8 @@ Outros ícones:
 
 ```text
 shipit/
+├── CLAUDE.md                  # Guia do projeto para o Claude Code (carregado automaticamente)
 ├── .github/
-│   ├── copilot-instructions.md
 │   └── workflows/
 │       └── release.yml        # CI/CD: build & release multiplataforma
 ├── electron/                  # Processo principal (Electron, CommonJS)
