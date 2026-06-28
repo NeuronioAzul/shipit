@@ -26,6 +26,7 @@ import { Select } from '../components/Select'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { parseSvnReleasesStored } from '../utils/svnReleases'
+import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
 
 function formatDateShort(d: string | null): string {
   if (!d) return '—'
@@ -121,7 +122,9 @@ function SortableActivityItem({
             </span>
           </div>
           <p className="text-foreground line-clamp-2">
-            {activity.description || <span className="text-muted-foreground italic">Sem descrição</span>}
+            {isRichTextEmpty(activity.description)
+              ? <span className="text-muted-foreground italic">Sem descrição</span>
+              : htmlToPlainText(activity.description)}
           </p>
 
           {compactSvnReleases.visible.length > 0 && (
@@ -280,7 +283,7 @@ export function ActivitiesPage() {
   const filteredActivities = activities.filter(a => {
     if (filterText && !isSearchMode) {
       const lower = filterText.toLowerCase()
-      const match = a.description?.toLowerCase().includes(lower) ||
+      const match = htmlToPlainText(a.description).toLowerCase().includes(lower) ||
         a.project_scope?.toLowerCase().includes(lower) ||
         a.link_ref?.toLowerCase().includes(lower) ||
         a.svn_releases?.toLowerCase().includes(lower)

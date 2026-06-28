@@ -484,13 +484,13 @@ function decodeHtmlEntities(str: string): string {
  * Preserves spaces between inline marks, keeps `<br>` as `<w:br/>`, and honors
  * bold (`<strong>`/`<b>`) and italic (`<em>`/`<i>`).
  */
-function inlineHtmlToRuns(html: string): string {
+function inlineHtmlToRuns(html: string, sz = '20'): string {
   const segments = html.split(/<br\s*\/?>/i)
   const runs: string[] = []
 
   segments.forEach((segment, segmentIdx) => {
     if (segmentIdx > 0) {
-      runs.push(`<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:br/></w:r>`)
+      runs.push(`<w:r><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:br/></w:r>`)
     }
 
     const parts = segment.split(/(<\/?(?:strong|b|em|i)\s*>)/i)
@@ -509,7 +509,7 @@ function inlineHtmlToRuns(html: string): string {
       const text = decodeHtmlEntities(part.replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ')
       if (text === '') continue
 
-      let rPr = '<w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/>'
+      let rPr = `<w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`
       if (bold) rPr += '<w:b/>'
       if (italic) rPr += '<w:i/>'
       rPr += '</w:rPr>'
@@ -524,8 +524,8 @@ function buildParagraphXml(runs: string, prefix = ''): string {
   return `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:spacing w:after="60"/></w:pPr>${prefix}${runs}</w:p>`
 }
 
-function buildListMarkerRun(marker: string): string {
-  return `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">${marker}</w:t></w:r>`
+function buildListMarkerRun(marker: string, sz = '20'): string {
+  return `<w:r><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${marker}</w:t></w:r>`
 }
 
 /**
@@ -572,6 +572,91 @@ export function htmlToWordXml(html: string): string {
   }
 
   return paragraphs.join('')
+}
+
+/** Detecta se a descrição já é HTML rich-text (editor) e não texto plano legado. */
+function isLikelyHtmlDescription(value: string): boolean {
+  return /<(p|br|ul|ol|li|strong|em|b|i)\b[^>]*>/i.test(value)
+}
+
+function buildBreakRun(sz: string): string {
+  return `<w:r><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:br/></w:r>`
+}
+
+/**
+ * Converte o HTML rich-text da descrição numa sequência de runs para UMA célula
+ * (mantém o parágrafo da célula). Blocos são separados por quebras de linha,
+ * itens de lista recebem marcador (• ou 1., 2., ...) e negrito/itálico são honrados.
+ */
+function htmlToCellRunsXml(html: string, sz: string): string {
+  const blocks: string[] = []
+  const blockRe = /<(ul|ol)\b[^>]*>([\s\S]*?)<\/\1>|<p\b[^>]*>([\s\S]*?)<\/p>/gi
+  let match: RegExpExecArray | null
+  let matchedAny = false
+
+  while ((match = blockRe.exec(html)) !== null) {
+    matchedAny = true
+    if (match[1]) {
+      const ordered = match[1].toLowerCase() === 'ol'
+      const liRe = /<li\b[^>]*>([\s\S]*?)<\/li>/gi
+      let li: RegExpExecArray | null
+      let itemIdx = 0
+      while ((li = liRe.exec(match[2])) !== null) {
+        itemIdx++
+        const inner = li[1].replace(/<\/?p\b[^>]*>/gi, '')
+        const runs = inlineHtmlToRuns(inner, sz)
+        if (!runs) continue
+        const marker = ordered ? `${itemIdx}. ` : '• '
+        blocks.push(buildListMarkerRun(marker, sz) + runs)
+      }
+    } else {
+      const runs = inlineHtmlToRuns(match[3], sz)
+      if (runs) blocks.push(runs)
+    }
+  }
+
+  if (!matchedAny) {
+    const runs = inlineHtmlToRuns(html, sz)
+    if (runs) blocks.push(runs)
+  }
+
+  return blocks.join(buildBreakRun(sz))
+}
+
+/**
+ * Substitui o run que contém o placeholder por uma sequência de runs (XML),
+ * preservando o parágrafo da célula. Usado para a descrição rich-text no DOCX.
+ */
+function replaceRunWithRunsXml(node: any, search: string, runsXml: string): boolean {
+  if (node.localName === 't' && node.namespaceURI === W_NS) {
+    if (!(node.textContent && node.textContent.includes(search))) return false
+
+    const run = node.parentNode
+    const para = run.parentNode
+    if (!runsXml) {
+      node.textContent = ''
+      return true
+    }
+
+    const doc = node.ownerDocument
+    const frag = new DOMParser().parseFromString(`<w:wrap xmlns:w="${W_NS}">${runsXml}</w:wrap>`, 'application/xml')
+    let child = (frag.documentElement as any).firstChild
+    while (child) {
+      const nextChild = child.nextSibling
+      para.insertBefore(doc.importNode(child, true), run)
+      child = nextChild
+    }
+    para.removeChild(run)
+    return true
+  }
+
+  let child = node.firstChild
+  while (child) {
+    const next = child.nextSibling
+    if (replaceRunWithRunsXml(child, search, runsXml)) return true
+    child = next
+  }
+  return false
 }
 
 function buildTextEvidencePageXml(
@@ -727,7 +812,14 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
       const actRow = cloneNode(activityRowTemplate) as Element
 
       replaceTextInNode(actRow, '{{activity_order}}', String(actOrderGlobal))
-      replaceTextInNodeMultiline(actRow, '{{activity_description}}', act.description || '')
+      const activityDescription = act.description || ''
+      if (isLikelyHtmlDescription(activityDescription)) {
+        // Descrição rich-text (editor): renderiza formatação na célula (sz 18 = 9pt do template).
+        replaceRunWithRunsXml(actRow, '{{activity_description}}', htmlToCellRunsXml(activityDescription, '18'))
+      } else {
+        // Descrição legada em texto plano: preserva apenas as quebras de linha.
+        replaceTextInNodeMultiline(actRow, '{{activity_description}}', activityDescription)
+      }
       replaceTextInNode(actRow, '{{activity_reference}}', '')
       // svn_releases is internal metadata for publication workflow and must not be exported to DOCX.
       replaceTextInNode(actRow, '{{activity_date_start}}', formatDateBR(act.date_start))

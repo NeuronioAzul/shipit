@@ -54,6 +54,17 @@ export async function createActivityRecord(
   }, { description, monthReference, overrides })
 }
 
+/**
+ * Preenche o campo de descrição (editor rich-text TipTap) no formulário de atividade.
+ * O editor é um contenteditable, não um `<textarea>`, então focamos e digitamos.
+ */
+export async function fillDescription(page: Page, description: string) {
+  const editor = page.locator('#description-editor-content .tiptap')
+  await editor.waitFor({ timeout: 5_000 })
+  await editor.click()
+  await editor.pressSequentially(description)
+}
+
 export async function createActivityThroughForm(
   page: Page,
   description: string,
@@ -69,9 +80,7 @@ export async function createActivityThroughForm(
 
   await page.click('button:has-text("Nova Atividade")')
 
-  const descInput = page.locator('textarea#description')
-  await descInput.waitFor({ timeout: 5_000 })
-  await descInput.fill(description)
+  await fillDescription(page, description)
 
   const monthInput = page.locator('input#month_reference')
   await monthInput.fill(monthReference)

@@ -26,6 +26,7 @@ import { isTypingTarget } from '../utils/keyboardGuards'
 import { shiftMonthReference } from '../utils/monthReference'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { parseSvnReleasesStored } from '../utils/svnReleases'
+import { isRichTextEmpty, normalizeToHtml } from '../utils/richText'
 import {
   resolveMonthNavigation,
   shouldSyncSelectedMonthToActivity,
@@ -626,11 +627,16 @@ export function ActivityDetailPage() {
         {/* Description */}
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Descrição</h3>
-          <div className="text-foreground whitespace-pre-wrap leading-relaxed">
-            {activity.description || (
-              <span className="text-muted-foreground italic">Sem descrição</span>
-            )}
-          </div>
+          {isRichTextEmpty(activity.description) ? (
+            <span className="text-muted-foreground italic">Sem descrição</span>
+          ) : (
+            <div
+              className="prose prose-sm max-w-none text-foreground leading-relaxed
+                [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
+                [&_li]:my-1 [&_p]:my-1 [&_strong]:font-bold [&_em]:italic"
+              dangerouslySetInnerHTML={{ __html: normalizeToHtml(activity.description) }}
+            />
+          )}
         </div>
 
         {/* Links */}

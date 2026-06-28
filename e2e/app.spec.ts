@@ -7,6 +7,7 @@ import { PRODUCTION_USER_DATA_DIR_NAME, SHIPIT_TEST_PROFILE_MARKER, SHIPIT_TEST_
 import {
   createActivityRecord as createActivityFixtureRecord,
   createActivityThroughForm,
+  fillDescription,
   getUniqueMonthSequence,
   type ActivityFixtureOverrides,
 } from './fixtures/activityFixtures'
@@ -496,7 +497,7 @@ test('runs file menu commands with safe instrumentation', async () => {
     await clickMenuCommand('file', 'file.new-activity')
     await page.waitForURL(/#\/activities\/new$/)
 
-    await page.locator('textarea#description').fill(description)
+    await fillDescription(page, description)
     await page.locator('input#month_reference').fill(monthRef)
     await clickMenuCommand('file', 'file.save-context')
 
@@ -504,7 +505,8 @@ test('runs file menu commands with safe instrumentation', async () => {
       return page.evaluate(async (description) => {
         const api = (window as unknown as { electronAPI?: { searchActivities?: (query: string) => Promise<Array<{ description?: string }>> } }).electronAPI
         const results = await api?.searchActivities?.(description)
-        return results?.some((activity) => activity.description === description) ?? false
+        // A descrição agora é HTML rich-text; o texto fica dentro de <p>...</p>.
+        return results?.some((activity) => (activity.description ?? '').includes(description)) ?? false
       }, description)
     }, { timeout: 1_000, intervals: [100, 150, 250] }).toBe(true)
 
@@ -930,7 +932,7 @@ test('creates activity with svn releases tags and finds it through global search
   await page.click('button:has-text("Nova Atividade")')
   await page.waitForURL(/#\/activities\/new(?:\?.*)?$/)
 
-  await page.locator('textarea#description').fill(description)
+  await fillDescription(page, description)
   await page.locator('input#month_reference').fill(monthRef)
 
   const svnInput = page.locator('#activity-form-svn-releases')

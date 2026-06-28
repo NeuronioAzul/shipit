@@ -594,6 +594,33 @@ describe('generateDocxReport', () => {
     expect(segment).toContain('<w:br/>')
   })
 
+  it('renders rich-text description formatting (bold + bullet list) in the DOCX cell', async () => {
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [makeActivity({
+        description: '<p>Resumo com <strong>negrito</strong></p><ul><li><p>item um</p></li><li><p>item dois</p></li></ul>',
+      })],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    expect(docXml).toContain('Resumo com')
+    expect(docXml).toContain('negrito')
+    expect(docXml).toContain('<w:b/>')
+    expect(docXml).toContain('• ')
+    expect(docXml).toContain('item um')
+    expect(docXml).toContain('item dois')
+    expect(docXml).not.toContain('{{activity_description}}')
+    // O HTML cru não deve vazar para o documento.
+    expect(docXml).not.toContain('<p>')
+    expect(docXml).not.toContain('<strong>')
+  })
+
   it('renders ordered list numbering in text evidence DOCX output', async () => {
     const activity = makeActivity({
       evidences: [{

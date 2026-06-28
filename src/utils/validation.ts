@@ -1,4 +1,5 @@
 import type { ActivityData, UserProfileData } from '../vite-env'
+import { isRichTextEmpty } from './richText'
 
 export interface ValidationError {
   field: string
@@ -8,7 +9,7 @@ export interface ValidationError {
 export function validateActivity(activity: Partial<ActivityData>): ValidationError[] {
   const errors: ValidationError[] = []
 
-  if (!activity.description?.trim()) {
+  if (isRichTextEmpty(activity.description)) {
     errors.push({ field: 'description', message: 'Descrição é obrigatória' })
   }
   if (activity.date_start && activity.date_end && activity.date_start > activity.date_end) {
@@ -109,7 +110,7 @@ export function validateProfile(profile: ProfileValidationTarget): ValidationErr
 /** Check if an activity has all required fields for report generation */
 export function isActivityComplete(activity: ActivityData): boolean {
   return !!(
-    activity.description?.trim() &&
+    !isRichTextEmpty(activity.description) &&
     activity.date_start &&
     activity.date_end &&
     activity.status

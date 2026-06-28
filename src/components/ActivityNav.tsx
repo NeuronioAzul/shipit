@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import type { ActivityData } from '../vite-env'
+import { htmlToPlainText } from '../utils/richText'
 
 interface ActivityNavProps {
   siblings: ActivityData[]
@@ -31,7 +32,8 @@ export function ActivityNav({
         : null
 
   function truncate(text: string, max = 50) {
-    return text.length > max ? text.slice(0, max) + '…' : text
+    const plain = htmlToPlainText(text)
+    return plain.length > max ? plain.slice(0, max) + '…' : plain
   }
 
   return (

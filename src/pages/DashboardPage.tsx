@@ -8,6 +8,7 @@ import { SkeletonStats, Skeleton } from '../components/Skeleton'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
+import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -257,10 +258,10 @@ export function DashboardPage() {
                     <div key={activity.id} className="flex items-center h-7 group">
                       <div
                         className="w-35 shrink-0 text-xs text-foreground truncate pr-2 cursor-pointer hover:text-primary"
-                        title={activity.description}
+                        title={htmlToPlainText(activity.description)}
                         onClick={() => navigate(`/activities/${activity.id}`)}
                       >
-                        {idx + 1}. {activity.description?.substring(0, 18) || 'Sem desc.'}
+                        {idx + 1}. {htmlToPlainText(activity.description).substring(0, 18) || 'Sem desc.'}
                       </div>
                       <div className="flex-1 relative h-5 bg-muted/30 rounded-sm">
                         {days && (
@@ -330,7 +331,9 @@ export function DashboardPage() {
                           className="cursor-pointer hover:text-primary transition-colors"
                           onClick={() => navigate(`/activities/${activity.id}`)}
                         >
-                          {activity.description || <span className="text-muted-foreground italic">Sem descrição</span>}
+                          {isRichTextEmpty(activity.description)
+                            ? <span className="text-muted-foreground italic">Sem descrição</span>
+                            : htmlToPlainText(activity.description)}
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
