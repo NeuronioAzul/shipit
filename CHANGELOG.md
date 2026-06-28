@@ -9,18 +9,15 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-### Alterado
-
-- Barra de rolagem temática aplicada globalmente para acompanhar o tema ativo, com tokens por tema e estilo unificado no renderer.
-- Principais áreas com overflow receberam gutter estável (`scrollbar-gutter: stable`) para reduzir saltos de layout quando a rolagem aparece.
-- Tema Cyberpunk deixou de depender de hardcode global de scrollbar e passou a reutilizar os tokens de tema com overrides pontuais em dropdowns.
-
 ### Adicionado
 
-- Novo cenário E2E Playwright para validar tokens de scrollbar por tema e comportamento de gutter estável nos hosts de rolagem.
+- Editor de texto rico (negrito, itálico e listas) no campo de **descrição da atividade**, reutilizando o mesmo editor das evidências de texto.
 
+### Corrigido
 
-
+- A descrição da atividade passou a **preservar as quebras de linha** no DOCX gerado (antes o texto era exportado em uma única linha).
+- A formatação das evidências de texto e da descrição (negrito, itálico, listas ordenadas e não ordenadas e quebras de linha) agora é exportada corretamente no relatório DOCX, incluindo a numeração de listas ordenadas e os espaços entre marcações.
+- Carregamento da suíte de testes corrigido após atualização de dependências: os decorators do TypeORM voltaram a ser compilados no modo legado pelo transformer do Vite 8 (oxc), via `electron/tsconfig.json`.
 
 ## [1.7.0] — 2026-05-27
 

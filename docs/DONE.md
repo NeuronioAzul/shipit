@@ -7,12 +7,19 @@
 > `coisas para fazer e publicar.md` (rascunho) → `TODO.md` (pendências reais) → `DONE.md` (este arquivo, histórico).
 >
 > Itens concluídos mas **ainda não lançados** ficam em [Unreleased]; ao publicar, anote a versão.
+>
+> Quando identificável, cada bloco traz uma linha `> Plano:` apontando para o(s) plano(s) em [docs/plans/](plans/) que originaram o trabalho. As fases iniciais (1–16) antecedem a convenção de planos numerados (`plan-shipitNN`) e nem sempre têm um plano correspondente.
 
 ---
 
 ## [Unreleased]
 
-- _(nada pendente de lançamento no momento)_
+> Plano: [plan-shipit38 — descrição rich-text e formatação no DOCX](plans/plan-shipit38-richTextDescriptionAndDocxFormatting.prompt.md)
+
+- [x] Campo de **descrição da atividade** com editor rich-text (negrito, itálico, listas), reutilizando o editor das evidências de texto. Descrições legadas em texto plano são normalizadas para HTML preservando as quebras de linha.
+- [x] **Correção:** quebras de linha da descrição passaram a ser preservadas no DOCX (antes colapsavam em uma única linha).
+- [x] **Correção:** o DOCX passou a exportar a formatação (negrito/itálico/listas/quebras) da descrição e das evidências de texto, com numeração de listas ordenadas e espaços entre marcações.
+- [x] **Infra/testes:** `electron/tsconfig.json` para os decorators do TypeORM no transformer oxc do Vite 8 (suíte voltou a 100% verde — 185 unit + 37 e2e); rebuild do `better-sqlite3` para a ABI do Electron atual; `ELECTRON_RUN_AS_NODE` (herdado do host) tratado nos comandos de e2e.
 
 ---
 
@@ -230,11 +237,15 @@
 
 ## Automação de Release ✅
 
+> Plano: [plan-shipit09 — Automated Release Script](plans/plan-shipit09-AutomatedReleaseScript.prompt.md)
+
 - [x] Script Python `docs/scripts/release.py` (validação de ambiente, commit condicional, CHANGELOG, bump, push, PR dev→main, squash merge, tag, aguardar CI/CD, publicar)
 - [x] Flags `--dry-run`, `--skip-changelog`, `--skip-commit`, `--skip-pull-request`, `--version`, `--help`; resumibilidade; compatibilidade Windows
 - [x] Documentação: `RELEASE_GUIDE.md`, `RELEASE_TROUBLESHOOTING.md`, `README.md`
 
 ## Fase 17: Sistema Multi-Tema ✅
+
+> Plano: [plan-shipit10 — multiThemeSystem](plans/plan-shipit10-multiThemeSystem.prompt.md)
 
 - [x] Arquitetura de temas: `themes.ts` (registro) + `themes.css` (paletas)
 - [x] 11 paletas (2 principais, 6 personalidade, 2 acessibilidade, 1 bônus)
@@ -246,10 +257,14 @@
 
 ## Fase 18: Atualização da Documentação ✅
 
+> Plano: [plan-shipit11 — documentationUpdate](plans/plan-shipit11-documentationUpdate.prompt.md)
+
 - [x] README reescrito como doc de usuário final
 - [x] CHANGELOG, TODO, copilot-instructions e ARCHITECTURE atualizados (ciclo v1.2.2)
 
 ## Fase 19: Evidências de Texto ✅
+
+> Plano: [plan-shipit14 — textEvidenceForActivities](plans/plan-shipit14-textEvidenceForActivities.prompt.md)
 
 - [x] Editor rich-text TipTap; componentes `TextEvidenceEditor` e `TextEvidenceModal`
 - [x] Campo `type` ('image'|'text') e `text_content` na entidade Evidence
@@ -257,14 +272,20 @@
 
 ## Fase 20: Lightbox de Evidências e Navegação entre Atividades ✅
 
+> Plano: [plan-shipit12 — layoutConsistencyAndEvidenceLightbox](plans/plan-shipit12-layoutConsistencyAndEvidenceLightbox.prompt.md) · [plan-shipit13 — activityDetailShowAllFieldsAndNavigation](plans/plan-shipit13-activityDetailShowAllFieldsAndNavigation.prompt.md)
+
 - [x] `EvidenceLightbox` (via `yet-another-react-lightbox`)
 - [x] `ActivityNav` com navegação prev/next
 
 ### Fase 20.1: Sincronização da Documentação (Full Sync) ✅
 
+> Plano: [plan-shipit14-1 — documentationUpdate](plans/plan-shipit14-1-documentationUpdate.prompt.md)
+
 - [x] Documentos sincronizados com o código (4 componentes + 19 dependências + entidade Evidence + contagens)
 
 ## Fase 21: Navegação Global, Menu de Contexto e Menu do App ✅
+
+> Plano: [plan-shipit17 — titlebarBackForwardNavigation](plans/plan-shipit17-titlebarBackForwardNavigation.prompt.md) · [plan-shipit18 — contextMenuExternalLinks](plans/plan-shipit18-contextMenuExternalLinks.prompt.md) · [plan-shipit19 — menuDoAppAoLadoDoLogo](plans/plan-shipit19-menuDoAppAoLadoDoLogo.prompt.md)
 
 - [x] `NavigationHistoryContext` com Voltar/Avançar (`Alt+←`/`Alt+→`)
 - [x] Navegação local de detalhes `←`/`→` com guardas de digitação
@@ -274,11 +295,15 @@
 
 ## Fase 22: Detalhe da Atividade e Evidência de Texto ✅
 
+> Plano: [plan-shipit20 — activityDetailDeleteAndMonthSelector](plans/plan-shipit20-activityDetailDeleteAndMonthSelector.prompt.md) · [plan-shipit21 — textEvidenceModalFixes](plans/plan-shipit21-textEvidenceModalFixes.prompt.md)
+
 - [x] Botão Excluir + modal de confirmação acessível; redirecionamento pós-exclusão
 - [x] `ActivityNav` com seletor de mês
 - [x] Foco do TipTap estabilizado; colagem corrigida; limite de 20.000 caracteres
 
 ## Fase 23: Ordenação Cronológica de Atividades ✅
+
+> Plano: [plan-shipit22 — activityChronologicalOrdering](plans/plan-shipit22-GPT55-activityChronologicalOrdering.prompt.md)
 
 - [x] Normalização de `order` para atividades legadas; novas entram no fim do mês
 - [x] `getActivities`/`getReportPayload`/`searchActivities` com ordenação estável (`order ASC, id ASC`)
@@ -286,6 +311,8 @@
 - [x] Marco: 113 testes Vitest (10 arquivos)
 
 ### Fase 23.1: Validação TitleBar e Release ✅
+
+> Plano: [plan-shipit23 — validacaoTitlebarRelease](plans/plan-shipit23-FullFix-validacaoTitlebarRelease.prompt.md)
 
 - [x] Preflight local em `dev` (Node 24/npm 11, build, Vitest, E2E baseline)
 - [x] Controles da TitleBar cobertos por Playwright/Electron; busca coberta extensivamente
@@ -302,11 +329,15 @@
 
 ## Fase 25: Compatibilidade de `userData` ✅
 
+> Plano: [plan-shipit25 — compatibilidadeUserData](plans/plan-shipit25-compatibilidadeUserData.prompt.md)
+
 - [x] `userData` de produção fixado no diretório legado `shipit` em `appData`
 - [x] Dev separado em `ShipIt!`; E2E com `SHIPIT_TEST_USER_DATA_DIR`
 - [x] `APP_ID` alinhado ao `build.appId` (`br.com.neuronioazul.shipit`)
 
 ## Fase 26: Fluxo Manual de Atualização ✅
+
+> Plano: [plan-shipit26 — atualizacaoManualESinalizacaoDeNovaVersao](plans/plan-shipit26-atualizacaoManualESinalizacaoDeNovaVersao.prompt.md) · [plan-shipit27 — fixStuckCheckingLoopAfterUpdateCheck](plans/plan-shipit27-fixStuckCheckingLoopAfterUpdateCheck.prompt.md)
 
 - [x] Seção "Atualizações" em Configurações (verificar/baixar/instalar + progresso) (v1.3.6)
 - [x] Badges de nova versão na navegação, modal na TitleBar, indicadores por plataforma (v1.3.6)
@@ -317,11 +348,15 @@
 
 ## Fase 27: Perfil com Disponibilidade ✅ (v1.5.0)
 
+> Plano: [plan-shipit28 — availabilityFieldsInProfile](plans/plan-shipit28-availabilityFieldsInProfile.prompt.md)
+
 - [x] `UserProfile` com disponibilidade diária/mensal e esforço mínimo
 - [x] ProfilePage coletando `contract_identifier`, `profile_type`, `correlating_activities` + campos numéricos
 - [x] Validação e DOCX considerando os novos campos; cobertura dedicada para ProfilePage
 
 ## Fase 28: Ajustes Pós-release 1.5.x ✅
+
+> Plano: [plan-shipit30 — fixNoUpdateFilepathBug](plans/plan-shipit30-fixNoUpdateFilepathBug.prompt.md) · [plan-shipit31 — fixdocxReferenceLinks](plans/plan-shipit31-fixdocxReferenceLinks.prompt.md)
 
 - [x] Estado de update restaurado com segurança após reinício (v1.5.1)
 - [x] Indicadores de atenção/versão pendente refinados
@@ -329,6 +364,8 @@
 - [x] Validação 26/05/2026: 147 testes Vitest (12 arquivos), 36 cenários Playwright
 
 ## Fase 29: Evidências por Tipo e Layout DOCX ✅ (v1.6.0)
+
+> Plano: [plan-shipit32 — EvidenceCountByType](plans/plan-shipit32-EvidenceCountByType.prompt.md) · [plan-shipit33 — docxImageMaxFitAnd2LineCaption](plans/plan-shipit33-docxImageMaxFitAnd2LineCaption.prompt.md)
 
 - [x] Contagem de evidências separada por tipo (imagem/texto) na lista, detalhe e Dashboard
 - [x] Contadores exibem ambos os tipos mesmo com valor zero
@@ -338,10 +375,15 @@
 
 ## v1.6.1 – v1.6.2 ✅
 
+> Plano: [plan-shipit34 — themedScrollbarTailwind](plans/plan-shipit34-themedScrollbarTailwind.prompt.md) (v1.6.1) · [plan-shipit36 — aboutPageDonationPix](plans/plan-shipit36-aboutPageDonationPix.prompt.md) (v1.6.2)
+
+- [x] Barra de rolagem temática global com tokens por tema e gutter estável (`scrollbar-gutter: stable`) (v1.6.1)
 - [x] Página **Sobre** com créditos e apoio via PIX (QR code) + cobertura E2E
 - [x] Refatoração do `ActivityBar`; textos revisados em Dashboard/Configurações; README atualizado
 
 ## v1.7.0 ✅
+
+> Plano: [plan-shipit37 — svnReleasesActivityField](plans/plan-shipit37-svnReleasesActivityField.prompt.md)
 
 - [x] Campo **Releases SVN** (`svn_releases`) na entidade `Activity` (CSV, uso interno, sem exportação DOCX)
 - [x] Componente `InputTags` (tags visuais, separadores automáticos, validação, dedupe)

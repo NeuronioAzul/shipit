@@ -15,19 +15,14 @@ SHIPIT!
 - n3 🟡 desejável
   - O n3 desejável, mas pode ser feito depois.
 
-## FIX
+> ✅ Concluídos e movidos para o [DONE.md](DONE.md) (ver `[Unreleased]`): formatação de texto no DOCX (quebras de linha, negrito, itálico, listas) e o editor rich-text na descrição da atividade — [plan-shipit38](plans/plan-shipit38-richTextDescriptionAndDocxFormatting.prompt.md).
+> ✅ `ELECTRON_RUN_AS_NODE=1`: não havia variável persistente (User/Machine vazios) — era herdada no nível de processo do host (VS Code/Electron). Tratada nos comandos de e2e; em terminal novo fora do host não aparece.
 
-- n1
-  - 🔴 fix: Verificar se os textos escritos no ShipIt! estão sendo passados para o DOCX com os pulos de linha, negrito, itálico, listas, etc, para garantir que as formatações estejam sendo mantidas corretamente no documento gerado.
-
-- n1
-  - 🔴 fix: Ao Criar atividade, e inserir um texto no campo de descrição,
-    - O texto aparece corretamente com os pulos de linha dentro do app,
-    - Inclusive quando eu quero alterar a descrição abrindo a edição/alteração da atividade os textos aparecem corretamente dentro do app, respeitando os pulos de linha.
-    - Quando eu clico em gerar um relatório/arquivo DOCX, a descrição da atividade não está respeitando os pulos de linha, deixando tudo em uma linha só.
+## Fix
 
 - n2
-  - 🟠 feat: Adicionar o formatador de texto igual ao do campo inserir evidência texto
+  - 🟠 feat and fix: Os themas precisam ser melhorados, o CSS está com algumas inconsistências nos estilos e cores quero que melhore e corrija o css que precisar, os botões e todos os campos de formulário, campos do tipo texto, textarea, select, checkbox, etc, precisam de uma verificação geral em todos os estylos para que trabalhem do mesmo jeito. 
+  - 🟠 feat and fix: Quero que valide todos os campos e estilos do cyberpunk e corrija inconsistências.
 
 ## New features
 
