@@ -1,6 +1,6 @@
 ---
 name: shipit-release-and-doc-sync
-description: Use ao concluir um desenvolvimento ou publicar uma versão do ShipIt. Orquestra a sincronização da documentação (CHANGELOG, TODO, DONE, ARCHITECTURE, README) com o estado real do código E o fluxo de release (bump de versão, geração do changelog a partir dos commits, mover tarefas concluídas para DONE com a versão, e disparo do docs/scripts/release.py). Substitui a geração de changelog via Copilot CLI por geração feita pelo próprio Claude. Gatilhos típicos: "fazer release", "publicar versão", "release X.Y.Z", "bump", "subir versão", "sincronizar documentação", "atualizar changelog", "atualizar docs", "terminei a feature, atualiza tudo".
+description: Use ao concluir um desenvolvimento ou publicar uma versão do ShipIt. Orquestra a sincronização da documentação (CHANGELOG, TODO, DONE, ARCHITECTURE, README) com o estado real do código E o fluxo de release (bump de versão, geração do changelog a partir dos commits, mover tarefas concluídas para DONE com a versão, e disparo do docs/scripts/release_v2.py — sem dependência do GitHub Copilot). O changelog é gerado pelo próprio Claude e o script roda com --skip-changelog. Gatilhos típicos: "fazer release", "publicar versão", "release X.Y.Z", "bump", "subir versão", "sincronizar documentação", "atualizar changelog", "atualizar docs", "terminei a feature, atualiza tudo".
 ---
 
 # ShipIt — Release & Doc Sync
@@ -35,16 +35,18 @@ Regra de ouro: este modo é **documental** — não altere código de produto, t
 
 ## Modo Release
 
-> ⚠️ `docs/scripts/release.py` é **interativo** e executa operações de **rede destrutivas-irreversíveis** (push, PR, squash merge na `main`, tag, publish no GitHub Releases). **Sempre confirme com o usuário** antes de dispará-lo. Prepare tudo localmente primeiro.
+> ⚠️ `docs/scripts/release_v2.py` é **interativo** e executa operações de **rede destrutivas-irreversíveis** (push, PR, squash merge na `main`, tag, publish no GitHub Releases). **Sempre confirme com o usuário** antes de dispará-lo. Prepare tudo localmente primeiro.
+>
+> Use a **v2** (`release_v2.py`) — sem dependência do GitHub Copilot. Pré-requisito: `gh auth status` autenticado (escopos `repo` + `write:packages`). Se houver um `GITHUB_TOKEN`/`GH_TOKEN` inválido no ambiente, remova-o antes do `gh auth login`.
 
 ### 1. Definir a versão
 
 - Versão atual: campo `version` em `package.json`.
 - Decidir patch/minor/major (semver) com base nas mudanças. Confirmar com o usuário.
 
-### 2. Gerar o CHANGELOG (substitui o Copilot CLI)
+### 2. Gerar o CHANGELOG
 
-O `release.py` tentaria gerar o changelog via `gh copilot`. **Nós geramos aqui, melhor**, e depois rodamos o script com `--skip-changelog`.
+A v2 não usa Copilot: o changelog é manual. **Nós geramos aqui** e rodamos o script com `--skip-changelog`.
 
 1. `git log <ultima-tag>..HEAD --no-merges --oneline` para listar os commits do ciclo (e revisar diffs relevantes).
 2. Promover o conteúdo de `## [Unreleased]` para uma nova seção `## [X.Y.Z] — AAAA-MM-DD` (data de hoje), no formato Keep a Changelog em pt-BR, mais novo no topo. Completar com o que faltar dos commits. Deixar `## [Unreleased]` vazio acima.
@@ -60,10 +62,10 @@ O `release.py` tentaria gerar o changelog via `gh copilot`. **Nós geramos aqui,
 Como o CHANGELOG já está pronto, rode pulando a etapa do changelog:
 
 ```bash
-python docs/scripts/release.py --version X.Y.Z --skip-changelog
+python docs/scripts/release_v2.py --version X.Y.Z --skip-changelog
 ```
 
-Flags úteis (ver cabeçalho do `release.py`): `--dry-run` (simular — **comece por aqui** se houver dúvida), `--skip-commit`, `--skip-pull-request` (retomar após PR mergeado), `--resume-from {tag|draft|workflow|publish}`, `--ci-timeout SEG`.
+Flags úteis (ver cabeçalho do `release_v2.py`): `--dry-run` (simular — **comece por aqui** se houver dúvida), `--skip-commit`, `--skip-pull-request` (retomar após PR mergeado), `--resume-from {tag|draft|workflow|publish}`, `--ci-timeout SEG`.
 
 O script ainda cuida de: validar ambiente → commitar pendências (incluindo CHANGELOG/DONE que editamos) → bump do `package.json` → push → PR dev→main → squash merge → tag → aguardar CI/CD (build Win/macOS/Linux) → validar assets → publicar.
 
