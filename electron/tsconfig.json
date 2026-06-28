@@ -1,0 +1,9 @@
+{
+  "// nota": "Config consumida pelo transformer do Vite/Vitest (oxc) e pelo TS server da IDE ao processar arquivos de electron/. O `tsconfig.json` da raiz tem include=['src'], então não cobre electron/, e sem experimentalDecorators o oxc compila os decorators do TypeORM como TC39 e quebra as entidades nos testes. O build de produção continua usando tsconfig.electron.json explicitamente (npm run build).",
+  "compilerOptions": {
+    "target": "ES2020",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false
+  }
+}
