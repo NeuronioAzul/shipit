@@ -568,4 +568,63 @@ describe('generateDocxReport', () => {
     expect(blankLineIndex).toBeGreaterThan(firstLinkIndex)
     expect(docXml).toContain('PAGEREF ev_019746ab000070008000000000000001_0')
   })
+
+  it('preserves line breaks in the activity description (multi-line)', async () => {
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [makeActivity({
+        description: 'Primeira linha da descrição\nSegunda linha da descrição\nTerceira linha',
+      })],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    // Each line is preserved and joined by Word line breaks (not collapsed onto one line).
+    expect(docXml).toContain('Primeira linha da descrição')
+    expect(docXml).toContain('Segunda linha da descrição')
+    expect(docXml).toContain('Terceira linha')
+    // The description placeholder run now contains <w:br/> separators.
+    const descIdx = docXml.indexOf('Primeira linha da descrição')
+    const segment = docXml.slice(descIdx, docXml.indexOf('Terceira linha') + 40)
+    expect(segment).toContain('<w:br/>')
+  })
+
+  it('renders ordered list numbering in text evidence DOCX output', async () => {
+    const activity = makeActivity({
+      evidences: [{
+        id: '019746ab-0000-7000-8000-ev0000000099',
+        activity_id: '019746ab-0000-7000-8000-000000000001',
+        file_path: null as any,
+        type: 'text' as any,
+        text_content: '<ol><li><p>Primeiro passo</p></li><li><p>Segundo passo</p></li></ol>',
+        caption: 'Lista numerada',
+        sort_index: 0,
+        date_added: new Date(),
+        deleted_at: null,
+        activity: null as any,
+      }],
+    })
+
+    const result = await generateDocxReport({
+      profile: makeProfile(),
+      activities: [activity],
+      monthReference: '03/2026',
+      templatePath: TEMPLATE_PATH,
+      reportsDir: outDir,
+    })
+
+    const buf = fs.readFileSync(result.filePath)
+    const zip = await JSZip.loadAsync(buf)
+    const docXml = await zip.file('word/document.xml')!.async('string')
+
+    expect(docXml).toContain('1. ')
+    expect(docXml).toContain('2. ')
+    expect(docXml).toContain('Primeiro passo')
+    expect(docXml).toContain('Segundo passo')
+  })
 })

@@ -4,6 +4,7 @@ import {
   fitImageToEvidencePage,
   formatImageCaptionForDocx,
   getLastBusinessDay,
+  htmlToWordXml,
 } from './report-generator.ts'
 
 describe('getLastBusinessDay', () => {
@@ -126,5 +127,70 @@ describe('formatImageCaptionForDocx', () => {
     expect(result.line2).not.toBeNull()
     expect(result.line2!.endsWith('...')).toBe(true)
     expect(result.truncated).toBe(true)
+  })
+})
+
+describe('htmlToWordXml', () => {
+  it('returns empty string for empty input', () => {
+    expect(htmlToWordXml('')).toBe('')
+  })
+
+  it('converts a paragraph into a single Word paragraph', () => {
+    const xml = htmlToWordXml('<p>Texto simples</p>')
+    expect(xml).toContain('<w:p')
+    expect(xml).toContain('<w:t xml:space="preserve">Texto simples</w:t>')
+    expect((xml.match(/<w:p\b/g) || []).length).toBe(1)
+  })
+
+  it('keeps bold and italic marks', () => {
+    const xml = htmlToWordXml('<p><strong>Negrito</strong> e <em>itálico</em></p>')
+    expect(xml).toContain('<w:b/>')
+    expect(xml).toContain('<w:i/>')
+    expect(xml).toContain('Negrito')
+    expect(xml).toContain('itálico')
+  })
+
+  it('preserves spaces between inline marks', () => {
+    const xml = htmlToWordXml('<p>foo <strong>bar</strong> baz</p>')
+    // Reconstruct visible text from <w:t> nodes to ensure spacing survives.
+    const text = (xml.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [])
+      .map((t) => t.replace(/<[^>]*>/g, ''))
+      .join('')
+    expect(text).toBe('foo bar baz')
+  })
+
+  it('converts <br> into a Word line break within the paragraph', () => {
+    const xml = htmlToWordXml('<p>linha 1<br>linha 2</p>')
+    expect(xml).toContain('<w:br/>')
+    expect(xml).toContain('linha 1')
+    expect(xml).toContain('linha 2')
+    expect((xml.match(/<w:p\b/g) || []).length).toBe(1)
+  })
+
+  it('renders unordered lists with bullet markers', () => {
+    const xml = htmlToWordXml('<ul><li><p>um</p></li><li><p>dois</p></li></ul>')
+    expect((xml.match(/• /g) || []).length).toBe(2)
+    expect(xml).toContain('um')
+    expect(xml).toContain('dois')
+  })
+
+  it('renders ordered lists with incrementing numbers', () => {
+    const xml = htmlToWordXml('<ol><li><p>primeiro</p></li><li><p>segundo</p></li><li><p>terceiro</p></li></ol>')
+    expect(xml).toContain('1. ')
+    expect(xml).toContain('2. ')
+    expect(xml).toContain('3. ')
+    expect(xml).not.toContain('• ')
+  })
+
+  it('decodes HTML entities before escaping for XML', () => {
+    const xml = htmlToWordXml('<p>A &amp; B &lt; C</p>')
+    expect(xml).toContain('A &amp; B &lt; C')
+    expect(xml).not.toContain('&amp;amp;')
+  })
+
+  it('treats unstructured/plain content as a single inline paragraph', () => {
+    const xml = htmlToWordXml('apenas texto')
+    expect(xml).toContain('apenas texto')
+    expect((xml.match(/<w:p\b/g) || []).length).toBe(1)
   })
 })
