@@ -9,6 +9,22 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Alterado
+
+- O campo **Status** no formulário de criação de atividade passa a vir preenchido com **"Concluído"** por padrão (antes era "Pendente"). A edição de atividades existentes continua respeitando o status salvo.
+- Os números de release no campo **Releases SVN (uso interno)** deixaram de exibir o prefixo `#` em todas as telas (formulário, lista de atividades e detalhe da atividade) — agora aparecem apenas como o número.
+
+
+## [1.9.1] — 2026-06-29
+
+### Adicionado
+- Geração automática do CHANGELOG, da mensagem de commit e do corpo do PR usando o Claude CLI durante o processo de release.
+
+### Alterado
+- O status padrão de novas atividades passou a ser "Concluído".
+- Os números de release agora são exibidos sem o prefixo "#".
+- A detecção do Claude CLI ficou portátil, funcionando de forma consistente entre diferentes máquinas.
+
 ## [1.9.0] — 2026-06-29
 
 ### Adicionado

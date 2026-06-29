@@ -94,7 +94,7 @@ export function InputTags({
             key={tag}
             className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30"
           >
-            #{tag}
+            {tag}
             <button
               type="button"
               onClick={() => removeTag(tag)}

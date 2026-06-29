@@ -135,7 +135,7 @@ function SortableActivityItem({
                   className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/30"
                   title={`Release SVN ${release}`}
                 >
-                  #{release}
+                  {release}
                 </span>
               ))}
               {compactSvnReleases.hiddenCount > 0 && (

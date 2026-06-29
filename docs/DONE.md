@@ -14,7 +14,8 @@
 
 ## [Unreleased]
 
-- _(nada pendente de lançamento no momento)_
+- [x] **feat:** Status padrão "Concluído" no formulário de criação de atividade (antes "Pendente"); edição preserva o status salvo.
+- [x] **feat:** Removido o prefixo `#` dos números de release no campo Releases SVN (uso interno) em todas as telas (formulário/`InputTags`, lista de atividades e detalhe da atividade); assertivas E2E ajustadas.
 
 ---
 

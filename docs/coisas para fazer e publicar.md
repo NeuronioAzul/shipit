@@ -24,6 +24,17 @@ SHIPIT!
 
 ## New features
 
+- n2
+  - 🟠 feat: na tela de criação de atividades, no campo `Status` deixar por padrão a opção 'Concluído'
+  - 🟠 feat: remover a '#' dos números de revision que são informados no campo `Releases SVN (uso interno)` em todas as telas e exibições
+
+
+
+
+
+
+## Pensando se vale a pena fazer
+
 - n3
   - 🟡 feat: Implementar em configurações a opção de escolher a pasta onde ficam as evidências, e também para melhorar a experiência do usuário, tornando a organização das evidências mais clara e eficiente.
   - 🟡 feat: Implementar em configurações a opção de escolher a pasta onde ficará o banco de dados e informações configurações do app

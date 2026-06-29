@@ -3,12 +3,14 @@
 """
 ShipIt — Script Automatizado de Release v2 (Python)
 
-Versão 2: SEM dependência do GitHub Copilot CLI. As mensagens de commit e a
-entrada do CHANGELOG são criadas manualmente (ou preparadas antes e usadas com
---skip-changelog). Nenhuma chamada a `gh copilot` é feita.
+Versão 2: SEM dependência do GitHub Copilot CLI. As mensagens de commit, a
+entrada do CHANGELOG e o corpo do PR podem ser geradas automaticamente pelo
+Claude CLI (`claude -p`), quando disponível no PATH (ou via SHIPIT_CLAUDE_BIN);
+caso contrário — ou com --no-ai — o fluxo cai para criação manual (editor/inline).
+Nenhuma chamada a `gh copilot` é feita.
 
 Automatiza o fluxo completo de release:
-  validar ambiente → commit → bump version → CHANGELOG (manual) →
+  validar ambiente → commit → bump version → CHANGELOG (IA ou manual) →
   push → PR (dev → main) → squash merge → tag → aguardar draft → aguardar workflow →
   validar assets → publicar release
 
@@ -22,14 +24,17 @@ Uso:
   python docs/scripts/release.py --skip-pull-request       # Retomar após PR já mergeado
   python docs/scripts/release.py --ci-timeout 5400         # Timeout em segundos para o workflow CI/CD
   python docs/scripts/release.py --skip-asset-validation   # Pular validação de assets (emergência)
+  python docs/scripts/release.py --no-ai                   # Desativar geração via Claude CLI
 
 Requer: Python 3.10+, git, gh CLI (autenticado com escopos repo + write:packages)
+Opcional: Claude CLI (`claude`) no PATH para geração automática de textos.
 """
 
 import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -56,6 +61,11 @@ WORKFLOW_NAME = "Build & Release"
 CHANGELOG_COMMIT_LIMIT = 40
 RESUME_CHECKPOINTS = ("tag", "draft", "workflow", "publish")
 WORKTREE_WARNING_TEXT = "NAO SALVE NADA ATE O SCRIPT TERMINAR"
+
+# --- Geração de texto via Claude CLI (opcional, com fallback manual) ---
+CLAUDE_BIN_ENV = "SHIPIT_CLAUDE_BIN"  # caminho do executável (sobrepõe o PATH)
+AI_TIMEOUT_SECONDS = 180
+AI_ENABLED = True  # desativado por --no-ai; também requer o 'claude' disponível
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -152,6 +162,171 @@ def run_cmd(
         cwd=cwd or PROJECT_ROOT,
         check=check,
     )
+
+
+# ================================================================================================
+# Geração de texto via Claude CLI (opcional)
+# ================================================================================================
+
+
+def _claude_candidate_paths() -> list[str]:
+    """Locais de instalação comuns do Claude CLI, para quando não está no PATH.
+
+    Cobre o instalador nativo (`~/.local/bin`, usado em todas as plataformas) e
+    instalações via npm, tornando a detecção portátil entre máquinas/usuários."""
+    home = Path.home()
+    candidates: list[Path] = []
+    if os.name == "nt":
+        candidates += [
+            home / ".local" / "bin" / "claude.exe",  # instalador nativo (oficial)
+            home / ".local" / "bin" / "claude",
+        ]
+        appdata = os.environ.get("APPDATA", "")
+        localappdata = os.environ.get("LOCALAPPDATA", "")
+        if appdata:
+            candidates.append(Path(appdata) / "npm" / "claude.cmd")  # npm global
+        if localappdata:
+            candidates.append(
+                Path(localappdata) / "Programs" / "claude" / "claude.exe"
+            )
+    else:
+        candidates += [
+            home / ".local" / "bin" / "claude",  # instalador nativo (oficial)
+            Path("/usr/local/bin/claude"),
+            Path("/opt/homebrew/bin/claude"),
+        ]
+    return [str(p) for p in candidates]
+
+
+def _claude_executable() -> str | None:
+    """Resolve o executável do Claude CLI de forma portátil entre máquinas.
+
+    Ordem de resolução:
+      1. SHIPIT_CLAUDE_BIN (caminho completo do executável);
+      2. PATH, via `shutil.which` (respeita o PATHEXT no Windows: .exe/.cmd);
+      3. locais de instalação conhecidos (`~/.local/bin`, npm global, etc.).
+    Retorna None se não encontrar — e o fluxo cai para criação manual."""
+    override = os.environ.get(CLAUDE_BIN_ENV, "").strip()
+    if override:
+        return override if os.path.isfile(override) else shutil.which(override)
+
+    found = shutil.which("claude")
+    if found:
+        return found
+
+    for candidate in _claude_candidate_paths():
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _ai_available() -> bool:
+    """True se a geração por IA está habilitada (sem --no-ai) e o CLI foi achado."""
+    return AI_ENABLED and _claude_executable() is not None
+
+
+def _strip_code_fences(text: str) -> str:
+    """Remove cercas de código (```), caso o modelo as inclua ao redor da resposta."""
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+    lines = stripped.splitlines()
+    if lines and lines[0].startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _print_block(text: str, prefix: str = "  | ") -> None:
+    """Imprime um bloco de texto com prefixo, para revisão pelo usuário."""
+    for line in text.splitlines():
+        print(f"{prefix}{line}")
+
+
+def _run_claude(prompt: str, *, timeout: int = AI_TIMEOUT_SECONDS) -> str | None:
+    """Executa o Claude CLI em modo headless (`claude -p`) e devolve o texto gerado.
+
+    Degrada para None — preservando o fluxo manual — se o binário não existir,
+    falhar, exceder o timeout ou devolver conteúdo vazio. Roda com cwd temporário
+    (fora do repositório) para não carregar contexto/CLAUDE.md/MCP do projeto."""
+    exe = _claude_executable()
+    if not exe:
+        return None
+
+    base = [exe, "-p", "--output-format", "text"]
+    run_kwargs: dict[str, object] = dict(
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=tempfile.gettempdir(),
+        timeout=timeout,
+        check=False,
+    )
+
+    if os.name == "nt" and exe.lower().endswith((".cmd", ".bat")):
+        # Shims .cmd/.bat (instalação via npm no Windows) não são executáveis
+        # diretos: passamos pelo interpretador de comandos e enviamos o prompt
+        # via STDIN para evitar escape de quebras de linha/aspas na linha de comando.
+        comspec = os.environ.get("COMSPEC", "cmd.exe")
+        cmd = [comspec, "/c", *base]
+        run_kwargs["input"] = prompt
+    else:
+        # Executável nativo (.exe/unix): prompt como argumento é o mais confiável.
+        cmd = [exe, "-p", prompt, "--output-format", "text"]
+
+    try:
+        result = subprocess.run(cmd, **run_kwargs)
+    except subprocess.TimeoutExpired:
+        print_warning(f"Claude CLI excedeu {timeout}s; seguindo no fluxo manual.")
+        return None
+    except OSError as exc:
+        print_warning(f"Não foi possível executar o Claude CLI ({exc}); fluxo manual.")
+        return None
+
+    if result.returncode != 0:
+        detail = (result.stderr or "").strip().splitlines()
+        print_warning(
+            "Claude CLI retornou erro"
+            + (f": {detail[-1]}" if detail else "")
+            + "; seguindo no fluxo manual."
+        )
+        return None
+
+    return _strip_code_fences((result.stdout or "").strip()) or None
+
+
+def _generate_changelog_with_claude(version: str, commits: str) -> str | None:
+    """Gera as seções do CHANGELOG (Keep a Changelog, pt-BR) a partir dos commits."""
+    prompt = (
+        f"Gere a entrada do CHANGELOG para a versão {version} do app desktop "
+        f'"ShipIt!" (Electron), em português do Brasil, seguindo o padrão '
+        f"Keep a Changelog.\n\n"
+        f"Commits desde a última release (base do que mudou):\n{commits}\n\n"
+        f"Regras OBRIGATÓRIAS de saída:\n"
+        f"- Responda APENAS com seções markdown de nível '### ' entre: "
+        f"Adicionado, Alterado, Corrigido, Removido, Segurança.\n"
+        f"- Inclua somente as seções aplicáveis (omita as vazias).\n"
+        f"- Use bullets '- ' com foco no usuário final (o que muda para quem usa "
+        f"o app), agrupando mudanças relacionadas.\n"
+        f"- NÃO inclua o cabeçalho de versão (ex.: '## [{version}]'), nem qualquer "
+        f"texto antes/depois, nem cercas de código (```).\n"
+        f"- Ignore commits puramente internos de release (bump de versão, "
+        f"'preparar release', merges e ajustes do próprio CHANGELOG)."
+    )
+    return _run_claude(prompt)
+
+
+def _generate_commit_message_with_claude(staged_summary: str) -> str | None:
+    """Gera o assunto de um commit (Conventional Commits, pt-BR) das mudanças staged."""
+    prompt = (
+        "Gere a linha de ASSUNTO de um commit no padrão Conventional Commits, em "
+        "português do Brasil, para as mudanças staged abaixo.\n\n"
+        f"{staged_summary}\n\n"
+        "Regras: responda APENAS com uma única linha (até ~72 caracteres), sem "
+        "corpo, sem aspas e sem cercas de código."
+    )
+    return _run_claude(prompt, timeout=120)
 
 
 def confirm(prompt: str, default: str = "n") -> bool:
@@ -586,8 +761,20 @@ def do_commit(dry_run: bool) -> None:
     # Stage tudo
     run_cmd(["git", "add", "-A"])
 
-    # v2: mensagem de commit manual (sem geração via IA). Enter aceita o padrão.
+    # Sugestão de mensagem via Claude CLI (quando disponível); Enter aceita o padrão.
     default_msg = "chore: preparar release"
+    if _ai_available():
+        print_step("Gerando mensagem de commit com o Claude CLI...")
+        stat = run_cmd(["git", "diff", "--cached", "--stat"], check=False).stdout.strip()
+        status = run_cmd(["git", "status", "--short"], check=False).stdout.strip()
+        suggestion = _generate_commit_message_with_claude(
+            f"Arquivos (git diff --cached --stat):\n{stat}\n\nStatus (git status --short):\n{status}"
+        )
+        if suggestion:
+            first_line = suggestion.splitlines()[0].strip()
+            if first_line:
+                default_msg = first_line
+
     try:
         entered = input(
             f"{_c(Colors.YELLOW, '❯')} Mensagem do commit [{default_msg}]: "
@@ -608,28 +795,37 @@ def do_commit(dry_run: bool) -> None:
 # ================================================================================================
 
 
-def _collect_changelog_via_editor() -> str | None:
-    """Abre um editor externo com um template Keep a Changelog e devolve o
-    conteúdo escrito. Retorna None se o editor não puder ser iniciado."""
+def _collect_changelog_via_editor(initial: str | None = None) -> str | None:
+    """Abre um editor externo e devolve o conteúdo escrito. Quando `initial` é
+    informado (ex.: texto gerado pela IA), abre o editor já preenchido para
+    revisão. Retorna None se o editor não puder ser iniciado."""
     import tempfile
 
     editor = os.environ.get("EDITOR") or os.environ.get("VISUAL")
     if not editor:
         editor = "notepad" if sys.platform == "win32" else "nano"
 
-    template = (
-        "### Adicionado\n"
-        "- \n"
-        "\n"
-        "### Corrigido\n"
-        "- \n"
-        "\n"
-        "### Alterado\n"
-        "- \n"
-        "\n"
-        "# Remova as seções não aplicáveis e as linhas iniciadas com '#'.\n"
-        "# Salve e feche o editor para confirmar.\n"
-    )
+    if initial:
+        template = (
+            initial.rstrip()
+            + "\n\n"
+            + "# Revise/edite o texto acima. Linhas iniciadas com '#' são ignoradas.\n"
+            + "# Salve e feche o editor para confirmar.\n"
+        )
+    else:
+        template = (
+            "### Adicionado\n"
+            "- \n"
+            "\n"
+            "### Corrigido\n"
+            "- \n"
+            "\n"
+            "### Alterado\n"
+            "- \n"
+            "\n"
+            "# Remova as seções não aplicáveis e as linhas iniciadas com '#'.\n"
+            "# Salve e feche o editor para confirmar.\n"
+        )
 
     tmp = tempfile.NamedTemporaryFile(
         mode="w", suffix=".md", delete=False, encoding="utf-8"
@@ -685,37 +881,92 @@ def _collect_changelog_inline() -> str:
 
 
 def _prompt_changelog_fallback(version: str, commits: str) -> str:
-    """UX do fallback manual: oferece editor externo, inline ou abortar."""
+    """UX de criação da entrada do CHANGELOG: IA (Claude CLI), editor, inline ou abortar."""
     print()
     print_info("Commits considerados:")
-    for line in commits.splitlines()[:20]:
+    commit_lines = commits.splitlines()
+    for line in commit_lines[:20]:
         print(f"  {line}")
-    if len(commits.splitlines()) > 20:
-        print(f"  ... (+{len(commits.splitlines()) - 20} commits)")
+    if len(commit_lines) > 20:
+        print(f"  ... (+{len(commit_lines) - 20} commits)")
     print()
-    print_info("Como deseja criar a entrada do CHANGELOG?")
-    print(f"  {_c(Colors.GREEN, 'e')}) Abrir editor externo (recomendado)")
-    print(f"  {_c(Colors.YELLOW, 'm')}) Digitar inline no terminal")
-    print(f"  {_c(Colors.RED, 'a')}) Abortar release")
-    try:
-        choice = (
-            input(f"{_c(Colors.YELLOW, '❯')} Escolha [e/m/a] (padrão: e): ")
-            .strip()
-            .lower()
-        )
-    except (EOFError, KeyboardInterrupt):
-        print()
-        print_error("Release cancelada.")
-        sys.exit(1)
-    if choice == "a":
-        print_error("Release cancelada pelo usuário.")
-        sys.exit(1)
-    if choice in ("", "e"):
-        result = _collect_changelog_via_editor()
-        if result:
-            return result
-        print_warning("Editor não retornou conteúdo. Caindo para entrada inline.")
-    return _collect_changelog_inline() or f"- Atualização para versão {version}"
+
+    fallback_entry = f"- Atualização para versão {version}"
+    ai = _ai_available()
+
+    while True:
+        print_info("Como deseja criar a entrada do CHANGELOG?")
+        if ai:
+            print(f"  {_c(Colors.GREEN, 'c')}) Gerar com Claude CLI (recomendado)")
+        print(f"  {_c(Colors.CYAN, 'e')}) Abrir editor externo")
+        print(f"  {_c(Colors.YELLOW, 'm')}) Digitar inline no terminal")
+        print(f"  {_c(Colors.RED, 'a')}) Abortar release")
+        default = "c" if ai else "e"
+        options = f"{'c/' if ai else ''}e/m/a"
+        try:
+            choice = (
+                input(f"{_c(Colors.YELLOW, '❯')} Escolha [{options}] (padrão: {default}): ")
+                .strip()
+                .lower()
+                or default
+            )
+        except (EOFError, KeyboardInterrupt):
+            print()
+            print_error("Release cancelada.")
+            sys.exit(1)
+
+        if choice == "a":
+            print_error("Release cancelada pelo usuário.")
+            sys.exit(1)
+
+        if choice == "c" and ai:
+            print_step("Gerando entrada do CHANGELOG com o Claude CLI...")
+            generated = _generate_changelog_with_claude(version, commits)
+            if not generated:
+                print_warning("A IA não retornou conteúdo. Escolha outra opção.")
+                continue
+            print()
+            print_info("Texto gerado:")
+            _print_block(generated)
+            print()
+            try:
+                sub = (
+                    input(
+                        f"{_c(Colors.YELLOW, '❯')} Usar este texto? "
+                        f"[s=sim / e=editar / r=regerar / m=manual] (padrão: s): "
+                    )
+                    .strip()
+                    .lower()
+                    or "s"
+                )
+            except (EOFError, KeyboardInterrupt):
+                print()
+                print_error("Release cancelada.")
+                sys.exit(1)
+            if sub == "s":
+                return generated
+            if sub == "e":
+                edited = _collect_changelog_via_editor(initial=generated)
+                if edited:
+                    return edited
+                print_warning("Editor não retornou conteúdo.")
+                continue
+            if sub == "r":
+                continue
+            # "m" → entrada inline
+            return _collect_changelog_inline() or fallback_entry
+
+        if choice == "e":
+            result = _collect_changelog_via_editor()
+            if result:
+                return result
+            print_warning("Editor não retornou conteúdo. Caindo para entrada inline.")
+            return _collect_changelog_inline() or fallback_entry
+
+        if choice == "m":
+            return _collect_changelog_inline() or fallback_entry
+
+        print_warning("Opção inválida.")
 
 
 def update_changelog(version: str, dry_run: bool) -> None:
@@ -953,7 +1204,16 @@ def create_pr(version: str, dry_run: bool) -> int | None:
     )
 
     title = f"Release v{version}"
-    body = f"## Release v{version}\n\nBump de versão e atualização do CHANGELOG para v{version}."
+    # Corpo do PR a partir do bloco do CHANGELOG da versão (curado/gerado por IA);
+    # fallback para um resumo genérico caso a seção ainda não exista.
+    changelog_block, _ = _extract_changelog_block_for_version(version)
+    if changelog_block:
+        body = f"## Release v{version}\n\n{changelog_block}"
+    else:
+        body = (
+            f"## Release v{version}\n\n"
+            f"Bump de versão e atualização do CHANGELOG para v{version}."
+        )
 
     if dry_run:
         print_dry_run(f"Criaria PR: '{title}' (dev → main)")
@@ -1747,6 +2007,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Pula a validação de assets antes de publicar (uso emergencial).",
     )
+    parser.add_argument(
+        "--no-ai",
+        action="store_true",
+        help=(
+            "Desativa a geração de textos via Claude CLI (CHANGELOG e mensagem de "
+            "commit), forçando o fluxo manual mesmo com o 'claude' disponível."
+        ),
+    )
     args = parser.parse_args()
 
     if args.version:
@@ -1778,10 +2046,24 @@ def main() -> None:
     args = parse_args()
     dry_run = args.dry_run
 
-    print_header("ShipIt — Release Automatizada v2 (sem Copilot)")
+    global AI_ENABLED
+    AI_ENABLED = not args.no_ai
+
+    print_header("ShipIt — Release Automatizada v2")
 
     if dry_run:
         print_warning("Modo DRY-RUN ativado. Nenhuma ação destrutiva será executada.\n")
+
+    # Status da geração automática de textos (CHANGELOG, commit) via Claude CLI.
+    if args.no_ai:
+        print_info("Geração por IA desativada (--no-ai). Textos serão criados manualmente.")
+    elif _claude_executable():
+        print_info("Claude CLI detectado — geração automática de textos habilitada.")
+    else:
+        print_warning(
+            "Claude CLI não encontrado no PATH — usando fluxo manual. "
+            f"Defina {CLAUDE_BIN_ENV} com o caminho do executável para habilitar a IA."
+        )
 
     # Step 1: Validação de ambiente
     if not check_environment():
