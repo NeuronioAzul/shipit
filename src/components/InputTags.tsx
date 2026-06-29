@@ -85,10 +85,8 @@ export function InputTags({
 
       <div
         className={
-          'w-full px-3 py-2 bg-card text-foreground border rounded-lg transition-colors flex flex-wrap items-center gap-2 ' +
-          (hasError
-            ? 'border-destructive focus-within:ring-2 focus-within:ring-destructive'
-            : 'border-border focus-within:ring-2 focus-within:ring-ring')
+          'field flex flex-wrap items-center gap-2 ' +
+          (hasError ? 'field-error' : '')
         }
       >
         {value.map((tag) => (

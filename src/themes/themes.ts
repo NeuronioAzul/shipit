@@ -9,7 +9,6 @@ export type ThemeId =
   | 'sunset'
   | 'high-contrast'
   | 'high-contrast-dark'
-  | 'cyberpunk'
 
 export type ThemeBase = 'dark' | 'light'
 
@@ -37,7 +36,7 @@ export const THEMES: ThemeMetadata[] = [
   {
     id: 'light',
     label: 'Claro',
-    description: 'Azuis suaves e brancos quentes',
+    description: 'Tema padrão com tons de azul e branco',
     icon: 'fa-solid fa-sun',
     category: 'main',
     base: 'light',
@@ -51,7 +50,7 @@ export const THEMES: ThemeMetadata[] = [
   {
     id: 'dark',
     label: 'Escuro',
-    description: 'Pretos profundos com acentos vibrantes',
+    description: 'Visual escuro com acentos vibrantes',
     icon: 'fa-solid fa-moon',
     category: 'main',
     base: 'dark',
@@ -66,7 +65,7 @@ export const THEMES: ThemeMetadata[] = [
   {
     id: 'colorful',
     label: 'Colorido',
-    description: 'Paleta vibrante e lúdica',
+    description: 'Paleta vibrante e multicolorida focada nas cores primárias',
     icon: 'fa-solid fa-palette',
     category: 'personality',
     base: 'light',
@@ -79,8 +78,8 @@ export const THEMES: ThemeMetadata[] = [
   },
   {
     id: 'rose-violet',
-    label: 'Rose & Violet',
-    description: 'Tons rosa e roxo elegantes',
+    label: 'Rosa & Violeta',
+    description: 'Elegância em tons de rosa, violeta e roxo, com detalhes sutis',
     icon: 'fa-solid fa-heart',
     category: 'personality',
     base: 'light',
@@ -94,7 +93,7 @@ export const THEMES: ThemeMetadata[] = [
   {
     id: 'minimalist',
     label: 'Minimalista',
-    description: 'Escala de cinza com acento sutil',
+    description: 'Tons de cinza com acento sutil',
     icon: 'fa-solid fa-minimize',
     category: 'personality',
     base: 'light',
@@ -108,64 +107,64 @@ export const THEMES: ThemeMetadata[] = [
   {
     id: 'futuristic',
     label: 'Futurista',
-    description: 'Neon ciano e roxo, visual sci-fi',
+    description: 'Neon ciano e roxo em fundo escuro',
     icon: 'fa-solid fa-rocket',
     category: 'personality',
     base: 'dark',
     preview: {
-      background: '#0A0E1A',
-      primary: '#06B6D4',
-      accent: '#A855F7',
-      foreground: '#E0F2FE',
+      background: '#030305',
+      primary: '#00CFFF',
+      accent: '#8B00FF',
+      foreground: '#F6F8FF',
     },
   },
   {
     id: 'ocean',
     label: 'Oceano',
-    description: 'Azuis e teais, vibe marítima',
+    description: 'Tons de azul e verde-água em fundo profundo',
     icon: 'fa-solid fa-water',
     category: 'personality',
-    base: 'light',
+    base: 'dark',
     preview: {
-      background: '#F0F9FF',
-      primary: '#0369A1',
-      accent: '#0D9488',
-      foreground: '#0C4A6E',
+      background: '#071826',
+      primary: '#2CA3C3',
+      accent: '#1DB7AE',
+      foreground: '#F5FBFD',
     },
   },
   {
     id: 'sunset',
     label: 'Pôr do Sol',
-    description: 'Laranjas quentes e hora dourada',
+    description: 'Tons quentes de laranja e dourado',
     icon: 'fa-solid fa-sun-plant-wilt',
     category: 'personality',
     base: 'light',
     preview: {
-      background: '#FFFBF0',
-      primary: '#C2410C',
-      accent: '#D97706',
-      foreground: '#431407',
+      background: '#F5F2ED',
+      primary: '#B13F0A',
+      accent: '#E58A17',
+      foreground: '#2F120B',
     },
   },
   // Accessibility
   {
     id: 'high-contrast',
     label: 'Alto Contraste',
-    description: 'Contraste máximo WCAG AAA',
+    description: 'WCAG AAA — com fundo branco',
     icon: 'fa-solid fa-eye',
     category: 'accessibility',
     base: 'light',
     preview: {
       background: '#FFFFFF',
-      primary: '#000000',
-      accent: '#0000CC',
+      primary: '#0000CC',
+      accent: '#993300',
       foreground: '#000000',
     },
   },
   {
     id: 'high-contrast-dark',
     label: 'Alto Contraste Escuro',
-    description: 'Fundo preto, texto branco/amarelo, AAA',
+    description: 'WCAG AAA — com fundo preto',
     icon: 'fa-solid fa-eye-low-vision',
     category: 'accessibility',
     base: 'dark',
@@ -174,21 +173,6 @@ export const THEMES: ThemeMetadata[] = [
       primary: '#FFFF00',
       accent: '#00FFFF',
       foreground: '#FFFFFF',
-    },
-  },
-  // Personality (dark)
-  {
-    id: 'cyberpunk',
-    label: 'Cyberpunk',
-    description: 'Neon amarelo e verde em preto total',
-    icon: 'fa-solid fa-bolt',
-    category: 'personality',
-    base: 'dark',
-    preview: {
-      background: '#05050C',
-      primary: '#F8EF02',
-      accent: '#00FFD2',
-      foreground: '#ADFF2F' 
     },
   },
 ]

@@ -58,7 +58,7 @@ export function AboutPage() {
           id="about-btn-back"
           type="button"
           onClick={() => navigate(-1)}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="btn btn-ghost btn-icon"
           title="Voltar"
           aria-label="Voltar para a tela anterior"
         >
@@ -132,7 +132,7 @@ export function AboutPage() {
             href={PIX_DONATION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+            className="btn btn-primary"
           >
             <i className="fa-solid fa-heart" aria-hidden="true"></i>
             Doar
@@ -172,7 +172,7 @@ export function AboutPage() {
                   id="about-copy-key"
                   type="button"
                   onClick={() => { void copyToClipboard(PIX_KEY, 'Chave Pix') }}
-                  className="h-8 px-3 rounded-md border border-border text-xs text-foreground hover:bg-muted/70 transition-colors"
+                  className="btn btn-outline btn-sm"
                 >
                   Copiar chave
                 </button>
@@ -187,7 +187,7 @@ export function AboutPage() {
                   id="about-copy-code"
                   type="button"
                   onClick={() => { void copyToClipboard(PIX_QR_CODE, 'Código Pix') }}
-                  className="h-8 px-3 rounded-md border border-border text-xs text-foreground hover:bg-muted/70 transition-colors"
+                  className="btn btn-outline btn-sm"
                 >
                   Copiar código
                 </button>

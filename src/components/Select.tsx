@@ -141,14 +141,14 @@ export function Select({
     }
   }
 
-  const sizeClasses = size === 'sm' ? 'px-3 py-1.5 text-sm' : 'px-3 py-2'
-
-  const inputBaseClass = hasError
-    ? `cyber-input cyber-input-error w-full ${sizeClasses} bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors`
-    : `cyber-input w-full ${sizeClasses} bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors`
-
-  // For small selects in filter bars, use muted background
-  const bgOverride = size === 'sm' ? 'bg-muted' : ''
+  const triggerClass = [
+    'field',
+    size === 'sm' ? 'field-sm' : '',
+    hasError ? 'field-error' : '',
+    'flex items-center justify-between text-left',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   // Dropdown rendered via portal to escape parent clip-path/overflow constraints
   const dropdown = open ? createPortal(
@@ -174,15 +174,11 @@ export function Select({
         const isSelected = opt.value === value
         const isFocused = i === focusedIndex
 
-        let itemClass = 'select-option flex items-center gap-2 px-3 py-2 text-sm transition-colors cursor-pointer '
+        let itemClass = 'option '
         if (isSelected) {
-          itemClass += 'select-option-selected bg-primary/10 text-primary font-medium '
-        }
-        if (isFocused && !isSelected) {
-          itemClass += 'bg-surface-hover '
-        }
-        if (!isSelected && !isFocused) {
-          itemClass += 'hover:bg-surface-hover '
+          itemClass += 'option-selected '
+        } else if (isFocused) {
+          itemClass += 'option-focused '
         }
 
         return (
@@ -216,7 +212,7 @@ export function Select({
         type="button"
         onClick={() => (open ? setOpen(false) : handleOpen())}
         onKeyDown={handleKeyDown}
-        className={`${inputBaseClass} ${bgOverride} flex items-center justify-between text-left`}
+        className={triggerClass}
         role="combobox"
         aria-haspopup="listbox"
         aria-expanded={open}

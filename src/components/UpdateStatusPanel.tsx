@@ -49,7 +49,7 @@ export function UpdateStatusPanel({
           id={`${idPrefix}-btn-check`}
           onClick={onCheck}
           disabled={isChecking || isDownloading}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-primary"
         >
           <i className={`fa-solid ${isChecking ? 'fa-spinner fa-spin' : 'fa-rotate'}`}></i>
           Verificar atualizações
@@ -60,7 +60,7 @@ export function UpdateStatusPanel({
             id={`${idPrefix}-btn-download`}
             onClick={onDownload}
             disabled={isDownloading}
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-accent"
           >
             <i className={`fa-solid ${isDownloading ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-down'}`}></i>
             {isDownloading ? 'Baixando atualização' : 'Baixar atualização'}
@@ -71,7 +71,7 @@ export function UpdateStatusPanel({
           <button
             id={`${idPrefix}-btn-install`}
             onClick={onInstall}
-            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
+            className="btn btn-primary"
           >
             <i className="fa-solid fa-arrow-rotate-right"></i>
             Instalar agora

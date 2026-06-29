@@ -1,0 +1,225 @@
+/* ===== ShipIt! Sistema padronizado de controles ===== */
+/* Botões, campos de formulário, checkboxes e opções de lista compartilhados
+   por TODOS os temas. 100% baseado em tokens (variáveis CSS) — nunca cores
+   cruas. Mantém raio, padding, foco, hover e disabled consistentes.
+   Definido em @layer components para que utilitárias do Tailwind possam
+   sobrescrever pontualmente quando necessário. */
+
+@layer components {
+  /* ============================================================
+     BOTÕES
+     ============================================================ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm); /* 0.5rem */
+    font-size: 0.875rem; /* text-sm */
+    line-height: 1.25rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease,
+      border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Variantes sólidas — hover escurece via opacidade (tema-agnóstico) */
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .btn-accent {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+  .btn-destructive {
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
+  }
+  .btn-primary:hover:not(:disabled),
+  .btn-accent:hover:not(:disabled),
+  .btn-destructive:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  .btn-primary:active:not(:disabled),
+  .btn-accent:active:not(:disabled),
+  .btn-destructive:active:not(:disabled) {
+    opacity: 0.8;
+  }
+
+  /* Superfície neutra */
+  .btn-secondary {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--surface-hover);
+  }
+
+  /* Contorno / fantasma / link */
+  .btn-outline {
+    background-color: transparent;
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background-color: var(--surface-hover);
+  }
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--muted-foreground);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--surface-hover);
+    color: var(--foreground);
+  }
+  .btn-link {
+    display: inline;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    color: var(--muted-foreground);
+    font-weight: 400;
+    text-decoration: underline;
+    white-space: normal;
+  }
+  .btn-link:hover:not(:disabled) {
+    color: var(--foreground);
+  }
+
+  /* Contorno destrutivo (ex.: excluir permanentemente) */
+  .btn-outline-destructive {
+    background-color: transparent;
+    color: var(--destructive);
+    border-color: var(--destructive);
+  }
+  .btn-outline-destructive:hover:not(:disabled) {
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
+  }
+
+  /* Tamanhos */
+  .btn-sm {
+    padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
+    font-size: 0.75rem; /* text-xs */
+  }
+  .btn-lg {
+    padding: 0.625rem 1.5rem; /* py-2.5 px-6 */
+  }
+  .btn-icon {
+    padding: 0.5rem; /* p-2, quadrado */
+    gap: 0;
+  }
+  .btn-icon-sm {
+    padding: 0.375rem; /* p-1.5 */
+    gap: 0;
+  }
+
+  /* ============================================================
+     CAMPOS (inputs de texto, textareas, gatilhos de Select/Date/Time)
+     ============================================================ */
+  .field {
+    width: 100%;
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    background-color: var(--input);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .field::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+  .field:hover:not(:disabled):not(:focus):not(:focus-within) {
+    border-color: var(--ring);
+  }
+  .field:focus,
+  .field:focus-visible,
+  .field:focus-within {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 45%, transparent);
+  }
+  .field:disabled,
+  .field[aria-disabled='true'] {
+    background-color: var(--disabled-bg);
+    color: var(--disabled-fg);
+    cursor: not-allowed;
+  }
+  textarea.field {
+    resize: vertical;
+  }
+
+  /* Tamanho compacto (barras de filtro) */
+  .field-sm {
+    padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
+  }
+
+  /* Estado de erro */
+  .field-error {
+    border-color: var(--destructive);
+  }
+  .field-error:focus,
+  .field-error:focus-visible,
+  .field-error:focus-within {
+    border-color: var(--destructive);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--destructive) 45%, transparent);
+  }
+
+  /* ============================================================
+     CHECKBOX / RADIO
+     ============================================================ */
+  .checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .checkbox:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* ============================================================
+     OPÇÕES DE LISTA (Select / TimePicker / SearchBar / dropdowns)
+     ============================================================ */
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--foreground);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .option:hover,
+  .option.option-focused {
+    background-color: var(--surface-hover);
+  }
+  .option-selected,
+  .option-selected:hover {
+    background-color: color-mix(in srgb, var(--primary) 14%, transparent);
+    color: var(--primary);
+    font-weight: 500;
+  }
+}

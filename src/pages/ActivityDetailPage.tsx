@@ -70,7 +70,7 @@ function SortableEvidenceCard({
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="cyber-neon-border bg-card border border-border rounded-lg overflow-hidden group p-2 relative">
+    <div ref={setNodeRef} style={style} className="bg-card border border-border rounded-lg overflow-hidden group/ev p-2 relative">
       <button
         ref={handleRef}
         {...attributes}
@@ -509,7 +509,7 @@ export function ActivityDetailPage() {
         <p className="text-muted-foreground text-lg">Atividade não encontrada.</p>
         <button
           onClick={() => navigate('/activities')}
-          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg cursor-pointer"
+          className="btn btn-primary mt-4"
         >
           Voltar
         </button>
@@ -531,7 +531,7 @@ export function ActivityDetailPage() {
           <button
             id="activity-detail-btn-back"
             onClick={() => navigate(`/activities?month=${activeMonthReference}`)}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon hover:text-foreground"
             title="Voltar"
             aria-label="Voltar para lista de atividades"
           >
@@ -543,8 +543,7 @@ export function ActivityDetailPage() {
           <button
             id="activity-detail-btn-edit"
             onClick={() => navigate(`/activities/${activity.id}/edit`)}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg
-              hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
+            className="btn btn-primary"
           >
             <i className="fa-solid fa-pen-to-square"></i>
             Editar
@@ -552,8 +551,7 @@ export function ActivityDetailPage() {
           <button
             id="activity-detail-btn-delete"
             onClick={() => setConfirmActivityDelete(true)}
-            className="px-4 py-2 border border-destructive/40 text-destructive rounded-lg
-              hover:bg-destructive/10 transition-colors cursor-pointer flex items-center gap-2"
+            className="btn btn-outline-destructive"
             aria-label="Excluir atividade"
           >
             <i className="fa-solid fa-trash-can" aria-hidden="true"></i>
@@ -739,8 +737,7 @@ export function ActivityDetailPage() {
                         e.stopPropagation()
                         handlePaste()
                       }}
-                      className="cyber-neon-border text-sm px-3 py-1 border border-border rounded-md
-                        hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                      className="btn btn-outline btn-sm"
                     >
                       <i className="fa-solid fa-paste mr-1"></i>
                       Colar da Área de Transferência
@@ -804,8 +801,7 @@ export function ActivityDetailPage() {
                         e.stopPropagation()
                         handlePaste()
                       }}
-                      className="cyber-neon-border text-xs px-2 py-1 border border-border rounded-lg cursor-pointer 
-                      hover:bg-success transition-colors text-foreground hover:text-foreground"
+                      className="btn btn-outline btn-sm"
                     >
                       <i className="fa-solid fa-paste mr-1"></i>
                       Colar
@@ -869,7 +865,7 @@ export function ActivityDetailPage() {
               <button
                 onClick={() => setConfirmActivityDelete(false)}
                 disabled={deletingActivity}
-                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
+                className="btn btn-outline"
               >
                 Cancelar
               </button>
@@ -877,7 +873,7 @@ export function ActivityDetailPage() {
                 id="activity-detail-confirm-delete"
                 onClick={handleDeleteActivity}
                 disabled={deletingActivity}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                className="btn btn-destructive"
               >
                 {deletingActivity ? (
                   <>
@@ -916,14 +912,14 @@ export function ActivityDetailPage() {
               <button
                 onClick={() => setConfirmEvidenceDelete(null)}
                 disabled={deletingEvidence}
-                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-amber-400 transition-colors cursor-pointer disabled:opacity-50"
+                className="btn btn-outline"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDeleteEvidence(confirmEvidenceDelete)}
                 disabled={deletingEvidence}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                className="btn btn-destructive"
               >
                 {deletingEvidence ? (
                   <>

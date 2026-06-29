@@ -20,9 +20,7 @@ SHIPIT!
 
 ## Fix
 
-- n2
-  - 🟠 feat and fix: Os themas precisam ser melhorados, o CSS está com algumas inconsistências nos estilos e cores quero que melhore e corrija o css que precisar, os botões e todos os campos de formulário, campos do tipo texto, textarea, select, checkbox, etc, precisam de uma verificação geral em todos os estylos para que trabalhem do mesmo jeito. 
-  - 🟠 feat and fix: Quero que valide todos os campos e estilos do cyberpunk e corrija inconsistências.
+
 
 ## New features
 

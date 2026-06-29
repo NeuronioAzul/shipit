@@ -363,6 +363,19 @@
   --scrollbar-thumb-hover: rgb(124 58 237 / 0.75);
 }
 
+/* Rosa & Violeta: imagem de fundo sutil sob o conteúdo, com scrim translúcido
+   (cor --background do tema) para preservar a legibilidade. Aplicada ao
+   container raiz do app; cards/superfícies opacas ficam por cima. */
+.rose-violet #app-layout {
+  background-image:
+    linear-gradient(rgb(253 242 248 / 0.82), rgb(253 242 248 / 0.82)),
+    url('/assets/images/bg/tema-rosa.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
 /* ===== 5. Minimalist ===== */
 .minimalist {
   --background: rgb(250, 250, 250);
@@ -448,259 +461,259 @@
   --scrollbar-thumb-hover: rgb(63 63 70 / 0.72);
 }
 
-/* ===== 6. Futuristic (dark base) ===== */
+/* ===== 6. Futuristic (dark base) — neon ciano/magenta sobre preto ===== */
 .futuristic {
-  --background: rgb(10, 14, 26);
-  --foreground: rgb(224, 242, 254);
+  --background: rgb(3, 3, 5);
+  --foreground: rgb(246, 248, 255);
 
-  --card: rgb(17, 24, 39);
-  --card-foreground: rgb(224, 242, 254);
-  --popover: rgb(30, 41, 59);
-  --popover-foreground: rgb(224, 242, 254);
+  --card: rgb(16, 22, 41);
+  --card-foreground: rgb(246, 248, 255);
+  --popover: rgb(19, 27, 51);
+  --popover-foreground: rgb(246, 248, 255);
 
-  --primary: rgb(6, 182, 212);
-  --primary-foreground: rgb(10, 14, 26);
+  --primary: rgb(0, 207, 255);
+  --primary-foreground: rgb(3, 3, 5);
 
-  --secondary: rgb(30, 41, 59);
-  --secondary-foreground: rgb(224, 242, 254);
+  --secondary: rgb(20, 26, 46);
+  --secondary-foreground: rgb(246, 248, 255);
 
-  --muted: rgb(30, 41, 59);
-  --muted-foreground: rgb(148, 163, 184);
+  --muted: rgb(20, 26, 46);
+  --muted-foreground: rgb(118, 130, 168);
 
-  --accent: rgb(168, 85, 247);
-  --accent-foreground: rgb(10, 14, 26);
+  --accent: rgb(139, 0, 255);
+  --accent-foreground: rgb(255, 255, 255);
 
-  --success: rgb(34, 211, 238);
-  --success-foreground: rgb(10, 14, 26);
+  --success: rgb(57, 255, 20);
+  --success-foreground: rgb(3, 3, 5);
 
-  --warning: rgb(251, 191, 36);
-  --warning-foreground: rgb(10, 14, 26);
+  --warning: rgb(255, 184, 0);
+  --warning-foreground: rgb(3, 3, 5);
 
-  --destructive: rgb(248, 113, 113);
-  --destructive-foreground: rgb(10, 14, 26);
+  --destructive: rgb(255, 58, 32);
+  --destructive-foreground: rgb(3, 3, 5);
 
-  --info: rgb(129, 140, 248);
-  --info-foreground: rgb(10, 14, 26);
+  --info: rgb(41, 114, 255);
+  --info-foreground: rgb(246, 248, 255);
 
-  --border: rgb(51, 65, 85);
-  --input: rgb(30, 41, 59);
-  --ring: rgb(6, 182, 212);
+  --border: rgb(49, 67, 109);
+  --input: rgb(20, 26, 46);
+  --ring: rgb(92, 238, 255);
 
-  --surface-1: rgb(17, 24, 39);
-  --surface-2: rgb(30, 41, 59);
-  --surface-3: rgb(51, 65, 85);
-  --surface-hover: rgb(30, 41, 59);
-  --surface-active: rgb(51, 65, 85);
+  --surface-1: rgb(16, 22, 41);
+  --surface-2: rgb(20, 26, 46);
+  --surface-3: rgb(29, 36, 58);
+  --surface-hover: rgb(29, 36, 58);
+  --surface-active: rgb(37, 49, 82);
 
   --sidebar: rgb(7, 11, 20);
-  --sidebar-foreground: rgb(224, 242, 254);
-  --sidebar-border: rgb(51, 65, 85);
+  --sidebar-foreground: rgb(246, 248, 255);
+  --sidebar-border: rgb(37, 49, 82);
 
   --header: rgb(7, 11, 20);
-  --header-foreground: rgb(224, 242, 254);
+  --header-foreground: rgb(246, 248, 255);
 
-  --titlebar: rgb(10, 14, 26);
-  --titlebar-foreground: rgb(148, 163, 184);
-  --titlebar-search: rgb(30, 41, 59);
+  --titlebar: rgb(3, 3, 5);
+  --titlebar-foreground: rgb(118, 130, 168);
+  --titlebar-search: rgb(20, 26, 46);
 
-  --activitybar: rgb(17, 24, 39);
-  --activitybar-foreground: rgb(148, 163, 184);
-  --activitybar-foreground-active: rgb(6, 182, 212);
+  --activitybar: rgb(16, 22, 41);
+  --activitybar-foreground: rgb(118, 130, 168);
+  --activitybar-foreground-active: rgb(0, 207, 255);
 
-  --disabled-bg: rgb(30, 41, 59);
-  --disabled-fg: rgb(71, 85, 105);
+  --disabled-bg: rgb(29, 36, 58);
+  --disabled-fg: rgb(75, 83, 112);
 
-  --selection: rgb(6, 182, 212);
-  --selection-foreground: rgb(10, 14, 26);
+  --selection: rgb(0, 207, 255);
+  --selection-foreground: rgb(3, 3, 5);
   --overlay: rgb(0, 0, 0);
 
   /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
-  --chart-1: rgb(6, 182, 212);
-  --chart-2: rgb(34, 211, 238);
-  --chart-3: rgb(129, 140, 248);
-  --chart-4: rgb(251, 191, 36);
-  --chart-5: rgb(248, 113, 113);
+  --chart-1: rgb(0, 207, 255);
+  --chart-2: rgb(57, 255, 20);
+  --chart-3: rgb(41, 114, 255);
+  --chart-4: rgb(255, 184, 0);
+  --chart-5: rgb(255, 58, 32);
 
-  --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.4);
-  --shadow-card: 0 12px 32px -16px rgb(6 182 212 / 0.15);
+  --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --shadow-card: 0 0 24px -10px rgb(0 207 255 / 0.18);
+  --shadow-modal: 0 24px 72px -24px rgb(0 0 0 / 0.65);
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-radius: 999px;
+  --scrollbar-track: rgb(20 26 46);
+  --scrollbar-thumb: rgb(0 207 255 / 0.5);
+  --scrollbar-thumb-hover: rgb(255 0 212 / 0.75);
+}
+
+/* ===== 7. Ocean (dark base) — oceano profundo, azul e verde-água ===== */
+.ocean {
+  --background: rgb(7, 24, 38);
+  --foreground: rgb(245, 251, 253);
+
+  --card: rgb(18, 49, 72);
+  --card-foreground: rgb(245, 251, 253);
+  --popover: rgb(24, 62, 87);
+  --popover-foreground: rgb(245, 251, 253);
+
+  --primary: rgb(44, 163, 195);
+  --primary-foreground: rgb(7, 24, 38);
+
+  --secondary: rgb(24, 62, 87);
+  --secondary-foreground: rgb(245, 251, 253);
+
+  --muted: rgb(24, 62, 87);
+  --muted-foreground: rgb(142, 169, 181);
+
+  --accent: rgb(29, 183, 174);
+  --accent-foreground: rgb(7, 24, 38);
+
+  --success: rgb(27, 203, 143);
+  --success-foreground: rgb(7, 24, 38);
+
+  --warning: rgb(232, 184, 74);
+  --warning-foreground: rgb(7, 24, 38);
+
+  --destructive: rgb(214, 90, 90);
+  --destructive-foreground: rgb(255, 255, 255);
+
+  --info: rgb(55, 183, 255);
+  --info-foreground: rgb(7, 24, 38);
+
+  --border: rgb(55, 113, 140);
+  --input: rgb(24, 62, 87);
+  --ring: rgb(107, 214, 255);
+
+  --surface-1: rgb(18, 49, 72);
+  --surface-2: rgb(24, 62, 87);
+  --surface-3: rgb(34, 81, 107);
+  --surface-hover: rgb(34, 81, 107);
+  --surface-active: rgb(41, 90, 116);
+
+  --sidebar: rgb(13, 36, 54);
+  --sidebar-foreground: rgb(245, 251, 253);
+  --sidebar-border: rgb(41, 90, 116);
+
+  --header: rgb(13, 36, 54);
+  --header-foreground: rgb(245, 251, 253);
+
+  --titlebar: rgb(7, 24, 38);
+  --titlebar-foreground: rgb(142, 169, 181);
+  --titlebar-search: rgb(24, 62, 87);
+
+  --activitybar: rgb(18, 49, 72);
+  --activitybar-foreground: rgb(142, 169, 181);
+  --activitybar-foreground-active: rgb(87, 184, 204);
+
+  --disabled-bg: rgb(24, 62, 87);
+  --disabled-fg: rgb(99, 120, 135);
+
+  --selection: rgb(44, 163, 195);
+  --selection-foreground: rgb(7, 24, 38);
+  --overlay: rgb(0, 0, 0);
+
+  /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
+  --chart-1: rgb(44, 163, 195);
+  --chart-2: rgb(27, 203, 143);
+  --chart-3: rgb(55, 183, 255);
+  --chart-4: rgb(232, 184, 74);
+  --chart-5: rgb(214, 90, 90);
+
+  --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.45);
+  --shadow-card: 0 0 24px -12px rgb(44 163 195 / 0.18);
   --shadow-modal: 0 24px 72px -24px rgb(0 0 0 / 0.6);
 
   /* Scrollbar */
   --scrollbar-size: 8px;
   --scrollbar-radius: 999px;
-  --scrollbar-track: rgb(30 41 59);
-  --scrollbar-thumb: rgb(6 182 212 / 0.55);
-  --scrollbar-thumb-hover: rgb(168 85 247 / 0.75);
+  --scrollbar-track: rgb(24 62 87);
+  --scrollbar-thumb: rgb(44 163 195 / 0.55);
+  --scrollbar-thumb-hover: rgb(29 183 174 / 0.75);
 }
 
-/* ===== 7. Ocean ===== */
-.ocean {
-  --background: rgb(240, 249, 255);
-  --foreground: rgb(12, 74, 110);
-
-  --card: rgb(255, 255, 255);
-  --card-foreground: rgb(12, 74, 110);
-  --popover: rgb(255, 255, 255);
-  --popover-foreground: rgb(12, 74, 110);
-
-  --primary: rgb(3, 105, 161);
-  --primary-foreground: rgb(255, 255, 255);
-
-  --secondary: rgb(224, 242, 254);
-  --secondary-foreground: rgb(3, 105, 161);
-
-  --muted: rgb(224, 242, 254);
-  --muted-foreground: rgb(2, 132, 199);
-
-  --accent: rgb(13, 148, 136);
-  --accent-foreground: rgb(255, 255, 255);
-
-  --success: rgb(5, 150, 105);
-  --success-foreground: rgb(255, 255, 255);
-
-  --warning: rgb(217, 119, 6);
-  --warning-foreground: rgb(255, 255, 255);
-
-  --destructive: rgb(220, 38, 38);
-  --destructive-foreground: rgb(255, 255, 255);
-
-  --info: rgb(2, 132, 199);
-  --info-foreground: rgb(255, 255, 255);
-
-  --border: rgb(186, 230, 253);
-  --input: rgb(255, 255, 255);
-  --ring: rgb(14, 165, 233);
-
-  --surface-1: rgb(255, 255, 255);
-  --surface-2: rgb(240, 249, 255);
-  --surface-3: rgb(224, 242, 254);
-  --surface-hover: rgb(224, 242, 254);
-  --surface-active: rgb(186, 230, 253);
-
-  --sidebar: rgb(3, 105, 161);
-  --sidebar-foreground: rgb(240, 249, 255);
-  --sidebar-border: rgb(7, 89, 133);
-
-  --header: rgb(3, 105, 161);
-  --header-foreground: rgb(240, 249, 255);
-
-  --titlebar: rgb(224, 242, 254);
-  --titlebar-foreground: rgb(12, 74, 110);
-  --titlebar-search: rgb(255, 255, 255);
-
-  --activitybar: rgb(240, 249, 255);
-  --activitybar-foreground: rgb(2, 132, 199);
-  --activitybar-foreground-active: rgb(3, 105, 161);
-
-  --disabled-bg: rgb(240, 249, 255);
-  --disabled-fg: rgb(125, 211, 252);
-
-  --selection: rgb(3, 105, 161);
-  --selection-foreground: rgb(255, 255, 255);
-  --overlay: rgb(12, 74, 110);
-
-  /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
-  --chart-1: rgb(3, 105, 161);
-  --chart-2: rgb(5, 150, 105);
-  --chart-3: rgb(2, 132, 199);
-  --chart-4: rgb(217, 119, 6);
-  --chart-5: rgb(220, 38, 38);
-
-  --shadow-soft: 0 8px 24px -12px rgb(3 105 161 / 0.12);
-  --shadow-card: 0 10px 30px -16px rgb(3 105 161 / 0.14);
-  --shadow-modal: 0 20px 60px -20px rgb(12 74 110 / 0.22);
-
-  /* Scrollbar */
-  --scrollbar-size: 8px;
-  --scrollbar-radius: 999px;
-  --scrollbar-track: rgb(224 242 254);
-  --scrollbar-thumb: rgb(3 105 161 / 0.55);
-  --scrollbar-thumb-hover: rgb(13 148 136 / 0.72);
-}
-
-/* ===== 8. Sunset ===== */
+/* ===== 8. Sunset (light base) — tons quentes de outono e dourados ===== */
 .sunset {
-  --background: rgb(255, 251, 240);
-  --foreground: rgb(67, 20, 7);
+  --background: rgb(245, 242, 237);
+  --foreground: rgb(47, 18, 11);
 
   --card: rgb(255, 255, 255);
-  --card-foreground: rgb(67, 20, 7);
+  --card-foreground: rgb(47, 18, 11);
   --popover: rgb(255, 255, 255);
-  --popover-foreground: rgb(67, 20, 7);
+  --popover-foreground: rgb(47, 18, 11);
 
-  --primary: rgb(194, 65, 12);
+  --primary: rgb(177, 63, 10);
   --primary-foreground: rgb(255, 255, 255);
 
-  --secondary: rgb(255, 247, 237);
-  --secondary-foreground: rgb(194, 65, 12);
+  --secondary: rgb(238, 231, 221);
+  --secondary-foreground: rgb(177, 63, 10);
 
-  --muted: rgb(255, 247, 237);
-  --muted-foreground: rgb(154, 52, 18);
+  --muted: rgb(238, 231, 221);
+  --muted-foreground: rgb(140, 122, 107);
 
-  --accent: rgb(217, 119, 6);
-  --accent-foreground: rgb(255, 255, 255);
+  --accent: rgb(229, 138, 23);
+  --accent-foreground: rgb(47, 18, 11);
 
-  --success: rgb(22, 163, 74);
+  --success: rgb(106, 122, 58);
   --success-foreground: rgb(255, 255, 255);
 
-  --warning: rgb(180, 83, 9);
+  --warning: rgb(180, 130, 20);
   --warning-foreground: rgb(255, 255, 255);
 
-  --destructive: rgb(220, 38, 38);
+  --destructive: rgb(166, 43, 18);
   --destructive-foreground: rgb(255, 255, 255);
 
-  --info: rgb(37, 99, 235);
+  --info: rgb(96, 110, 168);
   --info-foreground: rgb(255, 255, 255);
 
-  --border: rgb(253, 186, 116);
+  --border: rgb(214, 200, 184);
   --input: rgb(255, 255, 255);
-  --ring: rgb(234, 88, 12);
+  --ring: rgb(177, 63, 10);
 
   --surface-1: rgb(255, 255, 255);
-  --surface-2: rgb(255, 251, 240);
-  --surface-3: rgb(255, 247, 237);
-  --surface-hover: rgb(255, 247, 237);
-  --surface-active: rgb(255, 237, 213);
+  --surface-2: rgb(245, 242, 237);
+  --surface-3: rgb(238, 231, 221);
+  --surface-hover: rgb(238, 231, 221);
+  --surface-active: rgb(230, 217, 201);
 
-  --sidebar: rgb(194, 65, 12);
-  --sidebar-foreground: rgb(255, 251, 240);
-  --sidebar-border: rgb(154, 52, 18);
+  --sidebar: rgb(177, 63, 10);
+  --sidebar-foreground: rgb(245, 242, 237);
+  --sidebar-border: rgb(138, 63, 0);
 
-  --header: rgb(194, 65, 12);
-  --header-foreground: rgb(255, 251, 240);
+  --header: rgb(177, 63, 10);
+  --header-foreground: rgb(245, 242, 237);
 
-  --titlebar: rgb(255, 247, 237);
-  --titlebar-foreground: rgb(67, 20, 7);
+  --titlebar: rgb(238, 231, 221);
+  --titlebar-foreground: rgb(47, 18, 11);
   --titlebar-search: rgb(255, 255, 255);
 
-  --activitybar: rgb(255, 251, 240);
-  --activitybar-foreground: rgb(154, 52, 18);
-  --activitybar-foreground-active: rgb(194, 65, 12);
+  --activitybar: rgb(245, 242, 237);
+  --activitybar-foreground: rgb(140, 122, 107);
+  --activitybar-foreground-active: rgb(177, 63, 10);
 
-  --disabled-bg: rgb(255, 247, 237);
-  --disabled-fg: rgb(253, 186, 116);
+  --disabled-bg: rgb(238, 231, 221);
+  --disabled-fg: rgb(168, 156, 142);
 
-  --selection: rgb(194, 65, 12);
+  --selection: rgb(177, 63, 10);
   --selection-foreground: rgb(255, 255, 255);
-  --overlay: rgb(67, 20, 7);
+  --overlay: rgb(47, 18, 11);
 
   /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
-  --chart-1: rgb(194, 65, 12);
-  --chart-2: rgb(22, 163, 74);
-  --chart-3: rgb(37, 99, 235);
-  --chart-4: rgb(180, 83, 9);
-  --chart-5: rgb(220, 38, 38);
+  --chart-1: rgb(177, 63, 10);
+  --chart-2: rgb(106, 122, 58);
+  --chart-3: rgb(96, 110, 168);
+  --chart-4: rgb(180, 130, 20);
+  --chart-5: rgb(166, 43, 18);
 
-  --shadow-soft: 0 8px 24px -12px rgb(194 65 12 / 0.12);
-  --shadow-card: 0 10px 30px -16px rgb(194 65 12 / 0.14);
-  --shadow-modal: 0 20px 60px -20px rgb(67 20 7 / 0.22);
+  --shadow-soft: 0 8px 24px -12px rgb(177 63 10 / 0.12);
+  --shadow-card: 0 10px 30px -16px rgb(177 63 10 / 0.14);
+  --shadow-modal: 0 20px 60px -20px rgb(47 18 11 / 0.22);
 
   /* Scrollbar */
   --scrollbar-size: 8px;
   --scrollbar-radius: 999px;
-  --scrollbar-track: rgb(255 237 213);
-  --scrollbar-thumb: rgb(194 65 12 / 0.55);
-  --scrollbar-thumb-hover: rgb(217 119 6 / 0.75);
+  --scrollbar-track: rgb(238 231 221);
+  --scrollbar-thumb: rgb(177 63 10 / 0.5);
+  --scrollbar-thumb-hover: rgb(229 138 23 / 0.72);
 }
 
 /* ===== 9. High Contrast (light base, WCAG AAA 7:1+) ===== */
@@ -713,7 +726,7 @@
   --popover: rgb(255, 255, 255);
   --popover-foreground: rgb(0, 0, 0);
 
-  --primary: rgb(0, 0, 170);
+  --primary: rgb(0, 0, 204);
   --primary-foreground: rgb(255, 255, 255);
 
   --secondary: rgb(240, 240, 240);
@@ -722,24 +735,24 @@
   --muted: rgb(240, 240, 240);
   --muted-foreground: rgb(51, 51, 51);
 
-  --accent: rgb(170, 85, 0);
+  --accent: rgb(153, 51, 0);
   --accent-foreground: rgb(255, 255, 255);
 
   --success: rgb(0, 102, 0);
   --success-foreground: rgb(255, 255, 255);
 
-  --warning: rgb(153, 85, 0);
+  --warning: rgb(153, 102, 0);
   --warning-foreground: rgb(255, 255, 255);
 
   --destructive: rgb(204, 0, 0);
   --destructive-foreground: rgb(255, 255, 255);
 
-  --info: rgb(0, 0, 170);
+  --info: rgb(0, 0, 204);
   --info-foreground: rgb(255, 255, 255);
 
   --border: rgb(0, 0, 0);
   --input: rgb(255, 255, 255);
-  --ring: rgb(0, 0, 170);
+  --ring: rgb(0, 0, 204);
 
   --surface-1: rgb(255, 255, 255);
   --surface-2: rgb(245, 245, 245);
@@ -765,15 +778,15 @@
   --disabled-bg: rgb(232, 232, 232);
   --disabled-fg: rgb(102, 102, 102);
 
-  --selection: rgb(0, 0, 170);
+  --selection: rgb(0, 0, 204);
   --selection-foreground: rgb(255, 255, 255);
   --overlay: rgb(0, 0, 0);
 
   /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
-  --chart-1: rgb(0, 0, 170);
+  --chart-1: rgb(0, 0, 204);
   --chart-2: rgb(0, 102, 0);
   --chart-3: rgb(0, 102, 204);
-  --chart-4: rgb(170, 85, 0);
+  --chart-4: rgb(153, 51, 0);
   --chart-5: rgb(204, 0, 0);
 
   --shadow-soft: 0 4px 12px -4px rgb(0 0 0 / 0.25);
@@ -858,7 +871,7 @@
   --chart-1: rgb(255, 255, 0);
   --chart-2: rgb(0, 255, 0);
   --chart-3: rgb(0, 204, 255);
-  --chart-4: rgb(255, 170, 0);
+  --chart-4: rgb(255, 204, 0);
   --chart-5: rgb(255, 0, 0);
 
   --shadow-soft: none;
@@ -871,90 +884,4 @@
   --scrollbar-track: rgb(0 0 0);
   --scrollbar-thumb: rgb(255 255 255);
   --scrollbar-thumb-hover: rgb(255 255 0);
-}
-
-/* ===== 11. Cyberpunk (dark base) ===== */
-/* Inspired by Cyberpunk 2077: electric yellow, neon cyan, hot magenta on deep black */
-.cyberpunk {
-  --background: rgb(5, 5, 12);
-  --foreground: rgb(248, 239, 2);
-
-  --card: rgb(12, 12, 24);
-  --card-foreground: rgb(248, 239, 2);
-  --popover: rgb(18, 18, 35);
-  --popover-foreground: rgb(248, 239, 2);
-
-  --primary: rgb(248, 239, 2);
-  --primary-foreground: rgb(0, 0, 0);
-
-  --secondary: rgb(18, 18, 35);
-  --secondary-foreground: rgb(248, 239, 2);
-
-  --muted: rgb(18, 18, 35);
-  --muted-foreground: rgb(138, 230, 110);
-
-  --accent: rgb(0, 255, 210);
-  --accent-foreground: rgb(0, 0, 0);
-
-  --success: rgb(57, 255, 20);
-  --success-foreground: rgb(0, 0, 0);
-
-  --warning: rgb(255, 152, 0);
-  --warning-foreground: rgb(0, 0, 0);
-
-  --destructive: rgb(255, 0, 60);
-  --destructive-foreground: rgb(248, 239, 2);
-
-  --info: rgb(0, 255, 210);
-  --info-foreground: rgb(0, 0, 0);
-
-  --border: rgb(57, 255, 20);
-  --input: rgb(18, 18, 35);
-  --ring: rgb(248, 239, 2);
-
-  --surface-1: rgb(12, 12, 24);
-  --surface-2: rgb(18, 18, 35);
-  --surface-3: rgb(28, 28, 50);
-  --surface-hover: rgb(28, 28, 50);
-  --surface-active: rgb(38, 38, 65);
-
-  --sidebar: rgb(2, 2, 8);
-  --sidebar-foreground: rgb(248, 239, 2);
-  --sidebar-border: rgb(57, 255, 20);
-
-  --header: rgb(2, 2, 8);
-  --header-foreground: rgb(248, 239, 2);
-
-  --titlebar: rgb(5, 5, 12);
-  --titlebar-foreground: rgb(138, 230, 110);
-  --titlebar-search: rgb(18, 18, 35);
-
-  --activitybar: rgb(12, 12, 24);
-  --activitybar-foreground: rgb(138, 230, 110);
-  --activitybar-foreground-active: rgb(248, 239, 2);
-
-  --disabled-bg: rgb(18, 18, 35);
-  --disabled-fg: rgb(60, 60, 80);
-
-  --selection: rgb(248, 239, 2);
-  --selection-foreground: rgb(0, 0, 0);
-  --overlay: rgb(0, 0, 0);
-
-  /* Charts: 1=Total, 2=Concluídas, 3=Em Andamento, 4=Pendentes, 5=Canceladas */
-  --chart-1: rgb(248, 239, 2);
-  --chart-2: rgb(57, 255, 20);
-  --chart-3: rgb(0, 255, 210);
-  --chart-4: rgb(255, 152, 0);
-  --chart-5: rgb(255, 0, 60);
-
-  --shadow-soft: 0 0 12px -4px rgb(248 239 2 / 0.15);
-  --shadow-card: 0 0 20px -8px rgb(57 255 20 / 0.2);
-  --shadow-modal: 0 0 40px -12px rgb(248 239 2 / 0.3);
-
-  /* Scrollbar */
-  --scrollbar-size: 8px;
-  --scrollbar-radius: 0;
-  --scrollbar-track: rgb(12 12 24);
-  --scrollbar-thumb: rgb(57 255 20 / 0.6);
-  --scrollbar-thumb-hover: rgb(248 239 2);
 }

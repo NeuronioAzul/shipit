@@ -25,9 +25,7 @@ export function EmptyState({ onCreateProfile }: EmptyStateProps) {
       <button
         id="empty-state-btn"
         onClick={onCreateProfile}
-        className="px-8 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
-          hover:opacity-90 transition-all cursor-pointer shadow-lg hover:shadow-xl
-          flex items-center gap-3 text-lg"
+        className="btn btn-accent btn-lg shadow-lg hover:shadow-xl gap-3 text-lg"
       >
         <i className="fa-solid fa-user-plus"></i>
         Criar Perfil

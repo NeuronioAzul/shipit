@@ -32,11 +32,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       title={title}
-      className={`px-2.5 py-1.5 rounded text-sm font-medium transition-colors cursor-pointer ${
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-      }`}
+      className={`btn btn-sm ${active ? 'btn-primary' : 'btn-ghost'}`}
     >
       <i className={icon} aria-hidden="true"></i>
     </button>
@@ -141,7 +137,7 @@ export function RichTextEditor({
         id={`${idPrefix}-content`}
         onMouseDown={handleContentMouseDown}
         style={{ minHeight }}
-        className="cyber-input p-3 max-h-[400px] overflow-y-auto scrollbar-stable cursor-text"
+        className="p-3 max-h-[400px] overflow-y-auto scrollbar-stable cursor-text"
       >
         <EditorContent
           editor={editor}

@@ -244,10 +244,10 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 
 | Arquivo | Função |
 | -------- | -------- |
-| `themes.ts` | Registro de 11 temas com `ThemeMetadata` (id, label, description, icon, category, base, preview) |
-| `themes.css` | 60+ variáveis CSS por tema via `:root` + classes (`.dark`, `.ocean`, `.cyberpunk`, etc.) |
+| `themes.ts` | Registro de 10 temas com `ThemeMetadata` (id, label, description, icon, category, base, preview) |
+| `themes.css` | 60+ variáveis CSS por tema via `:root` + classes (`.dark`, `.ocean`, etc.) |
+| `controls.css` | Sistema padronizado de controles (`.btn*`, `.field*`, `.checkbox`, `.option`) baseado nos tokens de tema |
 | `scrollbars.css` | Scrollbar global temática via tokens CSS + helper `.scrollbar-stable` com `scrollbar-gutter: stable` |
-| `cyberpunk-effects.css` | Efeitos especiais do tema Cyberpunk (scanlines CRT, neon glow, glitch, clip-path angular) |
 
 ---
 
@@ -278,7 +278,6 @@ ThemeSelector (click)  →  ThemeContext.setTheme(id)  →  localStorage.shipit-
 | Principais | Claro, Escuro | light, dark |
 | Personalidade | Colorido, Rosa & Violeta, Minimalista, Futurista, Oceano, Pôr do Sol | mixed |
 | Acessibilidade | Alto Contraste, Alto Contraste Escuro | light, dark |
-| Bônus | Cyberpunk | dark |
 
 O `ThemeContext` computa `isDark` automaticamente a partir da propriedade `base` do tema selecionado, aplicando a classe `.dark` quando necessário.
 
@@ -385,7 +384,7 @@ Merge parcial: `saveSettings({ key: value })` faz merge com as configurações e
 
 Usado apenas no renderer para:
 
-- `shipit-theme`: preferência de tema (ID do tema, ex: `"cyberpunk"`, `"ocean"`, `"dark"`)
+- `shipit-theme`: preferência de tema (ID do tema, ex: `"ocean"`, `"dark"`, `"futuristic"`)
 - Fallback de dados quando `electronAPI` não está disponível (dev no browser)
 
 ---

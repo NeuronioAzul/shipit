@@ -745,13 +745,13 @@ test('supports app menu keyboard shortcuts for search focus and new activity', a
   await expect(page.locator('h1:has-text("Nova Atividade")')).toBeVisible({ timeout: 5_000 })
 })
 
-test('keeps top menu dropdown anchored in cyberpunk theme', async () => {
+test('keeps top menu dropdown anchored across themes', async () => {
   await page.click('[title="Configurações"]')
   await page.waitForURL(/#\/settings/)
-  await page.click('button[aria-label="Tema Cyberpunk"]')
+  await page.click('button[aria-label="Tema Escuro"]')
 
   const html = page.locator('html')
-  await expect(html).toHaveClass(/(?:^|\s)cyberpunk(?:\s|$)/)
+  await expect(html).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
 
   await page.click('#titlebar-menu-btn-file')
   await expect(page.locator('#titlebar-menu-panel-file')).toBeVisible({ timeout: 5_000 })
@@ -815,10 +815,10 @@ test('applies themed scrollbar tokens and stable gutters in scroll hosts', async
     }
   })
 
-  await page.click('button[aria-label="Tema Cyberpunk"]')
-  await expect(html).toHaveClass(/(?:^|\s)cyberpunk(?:\s|$)/)
+  await page.click('button[aria-label="Tema Escuro"]')
+  await expect(html).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
 
-  const cyberpunkScrollbar = await page.evaluate(() => {
+  const darkScrollbar = await page.evaluate(() => {
     const style = getComputedStyle(document.documentElement)
     return {
       size: style.getPropertyValue('--scrollbar-size').trim(),
@@ -829,12 +829,12 @@ test('applies themed scrollbar tokens and stable gutters in scroll hosts', async
   })
 
   expect(lightScrollbar.size).toBe('8px')
-  expect(cyberpunkScrollbar.size).toBe('8px')
+  expect(darkScrollbar.size).toBe('8px')
   expect(lightScrollbar.track).not.toBe('')
   expect(lightScrollbar.thumb).not.toBe('')
   expect(lightScrollbar.hover).not.toBe('')
-  expect(cyberpunkScrollbar.track).not.toBe(lightScrollbar.track)
-  expect(cyberpunkScrollbar.thumb).not.toBe(lightScrollbar.thumb)
+  expect(darkScrollbar.track).not.toBe(lightScrollbar.track)
+  expect(darkScrollbar.thumb).not.toBe(lightScrollbar.thumb)
 
   await page.click('[title="Atividades"]')
   await page.waitForURL(/#\/activities/)
@@ -1121,6 +1121,9 @@ test('searches from titlebar with debounce, keyboard navigation and close behavi
   await expect(dropdown.locator('mark').first()).toHaveText(query)
   await expect(dropdown.locator('button', { hasText: `Filtro avançado para "${query}"` })).toBeVisible()
 
+  // Garante que o input ainda está focado antes da navegação por teclado
+  // (evita corrida em que o ArrowDown era disparado durante um re-render).
+  await expect(input).toBeFocused()
   await page.keyboard.press('ArrowDown')
   await expect(page.locator('#searchbar-result-0')).toHaveAttribute('data-selected', 'true')
   await page.keyboard.press('ArrowDown')
@@ -1156,15 +1159,21 @@ test('searches from titlebar with debounce, keyboard navigation and close behavi
   await expect(dropdown).toHaveCount(0)
 })
 
-// ──── Cyberpunk Search Regression ────
+// ──── Search Anchoring Regression ────
 
-test('keeps searchbar stable and anchored in cyberpunk theme', async () => {
+test('keeps searchbar stable and anchored across themes', async () => {
+  // Cria a própria atividade-âncora para não depender do estado de outros
+  // testes (a ordem/estado do banco compartilhado tornava a busca instável).
+  const runId = Date.now()
+  const marker = `Ancora Tema ${runId}`
+  await createActivityRecord(marker)
+
   await page.click('[title="Configurações"]')
   await page.waitForURL(/#\/settings/)
-  await page.click('button[aria-label="Tema Cyberpunk"]')
+  await page.click('button[aria-label="Tema Escuro"]')
 
   const html = page.locator('html')
-  await expect(html).toHaveClass(/(?:^|\s)cyberpunk(?:\s|$)/)
+  await expect(html).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
 
   await page.click('[title="Atividades"]')
   await page.waitForURL(/#\/activities/)
@@ -1178,10 +1187,10 @@ test('keeps searchbar stable and anchored in cyberpunk theme', async () => {
   const magnifier = page.locator('#searchbar-magnifier, #searchbar .fa-magnifying-glass')
   await expect(magnifier).toBeVisible()
 
-  await input.first().fill('E2')
+  await input.first().fill(marker)
   const dropdown = page.locator('#searchbar-results')
   await expect(dropdown).toBeVisible({ timeout: 5_000 })
-  await expect(dropdown).toContainText('Atividade E2E Playwright')
+  await expect(dropdown).toContainText(marker)
 
   const metrics = await page.evaluate(() => {
     const searchbar = document.getElementById('searchbar')

@@ -9,7 +9,25 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-## [1.8.0] — 2026-06-28
+## [1.9.0] — 2026-06-29
+
+### Adicionado
+
+- **Sistema padronizado de controles** (`.btn*`, `.field*`, `.checkbox`, `.option`): botões, campos de texto/textarea, selects, date/time, checkboxes e opções de lista passam a compartilhar raio, padding, foco, hover e estados de disabled idênticos em todos os temas.
+- Imagem de fundo sutil no tema **Rosa & Violeta** (`public/assets/images/bg/tema-rosa.jpg`), com scrim translúcido para preservar a legibilidade.
+- Testes unitários do registro de temas (`src/themes/themes.test.ts`).
+
+### Alterado
+
+- **Temas repaginados**: **Futurista** (neon ciano/roxo em preto), **Oceano** (agora base **escura** — oceano profundo, azul e verde-água) e **Pôr do Sol** (tons quentes de outono e dourados). Temas de **Alto Contraste** ajustados para a paleta 8-bit websafe mantendo WCAG AAA.
+- **Temas equalizados**: as 10 paletas passam a definir exatamente o mesmo conjunto de ~60 variáveis CSS, facilitando a manutenção.
+- **Botões e campos de formulário unificados** em todo o app: semântica de "Cancelar" padronizada (contorno), ações destrutivas e CTAs consistentes, remoção de cores cruas (`emerald-300`, `amber-400`) e foco visível. Correções pontuais: borda conflitante no seletor de temas, `group/ev` na revelação de ações de evidência, hover sem efeito e duplicação de `className` no TimePicker.
+
+### Removido
+
+- **Tema Cyberpunk removido por completo**: efeitos (`cyberpunk-effects.css`), bloco de paleta, entrada no registro de temas, classes-gancho `cyber-*` no markup, cenários E2E específicos, cursores órfãos e a pasta de referência. O app passa a ter **10 temas**. Preferências antigas (`shipit-theme = "cyberpunk"`) degradam automaticamente para o tema Claro.
+
+## [1.8.1] — 2026-06-29
 
 ### Adicionado
 
@@ -20,6 +38,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - A descrição da atividade passou a **preservar as quebras de linha** no DOCX gerado (antes o texto era exportado em uma única linha).
 - A formatação das evidências de texto e da descrição (negrito, itálico, listas ordenadas e não ordenadas e quebras de linha) agora é exportada corretamente no relatório DOCX, incluindo a numeração de listas ordenadas e os espaços entre marcações.
 - Carregamento da suíte de testes corrigido após atualização de dependências: os decorators do TypeORM voltaram a ser compilados no modo legado pelo transformer do Vite 8 (oxc), via `electron/tsconfig.json`.
+- Build do Linux (AppImage/deb/rpm) corrigido para o electron-builder 26, que passou a rejeitar o `!` de "ShipIt!" no nome do pacote: definido `executableName` "shipit" só no Linux, sem alterar o nome "ShipIt!" exibido no Windows/macOS.
 
 ## [1.7.0] — 2026-05-27
 

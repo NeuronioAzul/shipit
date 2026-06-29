@@ -18,14 +18,16 @@
 
 ---
 
-## v1.8.0 — 2026-06-28
+## v1.8.1 — 2026-06-29
 
 > Plano: [plan-shipit38 — descrição rich-text e formatação no DOCX](plans/plan-shipit38-richTextDescriptionAndDocxFormatting.prompt.md)
 
 - [x] Campo de **descrição da atividade** com editor rich-text (negrito, itálico, listas), reutilizando o editor das evidências de texto. Descrições legadas em texto plano são normalizadas para HTML preservando as quebras de linha.
 - [x] **Correção:** quebras de linha da descrição passaram a ser preservadas no DOCX (antes colapsavam em uma única linha).
 - [x] **Correção:** o DOCX passou a exportar a formatação (negrito/itálico/listas/quebras) da descrição e das evidências de texto, com numeração de listas ordenadas e espaços entre marcações.
+- [x] **Correção (build Linux):** `executableName` "shipit" no Linux para o electron-builder 26 não rejeitar o `!` de "ShipIt!" no AppImage/deb/rpm (a v1.8.0 chegou a falhar só no `build-linux`; a 1.8.1 saiu com os 14 assets das 3 plataformas).
 - [x] **Infra/testes:** `electron/tsconfig.json` para os decorators do TypeORM no transformer oxc do Vite 8 (suíte voltou a 100% verde — 185 unit + 37 e2e); rebuild do `better-sqlite3` para a ABI do Electron atual; `ELECTRON_RUN_AS_NODE` (herdado do host) tratado nos comandos de e2e.
+- [x] Novo `docs/scripts/release_v2.py` (release sem dependência do GitHub Copilot).
 
 ---
 

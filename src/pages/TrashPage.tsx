@@ -111,7 +111,7 @@ export function TrashPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon text-muted-foreground hover:text-foreground"
             title="Voltar"
             aria-label="Voltar"
           >
@@ -133,7 +133,7 @@ export function TrashPage() {
             id="trash-btn-empty"
             onClick={() => setConfirmEmpty(true)}
             disabled={emptyingTrash}
-            className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="btn btn-destructive btn-sm"
           >
             {emptyingTrash ? (
               <>
@@ -221,7 +221,7 @@ export function TrashPage() {
                     />
                   )}
                   {/* Overlay with days left */}
-                  <div className={`cyber-neon-border absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                     isExpiringSoon
                       ? 'bg-destructive text-destructive-foreground'
                       : 'bg-background/80 text-muted-foreground'
@@ -246,7 +246,7 @@ export function TrashPage() {
                     <button
                       onClick={() => handleRestore(ev.id)}
                       disabled={restoring === ev.id || deleting === ev.id}
-                      className="flex-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                      className="btn btn-primary btn-sm flex-1 gap-1"
                     >
                       {restoring === ev.id ? (
                         <i className="fa-solid fa-spinner fa-spin"></i>
@@ -260,7 +260,7 @@ export function TrashPage() {
                     <button
                       onClick={() => setConfirmDelete(ev.id)}
                       disabled={restoring === ev.id || deleting === ev.id}
-                      className="cyber-neon-border px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn btn-outline-destructive btn-sm"
                       title="Excluir permanentemente"
                       aria-label="Excluir permanentemente"
                     >
@@ -300,13 +300,13 @@ export function TrashPage() {
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+                className="btn btn-outline"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handlePermanentDelete(confirmDelete)}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors cursor-pointer"
+                className="btn btn-destructive"
               >
                 Excluir permanentemente
               </button>
@@ -338,13 +338,13 @@ export function TrashPage() {
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => setConfirmEmpty(false)}
-                className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer"
+                className="btn btn-outline"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleEmptyTrash}
-                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors cursor-pointer"
+                className="btn btn-destructive"
               >
                 Esvaziar lixeira
               </button>

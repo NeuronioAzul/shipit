@@ -84,7 +84,7 @@ function SortableEvidenceCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="cyber-neon-border p-2 bg-card border border-border rounded-lg overflow-hidden group"
+      className="p-2 bg-card border border-border rounded-lg overflow-hidden group"
     >
       {/* Preview area */}
       <div
@@ -163,8 +163,7 @@ function SortableEvidenceCard({
               value={captionValue}
               onChange={(e) => setCaptionValue(e.target.value)}
               placeholder="Legenda da imagem..."
-              className="flex-1 px-2 py-1 bg-background text-foreground border border-border rounded text-sm
-                focus:outline-none focus:ring-1 focus:ring-ring"
+              className="field field-sm flex-1"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') saveCaption(evidence.id)
                 if (e.key === 'Escape') setEditingCaption(null)
@@ -174,7 +173,7 @@ function SortableEvidenceCard({
             <button
               type="button"
               onClick={() => saveCaption(evidence.id)}
-              className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm cursor-pointer hover:opacity-90"
+              className="btn btn-primary btn-icon-sm"
               aria-label="Salvar legenda"
             >
               <i className="fa-solid fa-check" aria-hidden="true"></i>
@@ -455,8 +454,7 @@ export function EvidenceUpload({
                   e.stopPropagation()
                   handlePaste()
                 }}
-                className="cyber-neon-border text-sm px-3 py-1 border border-border rounded-md
-                  hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                className="btn btn-outline btn-sm"
               >
                 <i className="fa-solid fa-paste mr-1"></i>
                 Colar da Área de Transferência
@@ -506,7 +504,7 @@ export function EvidenceUpload({
       <button
         type="button"
         onClick={openTextModalCreate}
-        className="cyber-neon-border w-full border-2 border-dashed border-border rounded-lg p-4 text-center
+        className="w-full border-2 border-dashed border-border rounded-lg p-4 text-center
           hover:border-primary hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
       >
         <i className="fa-solid fa-file-circle-plus"></i>

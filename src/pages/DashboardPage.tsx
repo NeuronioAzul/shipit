@@ -134,8 +134,7 @@ export function DashboardPage() {
           <button
             id="dashboard-btn-new"
             onClick={() => navigate(`/activities/new?month=${monthRef}`)}
-            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
-              hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
+            className="btn btn-accent shadow-md"
           >
             <i className="fa-solid fa-plus"></i>
             Nova Atividade
@@ -150,7 +149,7 @@ export function DashboardPage() {
           <button
             id="dashboard-btn-prev-month"
             onClick={() => changeMonth(-1)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon"
             aria-label="Mês anterior"
           >
             <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
@@ -161,7 +160,7 @@ export function DashboardPage() {
           <button
             id="dashboard-btn-next-month"
             onClick={() => changeMonth(1)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon"
             aria-label="Próximo mês"
           >
             <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
@@ -170,8 +169,7 @@ export function DashboardPage() {
         {!isCurrentMonth && (
           <button
             onClick={() => setSearchParams({ month: currentMonthRef })}
-            className="cyber-neon-border absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
-              hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
+            className="btn btn-outline btn-sm absolute right-0"
             title="Ir para o mês atual"
           >
             <i className="fa-solid fa-calendar-day"></i>
@@ -368,7 +366,7 @@ export function DashboardPage() {
                       <td className="px-4 py-2.5">
                         <button
                           onClick={() => navigate(`/activities/${activity.id}/edit`)}
-                          className="p-1 rounded hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                          className="btn btn-ghost btn-icon-sm hover:text-foreground"
                           title="Editar"
                         >
                           <i className="fa-solid fa-pen-to-square text-xs"></i>
@@ -388,8 +386,7 @@ export function DashboardPage() {
               </p>
               <button
                 onClick={() => navigate(`/activities/new?month=${monthRef}`)}
-                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg
-                  hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-2"
+                className="btn btn-accent mt-4"
               >
                 <i className="fa-solid fa-plus"></i>
                 Registrar Atividade
@@ -446,9 +443,7 @@ export function DashboardPage() {
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setShowConfirm(false)}
-                      className="px-4 py-2
-                      bg-destructive text-destructive-foreground rounded hover:bg-destructive/60 transition-colors cursor-pointer
-                         text-sm"
+                      className="btn btn-outline"
                     >
                       Cancelar
                     </button>
@@ -479,8 +474,7 @@ export function DashboardPage() {
                           setGenerating(false)
                         }
                       }}
-                      className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
-                        hover:opacity-90 transition-all cursor-pointer text-sm flex items-center gap-2"
+                      className="btn btn-accent"
                     >
                       <i className="fa-solid fa-file-word"></i>
                       Gerar DOCX
@@ -493,9 +487,7 @@ export function DashboardPage() {
               {!showConfirm && (
                 <button
                   disabled={incompletas > 0 || generating}
-                  className="px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-lg
-                    hover:opacity-90 transition-all cursor-pointer shadow-lg flex items-center gap-2
-                    disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="btn btn-accent btn-lg shadow-md"
                   title={incompletas > 0 ? 'Preencha todas as atividades antes de gerar o relatório' : 'Gerar relatório mensal'}
                   onClick={() => setShowConfirm(true)}
                 >

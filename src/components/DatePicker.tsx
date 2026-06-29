@@ -176,9 +176,7 @@ export function DatePicker({
   const isToday = (day: number) =>
     day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()
 
-  const inputBaseClass = hasError
-    ? 'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
-    : 'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
+  const inputBaseClass = hasError ? 'field field-error' : 'field'
 
   return (
     <div ref={containerRef} className="datepicker-container w-full" style={{ position: 'relative' }}>
