@@ -1,7 +1,8 @@
 {
   "name": "shipit",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Automatize a criação do Relatório Mensal de Atividades Desenvolvidas seguindo o padrão institucional do MEC.",
+  "pricing": "Free",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "concurrently -n vite,electron \"vite\" \"wait-on http://localhost:5173 && electron .\"",

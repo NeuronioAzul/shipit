@@ -4,7 +4,9 @@ import { toast } from 'sonner'
 import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
+import { RichTextEditor } from '../components/RichTextEditor'
 import { validateActivity, type ValidationError } from '../utils/validation'
+import { normalizeToHtml, isRichTextEmpty } from '../utils/richText'
 import { DatePicker } from '../components/DatePicker'
 import { Select } from '../components/Select'
 import { InputTags } from '../components/InputTags'
@@ -128,7 +130,8 @@ export function ActivityFormPage() {
     }
     if (activity) {
       const loadedForm: ActivityForm = {
-        description: activity.description || '',
+        // Descrições legadas são texto plano; normaliza para HTML preservando quebras.
+        description: normalizeToHtml(activity.description),
         date_start: activity.date_start || '',
         date_end: activity.date_end || '',
         status: activity.status,
@@ -161,6 +164,11 @@ export function ActivityFormPage() {
     setAutoSaveStatus('idle')
   }
 
+  function handleDescriptionChange(html: string) {
+    setForm((prev) => ({ ...prev, description: html }))
+    setAutoSaveStatus('idle')
+  }
+
   // Auto-save: debounce 2s after any form change (only if activity already has an id)
   useEffect(() => {
     if (!initialLoadDone.current) return
@@ -170,7 +178,7 @@ export function ActivityFormPage() {
 
     autoSaveTimer.current = setTimeout(async () => {
       // Only auto-save if there's meaningful content
-      if (!form.description.trim()) return
+      if (isRichTextEmpty(form.description)) return
 
       setAutoSaveStatus('saving')
       try {
@@ -470,36 +478,16 @@ export function ActivityFormPage() {
       <form id="activity-form" onSubmit={handleSubmit} className="space-y-5">
         {/* Descrição */}
         <div>
-          <label htmlFor="description" className={labelClass}>
+          <label className={labelClass}>
             Descrição <span className="text-destructive">*</span>
           </label>
-          <div className={frameClass('description')}>
-            <textarea
-              id="description"
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              onPaste={(e) => {
-                const plain = e.clipboardData.getData('text/plain')
-                if (plain) {
-                  e.preventDefault()
-                  const target = e.currentTarget
-                  const start = target.selectionStart
-                  const end = target.selectionEnd
-                  const newValue = form.description.slice(0, start) + plain + form.description.slice(end)
-                  setForm((prev) => ({ ...prev, description: newValue }))
-                  setAutoSaveStatus('idle')
-                  // Restore cursor position after React re-render
-                  requestAnimationFrame(() => {
-                    target.selectionStart = target.selectionEnd = start + plain.length
-                  })
-                }
-              }}
-              rows={5}
-              placeholder="Descreva a atividade realizada..."
-              className={fieldClass('description') + ' resize-y whitespace-pre-wrap'}
-            />
-          </div>
+          <RichTextEditor
+            content={form.description}
+            onChange={handleDescriptionChange}
+            placeholder="Descreva a atividade realizada..."
+            minHeight={120}
+            idPrefix="description-editor"
+          />
           {fieldError('description') && (
             <p className="text-xs text-destructive mt-1">{fieldError('description')}</p>
           )}

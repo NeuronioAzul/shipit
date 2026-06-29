@@ -325,6 +325,50 @@ function replaceTextInNode(node: any, search: string, replacement: string): void
   }
 }
 
+/**
+ * Replace a placeholder with multi-line text, converting `\n` into `<w:br/>`
+ * inside the same run so Word renders real line breaks (a plain `<w:t>` collapses them).
+ */
+function replaceTextInNodeMultiline(node: any, search: string, value: string): void {
+  if (node.localName === 't' && node.namespaceURI === W_NS) {
+    const text: string = node.textContent || ''
+    const idx = text.indexOf(search)
+    if (idx === -1) return
+
+    const before = text.slice(0, idx)
+    const after = text.slice(idx + search.length)
+    const lines = value.split(/\r?\n/)
+    node.setAttribute('xml:space', 'preserve')
+
+    if (lines.length <= 1) {
+      node.textContent = before + value + after
+      return
+    }
+
+    node.textContent = before + lines[0]
+    const run = node.parentNode
+    const doc = node.ownerDocument
+    let ref = node
+    for (let i = 1; i < lines.length; i++) {
+      const br = doc.createElementNS(W_NS, 'w:br')
+      run.insertBefore(br, ref.nextSibling)
+      ref = br
+      const t = doc.createElementNS(W_NS, 'w:t')
+      t.setAttribute('xml:space', 'preserve')
+      t.textContent = i === lines.length - 1 ? lines[i] + after : lines[i]
+      run.insertBefore(t, ref.nextSibling)
+      ref = t
+    }
+    return
+  }
+  let child = node.firstChild
+  while (child) {
+    const next = child.nextSibling
+    replaceTextInNodeMultiline(child, search, value)
+    child = next
+  }
+}
+
 function cloneNode(node: Node): Node {
   return node.cloneNode(true)
 }
@@ -418,54 +462,201 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;')
 }
 
+const HTML_NAMED_ENTITIES: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&nbsp;': ' ',
+}
+
+/** Decode the HTML entities the TipTap editor may emit, before re-escaping for XML. */
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, (m) => HTML_NAMED_ENTITIES[m] ?? m)
+}
+
 /**
- * Convert TipTap HTML content to OpenXML paragraphs for text evidence pages.
+ * Convert the inline HTML of a single block (paragraph/list item) to OpenXML runs.
+ * Preserves spaces between inline marks, keeps `<br>` as `<w:br/>`, and honors
+ * bold (`<strong>`/`<b>`) and italic (`<em>`/`<i>`).
  */
-function htmlToWordXml(html: string): string {
-  if (!html) return ''
-  const paragraphs: string[] = []
-  // Split by block elements: <p>, <li>, <ul>, <ol>
-  // Simple conversion: strip tags, keep bold/italic inline formatting
-  const blocks = html.split(/<\/(?:p|li)>/).filter(b => b.trim())
+function inlineHtmlToRuns(html: string, sz = '20'): string {
+  const segments = html.split(/<br\s*\/?>/i)
+  const runs: string[] = []
 
-  for (const block of blocks) {
-    let cleaned = block.replace(/<(?:p|li|ul|ol)[^>]*>/g, '')
-    // Check if this is a list item (was preceded by <li>)
-    const isBullet = block.includes('<li')
+  segments.forEach((segment, segmentIdx) => {
+    if (segmentIdx > 0) {
+      runs.push(`<w:r><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:br/></w:r>`)
+    }
 
-    const runs: string[] = []
-    // Process inline formatting
-    const parts = cleaned.split(/(<\/?(?:strong|b|em|i)>)/)
+    const parts = segment.split(/(<\/?(?:strong|b|em|i)\s*>)/i)
     let bold = false
     let italic = false
 
     for (const part of parts) {
-      if (part === '<strong>' || part === '<b>') { bold = true; continue }
-      if (part === '</strong>' || part === '</b>') { bold = false; continue }
-      if (part === '<em>' || part === '<i>') { italic = true; continue }
-      if (part === '</em>' || part === '</i>') { italic = false; continue }
-      // Strip any remaining tags
-      const text = part.replace(/<[^>]*>/g, '').trim()
-      if (!text) continue
-      let rPr = '<w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/>'
+      const tag = part.toLowerCase()
+      if (tag === '<strong>' || tag === '<b>') { bold = true; continue }
+      if (tag === '</strong>' || tag === '</b>') { bold = false; continue }
+      if (tag === '<em>' || tag === '<i>') { italic = true; continue }
+      if (tag === '</em>' || tag === '</i>') { italic = false; continue }
+
+      // Strip any remaining tags, decode entities and collapse whitespace
+      // (without trimming, to preserve single spaces between marks).
+      const text = decodeHtmlEntities(part.replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ')
+      if (text === '') continue
+
+      let rPr = `<w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`
       if (bold) rPr += '<w:b/>'
       if (italic) rPr += '<w:i/>'
       rPr += '</w:rPr>'
       runs.push(`<w:r>${rPr}<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`)
     }
+  })
 
-    if (runs.length === 0) continue
+  return runs.join('')
+}
 
-    const prefix = isBullet
-      ? `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">• </w:t></w:r>`
-      : ''
+function buildParagraphXml(runs: string, prefix = ''): string {
+  return `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:spacing w:after="60"/></w:pPr>${prefix}${runs}</w:p>`
+}
 
-    paragraphs.push(
-      `<w:p xmlns:w="${W_NS}"><w:pPr><w:pStyle w:val="Normal"/><w:spacing w:after="60"/></w:pPr>${prefix}${runs.join('')}</w:p>`
-    )
+function buildListMarkerRun(marker: string, sz = '20'): string {
+  return `<w:r><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${marker}</w:t></w:r>`
+}
+
+/**
+ * Convert TipTap HTML content to OpenXML paragraphs (text evidence pages and
+ * the activity description cell). Handles paragraphs, ordered/unordered lists,
+ * bold, italic and line breaks.
+ */
+export function htmlToWordXml(html: string): string {
+  if (!html) return ''
+  const paragraphs: string[] = []
+  // Iterate top-level blocks (lists or paragraphs) in document order.
+  const blockRe = /<(ul|ol)\b[^>]*>([\s\S]*?)<\/\1>|<p\b[^>]*>([\s\S]*?)<\/p>/gi
+  let match: RegExpExecArray | null
+  let matchedAny = false
+
+  while ((match = blockRe.exec(html)) !== null) {
+    matchedAny = true
+
+    if (match[1]) {
+      // List: number ordered items, bullet unordered ones.
+      const ordered = match[1].toLowerCase() === 'ol'
+      const liRe = /<li\b[^>]*>([\s\S]*?)<\/li>/gi
+      let li: RegExpExecArray | null
+      let itemIdx = 0
+      while ((li = liRe.exec(match[2])) !== null) {
+        itemIdx++
+        // TipTap wraps list-item content in a paragraph; strip the wrapper.
+        const inner = li[1].replace(/<\/?p\b[^>]*>/gi, '')
+        const runs = inlineHtmlToRuns(inner)
+        if (!runs) continue
+        const marker = ordered ? `${itemIdx}. ` : '• '
+        paragraphs.push(buildParagraphXml(runs, buildListMarkerRun(marker)))
+      }
+    } else {
+      const runs = inlineHtmlToRuns(match[3])
+      if (runs) paragraphs.push(buildParagraphXml(runs))
+    }
+  }
+
+  if (!matchedAny) {
+    // Unstructured content (e.g. legacy plain text): treat the whole value inline.
+    const runs = inlineHtmlToRuns(html)
+    if (runs) paragraphs.push(buildParagraphXml(runs))
   }
 
   return paragraphs.join('')
+}
+
+/** Detecta se a descrição já é HTML rich-text (editor) e não texto plano legado. */
+function isLikelyHtmlDescription(value: string): boolean {
+  return /<(p|br|ul|ol|li|strong|em|b|i)\b[^>]*>/i.test(value)
+}
+
+function buildBreakRun(sz: string): string {
+  return `<w:r><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:br/></w:r>`
+}
+
+/**
+ * Converte o HTML rich-text da descrição numa sequência de runs para UMA célula
+ * (mantém o parágrafo da célula). Blocos são separados por quebras de linha,
+ * itens de lista recebem marcador (• ou 1., 2., ...) e negrito/itálico são honrados.
+ */
+function htmlToCellRunsXml(html: string, sz: string): string {
+  const blocks: string[] = []
+  const blockRe = /<(ul|ol)\b[^>]*>([\s\S]*?)<\/\1>|<p\b[^>]*>([\s\S]*?)<\/p>/gi
+  let match: RegExpExecArray | null
+  let matchedAny = false
+
+  while ((match = blockRe.exec(html)) !== null) {
+    matchedAny = true
+    if (match[1]) {
+      const ordered = match[1].toLowerCase() === 'ol'
+      const liRe = /<li\b[^>]*>([\s\S]*?)<\/li>/gi
+      let li: RegExpExecArray | null
+      let itemIdx = 0
+      while ((li = liRe.exec(match[2])) !== null) {
+        itemIdx++
+        const inner = li[1].replace(/<\/?p\b[^>]*>/gi, '')
+        const runs = inlineHtmlToRuns(inner, sz)
+        if (!runs) continue
+        const marker = ordered ? `${itemIdx}. ` : '• '
+        blocks.push(buildListMarkerRun(marker, sz) + runs)
+      }
+    } else {
+      const runs = inlineHtmlToRuns(match[3], sz)
+      if (runs) blocks.push(runs)
+    }
+  }
+
+  if (!matchedAny) {
+    const runs = inlineHtmlToRuns(html, sz)
+    if (runs) blocks.push(runs)
+  }
+
+  return blocks.join(buildBreakRun(sz))
+}
+
+/**
+ * Substitui o run que contém o placeholder por uma sequência de runs (XML),
+ * preservando o parágrafo da célula. Usado para a descrição rich-text no DOCX.
+ */
+function replaceRunWithRunsXml(node: any, search: string, runsXml: string): boolean {
+  if (node.localName === 't' && node.namespaceURI === W_NS) {
+    if (!(node.textContent && node.textContent.includes(search))) return false
+
+    const run = node.parentNode
+    const para = run.parentNode
+    if (!runsXml) {
+      node.textContent = ''
+      return true
+    }
+
+    const doc = node.ownerDocument
+    const frag = new DOMParser().parseFromString(`<w:wrap xmlns:w="${W_NS}">${runsXml}</w:wrap>`, 'application/xml')
+    let child = (frag.documentElement as any).firstChild
+    while (child) {
+      const nextChild = child.nextSibling
+      para.insertBefore(doc.importNode(child, true), run)
+      child = nextChild
+    }
+    para.removeChild(run)
+    return true
+  }
+
+  let child = node.firstChild
+  while (child) {
+    const next = child.nextSibling
+    if (replaceRunWithRunsXml(child, search, runsXml)) return true
+    child = next
+  }
+  return false
 }
 
 function buildTextEvidencePageXml(
@@ -621,7 +812,14 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
       const actRow = cloneNode(activityRowTemplate) as Element
 
       replaceTextInNode(actRow, '{{activity_order}}', String(actOrderGlobal))
-      replaceTextInNode(actRow, '{{activity_description}}', act.description || '')
+      const activityDescription = act.description || ''
+      if (isLikelyHtmlDescription(activityDescription)) {
+        // Descrição rich-text (editor): renderiza formatação na célula (sz 18 = 9pt do template).
+        replaceRunWithRunsXml(actRow, '{{activity_description}}', htmlToCellRunsXml(activityDescription, '18'))
+      } else {
+        // Descrição legada em texto plano: preserva apenas as quebras de linha.
+        replaceTextInNodeMultiline(actRow, '{{activity_description}}', activityDescription)
+      }
       replaceTextInNode(actRow, '{{activity_reference}}', '')
       // svn_releases is internal metadata for publication workflow and must not be exported to DOCX.
       replaceTextInNode(actRow, '{{activity_date_start}}', formatDateBR(act.date_start))

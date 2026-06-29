@@ -282,7 +282,8 @@
         "terminal.integrated.tabs.defaultIcon": "terminal-powershell",
         "terminal.integrated.env.windows": {
             "PATH": "C:\\Program Files\\GitHub CLI;${env:PATH}"
-        }
+        },
+        "folder-color.pathColors": []
     },
     "extensions": {
         "recommendations": [

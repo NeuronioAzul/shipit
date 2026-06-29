@@ -85,10 +85,10 @@ Colete os dados abaixo antes de editar. Quando possível, faça leituras em para
 
 ### Inventário documental
 
-22. **Documentos principais** → `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md`.
+22. **Documentos principais** → `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `CLAUDE.md`.
 23. **Docs técnicos** → `docs/TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/DEPENDENCIES.md`.
 24. **Planos reutilizáveis** → `docs/plan-*.prompt.md` e este arquivo, quando o próprio processo documental mudou.
-25. **Links internos** → paths relativos entre README, docs e `.github/copilot-instructions.md`.
+25. **Links internos** → paths relativos entre README, docs e `CLAUDE.md`.
 
 Registre os dados coletados em uma tabela curta de referência antes de editar mentalmente; não precisa criar arquivo temporário.
 
@@ -253,23 +253,23 @@ Registre os dados coletados em uma tabela curta de referência antes de editar m
 
 ---
 
-## Fase 8: .github/copilot-instructions.md
+## Fase 8: CLAUDE.md
 
-**Arquivo**: `.github/copilot-instructions.md`
+**Arquivo**: `CLAUDE.md` (raiz do projeto — carregado automaticamente pelo Claude Code)
 
 ### Checklist
 
-- [ ] Header reflete versão atual/dev e último release.
-- [ ] Tech Stack table está completa e com versões corretas.
-- [ ] IPC handlers, rotas, entidades, temas e schedulers batem com o código.
-- [ ] File Structure lista pastas e componentes relevantes sem ficar obsoleta demais.
-- [ ] Conventions refletem práticas reais do projeto.
-- [ ] Gotchas incluem aprendizados recentes que evitam erro recorrente.
-- [ ] Roadmap Context reflete fases realmente concluídas.
+- [ ] Versão atual reflete o `package.json`.
+- [ ] Stack está completa e com versões corretas; lista de "não usa" continua verdadeira.
+- [ ] Regras invioláveis (segurança Electron, protocolos, idioma, tokens Tailwind, dois processos TS) continuam corretas.
+- [ ] Mapa "onde mexer" aponta para os arquivos certos (IPC, entidades, páginas, temas, DOCX).
+- [ ] Gotchas e Convenções incluem aprendizados recentes que evitam erro recorrente.
+- [ ] Os três arquivos de tarefa (rascunho/TODO/DONE) e o fluxo de release estão descritos corretamente.
+- [ ] Links internos para `docs/` funcionam.
 
 ### O que verificar
 
-Este é o arquivo mais crítico para agentes de IA no projeto.
+Este é o arquivo mais crítico para o Claude Code no projeto.
 
 1. Cruze cada seção com o código real.
 2. Prefira descrições estáveis a contagens frágeis quando o doc não precisa de número exato.
@@ -304,10 +304,10 @@ Execute esta fase por último.
 ### Consistência entre documentos
 
 - [ ] Versão, último release e estado `-dev` estão consistentes.
-- [ ] Contagem de testes é a mesma em README/DEVELOPMENT/TODO/copilot-instructions quando citada.
+- [ ] Contagem de testes é a mesma em README/DEVELOPMENT/TODO/CLAUDE.md quando citada.
 - [ ] Contagem de IPC é consistente ou documentada como aproximada de forma intencional.
 - [ ] Contagem de temas é consistente.
-- [ ] Componentes/páginas/rotas/entidades batem entre ARCHITECTURE e copilot-instructions.
+- [ ] Componentes/páginas/rotas/entidades batem entre ARCHITECTURE e CLAUDE.md.
 - [ ] Dependências e scripts batem com `package.json`.
 - [ ] Links internos usam paths relativos corretos.
 - [ ] README e CONTRIBUTING não duplicam detalhes técnicos extensos que pertencem a `docs/DEVELOPMENT.md`.
@@ -329,7 +329,7 @@ Use os comandos conforme necessário, adaptando ao shell disponível.
 ```bash
 npm run test
 npm run build
-rg "Version|Versão|1\." README.md CHANGELOG.md docs .github/copilot-instructions.md
+rg "Version|Versão|1\." README.md CHANGELOG.md docs CLAUDE.md
 rg "ipcMain\.handle|contextBridge|electronAPI" electron src
 rg --files src/components src/pages electron/entities .github/workflows docs
 ```

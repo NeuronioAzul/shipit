@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { ActivityData } from '../vite-env'
 import { localDb } from '../services/localDb'
 import { STATUS_COLORS } from '../utils/statusColors'
+import { htmlToPlainText } from '../utils/richText'
 
 export function SearchBar() {
   const navigate = useNavigate()
@@ -59,7 +60,7 @@ export function SearchBar() {
         const all = localDb.getActivities('')
         const lower = q.toLowerCase()
         data = all.filter(a =>
-          a.description?.toLowerCase().includes(lower) ||
+          htmlToPlainText(a.description).toLowerCase().includes(lower) ||
           a.project_scope?.toLowerCase().includes(lower) ||
           a.link_ref?.toLowerCase().includes(lower) ||
           a.svn_releases?.toLowerCase().includes(lower)
@@ -193,7 +194,7 @@ export function SearchBar() {
                 )}
               </div>
               <p className="text-sm text-foreground line-clamp-1">
-                {highlightMatch(activity.description)}
+                {highlightMatch(htmlToPlainText(activity.description))}
               </p>
               {activity.project_scope && (
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
