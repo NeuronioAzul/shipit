@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "./themes/themes.css";
+@import "./themes/controls.css";
 @import "./themes/scrollbars.css";
 
 /* ===== ShipIt! WCAG AA Palette ===== */
@@ -114,6 +115,7 @@
   }
   .dark ::selection,
   .futuristic ::selection,
+  .ocean ::selection,
   .high-contrast-dark ::selection {
     background-color: color-mix(in srgb, var(--selection) 35%, transparent);
     color: var(--selection-foreground);
