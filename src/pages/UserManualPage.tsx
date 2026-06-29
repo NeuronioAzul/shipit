@@ -19,7 +19,7 @@ export function UserManualPage() {
           id="manual-btn-back"
           type="button"
           onClick={() => navigate(-1)}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="btn btn-ghost btn-icon text-muted-foreground hover:text-foreground"
           title="Voltar"
           aria-label="Voltar para a tela anterior"
         >

@@ -88,7 +88,7 @@ export function TextEvidenceModal({
             id="text-evidence-modal-btn-close"
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="btn btn-ghost btn-icon-sm"
             aria-label="Fechar"
           >
             <i className="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
@@ -109,8 +109,7 @@ export function TextEvidenceModal({
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Legenda da evidência..."
-                className="w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg
-                  focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                className="field"
               />
             </div>
           ) : caption ? (
@@ -142,7 +141,7 @@ export function TextEvidenceModal({
               id="text-evidence-modal-btn-cancel"
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm rounded hover:bg-muted transition-colors cursor-pointer"
+              className="btn btn-outline"
             >
               Cancelar
             </button>
@@ -151,7 +150,7 @@ export function TextEvidenceModal({
               type="button"
               onClick={handleSave}
               disabled={!canSave}
-              className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="btn btn-primary"
             >
               <i className="fa-solid fa-floppy-disk" aria-hidden="true"></i>
               Salvar

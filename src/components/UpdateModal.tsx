@@ -58,7 +58,7 @@ export function UpdateModal({ open, onClose }: UpdateModalProps) {
           <button
             id="titlebar-update-modal-btn-close"
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon-sm text-muted-foreground hover:text-foreground"
             aria-label="Fechar"
           >
             <i className="fa-solid fa-xmark text-lg" aria-hidden="true"></i>

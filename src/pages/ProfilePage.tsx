@@ -251,12 +251,8 @@ export function ProfilePage() {
     }
   }
 
-  const inputClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
-    'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
-  const inputErrorClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
-    'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
+  const inputClass = 'field'
+  const inputErrorClass = 'field field-error'
 
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
 
@@ -268,17 +264,13 @@ export function ProfilePage() {
     return fieldError(field) ? inputErrorClass : inputClass
   }
 
-  function frameClass(field: string): string {
-    return '' + (fieldError(field) ? '' : '')
-  }
-
   return (
     <div className="max-w-4xl mx-auto">
       <div id="profile-header" className="flex items-center gap-3 mb-6">
         <button
           id="profile-btn-edit"
           onClick={() => navigate('/')}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="btn btn-ghost btn-icon hover:text-foreground"
           title="Voltar"
           aria-label="Voltar ao Dashboard"
         >
@@ -309,7 +301,7 @@ export function ProfilePage() {
           <label htmlFor="full_name" className={labelClass}>
             Nome Completo <span className="text-destructive">*</span>
           </label>
-          <div className={frameClass('full_name')}>
+          <div>
             <input
               id="full_name"
               name="full_name"
@@ -376,7 +368,7 @@ export function ProfilePage() {
           <label htmlFor="contract_identifier" className={labelClass}>
             Identificador do Contrato <span className="text-destructive">*</span>
           </label>
-          <div className={frameClass('contract_identifier')}>
+          <div>
             <input
               id="contract_identifier"
               name="contract_identifier"
@@ -443,7 +435,7 @@ export function ProfilePage() {
           <label htmlFor="project_scope" className={labelClass}>
             Escopo: (Squad / Projeto / Aplicação) <span className="text-destructive">*</span>
           </label>
-          <div className={frameClass('project_scope')}>
+          <div>
             <input
               id="project_scope"
               name="project_scope"
@@ -468,7 +460,7 @@ export function ProfilePage() {
           <label htmlFor="correlating_activities" className={labelClass}>
             Atividades Correlatas <span className="text-destructive">*</span>
           </label>
-          <div className={frameClass('correlating_activities')}>
+          <div>
             <textarea
               id="correlating_activities"
               name="correlating_activities"
@@ -494,7 +486,7 @@ export function ProfilePage() {
               <label htmlFor="daily_availability" className={labelClass}>
                 Disponibilidade Diária <span className="text-destructive">*</span>
               </label>
-              <div className={frameClass('daily_availability')}>
+              <div>
                 <input
                   id="daily_availability"
                   name="daily_availability"
@@ -518,7 +510,7 @@ export function ProfilePage() {
               <label htmlFor="monthly_availability" className={labelClass}>
                 Disponibilidade Mensal <span className="text-destructive">*</span>
               </label>
-              <div className={frameClass('monthly_availability')}>
+              <div>
                 <input
                   id="monthly_availability"
                   name="monthly_availability"
@@ -542,7 +534,7 @@ export function ProfilePage() {
               <label htmlFor="minimum_effort_hours" className={labelClass}>
                 Esforço Mínimo em Horas <span className="text-destructive">*</span>
               </label>
-              <div className={frameClass('minimum_effort_hours')}>
+              <div>
                 <input
                   id="minimum_effort_hours"
                   name="minimum_effort_hours"
@@ -570,10 +562,7 @@ export function ProfilePage() {
             id="profile-btn-submit"
             type="submit"
             disabled={saving}
-            className="px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-lg
-              hover:opacity-90 transition-all cursor-pointer shadow-md
-              disabled:opacity-50 disabled:cursor-not-allowed
-              flex items-center gap-2"
+            className="btn btn-accent btn-lg shadow-md"
           >
             {saving ? (
               <>
@@ -592,8 +581,7 @@ export function ProfilePage() {
             id="profile-btn-cancel"
             type="button"
             onClick={() => navigate('/')}
-            className="px-6 py-2.5 border border-border text-foreground rounded-lg
-              hover:bg-muted transition-colors cursor-pointer"
+            className="btn btn-outline"
           >
             Cancelar
           </button>

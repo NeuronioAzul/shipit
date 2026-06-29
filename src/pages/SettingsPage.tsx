@@ -304,7 +304,7 @@ export function SettingsPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/')}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="btn btn-ghost btn-icon"
           title="Voltar"
           aria-label="Voltar ao Dashboard"
         >
@@ -338,14 +338,14 @@ export function SettingsPage() {
                 type="text"
                 readOnly
                 value={reportsDir}
-                className="flex-1 px-3 py-2 bg-muted text-foreground text-sm w-full border border-border rounded-lg truncate"
+                className="field truncate"
                 title={reportsDir}
               />
             </div>
             <button
               id="settings-reports-btn-select"
               onClick={handleSelectDir}
-              className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+              className="btn btn-primary whitespace-nowrap"
             >
               <i className="fa-solid fa-folder-open mr-1"></i>
               Alterar
@@ -356,7 +356,7 @@ export function SettingsPage() {
               <button
                 id="settings-reports-btn-reset"
                 onClick={handleResetDir}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer underline"
+                className="btn-link text-xs"
               >
                 Restaurar padrão
               </button>
@@ -394,7 +394,7 @@ export function SettingsPage() {
             {selectedSound && (
               <button
                 onClick={() => handlePlaySound(selectedSound)}
-                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+                className="btn btn-primary btn-icon whitespace-nowrap"
                 title="Ouvir som"
                 aria-label="Ouvir som selecionado"
               >
@@ -421,7 +421,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={autoLaunch}
               onChange={handleToggleAutoLaunch}
-              className="accent-accent w-4 h-4"
+              className="checkbox"
             />
             <div>
               <span className="text-sm">Iniciar com o sistema</span>
@@ -446,7 +446,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={alertEnabled}
               onChange={(e) => setAlertEnabled(e.target.checked)}
-              className="accent-accent w-4 h-4"
+              className="checkbox"
             />
             <div>
               <span className="text-sm">Habilitar alertas de lembrete</span>
@@ -466,7 +466,7 @@ export function SettingsPage() {
                     <button
                       key={day}
                       onClick={() => toggleAlertDay(day)}
-                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         alertDaysBefore.includes(day)
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
@@ -500,7 +500,7 @@ export function SettingsPage() {
                     value={alertMessage}
                     onChange={(e) => setAlertMessage(e.target.value)}
                     rows={2}
-                    className="w-full px-3 py-2 text-foreground text-sm border border-border rounded-lg resize-none"
+                    className="field resize-none"
                   />
                 </div>
               </div>
@@ -512,7 +512,7 @@ export function SettingsPage() {
                   type="checkbox"
                   checked={alertSoundEnabled}
                   onChange={(e) => setAlertSoundEnabled(e.target.checked)}
-                  className="accent-accent w-4 h-4"
+                  className="checkbox"
                 />
                 <span className="text-sm">Tocar som ao alertar</span>
               </label>
@@ -522,7 +522,7 @@ export function SettingsPage() {
                 <button
                   id="settings-alerts-btn-save"
                   onClick={handleSaveAlert}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm flex items-center gap-2"
+                  className="btn btn-primary"
                 >
                   <i className="fa-solid fa-floppy-disk"></i>
                   Salvar Notificações
@@ -579,7 +579,7 @@ export function SettingsPage() {
               id="settings-btn-about"
               type="button"
               onClick={() => navigate('/about')}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer text-sm inline-flex items-center gap-2"
+              className="btn btn-primary"
             >
               <i className="fa-solid fa-lightbulb" aria-hidden="true"></i>
               Abrir tela Sobre

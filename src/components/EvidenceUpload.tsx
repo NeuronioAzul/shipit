@@ -163,8 +163,7 @@ function SortableEvidenceCard({
               value={captionValue}
               onChange={(e) => setCaptionValue(e.target.value)}
               placeholder="Legenda da imagem..."
-              className="flex-1 px-2 py-1 bg-background text-foreground border border-border rounded text-sm
-                focus:outline-none focus:ring-1 focus:ring-ring"
+              className="field field-sm flex-1"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') saveCaption(evidence.id)
                 if (e.key === 'Escape') setEditingCaption(null)
@@ -174,7 +173,7 @@ function SortableEvidenceCard({
             <button
               type="button"
               onClick={() => saveCaption(evidence.id)}
-              className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm cursor-pointer hover:opacity-90"
+              className="btn btn-primary btn-icon-sm"
               aria-label="Salvar legenda"
             >
               <i className="fa-solid fa-check" aria-hidden="true"></i>
@@ -455,8 +454,7 @@ export function EvidenceUpload({
                   e.stopPropagation()
                   handlePaste()
                 }}
-                className="text-sm px-3 py-1 border border-border rounded-md
-                  hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                className="btn btn-outline btn-sm"
               >
                 <i className="fa-solid fa-paste mr-1"></i>
                 Colar da Área de Transferência

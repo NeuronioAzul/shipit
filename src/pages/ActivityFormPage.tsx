@@ -356,12 +356,8 @@ export function ActivityFormPage() {
     }
   }
 
-  const inputClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
-    'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
-  const inputErrorClass =
-    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
-    'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
+  const inputClass = 'field'
+  const inputErrorClass = 'field field-error'
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
 
   function fieldError(field: string): string | undefined {
@@ -370,10 +366,6 @@ export function ActivityFormPage() {
 
   function fieldClass(field: string): string {
     return fieldError(field) ? inputErrorClass : inputClass
-  }
-
-  function frameClass(field: string): string {
-    return '' + (fieldError(field) ? '' : '')
   }
 
   const svnReleaseTags = parseSvnReleasesStored(form.svn_releases)
@@ -400,7 +392,7 @@ export function ActivityFormPage() {
           <button
             id="activity-form-btn-back"
             onClick={() => navigate(`/activities?month=${form.month_reference}`)}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon text-muted-foreground hover:text-foreground"
             title="Voltar"
             aria-label="Voltar para lista de atividades"
           >
@@ -432,7 +424,7 @@ export function ActivityFormPage() {
             id="activity-form-btn-cancel"
             type="button"
             onClick={() => navigate(`/activities?month=${form.month_reference}`)}
-            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer"
+            className="btn btn-outline"
           >
             Cancelar
           </button>
@@ -442,9 +434,7 @@ export function ActivityFormPage() {
             type="submit"
             form="activity-form"
             disabled={saving}
-            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
-              hover:opacity-90 transition-all cursor-pointer shadow-md
-              disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="btn btn-accent shadow-md"
           >
             {saving ? (
               <>
@@ -566,7 +556,7 @@ export function ActivityFormPage() {
             <label htmlFor="month_reference" className={labelClass}>
               Mês de Referência <span className="text-warning">*</span>
             </label>
-            <div className={frameClass('month_reference')}>
+            <div>
               <input
                 id="month_reference"
                 name="month_reference"

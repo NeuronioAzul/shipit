@@ -164,7 +164,7 @@ function SortableActivityItem({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onNavigate(`/activities/${activity.id}/edit`)}
-            className="p-2 rounded hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+            className="btn btn-ghost btn-icon"
             title="Editar"
             aria-label="Editar atividade"
           >
@@ -172,7 +172,7 @@ function SortableActivityItem({
           </button>
           <button
             onClick={() => onDelete(activity.id)}
-            className="p-2 rounded hover:bg-destructive/10 transition-colors cursor-pointer text-muted-foreground hover:text-destructive"
+            className="btn btn-ghost btn-icon hover:text-destructive"
             title="Excluir"
             aria-label="Excluir atividade"
           >
@@ -316,7 +316,7 @@ export function ActivitiesPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/')}
-            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="btn btn-ghost btn-icon"
             title="Voltar"
           >
             <i className="fa-solid fa-arrow-left text-lg"></i>
@@ -329,11 +329,8 @@ export function ActivitiesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 bg-primary text-primary-foreground rounded-lg
-            hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2 ${
-              showFilters || hasActiveFilters
-                ? 'bg-primary/20 hover:bg-primary'
-                : ''
+            className={`btn ${
+              showFilters || hasActiveFilters ? 'btn-primary' : 'btn-outline'
             }`}
             title="Filtros"
           >
@@ -345,8 +342,7 @@ export function ActivitiesPage() {
           </button>
           <button
             onClick={() => navigate(`/activities/new?month=${monthRef}`)}
-            className="px-4 py-2 bg-accent text-accent-foreground font-semibold rounded-lg
-              hover:opacity-90 transition-all cursor-pointer shadow-md flex items-center gap-2"
+            className="btn btn-accent shadow-md"
           >
             <i className="fa-solid fa-plus"></i>
             Nova Atividade
@@ -369,7 +365,7 @@ export function ActivitiesPage() {
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
                   placeholder="Buscar..."
-                  className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                  className="field field-sm"
                 />
               </div>
             </div>
@@ -412,7 +408,7 @@ export function ActivitiesPage() {
                   value={filterScope}
                   onChange={(e) => setFilterScope(e.target.value)}
                   placeholder="Filtrar por escopo..."
-                  className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                  className="field field-sm"
                 />
               </div>
             </div>
@@ -446,7 +442,7 @@ export function ActivitiesPage() {
               )}
               <button
                 onClick={clearFilters}
-                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer underline"
+                className="btn-link text-xs"
               >
                 Limpar filtros
               </button>
@@ -460,7 +456,7 @@ export function ActivitiesPage() {
         <div className="flex items-center justify-center gap-4 mb-6 select-none">
           <button
             onClick={() => changeMonth(-1)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon"
             aria-label="Mês anterior"
           >
             <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
@@ -470,7 +466,7 @@ export function ActivitiesPage() {
           </span>
           <button
             onClick={() => changeMonth(1)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="btn btn-ghost btn-icon"
             aria-label="Próximo mês"
           >
             <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
@@ -499,7 +495,7 @@ export function ActivitiesPage() {
           {hasActiveFilters ? (
             <button
               onClick={clearFilters}
-              className="mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="btn btn-outline mt-4"
             >
               <i className="fa-solid fa-xmark"></i>
               Limpar filtros
@@ -507,8 +503,7 @@ export function ActivitiesPage() {
           ) : (
             <button
               onClick={() => navigate(`/activities/new?month=${monthRef}`)}
-              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg
-                hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-2"
+              className="btn btn-primary mt-4"
             >
               <i className="fa-solid fa-plus"></i>
               Registrar Atividade
@@ -547,13 +542,13 @@ export function ActivitiesPage() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/60 transition-colors cursor-pointer"
+                className="btn btn-outline"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDelete(deleteId)}
-                className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/60 transition-colors cursor-pointer"
+                className="btn btn-destructive"
               >
                 Excluir
               </button>

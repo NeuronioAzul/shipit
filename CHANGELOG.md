@@ -9,6 +9,18 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Adicionado
+
+- **Sistema padronizado de controles** (`src/themes/controls.css`): classes `.btn*` (primary/accent/secondary/destructive/outline/ghost/link + tamanhos), `.field*` (texto, textarea e gatilhos de Select/Date/Time), `.checkbox` e `.option`, todas baseadas em tokens de tema. Botões, campos de formulário, checkboxes e opções de lista passam a compartilhar raio, padding, foco, hover e estados de disabled idênticos em todos os temas.
+- Imagem de fundo sutil no tema **Rosa & Violeta** (`public/assets/images/bg/tema-rosa.jpg`), com scrim translúcido para preservar a legibilidade.
+- Testes unitários do registro de temas (`src/themes/themes.test.ts`).
+
+### Alterado
+
+- **Temas repaginados e padronizados**: novas paletas para **Futurista** (neon ciano/roxo em preto), **Oceano** (agora base **escura** — oceano profundo, azul e verde-água) e **Pôr do Sol** (tons quentes de outono e dourados). Temas de **Alto Contraste** ajustados para a paleta 8-bit websafe mantendo WCAG AAA.
+- **Temas equalizados**: as 10 paletas passam a definir exatamente o mesmo conjunto de ~60 variáveis CSS, facilitando a manutenção.
+- **Botões e campos de formulário unificados** em todo o app via o sistema de controles: semântica de "Cancelar" padronizada (contorno), ações destrutivas e CTAs consistentes, remoção de cores cruas (`emerald-300`, `amber-400`, etc.) e foco visível em todos os controles. Correções pontuais: borda conflitante no seletor de temas, `group/ev` na revelação de ações de evidência, hover sem efeito e duplicação de `className` no TimePicker.
+
 ### Removido
 
 - **Tema Cyberpunk removido por completo**: stylesheet de efeitos (`src/themes/cyberpunk-effects.css`), bloco de paleta `.cyberpunk`, entrada no registro de temas, classes-gancho `cyber-*` no markup, cenários E2E específicos, cursores customizados órfãos (`public/assets/cursors/`) e a pasta de referência `docs/cyber-punk-style-samples/`. O app passa a ter **10 temas**. Preferências antigas (`shipit-theme = "cyberpunk"`) degradam automaticamente para o tema Claro.

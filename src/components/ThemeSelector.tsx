@@ -7,8 +7,9 @@ function ThemeCard({ theme, isActive, onSelect }: { theme: ThemeMetadata; isActi
       onClick={onSelect}
       className={`
         relative flex flex-col gap-2 p-3 rounded-lg border-2 text-left cursor-pointer transition-all
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
         ${isActive
-          ? 'border-primary border border-3'
+          ? 'border-primary bg-card ring-2 ring-primary/40'
           : 'border-border bg-card hover:border-primary/40 hover:bg-surface-hover'
         }
       `}
@@ -22,7 +23,7 @@ function ThemeCard({ theme, isActive, onSelect }: { theme: ThemeMetadata; isActi
           (color, i) => (
             <span
               key={i}
-              className="w-5 h-5 rounded-full border border-black/10 shrink-0"
+              className="w-5 h-5 rounded-full border border-border shrink-0"
               style={{ backgroundColor: color }}
             />
           ),

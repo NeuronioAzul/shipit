@@ -168,9 +168,7 @@ export function TimePicker({
     items[focusedMinIdx]?.scrollIntoView({ block: 'nearest' })
   }, [open, focusedMinIdx, focusCol])
 
-  const inputBaseClass = hasError
-    ? 'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
-    : 'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
+  const inputBaseClass = hasError ? 'field field-error' : 'field'
 
   const dropdown = open
     ? createPortal(
@@ -221,9 +219,9 @@ export function TimePicker({
                 const isFocused = h === focusedHour && focusCol === 'hour'
                 let cls =
                   'timepicker-item text-center py-1.5 text-sm cursor-pointer transition-colors '
-                if (isSelected) cls += 'timepicker-item-selected bg-primary/10 text-primary font-semibold '
-                if (isFocused && !isSelected) cls += 'bg-surface-hover '
-                if (!isSelected && !isFocused) cls += 'hover:bg-surface-hover '
+                if (isSelected) cls += 'option-selected '
+                else if (isFocused) cls += 'bg-surface-hover '
+                else cls += 'hover:bg-surface-hover '
                 return (
                   <div
                     key={h}
@@ -254,9 +252,9 @@ export function TimePicker({
                 const isFocused = idx === focusedMinIdx && focusCol === 'minute'
                 let cls =
                   'timepicker-item text-center py-1.5 text-sm cursor-pointer transition-colors '
-                if (isSelected) cls += 'timepicker-item-selected bg-primary/10 text-primary font-semibold '
-                if (isFocused && !isSelected) cls += 'bg-surface-hover '
-                if (!isSelected && !isFocused) cls += 'hover:bg-surface-hover '
+                if (isSelected) cls += 'option-selected '
+                else if (isFocused) cls += 'bg-surface-hover '
+                else cls += 'hover:bg-surface-hover '
                 return (
                   <div
                     key={m}
@@ -287,7 +285,7 @@ export function TimePicker({
         type="button"
         onClick={() => setOpen(!open)}
         onKeyDown={handleKeyDown}
-        className={`${inputBaseClass} flex items-center justify-between text-left ${className}`}
+        className={`${inputBaseClass} flex items-center justify-between text-left`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={placeholder}
