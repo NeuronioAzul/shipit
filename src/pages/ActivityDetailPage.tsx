@@ -673,7 +673,7 @@ export function ActivityDetailPage() {
                   key={release}
                   className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30"
                 >
-                  #{release}
+                  {release}
                 </span>
               ))}
             </div>

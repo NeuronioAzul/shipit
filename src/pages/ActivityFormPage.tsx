@@ -44,7 +44,7 @@ export function ActivityFormPage() {
     description: '',
     date_start: '',
     date_end: '',
-    status: 'Pendente',
+    status: 'Concluído',
     link_ref: '',
     svn_releases: '',
     attendance_type: '',

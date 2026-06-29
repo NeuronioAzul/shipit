@@ -9,6 +9,11 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Alterado
+
+- O campo **Status** no formulário de criação de atividade passa a vir preenchido com **"Concluído"** por padrão (antes era "Pendente"). A edição de atividades existentes continua respeitando o status salvo.
+- Os números de release no campo **Releases SVN (uso interno)** deixaram de exibir o prefixo `#` em todas as telas (formulário, lista de atividades e detalhe da atividade) — agora aparecem apenas como o número.
+
 ## [1.9.0] — 2026-06-29
 
 ### Adicionado

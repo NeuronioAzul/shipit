@@ -940,8 +940,8 @@ test('creates activity with svn releases tags and finds it through global search
   await svnInput.press('Tab')
 
   const svnSection = page.locator('#activity-form-svn-releases-section')
-  await expect(svnSection).toContainText(`#${releaseA}`)
-  await expect(svnSection).toContainText(`#${releaseB}`)
+  await expect(svnSection).toContainText(releaseA)
+  await expect(svnSection).toContainText(releaseB)
 
   await svnInput.fill('abc,')
   await svnInput.press('Tab')
@@ -950,13 +950,13 @@ test('creates activity with svn releases tags and finds it through global search
   await page.click('button[type="submit"]')
   await page.waitForURL(new RegExp(`#/activities\\?month=${monthRef.replace('/', '\\/')}$`), { timeout: 10_000 })
 
-  await expect(page.locator('#activities-list')).toContainText(`#${releaseA}`)
-  await expect(page.locator('#activities-list')).toContainText(`#${releaseB}`)
+  await expect(page.locator('#activities-list')).toContainText(releaseA)
+  await expect(page.locator('#activities-list')).toContainText(releaseB)
 
   await page.locator('.flex-1.cursor-pointer', { hasText: description }).first().click()
   await page.waitForURL(/#\/activities\/[^/?#]+$/)
-  await expect(page.locator('#activity-detail-svn-releases')).toContainText(`#${releaseA}`)
-  await expect(page.locator('#activity-detail-svn-releases')).toContainText(`#${releaseB}`)
+  await expect(page.locator('#activity-detail-svn-releases')).toContainText(releaseA)
+  await expect(page.locator('#activity-detail-svn-releases')).toContainText(releaseB)
 
   await page.keyboard.press('Control+k')
   const searchInput = page.locator('#searchbar-input')
