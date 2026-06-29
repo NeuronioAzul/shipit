@@ -2,7 +2,6 @@
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "./themes/themes.css";
 @import "./themes/scrollbars.css";
-@import "./themes/cyberpunk-effects.css";
 
 /* ===== ShipIt! WCAG AA Palette ===== */
 /* Theme variables are defined in ./themes/themes.css */
@@ -115,8 +114,7 @@
   }
   .dark ::selection,
   .futuristic ::selection,
-  .high-contrast-dark ::selection,
-  .cyberpunk ::selection {
+  .high-contrast-dark ::selection {
     background-color: color-mix(in srgb, var(--selection) 35%, transparent);
     color: var(--selection-foreground);
   }

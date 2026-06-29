@@ -357,10 +357,10 @@ export function ActivityFormPage() {
   }
 
   const inputClass =
-    'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
+    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
   const inputErrorClass =
-    'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
 
@@ -373,7 +373,7 @@ export function ActivityFormPage() {
   }
 
   function frameClass(field: string): string {
-    return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+    return '' + (fieldError(field) ? '' : '')
   }
 
   const svnReleaseTags = parseSvnReleasesStored(form.svn_releases)
@@ -589,7 +589,7 @@ export function ActivityFormPage() {
           <label htmlFor="project_scope" className={labelClass}>
             Escopo: (Squad / Projeto / Aplicação)
           </label>
-          <div className="cyber-input-frame">
+          <div>
             <input
               id="project_scope"
               name="project_scope"
@@ -610,7 +610,7 @@ export function ActivityFormPage() {
           <label htmlFor="link_ref" className={labelClass}>
             Links de Referência
           </label>
-          <div className="cyber-input-frame">
+          <div>
             <textarea
               id="link_ref"
               name="link_ref"

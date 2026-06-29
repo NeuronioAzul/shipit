@@ -84,7 +84,7 @@ function SortableEvidenceCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="cyber-neon-border p-2 bg-card border border-border rounded-lg overflow-hidden group"
+      className="p-2 bg-card border border-border rounded-lg overflow-hidden group"
     >
       {/* Preview area */}
       <div
@@ -455,7 +455,7 @@ export function EvidenceUpload({
                   e.stopPropagation()
                   handlePaste()
                 }}
-                className="cyber-neon-border text-sm px-3 py-1 border border-border rounded-md
+                className="text-sm px-3 py-1 border border-border rounded-md
                   hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
               >
                 <i className="fa-solid fa-paste mr-1"></i>
@@ -506,7 +506,7 @@ export function EvidenceUpload({
       <button
         type="button"
         onClick={openTextModalCreate}
-        className="cyber-neon-border w-full border-2 border-dashed border-border rounded-lg p-4 text-center
+        className="w-full border-2 border-dashed border-border rounded-lg p-4 text-center
           hover:border-primary hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
       >
         <i className="fa-solid fa-file-circle-plus"></i>

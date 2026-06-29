@@ -144,8 +144,8 @@ export function Select({
   const sizeClasses = size === 'sm' ? 'px-3 py-1.5 text-sm' : 'px-3 py-2'
 
   const inputBaseClass = hasError
-    ? `cyber-input cyber-input-error w-full ${sizeClasses} bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors`
-    : `cyber-input w-full ${sizeClasses} bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors`
+    ? `w-full ${sizeClasses} bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors`
+    : `w-full ${sizeClasses} bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors`
 
   // For small selects in filter bars, use muted background
   const bgOverride = size === 'sm' ? 'bg-muted' : ''

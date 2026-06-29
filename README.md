@@ -266,16 +266,10 @@ Personalize a aparência do ShipIt! com **11 temas** organizados em categorias:
 | 🔲 **Alto Contraste** | WCAG AAA — preto/branco/azul para baixa visão |
 | 🔳 **Alto Contraste Escuro** | WCAG AAA — amarelo/ciano em fundo preto |
 
-#### Bônus
-
-| Tema | Descrição |
-|------|-----------|
-| 💛 **Cyberpunk** | Neon amarelo e ciano, efeitos de glitch, scanlines CRT e cantos angulares |
-
 Acesse **Configurações → Aparência** para trocar de tema a qualquer momento. A transição é suave e instantânea.
 
 <!-- Screenshot: Seletor de temas na tela de Configurações -->
-<!-- Screenshot: Comparação lado a lado de diferentes temas (Light, Dark, Cyberpunk, Ocean) -->
+<!-- Screenshot: Comparação lado a lado de diferentes temas (Light, Dark, Ocean, Futurista) -->
 
 ### System Tray
 

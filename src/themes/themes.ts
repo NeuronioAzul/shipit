@@ -9,7 +9,6 @@ export type ThemeId =
   | 'sunset'
   | 'high-contrast'
   | 'high-contrast-dark'
-  | 'cyberpunk'
 
 export type ThemeBase = 'dark' | 'light'
 
@@ -174,21 +173,6 @@ export const THEMES: ThemeMetadata[] = [
       primary: '#FFFF00',
       accent: '#00FFFF',
       foreground: '#FFFFFF',
-    },
-  },
-  // Personality (dark)
-  {
-    id: 'cyberpunk',
-    label: 'Cyberpunk',
-    description: 'Neon amarelo e verde em preto total',
-    icon: 'fa-solid fa-bolt',
-    category: 'personality',
-    base: 'dark',
-    preview: {
-      background: '#05050C',
-      primary: '#F8EF02',
-      accent: '#00FFD2',
-      foreground: '#ADFF2F' 
     },
   },
 ]

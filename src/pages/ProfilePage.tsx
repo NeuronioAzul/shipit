@@ -252,10 +252,10 @@ export function ProfilePage() {
   }
 
   const inputClass =
-    'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
+    'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
   const inputErrorClass =
-    'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
+    'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg ' +
     'focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
 
   const labelClass = 'block text-sm font-medium text-foreground mb-1'
@@ -269,7 +269,7 @@ export function ProfilePage() {
   }
 
   function frameClass(field: string): string {
-    return 'cyber-input-frame' + (fieldError(field) ? ' cyber-frame-error' : '')
+    return '' + (fieldError(field) ? '' : '')
   }
 
   return (

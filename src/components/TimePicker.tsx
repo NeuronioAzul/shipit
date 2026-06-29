@@ -169,8 +169,8 @@ export function TimePicker({
   }, [open, focusedMinIdx, focusCol])
 
   const inputBaseClass = hasError
-    ? 'cyber-input cyber-input-error w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
-    : 'cyber-input w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
+    ? 'w-full px-3 py-2 bg-card text-foreground border border-destructive rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive transition-colors'
+    : 'w-full px-3 py-2 bg-card text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors'
 
   const dropdown = open
     ? createPortal(

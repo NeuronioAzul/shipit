@@ -170,7 +170,7 @@ export function DashboardPage() {
         {!isCurrentMonth && (
           <button
             onClick={() => setSearchParams({ month: currentMonthRef })}
-            className="cyber-neon-border absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
+            className="absolute right-0 px-3 py-1.5 text-xs border border-border text-muted-foreground rounded-lg
               hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
             title="Ir para o mês atual"
           >

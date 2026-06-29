@@ -184,8 +184,7 @@ shipit/
 │   ├── themes/                # Registro/paletas/efeitos dos temas
 │   │   ├── themes.ts
 │   │   ├── themes.css
-│   │   ├── scrollbars.css
-│   │   └── cyberpunk-effects.css
+│   │   └── scrollbars.css
 │   └── utils/
 │       ├── activityMonthNavigation.ts
 │       ├── keyboardGuards.ts

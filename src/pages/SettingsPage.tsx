@@ -333,19 +333,19 @@ export function SettingsPage() {
             Pasta onde os relatórios DOCX gerados serão salvos.
           </p>
           <div className="flex items-center gap-2 mb-3">
-            <div className="cyber-input-frame cyber-frame-muted flex-1">
+            <div className="flex-1">
               <input
                 type="text"
                 readOnly
                 value={reportsDir}
-                className="cyber-input flex-1 px-3 py-2 bg-muted text-foreground text-sm w-full border border-border rounded-lg truncate"
+                className="flex-1 px-3 py-2 bg-muted text-foreground text-sm w-full border border-border rounded-lg truncate"
                 title={reportsDir}
               />
             </div>
             <button
               id="settings-reports-btn-select"
               onClick={handleSelectDir}
-              className="cyber-button px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+              className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
             >
               <i className="fa-solid fa-folder-open mr-1"></i>
               Alterar
@@ -394,7 +394,7 @@ export function SettingsPage() {
             {selectedSound && (
               <button
                 onClick={() => handlePlaySound(selectedSound)}
-                className="cyber-button px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
+                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 hover:bg-emerald-300 transition-opacity cursor-pointer text-sm whitespace-nowrap"
                 title="Ouvir som"
                 aria-label="Ouvir som selecionado"
               >
@@ -421,7 +421,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={autoLaunch}
               onChange={handleToggleAutoLaunch}
-              className="cyberpunk-input accent-accent w-4 h-4"
+              className="accent-accent w-4 h-4"
             />
             <div>
               <span className="text-sm">Iniciar com o sistema</span>
@@ -495,12 +495,12 @@ export function SettingsPage() {
               {/* Mensagem */}
               <div>
                 <label className="text-sm font-medium mb-1 block">Mensagem do alerta</label>
-                <div className="cyber-input-frame">
+                <div>
                   <textarea
                     value={alertMessage}
                     onChange={(e) => setAlertMessage(e.target.value)}
                     rows={2}
-                    className="cyber-input w-full px-3 py-2 text-foreground text-sm border border-border rounded-lg resize-none"
+                    className="w-full px-3 py-2 text-foreground text-sm border border-border rounded-lg resize-none"
                   />
                 </div>
               </div>
@@ -512,7 +512,7 @@ export function SettingsPage() {
                   type="checkbox"
                   checked={alertSoundEnabled}
                   onChange={(e) => setAlertSoundEnabled(e.target.checked)}
-                  className="cyber-input accent-accent w-4 h-4"
+                  className="accent-accent w-4 h-4"
                 />
                 <span className="text-sm">Tocar som ao alertar</span>
               </label>

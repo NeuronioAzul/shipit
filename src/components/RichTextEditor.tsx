@@ -141,7 +141,7 @@ export function RichTextEditor({
         id={`${idPrefix}-content`}
         onMouseDown={handleContentMouseDown}
         style={{ minHeight }}
-        className="cyber-input p-3 max-h-[400px] overflow-y-auto scrollbar-stable cursor-text"
+        className="p-3 max-h-[400px] overflow-y-auto scrollbar-stable cursor-text"
       >
         <EditorContent
           editor={editor}

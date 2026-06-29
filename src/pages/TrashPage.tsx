@@ -221,7 +221,7 @@ export function TrashPage() {
                     />
                   )}
                   {/* Overlay with days left */}
-                  <div className={`cyber-neon-border absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                     isExpiringSoon
                       ? 'bg-destructive text-destructive-foreground'
                       : 'bg-background/80 text-muted-foreground'
@@ -260,7 +260,7 @@ export function TrashPage() {
                     <button
                       onClick={() => setConfirmDelete(ev.id)}
                       disabled={restoring === ev.id || deleting === ev.id}
-                      className="cyber-neon-border px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-sm border border-destructive text-destructive rounded hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Excluir permanentemente"
                       aria-label="Excluir permanentemente"
                     >

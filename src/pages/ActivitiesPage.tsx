@@ -363,13 +363,13 @@ export function ActivitiesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Texto livre</label>
-              <div className="cyber-input-frame cyber-frame-muted">
+              <div>
                 <input
                   type="text"
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
                   placeholder="Buscar..."
-                  className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                  className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
                 />
               </div>
             </div>
@@ -406,13 +406,13 @@ export function ActivitiesPage() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo: (Squad / Projeto / Aplicação)</label>
-              <div className="cyber-input-frame cyber-frame-muted">
+              <div>
                 <input
                   type="text"
                   value={filterScope}
                   onChange={(e) => setFilterScope(e.target.value)}
                   placeholder="Filtrar por escopo..."
-                  className="cyber-input w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
+                  className="w-full px-3 py-1.5 text-sm bg-muted text-foreground border border-border rounded-lg"
                 />
               </div>
             </div>
@@ -499,7 +499,7 @@ export function ActivitiesPage() {
           {hasActiveFilters ? (
             <button
               onClick={clearFilters}
-              className="cyber-neon-border mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="mt-4 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer inline-flex items-center gap-2 text-sm"
             >
               <i className="fa-solid fa-xmark"></i>
               Limpar filtros

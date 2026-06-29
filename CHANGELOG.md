@@ -9,6 +9,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Removido
+
+- **Tema Cyberpunk removido por completo**: stylesheet de efeitos (`src/themes/cyberpunk-effects.css`), bloco de paleta `.cyberpunk`, entrada no registro de temas, classes-gancho `cyber-*` no markup, cenários E2E específicos, cursores customizados órfãos (`public/assets/cursors/`) e a pasta de referência `docs/cyber-punk-style-samples/`. O app passa a ter **10 temas**. Preferências antigas (`shipit-theme = "cyberpunk"`) degradam automaticamente para o tema Claro.
+
 ## [1.8.1] — 2026-06-29
 
 ### Adicionado
