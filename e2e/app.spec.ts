@@ -1121,6 +1121,9 @@ test('searches from titlebar with debounce, keyboard navigation and close behavi
   await expect(dropdown.locator('mark').first()).toHaveText(query)
   await expect(dropdown.locator('button', { hasText: `Filtro avançado para "${query}"` })).toBeVisible()
 
+  // Garante que o input ainda está focado antes da navegação por teclado
+  // (evita corrida em que o ArrowDown era disparado durante um re-render).
+  await expect(input).toBeFocused()
   await page.keyboard.press('ArrowDown')
   await expect(page.locator('#searchbar-result-0')).toHaveAttribute('data-selected', 'true')
   await page.keyboard.press('ArrowDown')
@@ -1159,6 +1162,12 @@ test('searches from titlebar with debounce, keyboard navigation and close behavi
 // ──── Search Anchoring Regression ────
 
 test('keeps searchbar stable and anchored across themes', async () => {
+  // Cria a própria atividade-âncora para não depender do estado de outros
+  // testes (a ordem/estado do banco compartilhado tornava a busca instável).
+  const runId = Date.now()
+  const marker = `Ancora Tema ${runId}`
+  await createActivityRecord(marker)
+
   await page.click('[title="Configurações"]')
   await page.waitForURL(/#\/settings/)
   await page.click('button[aria-label="Tema Escuro"]')
@@ -1178,10 +1187,10 @@ test('keeps searchbar stable and anchored across themes', async () => {
   const magnifier = page.locator('#searchbar-magnifier, #searchbar .fa-magnifying-glass')
   await expect(magnifier).toBeVisible()
 
-  await input.first().fill('E2')
+  await input.first().fill(marker)
   const dropdown = page.locator('#searchbar-results')
   await expect(dropdown).toBeVisible({ timeout: 5_000 })
-  await expect(dropdown).toContainText('Atividade E2E Playwright')
+  await expect(dropdown).toContainText(marker)
 
   const metrics = await page.evaluate(() => {
     const searchbar = document.getElementById('searchbar')
