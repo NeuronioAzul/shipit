@@ -169,16 +169,55 @@ def run_cmd(
 # ================================================================================================
 
 
-def _claude_executable() -> str | None:
-    """Resolve o executável do Claude CLI.
+def _claude_candidate_paths() -> list[str]:
+    """Locais de instalação comuns do Claude CLI, para quando não está no PATH.
 
-    Prioriza a variável de ambiente SHIPIT_CLAUDE_BIN (caminho completo) e, em
-    seguida, busca no PATH via `shutil.which` (que respeita o PATHEXT no Windows
-    e encontra `claude.cmd`/`claude.exe`). Retorna None se não encontrar."""
+    Cobre o instalador nativo (`~/.local/bin`, usado em todas as plataformas) e
+    instalações via npm, tornando a detecção portátil entre máquinas/usuários."""
+    home = Path.home()
+    candidates: list[Path] = []
+    if os.name == "nt":
+        candidates += [
+            home / ".local" / "bin" / "claude.exe",  # instalador nativo (oficial)
+            home / ".local" / "bin" / "claude",
+        ]
+        appdata = os.environ.get("APPDATA", "")
+        localappdata = os.environ.get("LOCALAPPDATA", "")
+        if appdata:
+            candidates.append(Path(appdata) / "npm" / "claude.cmd")  # npm global
+        if localappdata:
+            candidates.append(
+                Path(localappdata) / "Programs" / "claude" / "claude.exe"
+            )
+    else:
+        candidates += [
+            home / ".local" / "bin" / "claude",  # instalador nativo (oficial)
+            Path("/usr/local/bin/claude"),
+            Path("/opt/homebrew/bin/claude"),
+        ]
+    return [str(p) for p in candidates]
+
+
+def _claude_executable() -> str | None:
+    """Resolve o executável do Claude CLI de forma portátil entre máquinas.
+
+    Ordem de resolução:
+      1. SHIPIT_CLAUDE_BIN (caminho completo do executável);
+      2. PATH, via `shutil.which` (respeita o PATHEXT no Windows: .exe/.cmd);
+      3. locais de instalação conhecidos (`~/.local/bin`, npm global, etc.).
+    Retorna None se não encontrar — e o fluxo cai para criação manual."""
     override = os.environ.get(CLAUDE_BIN_ENV, "").strip()
     if override:
         return override if os.path.isfile(override) else shutil.which(override)
-    return shutil.which("claude")
+
+    found = shutil.which("claude")
+    if found:
+        return found
+
+    for candidate in _claude_candidate_paths():
+        if os.path.isfile(candidate):
+            return candidate
+    return None
 
 
 def _ai_available() -> bool:
