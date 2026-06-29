@@ -9,7 +9,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-## [1.8.0] — 2026-06-28
+## [1.8.1] — 2026-06-29
 
 ### Adicionado
 
@@ -20,6 +20,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - A descrição da atividade passou a **preservar as quebras de linha** no DOCX gerado (antes o texto era exportado em uma única linha).
 - A formatação das evidências de texto e da descrição (negrito, itálico, listas ordenadas e não ordenadas e quebras de linha) agora é exportada corretamente no relatório DOCX, incluindo a numeração de listas ordenadas e os espaços entre marcações.
 - Carregamento da suíte de testes corrigido após atualização de dependências: os decorators do TypeORM voltaram a ser compilados no modo legado pelo transformer do Vite 8 (oxc), via `electron/tsconfig.json`.
+- Build do Linux (AppImage/deb/rpm) corrigido para o electron-builder 26, que passou a rejeitar o `!` de "ShipIt!" no nome do pacote: definido `executableName` "shipit" só no Linux, sem alterar o nome "ShipIt!" exibido no Windows/macOS.
 
 ## [1.7.0] — 2026-05-27
 
