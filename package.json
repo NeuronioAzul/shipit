@@ -164,6 +164,7 @@
         "deb",
         "rpm"
       ],
+      "executableName": "shipit",
       "icon": "public/assets/images/icons",
       "category": "Office",
       "artifactName": "ShipIt-${version}-Linux-${arch}.${ext}"
