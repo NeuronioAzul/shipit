@@ -14,6 +14,12 @@
 
 ## [Unreleased]
 
+- _(nada pendente de lançamento no momento)_
+
+---
+
+## v1.8.0 — 2026-06-28
+
 > Plano: [plan-shipit38 — descrição rich-text e formatação no DOCX](plans/plan-shipit38-richTextDescriptionAndDocxFormatting.prompt.md)
 
 - [x] Campo de **descrição da atividade** com editor rich-text (negrito, itálico, listas), reutilizando o editor das evidências de texto. Descrições legadas em texto plano são normalizadas para HTML preservando as quebras de linha.

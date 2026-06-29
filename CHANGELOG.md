@@ -9,6 +9,8 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-06-28
+
 ### Adicionado
 
 - Editor de texto rico (negrito, itálico e listas) no campo de **descrição da atividade**, reutilizando o mesmo editor das evidências de texto.
