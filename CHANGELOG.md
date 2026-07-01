@@ -20,6 +20,15 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Os números de release no campo **Releases SVN (uso interno)** deixaram de exibir o prefixo `#` em todas as telas (formulário, lista de atividades e detalhe da atividade) — agora aparecem apenas como o número.
 
 
+
+## [1.10.0] — 2026-06-30
+
+### Adicionado
+- Copiar evidências de imagem diretamente para a área de transferência, agilizando o compartilhamento sem precisar salvar o arquivo antes.
+- Abrir o local do arquivo da evidência direto pelo aplicativo.
+- Novo menu de contexto com essas ações de evidência, tornando-as acessíveis com o botão direito.
+- Copiar o número da versão com um único clique.
+
 ## [1.9.1] — 2026-06-29
 
 ### Adicionado
