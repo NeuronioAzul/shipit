@@ -4,7 +4,7 @@ Guia para o Claude Code trabalhar neste projeto. Este arquivo é carregado autom
 
 ## O que é
 
-App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.7.0**.
+App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.11.0**.
 
 ## Stack
 

@@ -88,6 +88,7 @@ app:zoomReset              app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
 app:generateReport         app:openFileInFolder
+app:copyImageToClipboard
 app:getUpdateState         app:checkForUpdate
 app:downloadUpdate         app:installUpdate
 app:acknowledgeUpdateAttention
