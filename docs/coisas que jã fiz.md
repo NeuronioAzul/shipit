@@ -283,3 +283,12 @@ $latest = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1).ta
 $releases | Where-Object { $_.tagName -ne $latest } | ForEach-Object {
 gh release delete $_.tagName --yes
 }
+
+
+## New features
+
+- n2
+  - 🟠 feat: na tela de criação de atividades, no campo `Status` deixar por padrão a opção 'Concluído'
+  - 🟠 feat: remover a '#' dos números de revision que são informados no campo `Releases SVN (uso interno)` em todas as telas e exibições
+
+

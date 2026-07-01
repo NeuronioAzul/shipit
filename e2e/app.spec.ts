@@ -966,6 +966,137 @@ test('creates activity with svn releases tags and finds it through global search
   await expect(page.locator('#searchbar-results')).toContainText(description)
 })
 
+// ──── Copiar release / evidência ────
+
+test('copies an svn release number to the clipboard from the detail page chip', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId + 3, 1)
+  const release = String(runId).slice(-6)
+  const description = `Atividade Copiar Release ${runId}`
+
+  await createActivityRecord(description, monthRef, { svn_releases: release })
+
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthRef)
+  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${monthRef}`))
+
+  await page.locator('.flex-1.cursor-pointer', { hasText: description }).first().click()
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+
+  // Limpa a área de transferência do sistema para uma asserção confiável.
+  await app.evaluate(({ clipboard }) => clipboard.writeText(''))
+
+  const chip = page.locator('#activity-detail-svn-releases button', { hasText: release })
+  await chip.hover()
+  await chip.click()
+
+  await expect(page.locator('text=copiado com sucesso')).toBeVisible({ timeout: 5_000 })
+  await expect.poll(async () => {
+    return app.evaluate(({ clipboard }) => clipboard.readText())
+  }).toBe(release)
+})
+
+test('copies an evidence image and opens its file location from the lightbox', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId + 11, 1)
+  const description = `Atividade Copiar Imagem ${runId}`
+
+  const activity = (await createActivityRecord(description, monthRef)) as { id: string }
+
+  // PNG 1x1 válido — garante que nativeImage.createFromPath não fique vazio.
+  const PNG_BASE64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
+  await page.evaluate(async ({ activityId, base64 }) => {
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const api = (window as unknown as {
+      electronAPI?: {
+        saveEvidenceFromBuffer?: (
+          activityId: string,
+          buffer: ArrayBuffer,
+          extension: string,
+          caption: string | null,
+        ) => Promise<unknown>
+      }
+    }).electronAPI
+    if (!api?.saveEvidenceFromBuffer) throw new Error('saveEvidenceFromBuffer indisponível no E2E')
+    await api.saveEvidenceFromBuffer(activityId, bytes.buffer, 'png', 'Evidência E2E')
+  }, { activityId: activity.id, base64: PNG_BASE64 })
+
+  await page.evaluate((id) => {
+    window.location.hash = `#/activities/${id}`
+  }, activity.id)
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+
+  const grid = page.locator('#activity-detail-evidence-grid')
+  await expect(grid).toBeVisible({ timeout: 5_000 })
+
+  // Instrumenta shell.showItemInFolder (usado por "Abrir local do arquivo").
+  await app.evaluate(({ shell }) => {
+    const globalState = globalThis as typeof globalThis & {
+      __shipitShowItemCalls?: string[]
+      __shipitRestoreShowItem?: () => void
+    }
+    const calls: string[] = []
+    const original = shell.showItemInFolder
+    shell.showItemInFolder = (target: string) => {
+      calls.push(target)
+    }
+    globalState.__shipitShowItemCalls = calls
+    globalState.__shipitRestoreShowItem = () => {
+      shell.showItemInFolder = original
+    }
+  })
+
+  try {
+    await app.evaluate(({ clipboard }) => clipboard.clear())
+
+    // 1) Botão "copiar imagem" no card.
+    const copyButton = grid
+      .locator('button[aria-label="Copiar imagem para a área de transferência"]')
+      .first()
+    await copyButton.scrollIntoViewIfNeeded()
+    await copyButton.click()
+
+    await expect(page.locator('text=Imagem copiada para a área de transferência')).toBeVisible({
+      timeout: 5_000,
+    })
+    await expect.poll(async () => {
+      return app.evaluate(({ clipboard }) => clipboard.readImage().isEmpty())
+    }).toBe(false)
+
+    // 2) Menu de contexto no lightbox → "Abrir local do arquivo".
+    await grid.locator('img').first().click()
+    const lightboxContainer = page.locator('.yarl__container')
+    await expect(lightboxContainer).toBeVisible({ timeout: 5_000 })
+
+    await lightboxContainer.click({ button: 'right' })
+    const openLocationItem = page.locator('button', { hasText: 'Abrir local do arquivo' })
+    await expect(openLocationItem).toBeVisible({ timeout: 5_000 })
+    await openLocationItem.click()
+
+    await expect.poll(async () => {
+      return app.evaluate(() => {
+        const globalState = globalThis as typeof globalThis & { __shipitShowItemCalls?: string[] }
+        return globalState.__shipitShowItemCalls?.length ?? 0
+      })
+    }).toBeGreaterThan(0)
+  } finally {
+    await app.evaluate(() => {
+      const globalState = globalThis as typeof globalThis & {
+        __shipitShowItemCalls?: string[]
+        __shipitRestoreShowItem?: () => void
+      }
+      globalState.__shipitRestoreShowItem?.()
+      delete globalState.__shipitRestoreShowItem
+      delete globalState.__shipitShowItemCalls
+    })
+  }
+})
+
 test('uses local ArrowLeft/ArrowRight navigation on activity detail page', async () => {
   const runId = Date.now()
   const activityA = `Atividade Navegação Local ${runId} A`

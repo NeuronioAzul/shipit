@@ -51,6 +51,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('app:generateReport', monthReference),
   openFileInFolder: (filePath: string) =>
     ipcRenderer.invoke('app:openFileInFolder', filePath),
+  copyImageToClipboard: (filePath: string) =>
+    ipcRenderer.invoke('app:copyImageToClipboard', filePath),
   getReports: (monthReference: string) =>
     ipcRenderer.invoke('db:getReports', monthReference),
 

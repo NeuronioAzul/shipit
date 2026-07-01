@@ -18,18 +18,17 @@ SHIPIT!
 > ✅ Concluídos e movidos para o [DONE.md](DONE.md) (ver `[Unreleased]`): formatação de texto no DOCX (quebras de linha, negrito, itálico, listas) e o editor rich-text na descrição da atividade — [plan-shipit38](plans/plan-shipit38-richTextDescriptionAndDocxFormatting.prompt.md).
 > ✅ `ELECTRON_RUN_AS_NODE=1`: não havia variável persistente (User/Machine vazios) — era herdada no nível de processo do host (VS Code/Electron). Tratada nos comandos de e2e; em terminal novo fora do host não aparece.
 
+## FEATURES
+
+- n1
+  - 🔴 feat: Acima do campo onde informo o número de revision, quero um botão para selecionável, com as opções (Desenvolvimento, Homologação e Produção), respectivamente nas cores (verde, amarelo e vermelho), para que eu possa selecionar o ambiente que estou trabalhando, essa é uma opção apenas interna, para que eu possa identificar rapidamente em qual ambiente é a evidência que estou trabalhando.
+  - 🔴 feat: exibir essa tag do ambiente selecionado na listagem de atividades,  e na visualização detalhada da atividade, para que eu possa identificar rapidamente de qual ambiente é a atividade.
+
 ## Fix
 
-
-
-## New features
-
 - n2
-  - 🟠 feat: na tela de criação de atividades, no campo `Status` deixar por padrão a opção 'Concluído'
-  - 🟠 feat: remover a '#' dos números de revision que são informados no campo `Releases SVN (uso interno)` em todas as telas e exibições
-
-
-
+  - 🟠 feat: Corrigir as cores nos temas para os botões de excluir e cancelar para uma cor dentro do tema que seja ou represente o vermelho, o cancelar e excluir ficou um pouco apagado em alguns temas.
+  - 
 
 
 

@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification, shell, type MenuItemConstructorOptions, type WebContents } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog, protocol, net, Notification, shell, clipboard, type MenuItemConstructorOptions, type WebContents } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
@@ -1031,6 +1031,18 @@ ipcMain.handle('app:generateReport', async (_event, monthReference: string) => {
 ipcMain.handle('app:openFileInFolder', async (_event, filePath: string) => {
   const { openInFolder } = await import('./report-generator')
   openInFolder(filePath)
+})
+
+ipcMain.handle('app:copyImageToClipboard', async (_event, filePath: string) => {
+  // Segurança: só permite arquivos dentro de evidences/ ou trash/ (mesma regra do protocolo)
+  const evidencesDir = path.join(app.getPath('userData'), 'evidences')
+  const trashDir = path.join(app.getPath('userData'), 'trash')
+  const resolved = path.resolve(filePath)
+  if (!resolved.startsWith(evidencesDir) && !resolved.startsWith(trashDir)) return false
+  const image = nativeImage.createFromPath(resolved)
+  if (image.isEmpty()) return false
+  clipboard.writeImage(image)
+  return true
 })
 
 ipcMain.handle('db:getReports', async (_event, monthReference: string) => {

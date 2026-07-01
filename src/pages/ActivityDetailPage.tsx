@@ -21,11 +21,13 @@ import { getCurrentMonthRef, localDb } from '../services/localDb'
 import { STATUS_COLORS } from '../utils/statusColors'
 import { EvidenceLightbox, type LightboxSlide } from '../components/EvidenceLightbox'
 import { TextEvidenceModal } from '../components/TextEvidenceModal'
+import { canUseEvidenceFileActions, copyEvidenceImage } from '../services/evidenceClipboard'
 import { ActivityNav } from '../components/ActivityNav'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { shiftMonthReference } from '../utils/monthReference'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { parseSvnReleasesStored } from '../utils/svnReleases'
+import { copyTextToClipboard } from '../utils/clipboard'
 import { isRichTextEmpty, normalizeToHtml } from '../utils/richText'
 import {
   resolveMonthNavigation,
@@ -81,6 +83,16 @@ function SortableEvidenceCard({
       >
         <i className="fa-solid fa-grip-vertical text-xs" aria-hidden="true"></i>
       </button>
+      {!isText && canUseEvidenceFileActions(evidence.file_path) && (
+        <button
+          onClick={(e) => { e.stopPropagation(); copyEvidenceImage(evidence.file_path) }}
+          className="absolute top-2 right-10 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:bg-black/70 hover:text-white cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
+          title="Copiar imagem para a área de transferência"
+          aria-label="Copiar imagem para a área de transferência"
+        >
+          <i className="fa-solid fa-copy text-xs" aria-hidden="true"></i>
+        </button>
+      )}
       <button
         onClick={() => onDelete(evidence.id)}
         className="absolute top-2 right-2 z-10 p-1.5 rounded bg-destructive/80 text-destructive-foreground hover:bg-destructive cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
@@ -669,12 +681,17 @@ export function ActivityDetailPage() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {svnReleases.map((release) => (
-                <span
+                <button
+                  type="button"
                   key={release}
-                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30"
+                  onClick={() => copyTextToClipboard(release, `Release ${release}`)}
+                  className="group/rel inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
+                  title="Copiar número de release"
+                  aria-label={`Copiar release ${release}`}
                 >
                   {release}
-                </span>
+                  <i className="fa-solid fa-copy text-[10px] opacity-0 group-hover/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
+                </button>
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -946,6 +963,7 @@ export function ActivityDetailPage() {
                 ? ev.file_path
                 : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
               description: ev.caption || undefined,
+              filePath: ev.file_path && !ev.file_path.startsWith('data:') ? ev.file_path : undefined,
             }))}
             onClose={() => setLightboxOpen(false)}
           />
