@@ -22,6 +22,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 
 
+
+## [1.11.0] — 2026-07-01
+
+### Adicionado
+- Agora é possível associar uma tag de ambiente às atividades, facilitando identificar e filtrar em qual ambiente cada atividade foi realizada.
+
 ## [1.10.0] — 2026-06-30
 
 ### Adicionado
