@@ -65,6 +65,7 @@ export const localDb = {
       svn_releases: null,
       status: 'Pendente',
       attendance_type: null,
+      environment: null,
       project_scope: null,
       last_updated: new Date().toISOString(),
       evidences: [],

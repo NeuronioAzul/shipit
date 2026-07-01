@@ -27,6 +27,7 @@ import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { parseSvnReleasesStored } from '../utils/svnReleases'
 import { copyTextToClipboard } from '../utils/clipboard'
+import { EnvironmentBadge } from '../components/EnvironmentBadge'
 import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
 
 function formatDateShort(d: string | null): string {
@@ -108,6 +109,7 @@ function SortableActivityItem({
               <i className={`fa-solid ${STATUS_ICONS[activity.status] || ''} text-[10px]`}></i>
               {activity.status}
             </span>
+            <EnvironmentBadge size="sm" environment={activity.environment} />
             <span
               className="text-xs text-muted-foreground flex items-center gap-2 whitespace-nowrap"
               aria-label={`${evidenceCounts.imageCount} imagens e ${evidenceCounts.textCount} evidências de texto`}

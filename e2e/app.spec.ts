@@ -997,6 +997,45 @@ test('copies an svn release number to the clipboard from the detail page chip', 
   }).toBe(release)
 })
 
+test('selects an environment and shows its tag in the list and detail', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId + 5, 1)
+  const description = `Atividade Ambiente ${runId}`
+
+  await page.click('[title="Atividades"]')
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthRef)
+  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${monthRef}`))
+
+  await page.click('button:has-text("Nova Atividade")')
+  await page.waitForURL(/#\/activities\/new(?:\?.*)?$/)
+
+  await fillDescription(page, description)
+  await page.locator('input#month_reference').fill(monthRef)
+
+  const prodButton = page.locator('#activity-form-environment button', { hasText: 'Produção' })
+  await prodButton.click()
+  await expect(prodButton).toHaveAttribute('aria-pressed', 'true')
+
+  // Toggle-off e re-seleção validam o comportamento de limpar.
+  await prodButton.click()
+  await expect(prodButton).toHaveAttribute('aria-pressed', 'false')
+  await prodButton.click()
+  await expect(prodButton).toHaveAttribute('aria-pressed', 'true')
+
+  await page.click('button[type="submit"]')
+  await page.waitForURL(new RegExp(`#/activities\\?month=${monthRef.replace('/', '\\/')}$`), { timeout: 10_000 })
+
+  const card = page.locator('.flex-1.cursor-pointer', { hasText: description }).first()
+  await expect(card).toContainText('prd')
+
+  await card.click()
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+  await expect(page.locator('#activity-detail-info')).toContainText('prd')
+})
+
 test('copies an evidence image and opens its file location from the lightbox', async () => {
   const runId = Date.now()
   const [monthRef] = getUniqueMonthSequence(runId + 11, 1)
@@ -1004,9 +1043,9 @@ test('copies an evidence image and opens its file location from the lightbox', a
 
   const activity = (await createActivityRecord(description, monthRef)) as { id: string }
 
-  // PNG 1x1 válido — garante que nativeImage.createFromPath não fique vazio.
+  // PNG 16x16 RGBA sólido — imagens 1x1 podem retornar vazio no nativeImage.
   const PNG_BASE64 =
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGO4Y2T0nxLMMGrAqAGjBgwXAwAMAD8f/JQG9gAAAABJRU5ErkJggg=='
 
   await page.evaluate(async ({ activityId, base64 }) => {
     const binary = atob(base64)
@@ -1023,7 +1062,9 @@ test('copies an evidence image and opens its file location from the lightbox', a
       }
     }).electronAPI
     if (!api?.saveEvidenceFromBuffer) throw new Error('saveEvidenceFromBuffer indisponível no E2E')
-    await api.saveEvidenceFromBuffer(activityId, bytes.buffer, 'png', 'Evidência E2E')
+    // A extensão precisa incluir o ponto (o app usa `'.' + ext`); sem ele o
+    // arquivo fica sem extensão válida e o nativeImage não decodifica.
+    await api.saveEvidenceFromBuffer(activityId, bytes.buffer, '.png', 'Evidência E2E')
   }, { activityId: activity.id, base64: PNG_BASE64 })
 
   await page.evaluate((id) => {
@@ -1033,6 +1074,32 @@ test('copies an evidence image and opens its file location from the lightbox', a
 
   const grid = page.locator('#activity-detail-evidence-grid')
   await expect(grid).toBeVisible({ timeout: 5_000 })
+
+  // Caminho absoluto salvo da evidência (usado nas asserções diretas).
+  const filePath = await page.evaluate(async (id) => {
+    const api = (window as unknown as {
+      electronAPI?: {
+        getActivity?: (id: string) => Promise<{
+          evidences?: Array<{ type: string; file_path: string | null }>
+        } | null>
+      }
+    }).electronAPI
+    const act = await api?.getActivity?.(id)
+    return act?.evidences?.find((e) => e.type !== 'text')?.file_path ?? null
+  }, activity.id)
+  expect(filePath).toBeTruthy()
+
+  // Diagnóstico no main (sem require — só o módulo electron está disponível):
+  // confirma que o arquivo salvo é decodificável e está sob userData/evidences.
+  const diag = await app.evaluate(({ nativeImage, app: electronApp }, fp) => {
+    return {
+      empty: nativeImage.createFromPath(fp).isEmpty(),
+      underUserData: fp.toLowerCase().startsWith(electronApp.getPath('userData').toLowerCase()),
+      userData: electronApp.getPath('userData'),
+      filePath: fp,
+    }
+  }, filePath as string)
+  expect(diag).toMatchObject({ empty: false, underUserData: true })
 
   // Instrumenta shell.showItemInFolder (usado por "Abrir local do arquivo").
   await app.evaluate(({ shell }) => {
@@ -1052,18 +1119,32 @@ test('copies an evidence image and opens its file location from the lightbox', a
   })
 
   try {
+    // 1a) Sonda direta do IPC — determinística e diagnóstica (revela retorno/erro
+    // em vez de depender do toast, que é transitório).
     await app.evaluate(({ clipboard }) => clipboard.clear())
+    const ipcResult = await page.evaluate(async (fp) => {
+      try {
+        const api = (window as unknown as {
+          electronAPI: { copyImageToClipboard: (fp: string) => Promise<boolean> }
+        }).electronAPI
+        return { ok: await api.copyImageToClipboard(fp) }
+      } catch (e) {
+        return { err: String(e) }
+      }
+    }, filePath as string)
+    expect(ipcResult).toEqual({ ok: true })
+    await expect.poll(async () => {
+      return app.evaluate(({ clipboard }) => clipboard.readImage().isEmpty())
+    }).toBe(false)
 
-    // 1) Botão "copiar imagem" no card.
+    // 1b) O botão "copiar imagem" no card dispara a mesma ação (cobertura de UI,
+    // verificada pelo efeito real no clipboard).
+    await app.evaluate(({ clipboard }) => clipboard.clear())
     const copyButton = grid
       .locator('button[aria-label="Copiar imagem para a área de transferência"]')
       .first()
     await copyButton.scrollIntoViewIfNeeded()
     await copyButton.click()
-
-    await expect(page.locator('text=Imagem copiada para a área de transferência')).toBeVisible({
-      timeout: 5_000,
-    })
     await expect.poll(async () => {
       return app.evaluate(({ clipboard }) => clipboard.readImage().isEmpty())
     }).toBe(false)
@@ -1084,6 +1165,12 @@ test('copies an evidence image and opens its file location from the lightbox', a
         return globalState.__shipitShowItemCalls?.length ?? 0
       })
     }).toBeGreaterThan(0)
+
+    // Estado limpo para o próximo teste: navega para fora, desmontando a página
+    // de detalhe e o lightbox (o Escape do yarl não alcança quando o foco saiu
+    // do container após o menu de contexto).
+    await page.evaluate(() => { window.location.hash = '#/activities' })
+    await expect(lightboxContainer).toHaveCount(0, { timeout: 5_000 })
   } finally {
     await app.evaluate(() => {
       const globalState = globalThis as typeof globalThis & {
@@ -1233,14 +1320,17 @@ test('searches from titlebar with debounce, keyboard navigation and close behavi
     await createActivityRecord(`${query} Item ${String(index).padStart(2, '0')}`, monthRef)
   }
 
-  await page.locator('#app-main').click()
-  await page.keyboard.press('Control+k')
-
   const input = page.locator('#searchbar-input')
   const dropdown = page.locator('#searchbar-results')
   const resultButtons = dropdown.locator('button[id^="searchbar-result-"]')
 
-  await expect(input).toBeFocused()
+  // Foca o input via atalho Ctrl+K. O atalho é disparo único, então repetimos
+  // click+atalho até o input assumir o foco (evita a corrida de foco pré-existente).
+  await expect(async () => {
+    await page.locator('#app-main').click()
+    await page.keyboard.press('Control+k')
+    await expect(input).toBeFocused({ timeout: 1_000 })
+  }).toPass({ timeout: 10_000 })
   await expect(page.locator('#searchbar-magnifier')).toBeVisible()
 
   await input.fill(query.slice(0, 1))

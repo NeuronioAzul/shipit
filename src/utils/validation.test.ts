@@ -145,6 +145,7 @@ describe('isActivityComplete', () => {
     status: 'Concluído',
     month_reference: '03/2026',
     attendance_type: null,
+    environment: null,
     project_scope: null,
     last_updated: '2026-03-15T00:00:00',
     evidences: [],

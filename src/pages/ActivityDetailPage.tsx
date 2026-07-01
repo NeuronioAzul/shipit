@@ -28,6 +28,7 @@ import { shiftMonthReference } from '../utils/monthReference'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { parseSvnReleasesStored } from '../utils/svnReleases'
 import { copyTextToClipboard } from '../utils/clipboard'
+import { EnvironmentBadge } from '../components/EnvironmentBadge'
 import { isRichTextEmpty, normalizeToHtml } from '../utils/richText'
 import {
   resolveMonthNavigation,
@@ -612,6 +613,7 @@ export function ActivityDetailPage() {
           >
             {activity.status}
           </span>
+          <EnvironmentBadge environment={activity.environment} />
           <span className="text-sm text-muted-foreground">
             <i className="fa-regular fa-calendar mr-1"></i>
             {formatDate(activity.date_start)} — {formatDate(activity.date_end)}

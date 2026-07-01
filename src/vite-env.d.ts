@@ -135,6 +135,7 @@ export interface UserProfileData {
 
 export type ActivityStatus = 'Em andamento' | 'Concluído' | 'Cancelado' | 'Pendente'
 export type AttendanceType = 'Presencial' | 'Remoto' | 'Híbrido'
+export type ActivityEnvironment = 'Desenvolvimento' | 'Homologação' | 'Produção'
 export type EvidenceType = 'image' | 'text'
 
 export interface ActivityData {
@@ -148,6 +149,7 @@ export interface ActivityData {
   status: ActivityStatus
   month_reference: string
   attendance_type: AttendanceType | null
+  environment: ActivityEnvironment | null
   project_scope: string | null
   last_updated: string
   evidences?: EvidenceData[]

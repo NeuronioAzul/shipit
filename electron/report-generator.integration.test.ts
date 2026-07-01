@@ -211,6 +211,33 @@ describe('generateDocxReport', () => {
     expect(docXml).not.toContain('{{activity_svn_releases}}')
   })
 
+  it('does not include the internal environment field in DOCX output', async () => {
+    async function renderDocXml(environment: 'Produção' | null): Promise<string> {
+      const result = await generateDocxReport({
+        profile: makeProfile(),
+        activities: [makeActivity({
+          description: 'Atividade com ambiente interno',
+          environment,
+        })],
+        monthReference: '03/2026',
+        templatePath: TEMPLATE_PATH,
+        reportsDir: outDir,
+      })
+      const buf = fs.readFileSync(result.filePath)
+      const zip = await JSZip.loadAsync(buf)
+      return zip.file('word/document.xml')!.async('string')
+    }
+
+    const countOf = (haystack: string, needle: string) => haystack.split(needle).length - 1
+
+    const withEnv = await renderDocXml('Produção')
+    const withoutEnv = await renderDocXml(null)
+
+    // O valor do ambiente não é injetado: a contagem da palavra não muda com/sem o campo.
+    expect(countOf(withEnv, 'Produção')).toBe(countOf(withoutEnv, 'Produção'))
+    expect(withEnv).not.toContain('{{activity_environment}}')
+  })
+
   it('handles multiple activities from different projects', async () => {
     const activities = [
       makeActivity({
