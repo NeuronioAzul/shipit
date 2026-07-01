@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback, useRef, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import type { ActivityData, EvidenceData } from '../vite-env'
+import type { ActivityData, ActivityEnvironment, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
+import { EnvironmentSelector } from '../components/EnvironmentSelector'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { validateActivity, type ValidationError } from '../utils/validation'
 import { normalizeToHtml, isRichTextEmpty } from '../utils/richText'
@@ -27,6 +28,7 @@ interface ActivityForm {
   status: string
   link_ref: string
   svn_releases: string
+  environment: string
   attendance_type: string
   month_reference: string
   project_scope: string
@@ -47,6 +49,7 @@ export function ActivityFormPage() {
     status: 'Concluído',
     link_ref: '',
     svn_releases: '',
+    environment: '',
     attendance_type: '',
     month_reference: defaultMonth,
     project_scope: '',
@@ -69,6 +72,7 @@ export function ActivityFormPage() {
       status: nextForm.status as ActivityData['status'],
       link_ref: nextForm.link_ref || null,
       svn_releases: nextForm.svn_releases || null,
+      environment: (nextForm.environment as ActivityEnvironment) || null,
       attendance_type: (nextForm.attendance_type as ActivityData['attendance_type']) || null,
       month_reference: nextForm.month_reference,
       project_scope: nextForm.project_scope || null,
@@ -89,6 +93,7 @@ export function ActivityFormPage() {
       status: nextForm.status,
       link_ref: nextForm.link_ref.trim(),
       svn_releases: nextForm.svn_releases.trim(),
+      environment: nextForm.environment,
       attendance_type: nextForm.attendance_type,
       month_reference: nextForm.month_reference,
       project_scope: nextForm.project_scope.trim(),
@@ -137,6 +142,7 @@ export function ActivityFormPage() {
         status: activity.status,
         link_ref: activity.link_ref || '',
         svn_releases: activity.svn_releases || '',
+        environment: activity.environment || '',
         attendance_type: activity.attendance_type || '',
         month_reference: activity.month_reference,
         project_scope: activity.project_scope || '',
@@ -613,6 +619,21 @@ export function ActivityFormPage() {
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Insira um link por linha. GitLab, Jira, etc.
+          </p>
+        </div>
+
+        {/* Ambiente (uso interno) */}
+        <div id="activity-form-environment-section" className="border border-border/60 rounded-lg p-4 bg-muted/20">
+          <label className={labelClass}>
+            Ambiente (uso interno)
+          </label>
+          <EnvironmentSelector
+            id="activity-form-environment"
+            value={form.environment as ActivityEnvironment | ''}
+            onChange={(v) => { setForm((prev) => ({ ...prev, environment: v })); setAutoSaveStatus('idle') }}
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Marcação interna para identificar o ambiente. Não incluída no relatório DOCX.
           </p>
         </div>
 

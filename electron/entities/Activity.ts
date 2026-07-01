@@ -9,6 +9,7 @@ import { Evidence } from './Evidence'
 
 export type ActivityStatus = 'Em andamento' | 'Concluído' | 'Cancelado' | 'Pendente'
 export type AttendanceType = 'Presencial' | 'Remoto' | 'Híbrido'
+export type ActivityEnvironment = 'Desenvolvimento' | 'Homologação' | 'Produção'
 
 @Entity('activities')
 export class Activity {
@@ -32,6 +33,9 @@ export class Activity {
 
   @Column({ type: 'text', nullable: true })
   svn_releases!: string | null // CSV de releases SVN (uso interno, nao exportado no DOCX)
+
+  @Column({ type: 'text', nullable: true })
+  environment!: ActivityEnvironment | null // Ambiente (uso interno, nao exportado no DOCX)
 
   @Column({ type: 'text', default: 'Pendente' })
   status!: ActivityStatus

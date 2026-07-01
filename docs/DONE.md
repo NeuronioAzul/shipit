@@ -14,6 +14,9 @@
 
 ## [Unreleased]
 
+> Plano: [plan-shipit41 — ambiente da atividade (tag interna)](plans/plan-shipit41-activityEnvironmentTag.prompt.md)
+
+- [x] **feat:** Ambiente da atividade (uso interno) — seletor segmentado colorido (`EnvironmentSelector`) acima do campo de Releases SVN com Desenvolvimento/Homologação/Produção (verde/amarelo/vermelho, toggle-off), e tag compacta (`EnvironmentBadge`, abreviações `dsv`/`hmg`/`prd`) na lista e no detalhe. Novo campo nullable `environment` na entidade `Activity` + `ActivityData`; tokens em `src/utils/environmentColors.ts` (reuso de `chart-*`). Não exportado no DOCX. Testes unitários (`environmentColors`, `EnvironmentSelector`, `EnvironmentBadge`, `database`, regressão DOCX) + E2E.
 - [x] **feat:** Copiar evidência de imagem para a área de transferência — botão de cópia nos cards de imagem (criação/edição/detalhe) e menu de contexto (botão direito) no lightbox com "Copiar para a área de transferência" e "Abrir local do arquivo". Novo handler IPC `app:copyImageToClipboard` (`clipboard.writeImage` com validação de pasta) e helper `src/services/evidenceClipboard.ts`; "abrir local" reutiliza `app:openFileInFolder`. Testes unitários (`evidenceClipboard.test.ts`) + E2E.
 - [x] **feat:** Copiar número de release SVN ao clicar no chip (lista de atividades e detalhe da atividade), com ícone de cópia revelado no hover. Novo util `src/utils/clipboard.ts` (`copyTextToClipboard`). Testes unitários (`clipboard.test.ts`) + E2E.
 - [x] **feat:** Status padrão "Concluído" no formulário de criação de atividade (antes "Pendente"); edição preserva o status salvo.

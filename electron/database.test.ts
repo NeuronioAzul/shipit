@@ -168,6 +168,26 @@ describe('Activity CRUD', () => {
     expect(retrieved!.status).toBe('Em andamento')
   })
 
+  it('persists, updates and clears the environment field', async () => {
+    const saved = await saveActivity({
+      description: 'Atividade com ambiente',
+      status: 'Concluído',
+      month_reference: '03/2026',
+      environment: 'Produção',
+      order: 1,
+    })
+    expect(saved.environment).toBe('Produção')
+
+    const updated = await saveActivity({ id: saved.id, environment: 'Homologação' })
+    expect(updated.environment).toBe('Homologação')
+
+    const cleared = await saveActivity({ id: saved.id, environment: null })
+    expect(cleared.environment).toBeNull()
+
+    const retrieved = await getActivity(saved.id)
+    expect(retrieved!.environment).toBeNull()
+  })
+
   it('filters activities by month_reference', async () => {
     await saveActivity({
       description: 'Março A',
