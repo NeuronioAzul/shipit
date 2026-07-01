@@ -26,6 +26,7 @@ import { Select } from '../components/Select'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { parseSvnReleasesStored } from '../utils/svnReleases'
+import { copyTextToClipboard } from '../utils/clipboard'
 import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
 
 function formatDateShort(d: string | null): string {
@@ -130,13 +131,17 @@ function SortableActivityItem({
           {compactSvnReleases.visible.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-1">
               {compactSvnReleases.visible.map((release) => (
-                <span
+                <button
+                  type="button"
                   key={release}
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/30"
-                  title={`Release SVN ${release}`}
+                  onClick={(e) => { e.stopPropagation(); copyTextToClipboard(release, `Release ${release}`) }}
+                  className="group/rel inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
+                  title={`Copiar release ${release}`}
+                  aria-label={`Copiar release ${release}`}
                 >
                   {release}
-                </span>
+                  <i className="fa-solid fa-copy text-[9px] opacity-0 group-hover/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
+                </button>
               ))}
               {compactSvnReleases.hiddenCount > 0 && (
                 <span className="text-[11px] text-muted-foreground">

@@ -18,6 +18,7 @@ import type { EvidenceData } from '../vite-env'
 import { localDb } from '../services/localDb'
 import { EvidenceLightbox, type LightboxSlide } from './EvidenceLightbox'
 import { TextEvidenceModal } from './TextEvidenceModal'
+import { canUseEvidenceFileActions, copyEvidenceImage } from '../services/evidenceClipboard'
 
 interface EvidenceUploadProps {
   activityId: string
@@ -139,6 +140,19 @@ function SortableEvidenceCard({
             aria-label="Editar evidência de texto"
           >
             <i className="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+          </button>
+        )}
+        {/* Copy image button (image evidence only, Electron) */}
+        {!isText && canUseEvidenceFileActions(evidence.file_path) && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); copyEvidenceImage(evidence.file_path) }}
+            className="absolute top-2 right-10 p-1.5 bg-black/50 text-white/80 rounded
+              opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 hover:text-white"
+            title="Copiar imagem para a área de transferência"
+            aria-label="Copiar imagem para a área de transferência"
+          >
+            <i className="fa-solid fa-copy text-xs" aria-hidden="true"></i>
           </button>
         )}
         {/* Delete button */}
@@ -520,6 +534,7 @@ export function EvidenceUpload({
               ? ev.file_path
               : `shipit-evidence://host?path=${encodeURIComponent(ev.file_path || '')}`,
             description: ev.caption || undefined,
+            filePath: ev.file_path && !ev.file_path.startsWith('data:') ? ev.file_path : undefined,
           }))}
           onClose={() => setLightboxOpen(false)}
         />

@@ -21,7 +21,8 @@ SHIPIT!
 ## FEATURES
 
 - n1
-  - 🔴 feat: Evidencia imagem, colocar botão para poder copiar a evidência para a área de transferência, na exibição maximizada exibir menu de contexto com o botão direito e exibir 2 opções: copiar para área de transferência e abrir local do arquivo, para poder colar em outro lugar, como em um e-mail, documento ou mensagem.
+  - 🔴 feat: Acima do campo onde informo o número de revision, quero um botão para selecionável, com as opções (Desenvolvimento, Homologação e Produção), respectivamente nas cores (verde, amarelo e vermelho), para que eu possa selecionar o ambiente que estou trabalhando, essa é uma opção apenas interna, para que eu possa identificar rapidamente em qual ambiente é a evidência que estou trabalhando.
+  - 🔴 feat: exibir essa tag do ambiente selecionado na listagem de atividades,  e na visualização detalhada da atividade, para que eu possa identificar rapidamente de qual ambiente é a atividade.
 
 ## Fix
 

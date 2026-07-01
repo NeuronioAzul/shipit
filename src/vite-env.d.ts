@@ -30,6 +30,7 @@ export interface ElectronAPI {
   // Reports
   generateReport: (monthReference: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
   openFileInFolder: (filePath: string) => Promise<void>
+  copyImageToClipboard: (filePath: string) => Promise<boolean>
   getReports: (monthReference: string) => Promise<ReportData[]>
 
   // Dialogs

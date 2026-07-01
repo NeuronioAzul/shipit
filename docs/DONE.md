@@ -14,6 +14,8 @@
 
 ## [Unreleased]
 
+- [x] **feat:** Copiar evidência de imagem para a área de transferência — botão de cópia nos cards de imagem (criação/edição/detalhe) e menu de contexto (botão direito) no lightbox com "Copiar para a área de transferência" e "Abrir local do arquivo". Novo handler IPC `app:copyImageToClipboard` (`clipboard.writeImage` com validação de pasta) e helper `src/services/evidenceClipboard.ts`; "abrir local" reutiliza `app:openFileInFolder`. Testes unitários (`evidenceClipboard.test.ts`) + E2E.
+- [x] **feat:** Copiar número de release SVN ao clicar no chip (lista de atividades e detalhe da atividade), com ícone de cópia revelado no hover. Novo util `src/utils/clipboard.ts` (`copyTextToClipboard`). Testes unitários (`clipboard.test.ts`) + E2E.
 - [x] **feat:** Status padrão "Concluído" no formulário de criação de atividade (antes "Pendente"); edição preserva o status salvo.
 - [x] **feat:** Removido o prefixo `#` dos números de release no campo Releases SVN (uso interno) em todas as telas (formulário/`InputTags`, lista de atividades e detalhe da atividade); assertivas E2E ajustadas.
 
