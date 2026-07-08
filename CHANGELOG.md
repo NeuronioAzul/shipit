@@ -9,6 +9,9 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Corrigido
+- Revisão ortográfica (pt-BR) de textos da interface: acentuação corrigida em placeholders e mensagens de atividades e perfil ("vírgula", "números", "publicações/homologação", "não é exportado para o relatório DOCX") e o indicador ordinal "nº" no placeholder de contrato.
+
 ## [1.11.0] — 2026-07-01
 
 ### Adicionado

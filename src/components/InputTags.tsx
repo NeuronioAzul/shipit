@@ -24,7 +24,7 @@ export function InputTags({
   name,
   value,
   onChange,
-  placeholder = 'Digite e use virgula para adicionar',
+  placeholder = 'Digite e use vírgula para adicionar',
   disabled = false,
   hasError = false,
   validateTag,

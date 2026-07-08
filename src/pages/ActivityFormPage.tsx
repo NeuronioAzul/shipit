@@ -379,7 +379,7 @@ export function ActivityFormPage() {
   function validateSvnReleaseTag(rawTag: string): string | null {
     return normalizeSvnReleaseToken(rawTag)
       ? null
-      : 'Use apenas numeros de release SVN, separados por virgula.'
+      : 'Use apenas números de release SVN, separados por vírgula.'
   }
 
   function handleSvnReleasesChange(nextTags: string[]) {
@@ -652,7 +652,7 @@ export function ActivityFormPage() {
             placeholder="Ex: 12345, 12346, 12347"
           />
           <p className="text-xs text-muted-foreground mt-2">
-            Campo usado para apoiar publicacoes e homologacao. Nao sera incluido no relatorio DOCX.
+            Campo usado para apoiar publicações e homologação. Não será incluído no relatório DOCX.
           </p>
         </div>
 

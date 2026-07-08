@@ -14,7 +14,7 @@
 
 ## [Unreleased]
 
-_(vazio — nada pendente de release)_
+- [x] **fix:** Revisão ortográfica pt-BR de textos da UI — 6 correções de acentuação/ortografia em `ActivityDetailPage`, `ActivityFormPage`, `InputTags`, `ProfilePage` e comentários em `Activity.ts` (inclui o indicador ordinal "nº" no placeholder de contrato).
 
 ---
 
