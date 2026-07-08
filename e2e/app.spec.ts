@@ -945,7 +945,7 @@ test('creates activity with svn releases tags and finds it through global search
 
   await svnInput.fill('abc,')
   await svnInput.press('Tab')
-  await expect(svnSection).toContainText('Use apenas numeros de release SVN')
+  await expect(svnSection).toContainText('Use apenas números de release SVN')
 
   await page.click('button[type="submit"]')
   await page.waitForURL(new RegExp(`#/activities\\?month=${monthRef.replace('/', '\\/')}$`), { timeout: 10_000 })
