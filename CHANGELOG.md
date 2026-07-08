@@ -12,6 +12,15 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ### Corrigido
 - Revisão ortográfica (pt-BR) de textos da interface: acentuação corrigida em placeholders e mensagens de atividades e perfil ("vírgula", "números", "publicações/homologação", "não é exportado para o relatório DOCX") e o indicador ordinal "nº" no placeholder de contrato.
 
+
+## [1.11.1] — 2026-07-08
+
+### Adicionado
+- As atividades agora exibem uma etiqueta de ambiente, facilitando identificar a qual ambiente cada atividade pertence.
+
+### Corrigido
+- Correções ortográficas e de revisão em português do Brasil na interface e na documentação.
+
 ## [1.11.0] — 2026-07-01
 
 ### Adicionado
