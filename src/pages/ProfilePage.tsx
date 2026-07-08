@@ -376,7 +376,7 @@ export function ProfilePage() {
               required
               value={form.contract_identifier}
               onChange={handleChange}
-              placeholder="Ex: Contrato n° 06/2022 – Digisystem Serviços Especializados Ltda"
+              placeholder="Ex: Contrato nº 06/2022 – Digisystem Serviços Especializados Ltda"
               className={fieldClass('contract_identifier')}
             />
           </div>

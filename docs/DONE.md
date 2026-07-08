@@ -14,13 +14,41 @@
 
 ## [Unreleased]
 
+- [x] **fix:** Revisão ortográfica pt-BR de textos da UI — 6 correções de acentuação/ortografia em `ActivityDetailPage`, `ActivityFormPage`, `InputTags`, `ProfilePage` e comentários em `Activity.ts` (inclui o indicador ordinal "nº" no placeholder de contrato).
+
+---
+
+## v1.11.0 — 2026-07-01
+
 > Plano: [plan-shipit41 — ambiente da atividade (tag interna)](plans/plan-shipit41-activityEnvironmentTag.prompt.md)
 
 - [x] **feat:** Ambiente da atividade (uso interno) — seletor segmentado colorido (`EnvironmentSelector`) acima do campo de Releases SVN com Desenvolvimento/Homologação/Produção (verde/amarelo/vermelho, toggle-off), e tag compacta (`EnvironmentBadge`, abreviações `dsv`/`hmg`/`prd`) na lista e no detalhe. Novo campo nullable `environment` na entidade `Activity` + `ActivityData`; tokens em `src/utils/environmentColors.ts` (reuso de `chart-*`). Não exportado no DOCX. Testes unitários (`environmentColors`, `EnvironmentSelector`, `EnvironmentBadge`, `database`, regressão DOCX) + E2E.
+
+---
+
+## v1.10.0 — 2026-06-30
+
+> Plano: [plan-shipit40 — copiar imagens para a área de transferência](plans/plan-shipit40-copyImagesToClipBoardprompt.md)
+
 - [x] **feat:** Copiar evidência de imagem para a área de transferência — botão de cópia nos cards de imagem (criação/edição/detalhe) e menu de contexto (botão direito) no lightbox com "Copiar para a área de transferência" e "Abrir local do arquivo". Novo handler IPC `app:copyImageToClipboard` (`clipboard.writeImage` com validação de pasta) e helper `src/services/evidenceClipboard.ts`; "abrir local" reutiliza `app:openFileInFolder`. Testes unitários (`evidenceClipboard.test.ts`) + E2E.
 - [x] **feat:** Copiar número de release SVN ao clicar no chip (lista de atividades e detalhe da atividade), com ícone de cópia revelado no hover. Novo util `src/utils/clipboard.ts` (`copyTextToClipboard`). Testes unitários (`clipboard.test.ts`) + E2E.
+
+---
+
+## v1.9.1 — 2026-06-29
+
 - [x] **feat:** Status padrão "Concluído" no formulário de criação de atividade (antes "Pendente"); edição preserva o status salvo.
 - [x] **feat:** Removido o prefixo `#` dos números de release no campo Releases SVN (uso interno) em todas as telas (formulário/`InputTags`, lista de atividades e detalhe da atividade); assertivas E2E ajustadas.
+- [x] **Infra (release):** geração automática do CHANGELOG, da mensagem de commit e do corpo do PR via Claude CLI durante o release; detecção do Claude CLI tornada portátil entre máquinas.
+
+---
+
+## v1.9.0 — 2026-06-29
+
+- [x] **Sistema padronizado de controles** (`.btn*`, `.field*`, `.checkbox`, `.option`) com raio/padding/foco/hover/disabled idênticos entre temas.
+- [x] **Temas repaginados e equalizados**: Futurista, Oceano (base escura) e Pôr do Sol; Alto Contraste ajustado (WCAG AAA); as 10 paletas passam a definir o mesmo conjunto de ~60 variáveis CSS. Imagem de fundo no tema Rosa & Violeta. Testes do registro de temas (`themes.test.ts`).
+- [x] **Botões e campos de formulário unificados** em todo o app (semântica de "Cancelar", remoção de cores cruas, foco visível).
+- [x] **Removido o tema Cyberpunk** por completo (efeitos, paleta, classes-gancho `cyber-*`, cenários E2E); o app passa a ter 10 temas; preferência antiga (`cyberpunk`) degrada para o tema Claro.
 
 ---
 

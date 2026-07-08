@@ -9,19 +9,17 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Corrigido
+- Revisão ortográfica (pt-BR) de textos da interface: acentuação corrigida em placeholders e mensagens de atividades e perfil ("vírgula", "números", "publicações/homologação", "não é exportado para o relatório DOCX") e o indicador ordinal "nº" no placeholder de contrato.
+
+
+## [1.11.1] — 2026-07-08
+
 ### Adicionado
+- As atividades agora exibem uma etiqueta de ambiente, facilitando identificar a qual ambiente cada atividade pertence.
 
-- **Ambiente da atividade (uso interno)**: novo seletor colorido acima do campo de Releases SVN com as opções **Desenvolvimento** (verde), **Homologação** (amarelo) e **Produção** (vermelho); clicar na opção já selecionada limpa a marcação. O ambiente escolhido aparece como uma tag compacta (`dsv`/`hmg`/`prd`) na lista de atividades e no detalhe, para identificar rapidamente de qual ambiente é cada atividade. Campo interno — não incluído no relatório DOCX.
-- **Copiar evidência de imagem para a área de transferência**: botão de cópia (revelado ao passar o mouse) em cada card de imagem nas telas de criação, edição e detalhe da atividade. Na visão maximizada (lightbox), o botão direito abre um menu de contexto com **Copiar para a área de transferência** e **Abrir local do arquivo**, permitindo colar a imagem em e-mail/documento/mensagem ou localizar o arquivo no explorador.
-- **Copiar número de release SVN**: os chips de release na lista de atividades e no detalhe da atividade passam a exibir um ícone de cópia ao passar o mouse; um clique copia o número para a área de transferência.
-
-### Alterado
-
-- O campo **Status** no formulário de criação de atividade passa a vir preenchido com **"Concluído"** por padrão (antes era "Pendente"). A edição de atividades existentes continua respeitando o status salvo.
-- Os números de release no campo **Releases SVN (uso interno)** deixaram de exibir o prefixo `#` em todas as telas (formulário, lista de atividades e detalhe da atividade) — agora aparecem apenas como o número.
-
-
-
+### Corrigido
+- Correções ortográficas e de revisão em português do Brasil na interface e na documentação.
 
 ## [1.11.0] — 2026-07-01
 

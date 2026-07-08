@@ -18,13 +18,10 @@ SHIPIT!
 > ✅ Concluídos e movidos para o [DONE.md](DONE.md) (ver `[Unreleased]`): formatação de texto no DOCX (quebras de linha, negrito, itálico, listas) e o editor rich-text na descrição da atividade — [plan-shipit38](plans/plan-shipit38-richTextDescriptionAndDocxFormatting.prompt.md).
 > ✅ `ELECTRON_RUN_AS_NODE=1`: não havia variável persistente (User/Machine vazios) — era herdada no nível de processo do host (VS Code/Electron). Tratada nos comandos de e2e; em terminal novo fora do host não aparece.
 
-## FEATURES
-
-## Fix
+## FEATURE experimental
 
 - n2
   - 🟠 feat: Corrigir as cores nos temas para os botões de excluir e cancelar para uma cor dentro do tema que seja ou represente o vermelho, o cancelar e excluir ficou um pouco apagado em alguns temas.
-  - 
 
 
 
@@ -41,3 +38,12 @@ SHIPIT!
 ## Verificação, correção e criação de testes
 
 ------------------------------------------------------------------
+
+
+
+Estou em uma branch experimental, branch `experimental-themes`, onde estou testando a implementação de temas no app, e estou verificando se os temas estão funcionando corretamente, e se as cores estão sendo aplicadas corretamente nos botões de excluir e cancelar, e se as cores estão dentro do tema que seja ou represente o vermelho, o cancelar e excluir ficou um pouco apagado em alguns temas.
+
+Quero que os botões fiquem na parte de cima da tela assim como na página de listar e Criar Atividade, , 
+Que fiquem visíveis e acessíveis para o usuário, 
+Que fiquem fixados no topo da tela para que o usuário possa acessar facilmente os botões da página,
+Quero que fique acompanhando o scroll da página sempre visíveis.

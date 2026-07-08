@@ -4,7 +4,7 @@ Guia para o Claude Code trabalhar neste projeto. Este arquivo é carregado autom
 
 ## O que é
 
-App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.7.0**.
+App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.11.0**.
 
 ## Stack
 
@@ -75,7 +75,9 @@ Ao concluir uma tarefa: marque/remova do TODO → registre em DONE com a versão
 
 ## Release e sincronização de docs
 
-Ao **concluir um desenvolvimento** ou **publicar uma versão**, use a skill **`shipit-release-and-doc-sync`**. O release é automatizado por [docs/scripts/release.py](<docs/scripts/release.py>) (interativo, faz operações de rede — confirme antes de disparar).
+**Regra:** sempre que **terminar uma feature/fix/refactor**, **publicar uma versão**, ou o usuário pedir para **atualizar/sincronizar a documentação** (CHANGELOG, TODO, DONE, ARCHITECTURE) — mesmo com frases como "atualiza os docs", "doc sync", "registra a mudança", "terminei, atualiza tudo", "fazer release" — **invoque a skill `shipit-release-and-doc-sync`** (via a ferramenta Skill) **antes** de editar os docs manualmente. Ela tem dois modos (Doc Sync e Release); na dúvida, pergunte qual.
+
+O release é automatizado por [docs/scripts/release_v2.py](<docs/scripts/release_v2.py>) (interativo, faz operações de rede — confirme antes de disparar).
 
 ## Detalhes completos
 

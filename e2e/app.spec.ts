@@ -945,7 +945,7 @@ test('creates activity with svn releases tags and finds it through global search
 
   await svnInput.fill('abc,')
   await svnInput.press('Tab')
-  await expect(svnSection).toContainText('Use apenas numeros de release SVN')
+  await expect(svnSection).toContainText('Use apenas números de release SVN')
 
   await page.click('button[type="submit"]')
   await page.waitForURL(new RegExp(`#/activities\\?month=${monthRef.replace('/', '\\/')}$`), { timeout: 10_000 })
@@ -964,6 +964,11 @@ test('creates activity with svn releases tags and finds it through global search
   await searchInput.fill(releaseA)
   await expect(page.locator('#searchbar-results')).toBeVisible({ timeout: 5_000 })
   await expect(page.locator('#searchbar-results')).toContainText(description)
+
+  // Cleanup: o SearchBar é persistente no titlebar e mantém `query`/`isOpen`
+  // entre testes; limpa para não vazar estado para os testes de busca seguintes.
+  await searchInput.fill('')
+  await page.keyboard.press('Escape')
 })
 
 // ──── Copiar release / evidência ────
@@ -1331,6 +1336,10 @@ test('searches from titlebar with debounce, keyboard navigation and close behavi
     await page.keyboard.press('Control+k')
     await expect(input).toBeFocused({ timeout: 1_000 })
   }).toPass({ timeout: 10_000 })
+  // Reseta qualquer `query` residual de testes anteriores (SearchBar é persistente
+  // no titlebar e não desmonta entre os testes).
+  await input.fill('')
+  await expect(dropdown).toHaveCount(0)
   await expect(page.locator('#searchbar-magnifier')).toBeVisible()
 
   await input.fill(query.slice(0, 1))

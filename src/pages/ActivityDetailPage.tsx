@@ -697,7 +697,7 @@ export function ActivityDetailPage() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Este campo nao e exportado para o relatorio DOCX.
+              Este campo não é exportado para o relatório DOCX.
             </p>
           </div>
         )}
