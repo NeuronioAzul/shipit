@@ -14,6 +14,7 @@
 
 ## [Unreleased]
 
+- [x] **fix:** Controles de evidência invisíveis no Linux — os botões de arrastar/copiar/excluir das evidências (`EvidenceUpload`, `ActivityDetailPage`) e as ações rápidas da lista (`ActivitiesPage`) dependiam só de `opacity-0 group-hover`, que falha no Electron/Linux. Trocado por estado de repouso visível (`opacity-70`) com destaque em `group-hover`/`focus-visible`/`focus-within`, garantindo visibilidade em todas as plataformas e via teclado.
 - [x] **fix:** Revisão ortográfica pt-BR de textos da UI — 6 correções de acentuação/ortografia em `ActivityDetailPage`, `ActivityFormPage`, `InputTags`, `ProfilePage` e comentários em `Activity.ts` (inclui o indicador ordinal "nº" no placeholder de contrato).
 
 ---
