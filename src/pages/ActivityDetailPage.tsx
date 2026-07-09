@@ -78,7 +78,7 @@ function SortableEvidenceCard({
         ref={handleRef}
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover/ev:opacity-100 transition-opacity touch-none"
+        className="absolute top-2 left-2 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:text-white cursor-grab active:cursor-grabbing opacity-70 group-hover/ev:opacity-100 focus-visible:opacity-100 transition-opacity touch-none"
         title="Arrastar para reordenar"
         aria-label="Arrastar para reordenar evidência"
       >
@@ -87,7 +87,7 @@ function SortableEvidenceCard({
       {!isText && canUseEvidenceFileActions(evidence.file_path) && (
         <button
           onClick={(e) => { e.stopPropagation(); copyEvidenceImage(evidence.file_path) }}
-          className="absolute top-2 right-10 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:bg-black/70 hover:text-white cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
+          className="absolute top-2 right-10 z-10 p-1.5 rounded bg-black/50 text-white/80 hover:bg-black/70 hover:text-white cursor-pointer opacity-70 group-hover/ev:opacity-100 focus-visible:opacity-100 transition-opacity"
           title="Copiar imagem para a área de transferência"
           aria-label="Copiar imagem para a área de transferência"
         >
@@ -96,7 +96,7 @@ function SortableEvidenceCard({
       )}
       <button
         onClick={() => onDelete(evidence.id)}
-        className="absolute top-2 right-2 z-10 p-1.5 rounded bg-destructive/80 text-destructive-foreground hover:bg-destructive cursor-pointer opacity-0 group-hover/ev:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 z-10 p-1.5 rounded bg-destructive/80 text-destructive-foreground hover:bg-destructive cursor-pointer opacity-70 group-hover/ev:opacity-100 focus-visible:opacity-100 transition-opacity"
         title="Excluir evidência"
         aria-label="Excluir evidência"
       >
@@ -692,7 +692,7 @@ export function ActivityDetailPage() {
                   aria-label={`Copiar release ${release}`}
                 >
                   {release}
-                  <i className="fa-solid fa-copy text-[10px] opacity-0 group-hover/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
+                  <i className="fa-solid fa-copy text-[10px] opacity-70 group-hover/rel:opacity-100 group-focus-visible/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
                 </button>
               ))}
             </div>

@@ -123,7 +123,7 @@ function SortableEvidenceCard({
           {...attributes}
           {...listeners}
           className="absolute top-2 left-2 p-1.5 bg-black/50 text-white/80 rounded
-            opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+            opacity-70 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
           title="Arrastar para reordenar"
           aria-label="Arrastar para reordenar evidência"
         >
@@ -135,7 +135,7 @@ function SortableEvidenceCard({
             type="button"
             onClick={(e) => { e.stopPropagation(); onEdit() }}
             className="absolute top-2 right-10 p-1.5 bg-primary/80 text-primary-foreground rounded
-              opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-primary"
+              opacity-70 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer hover:bg-primary"
             title="Editar evidência de texto"
             aria-label="Editar evidência de texto"
           >
@@ -148,7 +148,7 @@ function SortableEvidenceCard({
             type="button"
             onClick={(e) => { e.stopPropagation(); copyEvidenceImage(evidence.file_path) }}
             className="absolute top-2 right-10 p-1.5 bg-black/50 text-white/80 rounded
-              opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 hover:text-white"
+              opacity-70 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 hover:text-white"
             title="Copiar imagem para a área de transferência"
             aria-label="Copiar imagem para a área de transferência"
           >
@@ -160,7 +160,7 @@ function SortableEvidenceCard({
           type="button"
           onClick={() => onDelete(evidence.id)}
           className="absolute top-2 right-2 p-1.5 bg-destructive/80 text-destructive-foreground rounded
-            opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-destructive"
+            opacity-70 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer hover:bg-destructive"
           title="Remover evidência"
           aria-label="Remover evidência"
         >

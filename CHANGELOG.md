@@ -10,6 +10,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ## [Unreleased]
 
 ### Corrigido
+- No Linux, os botões de arrastar, copiar e excluir das evidências (além das ações rápidas na lista de atividades) não apareciam, pois só eram exibidos ao passar o mouse. Agora esses controles ficam sempre visíveis e apenas ganham destaque no foco/hover, funcionando de forma consistente em todas as plataformas e também via teclado.
 - Revisão ortográfica (pt-BR) de textos da interface: acentuação corrigida em placeholders e mensagens de atividades e perfil ("vírgula", "números", "publicações/homologação", "não é exportado para o relatório DOCX") e o indicador ordinal "nº" no placeholder de contrato.
 
 

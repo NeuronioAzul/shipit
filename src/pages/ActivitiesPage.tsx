@@ -142,7 +142,7 @@ function SortableActivityItem({
                   aria-label={`Copiar release ${release}`}
                 >
                   {release}
-                  <i className="fa-solid fa-copy text-[9px] opacity-0 group-hover/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
+                  <i className="fa-solid fa-copy text-[9px] opacity-70 group-hover/rel:opacity-100 group-focus-visible/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
                 </button>
               ))}
               {compactSvnReleases.hiddenCount > 0 && (
@@ -168,7 +168,7 @@ function SortableActivityItem({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <button
             onClick={() => onNavigate(`/activities/${activity.id}/edit`)}
             className="btn btn-ghost btn-icon"
