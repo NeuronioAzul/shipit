@@ -339,8 +339,13 @@ export function DashboardPage() {
                       </td>
                       <td className="px-4 py-2.5">
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${STATUS_COLORS[activity.status] || ''}`}
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${STATUS_COLORS[activity.status] || ''} ${
+                            activity.status === 'Em andamento' ? 'shipit-neon-border' : ''
+                          }`}
                         >
+                          {activity.status === 'Em andamento' && (
+                            <span className="shipit-neon-border-ring" aria-hidden="true"></span>
+                          )}
                           <i className={`fa-solid ${STATUS_ICONS[activity.status] || ''} text-[10px]`}></i>
                           {activity.status}
                         </span>
