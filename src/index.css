@@ -168,6 +168,11 @@
   100% { transform: scale(2.75); opacity: 0; }
 }
 
+@keyframes neon-border-spin {
+  from { rotate: 0deg; }
+  to   { rotate: 360deg; }
+}
+
 /* Page content fade-in */
 .animate-page-in {
   animation: fade-in 0.2s ease-out;
@@ -194,6 +199,60 @@
   border-radius: 9999px;
   background: inherit;
   animation: attention-sonar 1.8s ease-out infinite;
+}
+
+/* Borda neon com gradiente em rotação contínua (badge de status "Em andamento").
+   O efeito vem de um pseudo-elemento superdimensionado que gira atrás de um
+   fundo mascarado — só a faixa de 1px da borda fica visível. */
+.shipit-neon-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.shipit-neon-border > .shipit-neon-border-ring {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Borda de base, visível entre as passagens do brilho */
+  background: color-mix(in oklab, var(--chart-3) 25%, transparent);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.shipit-neon-border > .shipit-neon-border-ring::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 190%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    transparent 33%,
+    color-mix(in oklab, var(--chart-3) 55%, transparent) 43%,
+    color-mix(in oklab, var(--chart-3) 65%, white) 50%,
+    color-mix(in oklab, var(--chart-3) 55%, transparent) 57%,
+    transparent 67%,
+    transparent 100%
+  );
+  animation: neon-border-spin 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shipit-neon-border > .shipit-neon-border-ring::before {
+    animation: none;
+  }
 }
 
 /* ===== Theme transition ===== */
