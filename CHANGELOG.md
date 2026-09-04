@@ -16,6 +16,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 
 
+
+## [1.13.0] — 2026-09-04
+
+### Adicionado
+- O painel do dashboard agora exibe informações detalhadas, oferecendo uma visão mais completa e aprofundada dos dados diretamente na tela inicial.
+
 ## [1.12.0] — 2026-09-04
 
 ### Alterado
