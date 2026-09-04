@@ -15,6 +15,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 
 
+
+## [1.12.0] — 2026-09-04
+
+### Alterado
+- Aprimorada a página de Atividades com novos estilos e ajustes visuais, deixando a navegação e a visualização das atividades mais consistentes.
+
 ## [1.11.2] — 2026-07-09
 
 ### Corrigido
