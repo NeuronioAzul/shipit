@@ -72,7 +72,7 @@ function makeActivity(overrides?: Partial<Activity>): Activity {
     project_scope: 'Squad Alpha',
     last_updated: new Date(),
     link_ref: null,
-    svn_releases: null,
+    deployments: null,
     evidences: [],
     ...overrides,
   } as Activity
@@ -187,37 +187,16 @@ describe('generateDocxReport', () => {
     expect(docXml).toMatch(/>168<\/w:t>/)
   })
 
-  it('does not include svn_releases internal metadata in DOCX output', async () => {
+  it('does not include the internal deployments field (environments and releases) in DOCX output', async () => {
     const releaseA = '991122334455'
     const releaseB = '667788990011'
 
-    const result = await generateDocxReport({
-      profile: makeProfile(),
-      activities: [makeActivity({
-        description: 'Atividade com releases internos',
-        svn_releases: `${releaseA},${releaseB}`,
-      })],
-      monthReference: '03/2026',
-      templatePath: TEMPLATE_PATH,
-      reportsDir: outDir,
-    })
-
-    const buf = fs.readFileSync(result.filePath)
-    const zip = await JSZip.loadAsync(buf)
-    const docXml = await zip.file('word/document.xml')!.async('string')
-
-    expect(docXml).not.toContain(releaseA)
-    expect(docXml).not.toContain(releaseB)
-    expect(docXml).not.toContain('{{activity_svn_releases}}')
-  })
-
-  it('does not include the internal environment field in DOCX output', async () => {
-    async function renderDocXml(environment: 'Produção' | null): Promise<string> {
+    async function renderDocXml(deployments: string | null): Promise<string> {
       const result = await generateDocxReport({
         profile: makeProfile(),
         activities: [makeActivity({
-          description: 'Atividade com ambiente interno',
-          environment,
+          description: 'Atividade com publicações internas',
+          deployments,
         })],
         monthReference: '03/2026',
         templatePath: TEMPLATE_PATH,
@@ -230,12 +209,18 @@ describe('generateDocxReport', () => {
 
     const countOf = (haystack: string, needle: string) => haystack.split(needle).length - 1
 
-    const withEnv = await renderDocXml('Produção')
-    const withoutEnv = await renderDocXml(null)
+    const withDeployments = await renderDocXml(
+      `{"Desenvolvimento":["${releaseA}"],"Homologação":[],"Produção":["${releaseB}"]}`,
+    )
+    const withoutDeployments = await renderDocXml(null)
 
-    // O valor do ambiente não é injetado: a contagem da palavra não muda com/sem o campo.
-    expect(countOf(withEnv, 'Produção')).toBe(countOf(withoutEnv, 'Produção'))
-    expect(withEnv).not.toContain('{{activity_environment}}')
+    expect(withDeployments).not.toContain(releaseA)
+    expect(withDeployments).not.toContain(releaseB)
+    expect(withDeployments).not.toContain('{{activity_deployments}}')
+    // Os nomes dos ambientes não são injetados: a contagem não muda com/sem o campo.
+    for (const env of ['Desenvolvimento', 'Homologação', 'Produção']) {
+      expect(countOf(withDeployments, env)).toBe(countOf(withoutDeployments, env))
+    }
   })
 
   it('handles multiple activities from different projects', async () => {

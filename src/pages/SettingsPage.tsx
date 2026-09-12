@@ -5,8 +5,9 @@ import { useUpdateState } from '../contexts/UpdateStateContext'
 import { ThemeSelector } from '../components/ThemeSelector'
 import { Select } from '../components/Select'
 import { TimePicker } from '../components/TimePicker'
-import type { AppSettings } from '../vite-env'
+import type { AppSettings, MigrationNoticeData } from '../vite-env'
 import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
+import { copyTextToClipboard } from '../utils/clipboard'
 
 export function SettingsPage() {
   const location = useLocation()
@@ -18,6 +19,7 @@ export function SettingsPage() {
   const [selectedSound, setSelectedSound] = useState('')
   const [soundSaved, setSoundSaved] = useState(false)
   const [autoLaunch, setAutoLaunch] = useState(false)
+  const [migrationNotice, setMigrationNotice] = useState<MigrationNoticeData | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Alert config state
@@ -71,6 +73,9 @@ export function SettingsPage() {
       setSounds(soundList)
       setSelectedSound((settings as AppSettings).alertSound || '')
       setAutoLaunch(isAutoLaunch)
+      window.electronAPI.getLastMigrationNotice?.()
+        .then((notice) => setMigrationNotice(notice))
+        .catch(() => setMigrationNotice(null))
 
       let nextAlertEnabled = true
       let nextAlertDaysBefore = [5, 3, 2, 1, 0]
@@ -368,6 +373,55 @@ export function SettingsPage() {
             )}
           </div>
         </section>
+
+        {/* Backup do banco de dados (criado na migração da versão) */}
+        {migrationNotice && (
+          <section id="settings-backup-section" className="bg-card border border-border rounded-lg p-5">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-database text-primary"></i>
+              Backup do banco de dados
+            </h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              Criado automaticamente em{' '}
+              {migrationNotice.migratedAt
+                ? new Date(migrationNotice.migratedAt).toLocaleString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                  })
+                : 'data desconhecida'}
+              , antes da atualização para a versão {migrationNotice.toVersion}
+              {migrationNotice.fromVersion ? ` (a partir da ${migrationNotice.fromVersion})` : ''}.
+              Use-o caso precise voltar para a versão anterior do app.
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <input
+                  id="settings-backup-path"
+                  type="text"
+                  readOnly
+                  value={migrationNotice.backupPath}
+                  className="field truncate"
+                  title={migrationNotice.backupPath}
+                />
+              </div>
+              <button
+                id="settings-backup-btn-copy"
+                onClick={() => { void copyTextToClipboard(migrationNotice.backupPath, 'Caminho do backup') }}
+                className="btn btn-outline whitespace-nowrap"
+              >
+                <i className="fa-solid fa-copy mr-1"></i>
+                Copiar
+              </button>
+              <button
+                id="settings-backup-btn-open"
+                onClick={() => { void window.electronAPI?.openFileInFolder(migrationNotice.backupPath) }}
+                className="btn btn-primary whitespace-nowrap"
+              >
+                <i className="fa-solid fa-folder-open mr-1"></i>
+                Abrir pasta
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Link para Perfil */}
         <section id="settings-sounds-section" className="bg-card border border-border rounded-lg p-5">

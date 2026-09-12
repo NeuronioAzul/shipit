@@ -48,7 +48,8 @@ Responsável por:
 - **Janela principal**: `BrowserWindow` com `contextIsolation: true` e `nodeIntegration: false`
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
-- **IPC Handlers**: 57 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
+- **IPC Handlers**: 62 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
+- **Migração de banco com aviso e backup**: na primeira abertura após uma atualização que muda o schema, o banco é aberto sem sincronizar, o renderer mostra um aviso bloqueante e só após a confirmação o app faz backup → migração → `synchronize()` (ver `database.ts` e `db-backup.ts`)
 - **Identidade runtime e `userData`**: `runtime-paths.ts` centraliza `appId`, nome visual, diretórios de dados por modo, assets públicos, ícones e perfil temporário de testes
 - **Auto-update controlado**: `update-notifications.ts` usa `checkForUpdates()` com notificações próprias do ShipIt, dedupe e foco da janela existente
 
@@ -87,6 +88,8 @@ app:zoomIn                 app:zoomOut
 app:zoomReset              app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
+app:getStartupMigration    app:runStartupMigration
+app:getLastMigrationNotice app:openReleasesPage
 app:generateReport         app:openFileInFolder
 app:copyImageToClipboard
 app:getUpdateState         app:checkForUpdate
@@ -108,8 +111,34 @@ app:navigate               window:maximized-change
 
 - **DataSource singleton** inicializado lazily via `getDb()`
 - Banco SQLite em `{userData}/shipit.db`
-- `synchronize: true` — schema auto-atualiza a partir das entidades (modo dev)
+- Schema sincronizado a partir das entidades via `dataSource.synchronize()` **explícito** (não pela opção `synchronize: true`), para que colunas removidas de uma entidade só sejam dropadas depois de aviso → backup → migração
+- Inicialização em passos: `openDatabase()` (abre sem sync) → `needsLegacyMigration()` (`PRAGMA table_info`) → se necessário, `migrateLegacyEnvironmentColumns()` (SQL cru, idempotente) → `finalizeDatabase()` (`synchronize()`). `initDatabase()` encadeia tudo no fluxo normal; enquanto `isMigrationPending()`, `getDb()` lança e nenhum handler `db:*` acessa o banco
 - Funções exportadas: CRUD para todas as entidades, `getReportPayload()` para o gerador
+
+### `db-backup.ts` — Backup Verificado do Banco
+
+Sem dependência do Electron. `buildBackupPath(backupsDir, versão)` → `shipit-backup-antes-v<versão>-<AAAAMMDD-HHmmss>.db`; `createDatabaseBackup({ dbPath, backupPath })` copia `shipit.db` (+ sidecars `-wal`/`-shm`/`-journal`) para `{userData}/backups/`, verifica tamanho e cabeçalho SQLite e nunca deixa cópia parcial (lança `DatabaseBackupError`). O `main.ts` faz `PRAGMA wal_checkpoint(TRUNCATE)` antes de copiar. Backups nunca são apagados automaticamente.
+
+#### Fluxo de migração na inicialização (plano 42)
+
+```text
+app.whenReady
+  ├─ openDatabase()  (synchronize: false)
+  ├─ needsLegacyMigration()?
+  │    ├─ não → finalizeDatabase() → cleanupTrash() → startSchedulers()
+  │    └─ sim → pendingMigration = { fromVersion, toVersion, plannedBackupPath, … }  (nada toca o banco)
+  └─ createWindow()
+        renderer: App.tsx → app:getStartupMigration
+          ├─ null → app normal
+          └─ info → só <MigrationGate/> (opaco; sem layout/rotas)
+                aviso (30 s) → app:runStartupMigration
+                  main: wal_checkpoint → createDatabaseBackup → migrateLegacyEnvironmentColumns
+                        → finalizeDatabase → cleanupTrash/startSchedulers → __migrationNotice em settings.json
+                  ├─ backup falhou → nada alterado ("Tentar novamente" / "Fechar o app")
+                  └─ ok → resumo (caminho do backup, downgrade) → "Abrir o ShipIt!"
+```
+
+`SHIPIT_E2E_MIGRATION_COUNTDOWN_SECONDS` (env) encurta a contagem só em testes.
 
 ### `report-generator.ts` — Motor DOCX
 
@@ -144,7 +173,7 @@ As notificações usam cópia pt-BR, ícone ShipIt resolvido pelo runtime e cliq
 
 ### `preload.ts` — Context Bridge
 
-Expõe `window.electronAPI` com 57 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
+Expõe `window.electronAPI` com 62 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
 
 ### `entities/` — Modelo de Dados
 
@@ -152,7 +181,7 @@ Expõe `window.electronAPI` com 57 métodos tipados que chamam `ipcRenderer.invo
 | ---------- | -------- | ----- | ----------- |
 | `UserProfile` | `user_profile` | Auto-increment | Perfil do usuário com identificação contratual, tipo de perfil, atividades correlatas e disponibilidade (`contract_identifier`, `profile_type`, `correlating_activities`, `daily_availability`, `monthly_availability`, `minimum_effort_hours`) |
 | `Alert` | `alerts` | Auto-increment | Configuração de alertas com frequência, mensagem, som e último disparo (`alert_days_before`, `alert_frequency`, `alert_message`, `alert_sound_enabled`, `alert_sound_file`, `last_alert_sent`) |
-| `Activity` | `activities` | UUID v7 | Atividade registrada com período e status |
+| `Activity` | `activities` | UUID v7 | Atividade registrada com período, status e `deployments` (JSON interno `{ ambiente: releases[] }` — publicações por ambiente com releases SVN; não exportado no DOCX) |
 | `Evidence` | `evidences` | UUID v7 | Evidência (imagem ou texto) vinculada a uma atividade, com ordenação e soft-delete via `deleted_at` |
 | `Report` | `reports` | UUID v7 | Relatório DOCX gerado |
 | `ActivityReport` | `activities_report` | UUID v7 | Junction table: atividade ↔ relatório, com `date_added` para rastrear a vinculação |
@@ -186,6 +215,8 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza `<TitleBar>` + `<Acti
 
 Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout` → Route outlet
 
+Antes de montar o `HashRouter`, `App.tsx` consulta `app:getStartupMigration`; se houver migração pendente, renderiza apenas `<MigrationGate/>` até a conclusão.
+
 ### Componentes Principais
 
 | Componente | Responsabilidade |
@@ -200,6 +231,10 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | `DatePicker` | Campo de data reutilizável para formulários |
 | `TimePicker` | Campo de horário reutilizável para alertas/configurações |
 | `Select` | Select estilizado reutilizável |
+| `InputTags` | Entrada de tags (vírgula/Enter/Tab, colar CSV) com validação por tag |
+| `DeploymentsEditor` | Editor de publicações por ambiente (dsv → hmg → prd): toggle colorido + `InputTags` de releases por linha, releases retidas ao desmarcar, atalho "Repetir releases" |
+| `DeploymentPipeline` | Exibição `dsv › hmg › prd` na lista/detalhe; releases copiáveis; nada quando nenhum ambiente está marcado |
+| `MigrationGate` | Aviso bloqueante de migração do banco (contagem de 30 s → backup → migração → resumo com caminho do backup e instruções de downgrade) |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
 | `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
 | `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
@@ -240,6 +275,9 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | `activityMonthNavigation.ts` | Cálculo de navegação mensal para a tela de detalhes |
 | `keyboardGuards.ts` | Guardas para atalhos não dispararem durante digitação |
 | `statusColors.ts` | Mapeamento compartilhado de status para ícones/cores |
+| `environmentColors.ts` | Ordem, cores (`chart-*`), ícones e abreviações (`dsv`/`hmg`/`prd`) dos ambientes |
+| `deployments.ts` | Parse/serialização do JSON `deployments` (ordem fixa, dedupe, `null` quando vazio) e migração legada usada pelo `localDb` |
+| `svnReleases.ts` | Normalização/validação de números de release SVN |
 
 ### Temas (`src/themes/`)
 
@@ -326,7 +364,8 @@ Ambos registrados como privilegiados com `supportFetchAPI` e `stream` antes de `
 
 Banco principal para todos os dados estruturados. Caminho: `{userData}/shipit.db`.
 
-- Gerenciado pelo TypeORM com `synchronize: true`
+- Gerenciado pelo TypeORM; schema sincronizado por `dataSource.synchronize()` explícito após a verificação de migração (ver `database.ts`)
+- Backups pré-migração em `{userData}/backups/` (ver `db-backup.ts`)
 - Entidades com decorators (`@Entity`, `@Column`, `@OneToMany`, etc.)
 - UUID v7 como primary key (exceto UserProfile que usa auto-increment)
 
@@ -380,6 +419,8 @@ Configurações do app (não do perfil). Caminho: `{userData}/settings.json`.
 ```
 
 Merge parcial: `saveSettings({ key: value })` faz merge com as configurações existentes.
+
+Chaves **internas** (prefixo `__`) nunca são expostas ao renderer por `getSettings` e são preservadas por `saveSettings`: `__internalUpdate` (estado do auto-update), `__migrationNotice` (último backup/migração: `fromVersion`, `toVersion`, `backupPath`, `migratedAt` — lido por `app:getLastMigrationNotice` para a seção "Backup do banco de dados" em Configurações) e `__lastRunVersion` (versão que rodou por último, gravada quando o banco fica pronto).
 
 ### `localStorage`
 

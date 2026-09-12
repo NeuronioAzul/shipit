@@ -1,22 +1,17 @@
 import { useEffect, useState, useCallback, useRef, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import type { ActivityData, ActivityEnvironment, EvidenceData } from '../vite-env'
+import type { ActivityData, EvidenceData } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { EvidenceUpload } from '../components/EvidenceUpload'
-import { EnvironmentSelector } from '../components/EnvironmentSelector'
+import { DeploymentsEditor } from '../components/DeploymentsEditor'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { validateActivity, type ValidationError } from '../utils/validation'
 import { normalizeToHtml, isRichTextEmpty } from '../utils/richText'
 import { DatePicker } from '../components/DatePicker'
 import { Select } from '../components/Select'
-import { InputTags } from '../components/InputTags'
 import { registerSaveContextHandler, type SaveContextResult } from '../menu/saveContextRegistry'
-import {
-  normalizeSvnReleaseToken,
-  parseSvnReleasesStored,
-  serializeSvnReleases,
-} from '../utils/svnReleases'
+import { parseDeployments, serializeDeployments, type Deployment } from '../utils/deployments'
 
 const STATUSES = ['Em andamento', 'Concluído', 'Cancelado', 'Pendente'] as const
 const ATTENDANCE_TYPES = ['Presencial', 'Remoto', 'Híbrido'] as const
@@ -27,8 +22,7 @@ interface ActivityForm {
   date_end: string
   status: string
   link_ref: string
-  svn_releases: string
-  environment: string
+  deployments: Deployment[]
   attendance_type: string
   month_reference: string
   project_scope: string
@@ -48,8 +42,7 @@ export function ActivityFormPage() {
     date_end: '',
     status: 'Concluído',
     link_ref: '',
-    svn_releases: '',
-    environment: '',
+    deployments: [],
     attendance_type: '',
     month_reference: defaultMonth,
     project_scope: '',
@@ -71,8 +64,7 @@ export function ActivityFormPage() {
       date_end: nextForm.date_end || null,
       status: nextForm.status as ActivityData['status'],
       link_ref: nextForm.link_ref || null,
-      svn_releases: nextForm.svn_releases || null,
-      environment: (nextForm.environment as ActivityEnvironment) || null,
+      deployments: serializeDeployments(nextForm.deployments),
       attendance_type: (nextForm.attendance_type as ActivityData['attendance_type']) || null,
       month_reference: nextForm.month_reference,
       project_scope: nextForm.project_scope || null,
@@ -92,8 +84,7 @@ export function ActivityFormPage() {
       date_end: nextForm.date_end || null,
       status: nextForm.status,
       link_ref: nextForm.link_ref.trim(),
-      svn_releases: nextForm.svn_releases.trim(),
-      environment: nextForm.environment,
+      deployments: serializeDeployments(nextForm.deployments),
       attendance_type: nextForm.attendance_type,
       month_reference: nextForm.month_reference,
       project_scope: nextForm.project_scope.trim(),
@@ -141,8 +132,7 @@ export function ActivityFormPage() {
         date_end: activity.date_end || '',
         status: activity.status,
         link_ref: activity.link_ref || '',
-        svn_releases: activity.svn_releases || '',
-        environment: activity.environment || '',
+        deployments: parseDeployments(activity.deployments),
         attendance_type: activity.attendance_type || '',
         month_reference: activity.month_reference,
         project_scope: activity.project_scope || '',
@@ -374,19 +364,8 @@ export function ActivityFormPage() {
     return fieldError(field) ? inputErrorClass : inputClass
   }
 
-  const svnReleaseTags = parseSvnReleasesStored(form.svn_releases)
-
-  function validateSvnReleaseTag(rawTag: string): string | null {
-    return normalizeSvnReleaseToken(rawTag)
-      ? null
-      : 'Use apenas números de release SVN, separados por vírgula.'
-  }
-
-  function handleSvnReleasesChange(nextTags: string[]) {
-    setForm((prev) => ({
-      ...prev,
-      svn_releases: serializeSvnReleases(nextTags) || '',
-    }))
+  function handleDeploymentsChange(next: Deployment[]) {
+    setForm((prev) => ({ ...prev, deployments: next }))
     setAutoSaveStatus('idle')
   }
 
@@ -622,37 +601,19 @@ export function ActivityFormPage() {
           </p>
         </div>
 
-        {/* Ambiente (uso interno) */}
-        <div id="activity-form-environment-section" className="border border-border/60 rounded-lg p-4 bg-muted/20">
+        {/* Publicações por ambiente (uso interno) */}
+        <div id="activity-form-deployments-section" className="border border-border/60 rounded-lg p-4 bg-muted/20">
           <label className={labelClass}>
-            Ambiente (uso interno)
+            Publicações por ambiente (uso interno)
           </label>
-          <EnvironmentSelector
-            id="activity-form-environment"
-            value={form.environment as ActivityEnvironment | ''}
-            onChange={(v) => { setForm((prev) => ({ ...prev, environment: v })); setAutoSaveStatus('idle') }}
+          <DeploymentsEditor
+            idPrefix="activity-form-deployments"
+            value={form.deployments}
+            onChange={handleDeploymentsChange}
           />
           <p className="text-xs text-muted-foreground mt-2">
-            Marcação interna para identificar o ambiente. Não incluída no relatório DOCX.
-          </p>
-        </div>
-
-        {/* Releases SVN (uso interno) */}
-        <div id="activity-form-svn-releases-section" className="border border-border/60 rounded-lg p-4 bg-muted/20">
-          <label htmlFor="activity-form-svn-releases" className={labelClass}>
-            Releases SVN (uso interno)
-          </label>
-          <InputTags
-            id="activity-form-svn-releases"
-            name="svn_releases"
-            value={svnReleaseTags}
-            onChange={handleSvnReleasesChange}
-            validateTag={validateSvnReleaseTag}
-            normalizeTag={(tag) => normalizeSvnReleaseToken(tag) || ''}
-            placeholder="Ex: 12345, 12346, 12347"
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            Campo usado para apoiar publicações e homologação. Não será incluído no relatório DOCX.
+            Marque os ambientes em que esta atividade foi publicada e informe as releases SVN de cada um (opcional).
+            Não incluído no relatório DOCX.
           </p>
         </div>
 

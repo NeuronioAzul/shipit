@@ -71,6 +71,12 @@ export interface ElectronAPI {
   getAutoLaunch: () => Promise<boolean>
   setAutoLaunch: (enabled: boolean) => Promise<boolean>
 
+  // Migração do banco na primeira abertura após atualização (aviso → backup → migração)
+  getStartupMigration: () => Promise<StartupMigrationInfo | null>
+  runStartupMigration: () => Promise<StartupMigrationResult>
+  getLastMigrationNotice: () => Promise<MigrationNoticeData | null>
+  openReleasesPage: () => Promise<void>
+
   // Alerts
   getAlert: () => Promise<AlertData | null>
   saveAlert: (data: Partial<AlertData>) => Promise<AlertData>
@@ -117,6 +123,31 @@ export interface AppSettings {
   alertSound?: string
 }
 
+/** Dados do aviso bloqueante exibido antes da tela do app quando o banco precisa ser migrado. */
+export interface StartupMigrationInfo {
+  /** Versão que rodou por último (null quando desconhecida — instalações anteriores a este mecanismo). */
+  fromVersion: string | null
+  toVersion: string
+  /** Caminho onde o backup será gravado (decidido antes do aviso). */
+  plannedBackupPath: string
+  backupsDir: string
+  userDataDir: string
+  releasesUrl: string
+  countdownSeconds: number
+}
+
+export type StartupMigrationResult =
+  | { success: true; backupPath: string }
+  | { success: false; stage: 'backup' | 'migration'; error: string; backupPath?: string }
+
+/** Registro persistido do último backup/migração (Configurações › Backup do banco de dados). */
+export interface MigrationNoticeData {
+  fromVersion: string | null
+  toVersion: string
+  backupPath: string
+  migratedAt: string
+}
+
 export interface UserProfileData {
   id?: number
   full_name: string
@@ -145,11 +176,11 @@ export interface ActivityData {
   date_start: string | null
   date_end: string | null
   link_ref: string | null
-  svn_releases: string | null
+  /** JSON `{ ambiente: releases[] }` — publicações por ambiente (uso interno). Ver `utils/deployments.ts`. */
+  deployments: string | null
   status: ActivityStatus
   month_reference: string
   attendance_type: AttendanceType | null
-  environment: ActivityEnvironment | null
   project_scope: string | null
   last_updated: string
   evidences?: EvidenceData[]

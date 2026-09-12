@@ -10,6 +10,8 @@ interface InputTagsProps {
   hasError?: boolean
   validateTag?: (tag: string) => string | null
   normalizeTag?: (tag: string) => string
+  autoFocus?: boolean
+  onFocus?: () => void
 }
 
 function splitCandidateTags(raw: string): string[] {
@@ -29,6 +31,8 @@ export function InputTags({
   hasError = false,
   validateTag,
   normalizeTag,
+  autoFocus = false,
+  onFocus,
 }: InputTagsProps) {
   const [draft, setDraft] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
@@ -115,6 +119,8 @@ export function InputTags({
           disabled={disabled}
           placeholder={placeholder}
           className="flex-1 min-w-36 bg-transparent outline-none border-none text-sm"
+          autoFocus={autoFocus}
+          onFocus={onFocus}
           onChange={(event) => {
             setDraft(event.target.value)
             if (localError) setLocalError(null)

@@ -821,7 +821,7 @@ export async function generateDocxReport(payload: ReportPayload): Promise<{ file
         replaceTextInNodeMultiline(actRow, '{{activity_description}}', activityDescription)
       }
       replaceTextInNode(actRow, '{{activity_reference}}', '')
-      // svn_releases is internal metadata for publication workflow and must not be exported to DOCX.
+      // `deployments` (publicações por ambiente/releases) é metadado interno e não deve ir para o DOCX.
       replaceTextInNode(actRow, '{{activity_date_start}}', formatDateBR(act.date_start))
       replaceTextInNode(actRow, '{{activity_date_end}}', formatDateBR(act.date_end))
       replaceTextInNode(actRow, '{{activity_status}}', act.status || '')

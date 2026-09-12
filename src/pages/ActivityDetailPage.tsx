@@ -26,9 +26,10 @@ import { ActivityNav } from '../components/ActivityNav'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { shiftMonthReference } from '../utils/monthReference'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
-import { parseSvnReleasesStored } from '../utils/svnReleases'
+import { parseDeployments } from '../utils/deployments'
+import { ENVIRONMENTS, ENVIRONMENT_ABBR, ENVIRONMENT_COLORS, ENVIRONMENT_ICONS } from '../utils/environmentColors'
 import { copyTextToClipboard } from '../utils/clipboard'
-import { EnvironmentBadge } from '../components/EnvironmentBadge'
+import { DeploymentPipeline } from '../components/DeploymentPipeline'
 import { isRichTextEmpty, normalizeToHtml } from '../utils/richText'
 import {
   resolveMonthNavigation,
@@ -531,7 +532,8 @@ export function ActivityDetailPage() {
   }
 
   const links = parseLinks(activity.link_ref)
-  const svnReleases = parseSvnReleasesStored(activity.svn_releases)
+  const deployments = parseDeployments(activity.deployments)
+  const deploymentsByEnv = new Map(deployments.map((item) => [item.environment, item]))
   const activeMonthReference = selectedMonth || activity.month_reference
   const showEmptyMonthState = monthWithoutActivities === activeMonthReference
   const showMonthLoadingState = siblingsLoading && activeMonthReference !== activity.month_reference
@@ -613,7 +615,7 @@ export function ActivityDetailPage() {
           >
             {activity.status}
           </span>
-          <EnvironmentBadge environment={activity.environment} />
+          <DeploymentPipeline size="md" deployments={deployments} />
           <span className="text-sm text-muted-foreground">
             <i className="fa-regular fa-calendar mr-1"></i>
             {formatDate(activity.date_start)} — {formatDate(activity.date_end)}
@@ -675,27 +677,61 @@ export function ActivityDetailPage() {
           </div>
         )}
 
-        {/* Releases SVN */}
-        {svnReleases.length > 0 && (
-          <div id="activity-detail-svn-releases">
+        {/* Publicações por ambiente (uso interno) */}
+        {deployments.length > 0 && (
+          <div id="activity-detail-deployments">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              Releases SVN (uso interno)
+              Publicações por ambiente (uso interno)
             </h3>
-            <div className="flex flex-wrap gap-2">
-              {svnReleases.map((release) => (
-                <button
-                  type="button"
-                  key={release}
-                  onClick={() => copyTextToClipboard(release, `Release ${release}`)}
-                  className="group/rel inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
-                  title="Copiar número de release"
-                  aria-label={`Copiar release ${release}`}
-                >
-                  {release}
-                  <i className="fa-solid fa-copy text-[10px] opacity-70 group-hover/rel:opacity-100 group-focus-visible/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
-                </button>
-              ))}
-            </div>
+            <ul className="space-y-2">
+              {ENVIRONMENTS.map((env) => {
+                const deployment = deploymentsByEnv.get(env)
+                return (
+                  <li
+                    key={env}
+                    className="flex flex-wrap items-center gap-2"
+                    data-environment={env}
+                    data-marked={!!deployment}
+                  >
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold tracking-wide w-40 ${
+                        deployment
+                          ? ENVIRONMENT_COLORS[env]
+                          : 'border-dashed border-border text-muted-foreground/60'
+                      }`}
+                      title={deployment ? `Publicado em ${env}` : `Ainda não publicado em ${env}`}
+                    >
+                      <i className={`fa-solid ${ENVIRONMENT_ICONS[env]} text-[0.85em]`} aria-hidden="true"></i>
+                      {env}
+                      <span className="ml-auto text-[10px] font-medium opacity-70">{ENVIRONMENT_ABBR[env]}</span>
+                    </span>
+                    {deployment ? (
+                      deployment.releases.length > 0 ? (
+                        <span className="flex flex-wrap gap-2">
+                          {deployment.releases.map((release) => (
+                            <button
+                              type="button"
+                              key={release}
+                              onClick={() => copyTextToClipboard(release, `Release ${release}`)}
+                              className="group/rel inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
+                              title="Copiar número de release"
+                              aria-label={`Copiar release ${release}`}
+                            >
+                              {release}
+                              <i className="fa-solid fa-copy text-[10px] opacity-70 group-hover/rel:opacity-100 group-focus-visible/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
+                            </button>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Publicado sem release anotada</span>
+                      )
+                    ) : (
+                      <span className="text-xs text-muted-foreground/70 italic">Ainda não publicado</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
             <p className="text-xs text-muted-foreground mt-2">
               Este campo não é exportado para o relatório DOCX.
             </p>

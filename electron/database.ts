@@ -12,15 +12,26 @@ import { app } from 'electron'
 import { v7 as uuidv7 } from 'uuid'
 
 let dataSource: DataSource | null = null
+/**
+ * Verdadeiro entre `openDatabase()` e `finalizeDatabase()` quando o schema legado
+ * ainda precisa ser migrado. Enquanto pendente, nenhum acesso ao banco é permitido
+ * (o renderer só monta o aviso de migração; ver `MigrationGate`).
+ */
+let migrationPending = false
 
 const ALL_ENTITIES = [UserProfile, Alert, Activity, Evidence, Report, ActivityReport]
 
-function getDbPath(): string {
+export function getDbPath(): string {
   const userDataPath = app.getPath('userData')
   return path.join(userDataPath, 'shipit.db')
 }
 
-export async function initDatabase(overrides?: Partial<DataSourceOptions>): Promise<DataSource> {
+/**
+ * Abre a conexão SEM sincronizar o schema. O `synchronize` do TypeORM derruba
+ * colunas que saíram das entidades (com os dados) — por isso a sincronização só
+ * acontece em `finalizeDatabase()`, depois de aviso → backup → migração.
+ */
+export async function openDatabase(overrides?: Partial<DataSourceOptions>): Promise<DataSource> {
   if (dataSource && dataSource.isInitialized) {
     return dataSource
   }
@@ -29,17 +40,118 @@ export async function initDatabase(overrides?: Partial<DataSourceOptions>): Prom
     type: 'better-sqlite3',
     database: getDbPath(),
     entities: ALL_ENTITIES,
-    synchronize: true,
+    synchronize: false,
     logging: false,
   }
 
-  dataSource = new DataSource({ ...defaultOpts, ...overrides } as DataSourceOptions)
+  dataSource = new DataSource({ ...defaultOpts, ...overrides, synchronize: false } as DataSourceOptions)
 
   await dataSource.initialize()
   return dataSource
 }
 
+interface TableColumnInfo {
+  name: string
+}
+
+async function getActivityColumns(ds: DataSource): Promise<Set<string>> {
+  const rows = (await ds.query('PRAGMA table_info(activities)')) as TableColumnInfo[]
+  return new Set(rows.map((row) => row.name))
+}
+
+/**
+ * Banco de uma versão anterior ao plano 42 (coluna `environment` ainda existe)?
+ * Retorna `false` em banco novo (tabela inexistente) ou já migrado.
+ */
+export async function needsLegacyMigration(ds: DataSource): Promise<boolean> {
+  const columns = await getActivityColumns(ds)
+  return columns.has('environment')
+}
+
+/** Parse mínimo do CSV legado de releases (somente números, sem repetição). Sem importar de `src/`. */
+function parseLegacyReleasesCsv(raw: string | null): string[] {
+  if (!raw) return []
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const token of raw.split(/[\n,;]+/)) {
+    const trimmed = token.trim()
+    if (!/^\d+$/.test(trimmed) || seen.has(trimmed)) continue
+    seen.add(trimmed)
+    result.push(trimmed)
+  }
+  return result
+}
+
+interface LegacyActivityRow {
+  id: string
+  environment: string | null
+  svn_releases: string | null
+}
+
+/**
+ * Migração única (plano 42): `environment` + suas `svn_releases` → `deployments`.
+ * Linhas só com `svn_releases` (sem ambiente) não são tocadas — a coluna some
+ * no `finalizeDatabase()` e os valores ficam apenas no backup.
+ * Idempotente e em SQL cru (não depende da entidade). Retorna o nº de linhas migradas.
+ */
+export async function migrateLegacyEnvironmentColumns(ds: DataSource): Promise<number> {
+  const columns = await getActivityColumns(ds)
+  if (!columns.has('environment')) return 0
+
+  if (!columns.has('deployments')) {
+    await ds.query('ALTER TABLE activities ADD COLUMN deployments text')
+  }
+
+  const hasSvnReleases = columns.has('svn_releases')
+  const rows = (await ds.query(
+    `SELECT id, environment, ${hasSvnReleases ? 'svn_releases' : 'NULL AS svn_releases'} FROM activities
+     WHERE environment IS NOT NULL AND deployments IS NULL`,
+  )) as LegacyActivityRow[]
+
+  let migrated = 0
+  for (const row of rows) {
+    if (!row.environment) continue
+    const deployments = JSON.stringify({ [row.environment]: parseLegacyReleasesCsv(row.svn_releases) })
+    await ds.query('UPDATE activities SET deployments = ? WHERE id = ?', [deployments, row.id])
+    migrated++
+  }
+  return migrated
+}
+
+/** Sincroniza o schema com as entidades (remove colunas legadas) e libera o acesso ao banco. */
+export async function finalizeDatabase(ds: DataSource): Promise<DataSource> {
+  await ds.synchronize()
+  migrationPending = false
+  return ds
+}
+
+export function setMigrationPending(pending: boolean): void {
+  migrationPending = pending
+}
+
+export function isMigrationPending(): boolean {
+  return migrationPending
+}
+
+/**
+ * Abre e sincroniza o banco de uma vez — fluxo normal (sem migração pendente).
+ * O `main.ts` usa os passos separados quando detecta schema legado.
+ */
+export async function initDatabase(overrides?: Partial<DataSourceOptions>): Promise<DataSource> {
+  if (migrationPending) {
+    throw new Error('Banco de dados aguardando migração')
+  }
+  if (dataSource && dataSource.isInitialized) {
+    return dataSource
+  }
+  const ds = await openDatabase(overrides)
+  return finalizeDatabase(ds)
+}
+
 export async function getDb(): Promise<DataSource> {
+  if (migrationPending) {
+    throw new Error('Banco de dados aguardando migração')
+  }
   if (!dataSource || !dataSource.isInitialized) {
     return initDatabase()
   }
@@ -52,6 +164,7 @@ export async function resetDatabase(): Promise<void> {
     await dataSource.destroy()
   }
   dataSource = null
+  migrationPending = false
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
@@ -556,7 +669,7 @@ export async function searchActivities(query: string): Promise<Activity[]> {
     .where('activity.description LIKE :like', { like })
     .orWhere('activity.project_scope LIKE :like', { like })
     .orWhere('activity.link_ref LIKE :like', { like })
-    .orWhere('activity.svn_releases LIKE :like', { like })
+    .orWhere('activity.deployments LIKE :like', { like })
     .orWhere('evidence.caption LIKE :like', { like })
     .orderBy('activity.month_reference', 'ASC')
     .addOrderBy('activity.order', 'ASC')
