@@ -30,6 +30,17 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 
 
+
+## [1.14.0] — 2026-09-11
+
+### Adicionado
+- Duplicação de atividades: crie uma nova atividade a partir de uma existente com um clique, reaproveitando os dados já preenchidos.
+- Campos de ambiente e revisão nos formulários de atividades, permitindo registrar em qual ambiente e revisão cada atividade foi realizada.
+- Pipeline de deploy com verificação (gate) de migração de banco de dados, garantindo que migrações pendentes sejam validadas antes da publicação.
+
+### Alterado
+- Informações de ambiente e releases (SVN) foram unificadas em um único campo de "deployments", simplificando o preenchimento e a visualização das entregas.
+
 ## [1.13.0] — 2026-09-04
 
 ### Adicionado
