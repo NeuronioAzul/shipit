@@ -26,7 +26,7 @@ Para a auditoria documental profunda, **siga o playbook existente** em <../../..
 4. **docs/DONE.md** → registrar o que foi feito (ver formato abaixo). Anotar a versão se já tiver sido lançada, ou `[Unreleased]` se ainda não.
 5. **docs/ARCHITECTURE.md** e **AGENTS.md** → atualizar **apenas se** mudou estrutura: IPC handlers, rotas, entidades/campos, temas, schedulers, dependências, regras ou gotchas.
 6. **README.md / DEVELOPMENT.md / DEPENDENCIES.md** → atualizar se a mudança for visível ao usuário, ao setup ou às dependências.
-7. **Validar**: rodar `npm run test` quando uma contagem de testes for citada/atualizada. `npm run build` só se solicitado.
+7. **Validar**: rodar `npm run test` quando uma contagem de testes for citada/atualizada. `npm run build` só se solicitado. Se uma contagem de cenários E2E for citada ou o ciclo tocou em `e2e/`, rodar o Playwright com `env -u ELECTRON_RUN_AS_NODE npx playwright test` (após `npm run build`) — o shell da sessão exporta `ELECTRON_RUN_AS_NODE=1`, que impede o Electron de subir; ver `docs/DEVELOPMENT.md`.
 8. **Entregar** um resumo: arquivos alterados, validações executadas e pendências.
 
 Regra de ouro: este modo é **documental** — não altere código de produto, testes ou build para "fazer a doc bater".

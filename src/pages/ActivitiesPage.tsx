@@ -18,34 +18,22 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { ActivityData, ActivityStatus, AttendanceType } from '../vite-env'
+import type { ActivityData, ActivityEnvironment, ActivityStatus, AttendanceType } from '../vite-env'
 import { localDb, getCurrentMonthRef } from '../services/localDb'
 import { isActivityComplete } from '../utils/validation'
 import { SkeletonActivityItem } from '../components/Skeleton'
 import { Select } from '../components/Select'
 import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
+import { ENVIRONMENTS } from '../utils/environmentColors'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
-import { parseSvnReleasesStored } from '../utils/svnReleases'
-import { copyTextToClipboard } from '../utils/clipboard'
-import { EnvironmentBadge } from '../components/EnvironmentBadge'
+import { isDeployedTo, parseDeployments } from '../utils/deployments'
+import { DeploymentPipeline } from '../components/DeploymentPipeline'
 import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
 
 function formatDateShort(d: string | null): string {
   if (!d) return '—'
   const date = new Date(d + 'T00:00:00')
   return date.toLocaleDateString('pt-BR')
-}
-
-function getCompactSvnReleases(raw: string | null, maxVisible = 4): { visible: string[]; hiddenCount: number } {
-  const tags = parseSvnReleasesStored(raw)
-  if (tags.length <= maxVisible) {
-    return { visible: tags, hiddenCount: 0 }
-  }
-
-  return {
-    visible: tags.slice(0, maxVisible),
-    hiddenCount: tags.length - maxVisible,
-  }
 }
 
 function SortableActivityItem({
@@ -70,7 +58,7 @@ function SortableActivityItem({
     zIndex: isDragging ? 10 : undefined,
   }
   const evidenceCounts = getEvidenceTypeCounts(activity.evidences)
-  const compactSvnReleases = getCompactSvnReleases(activity.svn_releases)
+  const deployments = parseDeployments(activity.deployments)
 
   return (
     <div ref={setNodeRef} style={style} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow group">
@@ -114,7 +102,7 @@ function SortableActivityItem({
               <i className={`fa-solid ${STATUS_ICONS[activity.status] || ''} text-[10px]`}></i>
               {activity.status}
             </span>
-            <EnvironmentBadge size="sm" environment={activity.environment} />
+            <DeploymentPipeline size="sm" showReleases deployments={deployments} />
             <span
               className="text-xs text-muted-foreground flex items-center gap-2 whitespace-nowrap"
               aria-label={`${evidenceCounts.imageCount} imagens e ${evidenceCounts.textCount} evidências de texto`}
@@ -134,29 +122,6 @@ function SortableActivityItem({
               ? <span className="text-muted-foreground italic">Sem descrição</span>
               : htmlToPlainText(activity.description)}
           </p>
-
-          {compactSvnReleases.visible.length > 0 && (
-            <div className="mt-2 flex flex-wrap items-center gap-1">
-              {compactSvnReleases.visible.map((release) => (
-                <button
-                  type="button"
-                  key={release}
-                  onClick={(e) => { e.stopPropagation(); copyTextToClipboard(release, `Release ${release}`) }}
-                  className="group/rel inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
-                  title={`Copiar release ${release}`}
-                  aria-label={`Copiar release ${release}`}
-                >
-                  {release}
-                  <i className="fa-solid fa-copy text-[9px] opacity-70 group-hover/rel:opacity-100 group-focus-visible/rel:opacity-100 transition-opacity" aria-hidden="true"></i>
-                </button>
-              ))}
-              {compactSvnReleases.hiddenCount > 0 && (
-                <span className="text-[11px] text-muted-foreground">
-                  +{compactSvnReleases.hiddenCount}
-                </span>
-              )}
-            </div>
-          )}
 
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
             <span>
@@ -208,6 +173,7 @@ export function ActivitiesPage() {
   const [filterText, setFilterText] = useState(searchQuery)
   const [filterStatus, setFilterStatus] = useState<ActivityStatus | ''>('')
   const [filterAttendance, setFilterAttendance] = useState<AttendanceType | ''>('')
+  const [filterEnvironment, setFilterEnvironment] = useState<ActivityEnvironment | ''>('')
   const [filterScope, setFilterScope] = useState('')
   const [showFilters, setShowFilters] = useState(!!searchQuery)
   const isSearchMode = !!searchQuery
@@ -298,21 +264,23 @@ export function ActivitiesPage() {
       const match = htmlToPlainText(a.description).toLowerCase().includes(lower) ||
         a.project_scope?.toLowerCase().includes(lower) ||
         a.link_ref?.toLowerCase().includes(lower) ||
-        a.svn_releases?.toLowerCase().includes(lower)
+        a.deployments?.toLowerCase().includes(lower)
       if (!match) return false
     }
     if (filterStatus && a.status !== filterStatus) return false
     if (filterAttendance && a.attendance_type !== filterAttendance) return false
+    if (filterEnvironment && !isDeployedTo(parseDeployments(a.deployments), filterEnvironment)) return false
     if (filterScope && !a.project_scope?.toLowerCase().includes(filterScope.toLowerCase())) return false
     return true
   })
 
-  const hasActiveFilters = !!filterText || !!filterStatus || !!filterAttendance || !!filterScope
+  const hasActiveFilters = !!filterText || !!filterStatus || !!filterAttendance || !!filterEnvironment || !!filterScope
 
   function clearFilters() {
     setFilterText('')
     setFilterStatus('')
     setFilterAttendance('')
+    setFilterEnvironment('')
     setFilterScope('')
     if (isSearchMode) {
       const params = new URLSearchParams(searchParams)
@@ -368,7 +336,7 @@ export function ActivitiesPage() {
           <div>
             <h3>Filtros</h3>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Texto livre</label>
               <div>
@@ -413,6 +381,20 @@ export function ActivitiesPage() {
               />
             </div>
             <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Ambiente</label>
+              <Select
+                id="activities-filter-environment"
+                value={filterEnvironment}
+                onChange={(v) => setFilterEnvironment(v as ActivityEnvironment | '')}
+                options={[
+                  { value: '', label: 'Todos' },
+                  ...ENVIRONMENTS.map((env) => ({ value: env, label: env })),
+                ]}
+                placeholder="Todos"
+                size="sm"
+              />
+            </div>
+            <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Escopo: (Squad / Projeto / Aplicação)</label>
               <div>
                 <input
@@ -444,6 +426,12 @@ export function ActivitiesPage() {
                 <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
                   Atendimento: {filterAttendance}
                   <button onClick={() => setFilterAttendance('')} className="hover:text-destructive cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
+                </span>
+              )}
+              {filterEnvironment && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                  Ambiente: {filterEnvironment}
+                  <button onClick={() => setFilterEnvironment('')} className="hover:text-destructive cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
                 </span>
               )}
               {filterScope && (

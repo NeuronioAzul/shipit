@@ -9,6 +9,19 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Adicionado
+- **Publicações por ambiente em uma única atividade.** O formulário ganha a seção "Publicações por ambiente (uso interno)": marque em quais ambientes a atividade já foi publicada (Desenvolvimento / Homologação / Produção) e informe, ao lado de cada um, os números de release SVN daquele ambiente. Não é mais preciso criar três atividades para a mesma entrega — e continua possível criar outra só para Produção em outra data. Desmarcar um ambiente não perde as releases digitadas (voltam ao re-marcar) e o atalho "Repetir releases de …" copia as releases do ambiente anterior.
+- Lista e detalhe de atividades mostram um **pipeline** `dsv › hmg › prd`: ambientes publicados em destaque (com releases copiáveis ao clique), não publicados apagados. Novo filtro **Ambiente** na lista.
+- **Backup automático e aviso antes de migrar o banco.** Na primeira abertura após esta atualização, antes de qualquer tela, um aviso bloqueante (liberado após 30 s) explica a mudança, informa onde o backup ficará e como voltar para a versão anterior. Só após a confirmação o app faz o backup verificado de `shipit.db` em `{userData}/backups/`, converte os dados e atualiza a estrutura do banco. Se o backup falhar, nada é alterado. Configurações passa a exibir a seção "Backup do banco de dados" com o caminho do último backup.
+- Busca global e filtro de texto passam a encontrar atividades por número de release ou nome do ambiente publicado.
+
+### Alterado
+- Campo interno `deployments` (JSON `{ ambiente: releases[] }`) substitui os campos `environment` e `svn_releases` da atividade. Atividades que já tinham ambiente marcado são convertidas automaticamente levando suas releases. Continua fora do relatório DOCX.
+- O banco passa a ser aberto sem sincronização automática de schema; a sincronização ocorre explicitamente após a verificação/migração (`openDatabase → needsLegacyMigration → [aviso → backup → migração] → finalizeDatabase`).
+
+### Removido
+- Campos `environment` e `svn_releases` da entidade `Activity`, componentes `EnvironmentSelector`/`EnvironmentBadge` e as duas seções separadas do formulário. **Releases antigas sem ambiente marcado não são migradas nem exibidas** — permanecem apenas no backup criado antes da migração.
+
 ### Corrigido
 - No Linux, os botões de arrastar, copiar e excluir das evidências (além das ações rápidas na lista de atividades) não apareciam, pois só eram exibidos ao passar o mouse. Agora esses controles ficam sempre visíveis e apenas ganham destaque no foco/hover, funcionando de forma consistente em todas as plataformas e também via teclado.
 - Revisão ortográfica (pt-BR) de textos da interface: acentuação corrigida em placeholders e mensagens de atividades e perfil ("vírgula", "números", "publicações/homologação", "não é exportado para o relatório DOCX") e o indicador ordinal "nº" no placeholder de contrato.

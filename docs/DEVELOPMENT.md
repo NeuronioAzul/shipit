@@ -37,12 +37,27 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm run test`     | Executa 147 testes unitários e de integração (Vitest, 12 arquivos verificados em 26/05/2026) |
+| `npm run test`     | Executa 258 testes unitários e de integração (Vitest, 23 arquivos verificados em 11/09/2026) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 36 cenários declarados end-to-end com Playwright/Electron (precedido por `pretest:e2e`) |
+| `npm run test:e2e` | Executa 46 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/migration.spec.ts`; precedido por `pretest:e2e`) |
 | `npm run test:all` | Executa a suíte completa: Vitest + build + Playwright |
 | `npm run pretest:e2e` | Hook automático que roda `npm run build` antes do Playwright |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
+
+### E2E (Playwright) — armadilha `ELECTRON_RUN_AS_NODE`
+
+Se o shell tiver `ELECTRON_RUN_AS_NODE=1` exportado (comum em sessões de agentes/IDEs que embutem o Electron), o binário do Electron roda como Node puro: o Playwright falha com `electron.exe: bad option: --remote-debugging-port=0` e `require('electron').app` fica `undefined`. Remova a variável **só para o comando**:
+
+```bash
+# Git Bash / POSIX
+env -u ELECTRON_RUN_AS_NODE npx playwright test                       # suíte inteira (usa dist-electron já compilado)
+env -u ELECTRON_RUN_AS_NODE npx playwright test e2e/migration.spec.ts # um spec
+
+# PowerShell
+Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue; npx playwright test
+```
+
+O `e2e/migration.spec.ts` tem launch próprio: semeia um `shipit.db` no formato anterior ao plano 42 (via `sql.js`) e valida aviso → backup → migração → relaunch. Uma falha esporádica de encerramento (`worker process exited unexpectedly (code=3221226505)`) pode ocorrer no primeiro run — repita antes de investigar.
 
 ---
 

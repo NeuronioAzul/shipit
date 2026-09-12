@@ -41,7 +41,7 @@
 
 | Pacote                   | Versão   | Finalidade                                                        |
 | ------------------------ | -------- | ----------------------------------------------------------------- |
-| `@playwright/test`       | 1.59.1   | Framework de testes E2E para Electron (36 cenários declarados em `e2e/app.spec.ts`). |
+| `@playwright/test`       | 1.59.1   | Framework de testes E2E para Electron (46 cenários em `e2e/app.spec.ts` + `e2e/migration.spec.ts`). |
 | `@tailwindcss/vite`      | 4.2.2    | Plugin Vite oficial do Tailwind CSS v4.                           |
 | `@testing-library/react` | 16.3.2   | Testes de componentes React no renderer com queries orientadas à UI. |
 | `@types/better-sqlite3`  | 7.6.13   | Tipagens TypeScript para better-sqlite3.                          |
@@ -79,7 +79,7 @@ dnd-kit      →  Drag & drop (reordenação)
 JSZip        →  Geração de relatórios DOCX
 sonner       →  Toasts/notificações na UI
 Vitest       →  Testes unitários e integração (147 testes verificados em 26/05/2026)
-Playwright   →  Testes E2E (36 cenários declarados)
+Playwright   →  Testes E2E (46 cenários)
 ```
 
 ## Notas Importantes

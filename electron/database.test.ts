@@ -38,6 +38,11 @@ import {
   saveTextEvidence,
   updateTextEvidence,
   updateEvidenceCaption,
+  needsLegacyMigration,
+  migrateLegacyEnvironmentColumns,
+  finalizeDatabase,
+  setMigrationPending,
+  isMigrationPending,
 } from './database.ts'
 import { Activity } from './entities/Activity'
 
@@ -168,24 +173,24 @@ describe('Activity CRUD', () => {
     expect(retrieved!.status).toBe('Em andamento')
   })
 
-  it('persists, updates and clears the environment field', async () => {
+  it('persists, updates and clears the deployments field', async () => {
     const saved = await saveActivity({
-      description: 'Atividade com ambiente',
+      description: 'Atividade com publicações',
       status: 'Concluído',
       month_reference: '03/2026',
-      environment: 'Produção',
+      deployments: '{"Produção":["12345"]}',
       order: 1,
     })
-    expect(saved.environment).toBe('Produção')
+    expect(saved.deployments).toBe('{"Produção":["12345"]}')
 
-    const updated = await saveActivity({ id: saved.id, environment: 'Homologação' })
-    expect(updated.environment).toBe('Homologação')
+    const updated = await saveActivity({ id: saved.id, deployments: '{"Desenvolvimento":[],"Homologação":["1"]}' })
+    expect(updated.deployments).toBe('{"Desenvolvimento":[],"Homologação":["1"]}')
 
-    const cleared = await saveActivity({ id: saved.id, environment: null })
-    expect(cleared.environment).toBeNull()
+    const cleared = await saveActivity({ id: saved.id, deployments: null })
+    expect(cleared.deployments).toBeNull()
 
     const retrieved = await getActivity(saved.id)
-    expect(retrieved!.environment).toBeNull()
+    expect(retrieved!.deployments).toBeNull()
   })
 
   it('filters activities by month_reference', async () => {
@@ -345,50 +350,26 @@ describe('Activity CRUD', () => {
     ])
   })
 
-  it('persists and updates svn_releases on activities', async () => {
-    const saved = await saveActivity({
-      description: 'Atividade com releases SVN',
-      status: 'Pendente',
-      month_reference: '03/2026',
-      svn_releases: '12345,67890',
-    })
-
-    expect(saved.svn_releases).toBe('12345,67890')
-
-    const created = await getActivity(saved.id)
-    expect(created).not.toBeNull()
-    expect(created!.svn_releases).toBe('12345,67890')
-
-    await saveActivity({
-      id: saved.id,
-      description: 'Atividade com releases SVN',
-      status: 'Concluído',
-      month_reference: '03/2026',
-      svn_releases: '77777',
-    })
-
-    const updated = await getActivity(saved.id)
-    expect(updated).not.toBeNull()
-    expect(updated!.svn_releases).toBe('77777')
-  })
-
-  it('searches activities by svn_releases value', async () => {
+  it('searches activities by release number and by environment name in deployments', async () => {
     const target = await saveActivity({
       description: 'Atividade alvo release',
       status: 'Pendente',
       month_reference: '03/2026',
-      svn_releases: '99112233,44556677',
+      deployments: '{"Homologação":["99112233","44556677"]}',
     })
 
-    await saveActivity({
+    const other = await saveActivity({
       description: 'Outra atividade sem match',
       status: 'Pendente',
       month_reference: '03/2026',
-      svn_releases: '111222',
+      deployments: '{"Produção":["111222"]}',
     })
 
-    const results = await searchActivities('44556677')
-    expect(results.some((activity) => activity.id === target.id)).toBe(true)
+    const byRelease = await searchActivities('44556677')
+    expect(byRelease.map((activity) => activity.id)).toEqual([target.id])
+
+    const byEnvironment = await searchActivities('Produção')
+    expect(byEnvironment.map((activity) => activity.id)).toEqual([other.id])
   })
 
   it('updates an existing activity', async () => {
@@ -804,5 +785,107 @@ describe('Counting helpers', () => {
     await saveActivity({ description: 'C', status: 'Em andamento', month_reference: '03/2026', order: 3 })
 
     expect(await countIncompleteActivities('03/2026')).toBe(2)
+  })
+})
+
+describe('Legacy schema migration (plano 42)', () => {
+  interface ColumnInfo { name: string }
+
+  async function activityColumns(): Promise<string[]> {
+    const db = await getDb()
+    const rows = (await db.query('PRAGMA table_info(activities)')) as ColumnInfo[]
+    return rows.map((row) => row.name)
+  }
+
+  /** Simula o schema anterior ao plano 42 (colunas legadas de volta na tabela). */
+  async function seedLegacySchema() {
+    const db = await getDb()
+    await db.query('ALTER TABLE activities ADD COLUMN environment text')
+    await db.query('ALTER TABLE activities ADD COLUMN svn_releases text')
+    const insert = (id: string, env: string | null, svn: string | null) =>
+      db.query(
+        `INSERT INTO activities (id, description, status, month_reference, environment, svn_releases, last_updated)
+         VALUES (?, ?, 'Pendente', '03/2026', ?, ?, CURRENT_TIMESTAMP)`,
+        [id, `Legado ${id}`, env, svn],
+      )
+    await insert('env-only', 'Produção', null)
+    await insert('env-and-releases', 'Homologação', '12345, 12346,abc,12345')
+    await insert('releases-only', null, '99999')
+    await insert('nothing', null, null)
+    return db
+  }
+
+  it('does not need migration on a fresh database', async () => {
+    const db = await getDb()
+    expect(await needsLegacyMigration(db)).toBe(false)
+    expect(await migrateLegacyEnvironmentColumns(db)).toBe(0)
+  })
+
+  it('detects the legacy schema and migrates only rows with an environment', async () => {
+    const db = await seedLegacySchema()
+    expect(await needsLegacyMigration(db)).toBe(true)
+
+    // A coluna `deployments` já existe nesta base (schema atual); a migração lida com os dois casos.
+    expect(await migrateLegacyEnvironmentColumns(db)).toBe(2)
+
+    const rows = (await db.query(
+      'SELECT id, deployments, environment, svn_releases FROM activities ORDER BY id',
+    )) as { id: string; deployments: string | null; environment: string | null; svn_releases: string | null }[]
+    const byId = Object.fromEntries(rows.map((row) => [row.id, row]))
+
+    expect(byId['env-only'].deployments).toBe('{"Produção":[]}')
+    expect(byId['env-and-releases'].deployments).toBe('{"Homologação":["12345","12346"]}')
+    expect(byId['releases-only'].deployments).toBeNull()
+    expect(byId['nothing'].deployments).toBeNull()
+    // Linhas sem ambiente não são tocadas antes do sync.
+    expect(byId['releases-only'].svn_releases).toBe('99999')
+
+    // Segunda chamada é no-op.
+    expect(await migrateLegacyEnvironmentColumns(db)).toBe(0)
+  })
+
+  it('adds the deployments column when it is missing before migrating', async () => {
+    const db = await getDb()
+    // Recria a tabela no formato antigo (sem `deployments`) para o caso real de upgrade.
+    await db.query('DROP TABLE activities')
+    await db.query(`CREATE TABLE activities (
+      id text PRIMARY KEY, "order" integer, description text, date_start date, date_end date,
+      link_ref text, svn_releases text, environment text, status text NOT NULL DEFAULT 'Pendente',
+      month_reference text NOT NULL, attendance_type text, project_scope text,
+      last_updated datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+    )`)
+    await db.query(
+      `INSERT INTO activities (id, description, month_reference, environment, svn_releases)
+       VALUES ('a1', 'Antiga', '03/2026', 'Desenvolvimento', '777')`,
+    )
+
+    expect((await activityColumns()).includes('deployments')).toBe(false)
+    expect(await migrateLegacyEnvironmentColumns(db)).toBe(1)
+    expect((await activityColumns()).includes('deployments')).toBe(true)
+
+    const [row] = (await db.query('SELECT deployments FROM activities WHERE id = ?', ['a1'])) as { deployments: string }[]
+    expect(row.deployments).toBe('{"Desenvolvimento":["777"]}')
+
+    // finalizeDatabase (synchronize) remove as colunas legadas e preserva `deployments`.
+    await finalizeDatabase(db)
+    const columns = await activityColumns()
+    expect(columns).not.toContain('environment')
+    expect(columns).not.toContain('svn_releases')
+    expect(columns).toContain('deployments')
+
+    const migrated = await getActivity('a1')
+    expect(migrated!.deployments).toBe('{"Desenvolvimento":["777"]}')
+  })
+
+  it('blocks database access while a migration is pending', async () => {
+    setMigrationPending(true)
+    try {
+      expect(isMigrationPending()).toBe(true)
+      await expect(getDb()).rejects.toThrow('aguardando migração')
+      await expect(getActivities('03/2026')).rejects.toThrow('aguardando migração')
+    } finally {
+      setMigrationPending(false)
+    }
+    await expect(getDb()).resolves.toBeTruthy()
   })
 })

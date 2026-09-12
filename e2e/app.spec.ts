@@ -914,7 +914,7 @@ test('creates an activity', async () => {
   await expect(page.locator('text=Atividade E2E Playwright').first()).toBeVisible({ timeout: 5_000 })
 })
 
-test('creates activity with svn releases tags and finds it through global search', async () => {
+test('creates activity with release tags per environment and finds it through global search', async () => {
   const runId = Date.now()
   const [monthRef] = getUniqueMonthSequence(runId, 1)
   const description = `Atividade SVN Releases ${runId}`
@@ -935,11 +935,13 @@ test('creates activity with svn releases tags and finds it through global search
   await fillDescription(page, description)
   await page.locator('input#month_reference').fill(monthRef)
 
-  const svnInput = page.locator('#activity-form-svn-releases')
+  // Marca Produção e informa as releases no input daquela linha.
+  await page.locator('#activity-form-deployments-toggle-prd').click()
+  const svnInput = page.locator('#activity-form-deployments-releases-prd')
   await svnInput.fill(`${releaseA},${releaseB}`)
   await svnInput.press('Tab')
 
-  const svnSection = page.locator('#activity-form-svn-releases-section')
+  const svnSection = page.locator('#activity-form-deployments-section')
   await expect(svnSection).toContainText(releaseA)
   await expect(svnSection).toContainText(releaseB)
 
@@ -955,8 +957,8 @@ test('creates activity with svn releases tags and finds it through global search
 
   await page.locator('.flex-1.cursor-pointer', { hasText: description }).first().click()
   await page.waitForURL(/#\/activities\/[^/?#]+$/)
-  await expect(page.locator('#activity-detail-svn-releases')).toContainText(releaseA)
-  await expect(page.locator('#activity-detail-svn-releases')).toContainText(releaseB)
+  await expect(page.locator('#activity-detail-deployments')).toContainText(releaseA)
+  await expect(page.locator('#activity-detail-deployments')).toContainText(releaseB)
 
   await page.keyboard.press('Control+k')
   const searchInput = page.locator('#searchbar-input')
@@ -979,7 +981,7 @@ test('copies an svn release number to the clipboard from the detail page chip', 
   const release = String(runId).slice(-6)
   const description = `Atividade Copiar Release ${runId}`
 
-  await createActivityRecord(description, monthRef, { svn_releases: release })
+  await createActivityRecord(description, monthRef, { deployments: JSON.stringify({ 'Homologação': [release] }) })
 
   await page.evaluate((month) => {
     window.location.hash = `#/activities?month=${month}`
@@ -992,7 +994,7 @@ test('copies an svn release number to the clipboard from the detail page chip', 
   // Limpa a área de transferência do sistema para uma asserção confiável.
   await app.evaluate(({ clipboard }) => clipboard.writeText(''))
 
-  const chip = page.locator('#activity-detail-svn-releases button', { hasText: release })
+  const chip = page.locator('#activity-detail-deployments button', { hasText: release })
   await chip.hover()
   await chip.click()
 
@@ -1002,10 +1004,16 @@ test('copies an svn release number to the clipboard from the detail page chip', 
   }).toBe(release)
 })
 
-test('selects an environment and shows its tag in the list and detail', async () => {
+test('does not show the migration gate on a fresh database', async () => {
+  await expect(page.locator('#migration-gate')).toHaveCount(0)
+})
+
+test('marks deployments per environment with releases and shows the pipeline in list and detail', async () => {
   const runId = Date.now()
   const [monthRef] = getUniqueMonthSequence(runId + 5, 1)
-  const description = `Atividade Ambiente ${runId}`
+  const description = `Atividade Publicações ${runId}`
+  const releaseA = String(runId).slice(-6)
+  const releaseB = String(runId + 1).slice(-6)
 
   await page.click('[title="Atividades"]')
   await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
@@ -1020,25 +1028,62 @@ test('selects an environment and shows its tag in the list and detail', async ()
   await fillDescription(page, description)
   await page.locator('input#month_reference').fill(monthRef)
 
-  const prodButton = page.locator('#activity-form-environment button', { hasText: 'Produção' })
-  await prodButton.click()
-  await expect(prodButton).toHaveAttribute('aria-pressed', 'true')
+  const dsvToggle = page.locator('#activity-form-deployments-toggle-dsv')
+  const hmgToggle = page.locator('#activity-form-deployments-toggle-hmg')
+  const prdToggle = page.locator('#activity-form-deployments-toggle-prd')
 
-  // Toggle-off e re-seleção validam o comportamento de limpar.
-  await prodButton.click()
-  await expect(prodButton).toHaveAttribute('aria-pressed', 'false')
-  await prodButton.click()
-  await expect(prodButton).toHaveAttribute('aria-pressed', 'true')
+  // Marca Desenvolvimento e informa duas releases.
+  await dsvToggle.click()
+  await expect(dsvToggle).toHaveAttribute('aria-pressed', 'true')
+  const dsvInput = page.locator('#activity-form-deployments-releases-dsv')
+  await dsvInput.fill(`${releaseA}, ${releaseB}`)
+  await dsvInput.press('Enter')
+  await expect(page.locator('#activity-form-deployments-section')).toContainText(releaseA)
+  await expect(page.locator('#activity-form-deployments-section')).toContainText(releaseB)
+
+  // Marca Homologação e usa o atalho "Repetir releases".
+  await hmgToggle.click()
+  await expect(hmgToggle).toHaveAttribute('aria-pressed', 'true')
+  await page.locator('#activity-form-deployments-repeat-hmg').click()
+  await expect(page.locator('#activity-form-deployments-repeat-hmg')).toHaveCount(0)
+
+  // Desmarcar e re-marcar restaura as releases retidas.
+  await hmgToggle.click()
+  await expect(hmgToggle).toHaveAttribute('aria-pressed', 'false')
+  await expect(page.locator('#activity-form-deployments-releases-hmg')).toHaveCount(0)
+  await hmgToggle.click()
+  await expect(hmgToggle).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('[data-environment="Homologação"]')).toContainText(releaseA)
+
+  // Produção fica sem publicação.
+  await expect(prdToggle).toHaveAttribute('aria-pressed', 'false')
 
   await page.click('button[type="submit"]')
   await page.waitForURL(new RegExp(`#/activities\\?month=${monthRef.replace('/', '\\/')}$`), { timeout: 10_000 })
 
+  // Lista: pipeline com dsv/hmg marcados (com releases) e prd apagado.
   const card = page.locator('.flex-1.cursor-pointer', { hasText: description }).first()
-  await expect(card).toContainText('prd')
+  await expect(card.locator('[data-environment="Desenvolvimento"][data-marked="true"]')).toBeVisible()
+  await expect(card.locator('[data-environment="Homologação"][data-marked="true"]')).toBeVisible()
+  await expect(card.locator('[data-environment="Produção"][data-marked="false"]')).toBeVisible()
+  await expect(card).toContainText(releaseA)
 
+  // Filtro por ambiente: Produção esconde o card; Desenvolvimento mostra.
+  await page.click('button:has-text("Filtros")')
+  await selectComboboxOption('#activities-filter-environment', 'Produção')
+  await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(0)
+  await selectComboboxOption('#activities-filter-environment', 'Desenvolvimento')
+  await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(1)
+  await selectComboboxOption('#activities-filter-environment', 'Todos')
+
+  // Detalhe: bloco de publicações com as três linhas.
   await card.click()
   await page.waitForURL(/#\/activities\/[^/?#]+$/)
-  await expect(page.locator('#activity-detail-info')).toContainText('prd')
+  const block = page.locator('#activity-detail-deployments')
+  await expect(block).toBeVisible()
+  await expect(block.locator('li[data-environment="Desenvolvimento"]')).toContainText(releaseB)
+  await expect(block.locator('li[data-environment="Homologação"]')).toContainText(releaseA)
+  await expect(block.locator('li[data-environment="Produção"]')).toContainText('Ainda não publicado')
 })
 
 test('copies an evidence image and opens its file location from the lightbox', async () => {

@@ -1,10 +1,36 @@
-import type { ActivityData, EvidenceData } from '../vite-env'
+import type { ActivityData, ActivityEnvironment, EvidenceData } from '../vite-env'
+import { migrateLegacyDeployments } from '../utils/deployments'
 
 const ACTIVITIES_KEY = 'shipit-activities'
 
+/** Registro salvo por versões anteriores ao plano 42 (campos legados ainda presentes). */
+type StoredActivity = ActivityData & {
+  environment?: ActivityEnvironment | null
+  svn_releases?: string | null
+}
+
+/**
+ * Converte registros legados (`environment` + `svn_releases`) para `deployments`
+ * na leitura e persiste de volta. Releases sem ambiente são descartadas (plano 42).
+ */
+function migrateStoredActivities(activities: StoredActivity[]): ActivityData[] {
+  let changed = false
+  const migrated = activities.map((activity) => {
+    if (!('environment' in activity) && !('svn_releases' in activity)) return activity
+    changed = true
+    const { environment, svn_releases, ...rest } = activity
+    return {
+      ...rest,
+      deployments: rest.deployments ?? migrateLegacyDeployments(environment ?? null, svn_releases ?? null),
+    }
+  })
+  if (changed) setStoredActivities(migrated)
+  return migrated
+}
+
 function getStoredActivities(): ActivityData[] {
   const raw = localStorage.getItem(ACTIVITIES_KEY)
-  return raw ? JSON.parse(raw) : []
+  return raw ? migrateStoredActivities(JSON.parse(raw)) : []
 }
 
 function setStoredActivities(activities: ActivityData[]) {
@@ -62,10 +88,9 @@ export const localDb = {
       date_start: null,
       date_end: null,
       link_ref: null,
-      svn_releases: null,
+      deployments: null,
       status: 'Pendente',
       attendance_type: null,
-      environment: null,
       project_scope: null,
       last_updated: new Date().toISOString(),
       evidences: [],

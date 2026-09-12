@@ -45,7 +45,7 @@ export async function createActivityRecord(
       date_end: null,
       status: 'Pendente',
       link_ref: null,
-      svn_releases: null,
+      deployments: null,
       attendance_type: null,
       month_reference: monthReference,
       project_scope: null,

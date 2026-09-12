@@ -52,6 +52,38 @@ protocol.registerSchemesAsPrivileged([
 
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
 const INTERNAL_UPDATE_SETTINGS_KEY = '__internalUpdate'
+// Chaves internas de settings.json (prefixo `__`): nunca expostas ao renderer via getSettings/saveSettings.
+const MIGRATION_NOTICE_SETTINGS_KEY = '__migrationNotice'
+const LAST_RUN_VERSION_SETTINGS_KEY = '__lastRunVersion'
+const RELEASES_URL = 'https://github.com/NeuronioAzul/shipit/releases'
+const DEFAULT_MIGRATION_COUNTDOWN_SECONDS = 30
+
+/** Dados do aviso bloqueante (plano 42) — espelha `StartupMigrationInfo` do renderer. */
+interface StartupMigrationInfo {
+  fromVersion: string | null
+  toVersion: string
+  plannedBackupPath: string
+  backupsDir: string
+  userDataDir: string
+  releasesUrl: string
+  countdownSeconds: number
+}
+
+type StartupMigrationResult =
+  | { success: true; backupPath: string }
+  | { success: false; stage: 'backup' | 'migration'; error: string; backupPath?: string }
+
+interface MigrationNoticeData {
+  fromVersion: string | null
+  toVersion: string
+  backupPath: string
+  migratedAt: string
+}
+
+/** Preenchido no startup quando o banco tem schema legado; limpo ao concluir a migração. */
+let pendingMigration: StartupMigrationInfo | null = null
+/** Evita rodar cleanupTrash/schedulers duas vezes (fluxo normal × pós-migração). */
+let databaseReady = false
 
 interface PersistedUpdateState {
   latestKnownVersion?: string
@@ -221,10 +253,52 @@ function normalizePersistedUpdateState(state: PersistedUpdateState): PersistedUp
   return normalized
 }
 
+function isInternalSettingsKey(key: string): boolean {
+  return key.startsWith('__')
+}
+
 function getPublicSettings(settingsData: Record<string, unknown>): Record<string, unknown> {
-  const publicSettings = { ...settingsData }
-  delete publicSettings[INTERNAL_UPDATE_SETTINGS_KEY]
+  const publicSettings: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(settingsData)) {
+    if (!isInternalSettingsKey(key)) publicSettings[key] = value
+  }
   return publicSettings
+}
+
+function getInternalSettings(settingsData: Record<string, unknown>): Record<string, unknown> {
+  const internalSettings: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(settingsData)) {
+    if (isInternalSettingsKey(key)) internalSettings[key] = value
+  }
+  return internalSettings
+}
+
+function writeInternalSetting(key: string, value: unknown): void {
+  const nextSettings = { ...loadSettings() }
+  if (value === undefined || value === null) {
+    delete nextSettings[key]
+  } else {
+    nextSettings[key] = value
+  }
+  saveSettingsFile(nextSettings)
+}
+
+function readLastRunVersion(): string | null {
+  const value = loadSettings()[LAST_RUN_VERSION_SETTINGS_KEY]
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function readMigrationNotice(): MigrationNoticeData | null {
+  const value = loadSettings()[MIGRATION_NOTICE_SETTINGS_KEY]
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const notice = value as Partial<MigrationNoticeData>
+  if (typeof notice.backupPath !== 'string' || typeof notice.toVersion !== 'string') return null
+  return {
+    fromVersion: typeof notice.fromVersion === 'string' ? notice.fromVersion : null,
+    toVersion: notice.toVersion,
+    backupPath: notice.backupPath,
+    migratedAt: typeof notice.migratedAt === 'string' ? notice.migratedAt : '',
+  }
 }
 
 function readPersistedUpdateState(settingsData: Record<string, unknown> = loadSettings()): PersistedUpdateState {
@@ -575,15 +649,120 @@ function createTray() {
   })
 }
 
+/** Tarefas que dependem do banco pronto: lixeira, alertas e status do tray. */
+async function startDatabaseDependentServices(): Promise<void> {
+  if (databaseReady) return
+  databaseReady = true
+  const { cleanupTrash } = await import('./database')
+  // Cleanup old trash items on startup
+  await cleanupTrash()
+  startSchedulers()
+  writeInternalSetting(LAST_RUN_VERSION_SETTINGS_KEY, app.getVersion())
+}
+
+function resolveMigrationCountdownSeconds(): number {
+  const raw = process.env.SHIPIT_E2E_MIGRATION_COUNTDOWN_SECONDS
+  if (!raw) return DEFAULT_MIGRATION_COUNTDOWN_SECONDS
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_MIGRATION_COUNTDOWN_SECONDS
+}
+
+/**
+ * Abre o banco sem sincronizar. Se o schema for de uma versão anterior (plano 42),
+ * deixa a migração pendente: o renderer mostra o aviso e só depois de
+ * aviso → backup → migração o schema é sincronizado (`app:runStartupMigration`).
+ */
+async function prepareDatabaseOnStartup(): Promise<void> {
+  const { openDatabase, needsLegacyMigration, finalizeDatabase, setMigrationPending } = await import('./database')
+  const { buildBackupPath } = await import('./db-backup')
+
+  const ds = await openDatabase()
+  if (!(await needsLegacyMigration(ds))) {
+    await finalizeDatabase(ds)
+    await startDatabaseDependentServices()
+    return
+  }
+
+  setMigrationPending(true)
+  const userDataDir = app.getPath('userData')
+  const backupsDir = path.join(userDataDir, 'backups')
+  pendingMigration = {
+    fromVersion: readLastRunVersion(),
+    toVersion: app.getVersion(),
+    plannedBackupPath: buildBackupPath(backupsDir, app.getVersion()),
+    backupsDir,
+    userDataDir,
+    releasesUrl: RELEASES_URL,
+    countdownSeconds: resolveMigrationCountdownSeconds(),
+  }
+  console.warn('[shipit] Schema legado detectado — aguardando confirmação do usuário para backup e migração.')
+}
+
+/** aviso (já confirmado no renderer) → backup verificado → migração → sync do schema. */
+async function runStartupMigration(): Promise<StartupMigrationResult> {
+  const info = pendingMigration
+  if (!info) {
+    return { success: false, stage: 'migration', error: 'Não há migração pendente.' }
+  }
+
+  const { openDatabase, migrateLegacyEnvironmentColumns, finalizeDatabase, getDbPath } = await import('./database')
+  const { createDatabaseBackup, buildBackupPath } = await import('./db-backup')
+  const ds = await openDatabase()
+
+  // 1) Backup — sem ele nada é alterado.
+  let backupPath: string
+  try {
+    // Garante que shipit.db contém tudo antes de copiar (WAL pode ter páginas pendentes).
+    try {
+      await ds.query('PRAGMA wal_checkpoint(TRUNCATE)')
+    } catch (error) {
+      console.warn('[shipit] wal_checkpoint falhou (ignorado):', error)
+    }
+    // Caminho recalculado se o planejado já existir (ex.: "Tentar novamente" no mesmo segundo).
+    const target = fs.existsSync(info.plannedBackupPath)
+      ? buildBackupPath(info.backupsDir, info.toVersion)
+      : info.plannedBackupPath
+    backupPath = createDatabaseBackup({ dbPath: getDbPath(), backupPath: target }).backupPath
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[shipit] Backup do banco falhou; migração abortada:', message)
+    return { success: false, stage: 'backup', error: message }
+  }
+
+  // 2) Migração + 3) sincronização do schema (remove colunas legadas).
+  try {
+    const migrated = await migrateLegacyEnvironmentColumns(ds)
+    await finalizeDatabase(ds)
+    console.info(`[shipit] Migração concluída: ${migrated} atividade(s) convertida(s). Backup em ${backupPath}`)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[shipit] Migração falhou após o backup:', message)
+    return { success: false, stage: 'migration', error: message, backupPath }
+  }
+
+  const notice: MigrationNoticeData = {
+    fromVersion: info.fromVersion,
+    toVersion: info.toVersion,
+    backupPath,
+    migratedAt: new Date().toISOString(),
+  }
+  writeInternalSetting(MIGRATION_NOTICE_SETTINGS_KEY, notice)
+  pendingMigration = null
+  await startDatabaseDependentServices()
+  return { success: true, backupPath }
+}
+
+ipcMain.handle('app:getStartupMigration', () => pendingMigration)
+ipcMain.handle('app:runStartupMigration', () => runStartupMigration())
+ipcMain.handle('app:getLastMigrationNotice', () => readMigrationNotice())
+ipcMain.handle('app:openReleasesPage', () => openExternalSafely(RELEASES_URL))
+
 app.whenReady().then(async () => {
   if (!hasSingleInstanceLock) return
 
-  // Initialize database early to ensure TypeORM metadata is registered
-  const { initDatabase, cleanupTrash } = await import('./database')
-  await initDatabase()
-  
-  // Cleanup old trash items on startup
-  await cleanupTrash()
+  // Abre o banco cedo (registra os metadados do TypeORM). Se o schema for legado,
+  // a sincronização fica para depois do aviso → backup → migração.
+  await prepareDatabaseOnStartup()
 
   // Register custom protocol to serve evidence images securely
   protocol.handle('shipit-evidence', (request) => {
@@ -629,7 +808,6 @@ app.whenReady().then(async () => {
 
   createWindow()
   createTray()
-  startSchedulers()
 
   // Auto-update: check for updates only in packaged builds (or under the
   // E2E fake updater).
@@ -891,14 +1069,18 @@ ipcMain.handle('app:getSettings', () => {
 
 ipcMain.handle('app:saveSettings', (_event, partial: Record<string, unknown>) => {
   const current = loadSettings()
-  const merged = {
+  // Chaves internas (`__*`) são preservadas; o renderer só altera as públicas.
+  const nextSettings: Record<string, unknown> = {
     ...getPublicSettings(current),
     ...getPublicSettings(partial),
+    ...getInternalSettings(current),
   }
   const persistedUpdateState = readPersistedUpdateState(current)
-  const nextSettings = Object.keys(persistedUpdateState).length > 0
-    ? { ...merged, [INTERNAL_UPDATE_SETTINGS_KEY]: persistedUpdateState }
-    : merged
+  if (Object.keys(persistedUpdateState).length > 0) {
+    nextSettings[INTERNAL_UPDATE_SETTINGS_KEY] = persistedUpdateState
+  } else {
+    delete nextSettings[INTERNAL_UPDATE_SETTINGS_KEY]
+  }
 
   saveSettingsFile(nextSettings)
   return getPublicSettings(nextSettings)

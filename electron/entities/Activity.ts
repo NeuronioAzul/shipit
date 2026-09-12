@@ -31,11 +31,10 @@ export class Activity {
   @Column({ type: 'text', nullable: true })
   link_ref!: string | null // JSON array of URLs
 
+  // JSON { ambiente: releases[] } — publicações por ambiente (uso interno, não exportado no DOCX).
+  // Ex.: {"Desenvolvimento":["12345"],"Produção":[]} — chave presente = publicado; [] = sem release anotada.
   @Column({ type: 'text', nullable: true })
-  svn_releases!: string | null // CSV de releases SVN (uso interno, não exportado no DOCX)
-
-  @Column({ type: 'text', nullable: true })
-  environment!: ActivityEnvironment | null // Ambiente (uso interno, não exportado no DOCX)
+  deployments!: string | null
 
   @Column({ type: 'text', default: 'Pendente' })
   status!: ActivityStatus
