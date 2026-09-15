@@ -9,8 +9,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+## [1.16.1] — 2026-09-15
+
 ### Corrigido
-- **Notas de versão sem texto de apresentação.** A geração automática das notas deixou de incluir a frase de abertura da ferramenta de IA ("Segue a entrada do CHANGELOG..."), que havia vazado para a entrada da 1.16.0 (já corrigida neste arquivo).
+- **Notas de versão sem texto de apresentação.** As notas de versão geradas automaticamente deixaram de incluir uma frase de apresentação indevida ("Segue a entrada do CHANGELOG...") no início do texto. A entrada da versão 1.16.0 já foi corrigida.
 
 ## [1.16.0] — 2026-09-15
 
