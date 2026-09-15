@@ -500,6 +500,14 @@ def _normalize_ai_commit_message(text: str) -> str:
     if len(text) >= 2 and text[0] == text[-1] and text[0] in quotes:
         text = text[1:-1].strip()
     lines = [line.rstrip() for line in text.splitlines()]
+    # Preâmbulo ("Segue a mensagem de commit:" etc.): descarta tudo o que vem
+    # antes da primeira linha com cara de cabeçalho Conventional Commits.
+    for idx, line in enumerate(lines):
+        candidate = line.strip().strip(quotes)
+        if CONVENTIONAL_COMMIT_HEADER_RE.match(candidate):
+            if idx > 0:
+                lines = lines[idx:]
+            break
     # ...ou apenas o cabeçalho (primeira linha).
     if lines:
         header = lines[0].strip()
@@ -714,18 +722,92 @@ def _generate_changelog_with_claude(version: str, context: ReleaseContext) -> st
         "para o usuário (ex.: o app abre mais rápido).\n"
         "- Não invente funcionalidades: use apenas o que está nas fontes. Em caso de "
         "ambiguidade, descreva o efeito mais provável de forma conservadora.\n\n"
-        "SAÍDA: apenas as seções markdown (e a frase de abertura, se houver). Sem o "
-        f"cabeçalho de versão '## [{version}]', sem texto antes/depois e sem cercas "
-        "de código.\n\n"
         "FONTES:\n"
         "[1] Seção [Unreleased] do CHANGELOG — já curada; é a FONTE PRINCIPAL. "
         "Preserve o sentido, melhore a redação para o usuário final e remova os "
         "detalhes técnicos:\n"
         f"{unreleased}\n\n"
         f"[2] Commits desde a última versão publicada ({context.commit_range}):\n"
-        f"{context.commits_text}"
+        f"{context.commits_text}\n\n"
+        "FORMATO DA RESPOSTA (obrigatório — o texto é inserido no arquivo SEM revisão "
+        "humana, então qualquer frase extra vai para o CHANGELOG publicado):\n"
+        "- A resposta é o conteúdo final do CHANGELOG, e nada mais. Comece DIRETAMENTE "
+        "pela frase de abertura (se houver) ou pelo primeiro '### '.\n"
+        "- NÃO escreva apresentação, introdução ou fechamento (nada de \"Segue a "
+        "entrada...\", \"Aqui está...\", \"Com base nas fontes...\", \"Observação:\", "
+        "\"Se quiser, posso...\").\n"
+        f"- NÃO inclua o cabeçalho de versão '## [{version}]' nem cercas de código.\n"
+        "- Não mencione as fontes, o prompt, os commits ou o processo de geração."
     )
-    return _run_claude(prompt)
+    raw = _run_claude(prompt)
+    return _clean_ai_changelog_entry(raw) if raw else None
+
+
+# Linhas de apresentação/fechamento que os modelos às vezes acrescentam mesmo
+# proibidos; removidas do começo/fim da resposta antes de inserir no CHANGELOG.
+AI_CHANGELOG_PREAMBLE_RE = re.compile(
+    r"^(segue|seguem|aqui (está|estão|vai|vão)|abaixo|conforme|claro|certo|com base|"
+    r"a seguir|esta é a entrada|entrada do changelog)\b"
+    r"|\b(fontes? (fornecidas?|informadas?)|a partir das fontes|conforme solicitado)\b",
+    re.IGNORECASE,
+)
+AI_CHANGELOG_TRAILER_RE = re.compile(
+    r"^(nota|observaç(ão|ões)|obs\.?|se (quiser|precisar|desejar)|posso|caso (queira|precise)|"
+    r"qualquer (dúvida|ajuste)|fico à disposição)\b",
+    re.IGNORECASE,
+)
+
+
+def _clean_ai_changelog_entry(text: str) -> str:
+    """Remove o que não é conteúdo do CHANGELOG: cabeçalho '## [x.y.z]' indevido,
+    parágrafos de apresentação antes da primeira seção e comentários de
+    fechamento depois do último bullet. A frase de abertura legítima (sem cara
+    de apresentação) é preservada."""
+    text = _strip_code_fences(text.replace("\r\n", "\n")).strip()
+    lines = text.split("\n")
+
+    # Quebra em parágrafos (blocos separados por linha em branco) para avaliar
+    # apenas os de texto simples que ficam ANTES do primeiro heading '### '.
+    paragraphs: list[list[str]] = []
+    current: list[str] = []
+    for line in lines:
+        if line.strip():
+            current.append(line)
+        elif current:
+            paragraphs.append(current)
+            current = []
+    if current:
+        paragraphs.append(current)
+
+    def is_heading(par: list[str]) -> bool:
+        return par[0].lstrip().startswith("#")
+
+    def is_bullet(par: list[str]) -> bool:
+        return par[0].lstrip().startswith(("- ", "* "))
+
+    # Cabeçalho de versão indevido ('## [x.y.z] — data') no topo.
+    while paragraphs and re.match(r"^##\s*\[", paragraphs[0][0].strip()):
+        paragraphs[0] = paragraphs[0][1:]
+        if not paragraphs[0]:
+            paragraphs.pop(0)
+
+    # Preâmbulos: parágrafos de texto simples antes do primeiro heading.
+    while paragraphs and not is_heading(paragraphs[0]) and not is_bullet(paragraphs[0]):
+        first_line = paragraphs[0][0].strip()
+        if AI_CHANGELOG_PREAMBLE_RE.search(first_line):
+            paragraphs.pop(0)
+            continue
+        break
+
+    # Fechamentos: texto simples depois do último bullet/heading.
+    while paragraphs and not is_heading(paragraphs[-1]) and not is_bullet(paragraphs[-1]):
+        last_line = paragraphs[-1][0].strip()
+        if AI_CHANGELOG_TRAILER_RE.search(last_line):
+            paragraphs.pop()
+            continue
+        break
+
+    return "\n\n".join("\n".join(par) for par in paragraphs).strip()
 
 
 def confirm(prompt: str, default: str = "n") -> bool:

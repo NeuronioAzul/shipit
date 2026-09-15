@@ -9,9 +9,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-## [1.16.0] — 2026-09-15
+### Corrigido
+- **Notas de versão sem texto de apresentação.** A geração automática das notas deixou de incluir a frase de abertura da ferramenta de IA ("Segue a entrada do CHANGELOG..."), que havia vazado para a entrada da 1.16.0 (já corrigida neste arquivo).
 
-Segue a entrada do CHANGELOG da versão 1.16.0, escrita para o usuário final a partir das fontes fornecidas.
+## [1.16.0] — 2026-09-15
 
 Agora é possível duplicar uma atividade em poucos cliques, sem redigitar nada.
 
