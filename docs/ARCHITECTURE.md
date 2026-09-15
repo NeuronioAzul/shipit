@@ -221,6 +221,7 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | `InputTags` | Entrada de tags (vírgula/Enter/Tab, colar CSV) com validação por tag |
 | `DeploymentsEditor` | Editor de publicações por ambiente (dsv → hmg → prd): toggle colorido + `InputTags` de releases por linha, releases retidas ao desmarcar, atalho "Repetir releases" |
 | `DeploymentPipeline` | Exibição `dsv › hmg › prd` na lista/detalhe; releases copiáveis; nada quando nenhum ambiente está marcado |
+| `TimelineChart` | Linha do Tempo do Dashboard: uma coluna por dia (número + letra do dia da semana, fins de semana em destaque, divisórias via container query `@min-[682px]`), barras por atividade e realce da coluna sob o ponteiro |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
 | `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
 | `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
@@ -258,7 +259,8 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | Módulo | Função |
 | -------- | -------- |
 | `validation.ts` | Valida campos obrigatórios do perfil e das atividades antes da geração do relatório |
-| `monthReference.ts` | Normalização e formatação de mês de referência (`YYYY-MM`) |
+| `monthReference.ts` | Normalização e formatação de mês de referência (`MM/YYYY`); `parseMonthReference` com fallback para o mês atual |
+| `timelineDays.ts` | Dias do mês para a Linha do Tempo (`getTimelineDays`: letra pt-BR, fim de semana, rótulo), `getDayAtPointer` (hover), `getActivityDays` (recorte do período ao mês), `formatShortDate`, limiar `FULL_DENSITY_MIN_TRACK_PX` |
 | `activityMonthNavigation.ts` | Cálculo de navegação mensal para a tela de detalhes |
 | `keyboardGuards.ts` | Guardas para atalhos não dispararem durante digitação |
 | `statusColors.ts` | Mapeamento compartilhado de status para ícones/cores |

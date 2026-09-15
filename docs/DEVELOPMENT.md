@@ -37,9 +37,9 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm run test`     | Executa 257 testes unitários e de integração (Vitest, 22 arquivos verificados em 15/09/2026) |
+| `npm run test`     | Executa 275 testes unitários e de integração (Vitest, 24 arquivos verificados em 15/09/2026) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 44 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/legacy-schema-guard.spec.ts`; precedido por `pretest:e2e`) |
+| `npm run test:e2e` | Executa 45 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/legacy-schema-guard.spec.ts`; precedido por `pretest:e2e`) |
 | `npm run test:all` | Executa a suíte completa: Vitest + build + Playwright |
 | `npm run pretest:e2e` | Hook automático que roda `npm run build` antes do Playwright |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
@@ -173,13 +173,14 @@ shipit/
 │   │   ├─ TextEvidenceEditor.tsx
 │   │   ├─ TextEvidenceModal.tsx
 │   │   ├─ ThemeSelector.tsx
+│   │   ├─ TimelineChart.tsx   # Linha do Tempo do Dashboard (colunas por dia)
 │   │   ├─ TimePicker.tsx
 │   │   ├─ TitleBar.tsx
 │   │   ├─ UpdateModal.tsx
 │   │   └─ UpdateStatusPanel.tsx
 │   ├── pages/                 # Páginas/rotas
 │   │   ├── HomePage.tsx       # Router → Dashboard ou EmptyState
-│   │   ├── DashboardPage.tsx  # Resumo mensal + Gantt
+│   │   ├── DashboardPage.tsx  # Resumo mensal + Linha do Tempo
 │   │   ├── ActivitiesPage.tsx # Listagem de atividades
 │   │   ├── ActivityFormPage.tsx    # Formulário criar/editar
 │   │   ├── ActivityDetailPage.tsx  # Detalhes da atividade
@@ -205,6 +206,7 @@ shipit/
 │       ├── keyboardGuards.ts
 │       ├── monthReference.ts
 │       ├── statusColors.ts
+│       ├── timelineDays.ts    # Dias/fins de semana/hover da Linha do Tempo
 │       └── validation.ts      # Validação de campos obrigatórios
 ├── build/                     # Build resources do electron-builder
 │   ├── ShipIt.ico             # Ícone Windows usado no empacotamento

@@ -179,7 +179,7 @@ Cada evidência pode ter uma **legenda** descritiva que aparecerá no relatório
 O **Dashboard** mostra um resumo visual do seu mês:
 
 - **Cards de status** — total, concluídas, em andamento, pendentes, canceladas
-- **Gráfico de Gantt** — visualize o período de cada atividade ao longo do mês
+- **Gráfico de Gantt** — visualize o período de cada atividade ao longo do mês, com uma coluna por dia (número e dia da semana, fins de semana em destaque) e realce da coluna ao passar o mouse
 - **Tabela de atividades** — lista completa com indicadores de campos incompletos
 
 Use o seletor de mês e os botões de navegação para alternar rapidamente o período exibido.

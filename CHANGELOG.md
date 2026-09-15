@@ -9,6 +9,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Adicionado
+- **Dias visíveis na Linha do Tempo do Dashboard.** O gráfico passa a ter uma coluna por dia do mês, com o número do dia e a letra do dia da semana (D, S, T, Q, Q, S, S) no cabeçalho, sábados e domingos em cor de destaque e linhas verticais separando os dias, para ler de relance quantos dias cada atividade levou. Ao passar o mouse, a coluna do dia é destacada por inteiro. Em janelas estreitas, as linhas e as letras somem e voltam os números só a cada 5 dias.
+
+### Corrigido
+- **Barras alinhadas aos dias na Linha do Tempo.** Os números dos dias no cabeçalho estavam levemente deslocados em relação às barras das atividades; agora cabeçalho e barras usam a mesma escala.
+
 ## [1.16.1] — 2026-09-15
 
 ### Corrigido

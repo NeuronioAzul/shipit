@@ -1894,6 +1894,115 @@ test('regression: shows download button (not install) when restarting with stale
   await expect(page.locator('#settings-update-status')).toContainText(`Versão ${FUTURE_VERSION} pronta para download.`)
 })
 
+test('dashboard timeline renders day grid, weekday letters and column hover', async () => {
+  const [monthRef] = getUniqueMonthSequence(455, 1)
+  const [mm, yyyy] = monthRef.split('/')
+  const year = Number(yyyy)
+  const monthIndex = Number(mm) - 1
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+  const weekdayLetters = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+  const weekendCount = Array.from({ length: daysInMonth }, (_, i) => new Date(year, monthIndex, i + 1).getDay())
+    .filter((weekday) => weekday === 0 || weekday === 6)
+    .length
+
+  await createActivityRecord('Atividade da linha do tempo', monthRef, {
+    date_start: `${yyyy}-${mm}-05`,
+    date_end: `${yyyy}-${mm}-09`,
+    status: 'Em andamento',
+  })
+
+  // O Dashboard só aparece com perfil; garante um quando o teste roda isolado
+  const profileName = await page.evaluate(async () => {
+    const api = (window as unknown as {
+      electronAPI?: {
+        getUserProfile?: () => Promise<{ full_name?: string } | null>
+        saveUserProfile?: (data: Record<string, unknown>) => Promise<unknown>
+      }
+    }).electronAPI
+    const existing = await api?.getUserProfile?.()
+    if (existing?.full_name) return existing.full_name
+    await api?.saveUserProfile?.({
+      full_name: 'PERFIL LINHA DO TEMPO',
+      role: 'ENGENHEIRO DE SOFTWARE',
+      seniority_level: 'Pleno',
+      contract_identifier: 'CT-TIMELINE-001',
+      profile_type: 'DEV-03',
+      correlating_activities: 'Desenvolvimento de software.',
+      attendance_type: 'Remoto',
+      project_scope: 'Squad Timeline',
+    })
+    return (await api?.getUserProfile?.())?.full_name ?? null
+  })
+  expect(profileName).toBeTruthy()
+
+  // A Home verifica o perfil só ao montar: sai da rota antes de voltar ao Dashboard
+  await page.evaluate(() => {
+    window.location.hash = '#/activities'
+  })
+  await page.waitForURL(/#\/activities/)
+
+  // Normaliza zoom e tamanho da janela: testes anteriores podem tê-los alterado
+  await restoreMainWindow()
+  const originalSize = await app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0]
+    win?.webContents.setZoomLevel(0)
+    return win?.getSize() ?? [1100, 750]
+  })
+
+  try {
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1280, 800))
+
+    await page.evaluate((month) => {
+      window.location.hash = `#/?month=${month}`
+    }, monthRef)
+    await page.waitForURL((url) => url.toString().includes(`#/?month=${monthRef}`))
+    await expect(page.locator('#dashboard-gantt')).toBeVisible({ timeout: 5_000 })
+
+    const headerCells = page.locator('#dashboard-gantt-header [data-day]')
+    const columns = page.locator('#dashboard-gantt-columns [data-day]')
+    await expect(headerCells).toHaveCount(daysInMonth)
+    await expect(columns).toHaveCount(daysInMonth)
+
+    // Letra do dia da semana (pt-BR) e marcação de fim de semana
+    const firstWeekday = new Date(year, monthIndex, 1).getDay()
+    await expect(headerCells.nth(0).locator('[data-role="weekday"]')).toHaveText(weekdayLetters[firstWeekday])
+    await expect(page.locator('#dashboard-gantt-header [data-weekend="true"]')).toHaveCount(weekendCount)
+    await expect(page.locator('#dashboard-gantt-columns [data-weekend="true"]')).toHaveCount(weekendCount)
+
+    // Modo completo (janela larga): letras visíveis em todos os dias
+    await expect(headerCells.nth(1).locator('[data-role="weekday"]')).toBeVisible()
+    await expect(headerCells.nth(1).locator('[data-role="day-number"]')).toBeVisible()
+
+    // Hover destaca a coluna inteira e limpa ao sair da trilha
+    await headerCells.nth(6).hover()
+    await expect(columns.nth(6)).toHaveAttribute('data-hovered', 'true')
+    await expect(headerCells.nth(6)).toHaveAttribute('data-hovered', 'true')
+    await expect(page.locator('#dashboard-gantt-columns [data-hovered="true"]')).toHaveCount(1)
+    await page.locator('#dashboard-month-label').hover()
+    await expect(columns.nth(6)).toHaveAttribute('data-hovered', 'false')
+
+    // Barra alinhada às colunas dos dias 5..9
+    const bar = page.locator('#dashboard-gantt-track [data-activity-bar]').first()
+    await expect(bar).toBeVisible()
+    const barBox = await bar.boundingBox()
+    const day5Box = await headerCells.nth(4).boundingBox()
+    const day9Box = await headerCells.nth(8).boundingBox()
+    expect(barBox && day5Box && day9Box).toBeTruthy()
+    expect(Math.abs(barBox!.x - day5Box!.x)).toBeLessThanOrEqual(1)
+    expect(Math.abs(barBox!.x + barBox!.width - (day9Box!.x + day9Box!.width))).toBeLessThanOrEqual(1)
+
+    // Modo compacto (janela mínima): letras somem, números só nos marcos (1, 5, 10…)
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(800, 600))
+    await expect(headerCells.nth(1).locator('[data-role="weekday"]')).toBeHidden()
+    await expect(headerCells.nth(1).locator('[data-role="day-number"]')).toBeHidden()
+    await expect(headerCells.nth(4).locator('[data-role="day-number"]')).toBeVisible()
+  } finally {
+    await app.evaluate(({ BrowserWindow }, size) => {
+      BrowserWindow.getAllWindows()[0]?.setSize(size[0], size[1])
+    }, originalSize)
+  }
+})
+
 test('routes quit menu command through Electron without ending the suite', async () => {
   await app.evaluate(({ app }) => {
     const globalState = globalThis as typeof globalThis & {

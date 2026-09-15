@@ -9,6 +9,8 @@ import { STATUS_COLORS, STATUS_ICONS } from '../utils/statusColors'
 import { isTypingTarget } from '../utils/keyboardGuards'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
+import { formatShortDate } from '../utils/timelineDays'
+import { TimelineChart } from '../components/TimelineChart'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -63,11 +65,6 @@ export function DashboardPage() {
     setSearchParams({ month: newMonth })
   }, [monthRef, setSearchParams])
 
-  function formatDate(d: string | null): string {
-    if (!d) return '—'
-    return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-  }
-
   const [mm, yyyy] = monthRef.split('/')
   const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1).toLocaleDateString(
     'pt-BR',
@@ -107,23 +104,6 @@ export function DashboardPage() {
     { label: 'Pendentes', value: pendentes, icon: 'fa-clock', color: 'text-chart-4', bg: 'bg-chart-4/10' },
     { label: 'Canceladas', value: canceladas, icon: 'fa-times-circle', color: 'text-chart-5', bg: 'bg-chart-5/10' },
   ]
-
-  // Gantt chart data
-  const daysInMonth = new Date(parseInt(yyyy), parseInt(mm), 0).getDate()
-
-  function getActivityDays(activity: ActivityData): { start: number; end: number } | null {
-    if (!activity.date_start || !activity.date_end) return null
-    const s = new Date(activity.date_start + 'T00:00:00')
-    const e = new Date(activity.date_end + 'T00:00:00')
-    const monthStart = new Date(parseInt(yyyy), parseInt(mm) - 1, 1)
-    const monthEnd = new Date(parseInt(yyyy), parseInt(mm), 0)
-
-    const clampStart = s < monthStart ? 1 : s.getDate()
-    const clampEnd = e > monthEnd ? daysInMonth : e.getDate()
-
-    if (clampStart > daysInMonth || clampEnd < 1) return null
-    return { start: Math.max(1, clampStart), end: Math.min(daysInMonth, clampEnd) }
-  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -227,57 +207,11 @@ export function DashboardPage() {
                 <i className="fa-solid fa-chart-gantt mr-1"></i>
                 Linha do Tempo
               </h2>
-              <div className="min-w-150">
-                {/* Day headers */}
-                <div className="flex items-center mb-1" style={{ paddingLeft: '140px' }}>
-                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
-                    <div
-                      key={day}
-                      className="text-[9px] text-muted-foreground text-center"
-                      style={{ width: `${100 / daysInMonth}%` }}
-                    >
-                      {day % 5 === 0 || day === 1 ? day : ''}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Activity bars */}
-                {activities.map((activity, idx) => {
-                  const days = getActivityDays(activity)
-                  const barColor = activity.status === 'Concluído'
-                    ? 'bg-chart-2'
-                    : activity.status === 'Cancelado'
-                      ? 'bg-chart-5'
-                      : activity.status === 'Em andamento'
-                        ? 'bg-chart-3'
-                        : 'bg-chart-4'
-
-                  return (
-                    <div key={activity.id} className="flex items-center h-7 group">
-                      <div
-                        className="w-35 shrink-0 text-xs text-foreground truncate pr-2 cursor-pointer hover:text-primary"
-                        title={htmlToPlainText(activity.description)}
-                        onClick={() => navigate(`/activities/${activity.id}`)}
-                      >
-                        {idx + 1}. {htmlToPlainText(activity.description).substring(0, 18) || 'Sem desc.'}
-                      </div>
-                      <div className="flex-1 relative h-5 bg-muted/30 rounded-sm">
-                        {days && (
-                          <div
-                            className={`absolute top-0.5 h-4 rounded-sm ${barColor} opacity-80 hover:opacity-100 transition-opacity cursor-pointer`}
-                            style={{
-                              left: `${((days.start - 1) / daysInMonth) * 100}%`,
-                              width: `${((days.end - days.start + 1) / daysInMonth) * 100}%`,
-                            }}
-                            title={`${activity.description}\n${formatDate(activity.date_start)} → ${formatDate(activity.date_end)}`}
-                            onClick={() => navigate(`/activities/${activity.id}`)}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <TimelineChart
+                activities={activities}
+                monthRef={monthRef}
+                onSelect={(id) => navigate(`/activities/${id}`)}
+              />
             </div>
           )}
 
@@ -335,7 +269,7 @@ export function DashboardPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
-                        {formatDate(activity.date_start)} — {formatDate(activity.date_end)}
+                        {formatShortDate(activity.date_start)} — {formatShortDate(activity.date_end)}
                       </td>
                       <td className="px-4 py-2.5">
                         <span
