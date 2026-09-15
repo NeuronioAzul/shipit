@@ -14,6 +14,14 @@
 
 ## [Unreleased]
 
+> Plano: [plan-shipit43 — duplicar atividade](plans/plan-shipit43-duplicateActivity.prompt.md)
+
+- [x] **feat:** Duplicar atividade — `duplicateActivity(id, options)` em `electron/database.ts` (copia `description`/`project_scope`/`link_ref`/`attendance_type`/`status`; `month_reference` de destino; `date_start`/`date_end` só com `keepDates`; `deployments` só com `copyDeployments`; evidências só com `copyEvidences`: imagem → arquivo novo `<uuidv7><ext>` em `userData/evidences`, texto → registro novo, preservando `caption`/`sort_index`, ignorando `deleted_at`, pulando arquivo ausente com `console.warn`; `order` recalculado por `saveActivity`; sem vínculo com `ActivityReport`; origem inexistente lança "Atividade não encontrada"). Handler `db:duplicateActivity` (`main.ts` + `preload.ts`), tipo `DuplicateActivityOptions` em `vite-env.d.ts`, fallback `localDb.duplicateActivity` (imagens em data URL copiam o registro). Componente `DuplicateActivityModal` (mês `MM/YYYY` validado inline com `validateMonthReference`, três checkboxes com contagem real de evidências via `getEvidenceTypeCounts`, spinner "Duplicando…", `Esc`/backdrop/Cancelar fecham, `Enter` confirma, foco inicial no mês) reutilizado por `#activity-detail-btn-duplicate` (`btn btn-outline`, entre Editar e Excluir) e pelo botão `fa-clone` do card da lista (`data-testid="activity-card-duplicate"`); após duplicar, toast + navegação para `/activities/<id>/edit`. Navegação por setas do detalhe suspensa enquanto o modal está aberto. Testes: 7 em `database.test.ts`, 13 em `DuplicateActivityModal.test.tsx`, 3 cenários E2E em `app.spec.ts` (detalhe com padrões; card para o mês seguinte com período e evidências copiadas, arquivos distintos verificados via `nativeImage`; mês inválido bloqueia e `Esc` fecha).
+
+---
+
+## v1.15.0 — 2026-09-15
+
 > Plano: [plan-shipit42.1 — limpeza pós-migração](plans/plan-shipit42.1-removeLegacyMigrationCode.prompt.md)
 
 - [x] **refactor:** Remoção do código de uso único da migração do plano 42 — `needsLegacyMigration`/`migrateLegacyEnvironmentColumns`/guarda `migrationPending` em `database.ts`, módulo `db-backup.ts` (+ teste), `MigrationGate` (+ teste), `useStartupMigration` em `App.tsx`, seção de backup em `SettingsPage`, migração legada em `localDb.ts`/`deployments.ts`, 4 handlers IPC (`app:getStartupMigration`, `app:runStartupMigration`, `app:getLastMigrationNotice`, `app:openReleasesPage`) com preload/tipos, env `SHIPIT_E2E_MIGRATION_COUNTDOWN_SECONDS`, bloco de testes de migração e `e2e/migration.spec.ts`. Mantidos: `openDatabase`/`finalizeDatabase` (sync explícito), chaves internas de `settings.json` e `__lastRunVersion`. Referência no histórico: `442904d`.

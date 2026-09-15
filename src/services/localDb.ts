@@ -1,4 +1,4 @@
-import type { ActivityData, EvidenceData } from '../vite-env'
+import type { ActivityData, DuplicateActivityOptions, EvidenceData } from '../vite-env'
 
 const ACTIVITIES_KEY = 'shipit-activities'
 
@@ -84,6 +84,49 @@ export const localDb = {
     if (filtered.length === all.length) return false
     setStoredActivities(filtered)
     return true
+  },
+
+  /**
+   * Duplica uma atividade (plano 43) com a mesma semântica do main process.
+   * Imagens aqui são data URLs, então "copiar o arquivo" é copiar o registro.
+   */
+  duplicateActivity(id: string, options: DuplicateActivityOptions): ActivityData {
+    const source = getStoredActivities().find((a) => a.id === id)
+    if (!source) throw new Error('Atividade não encontrada')
+
+    const copy = localDb.saveActivity({
+      description: source.description,
+      project_scope: source.project_scope,
+      link_ref: source.link_ref,
+      attendance_type: source.attendance_type,
+      status: source.status,
+      month_reference: options.monthReference,
+      date_start: options.keepDates ? source.date_start : null,
+      date_end: options.keepDates ? source.date_end : null,
+      deployments: options.copyDeployments ? source.deployments : null,
+      evidences: [],
+    })
+
+    if (options.copyEvidences) {
+      const all = getStoredActivities()
+      const stored = all.find((a) => a.id === copy.id)
+      if (stored) {
+        stored.evidences = (source.evidences ?? [])
+          .filter((e) => !e.deleted_at)
+          .sort((a, b) => a.sort_index - b.sort_index)
+          .map((e) => ({
+            ...e,
+            id: generateId(),
+            activity_id: copy.id,
+            date_added: new Date().toISOString(),
+            deleted_at: null,
+          }))
+        setStoredActivities(all)
+        return stored
+      }
+    }
+
+    return copy
   },
 
   reorderActivities(items: { id: string; order: number }[]) {

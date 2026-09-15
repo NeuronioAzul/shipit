@@ -30,6 +30,7 @@ import { parseDeployments } from '../utils/deployments'
 import { ENVIRONMENTS, ENVIRONMENT_ABBR, ENVIRONMENT_COLORS, ENVIRONMENT_ICONS } from '../utils/environmentColors'
 import { copyTextToClipboard } from '../utils/clipboard'
 import { DeploymentPipeline } from '../components/DeploymentPipeline'
+import { DuplicateActivityModal } from '../components/DuplicateActivityModal'
 import { isRichTextEmpty, normalizeToHtml } from '../utils/richText'
 import {
   resolveMonthNavigation,
@@ -149,6 +150,7 @@ export function ActivityDetailPage() {
   const [confirmEvidenceDelete, setConfirmEvidenceDelete] = useState<string | null>(null)
   const [deletingEvidence, setDeletingEvidence] = useState(false)
   const [confirmActivityDelete, setConfirmActivityDelete] = useState(false)
+  const [showDuplicate, setShowDuplicate] = useState(false)
   const [deletingActivity, setDeletingActivity] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -272,9 +274,9 @@ export function ActivityDetailPage() {
     }
   }, [selectedMonth, siblingsLoading, siblingsMonthReference, siblings, activity, id, navigate])
 
-  // Keyboard shortcuts: ← / → (local navigation in detail page)
+  // Keyboard shortcuts: ← / → (local navigation in detail page); suspensos com o modal de duplicação aberto
   useEffect(() => {
-    if (!activity || siblings.length === 0) return
+    if (!activity || siblings.length === 0 || showDuplicate) return
 
     const currentIndex = siblings.findIndex((a) => a.id === activity.id)
 
@@ -312,7 +314,7 @@ export function ActivityDetailPage() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activity, siblings, navigate])
+  }, [activity, siblings, navigate, showDuplicate])
 
   useEffect(() => {
     if (!confirmActivityDelete) return
@@ -562,6 +564,15 @@ export function ActivityDetailPage() {
           >
             <i className="fa-solid fa-pen-to-square"></i>
             Editar
+          </button>
+          <button
+            id="activity-detail-btn-duplicate"
+            onClick={() => setShowDuplicate(true)}
+            className="btn btn-outline"
+            aria-label="Duplicar atividade"
+          >
+            <i className="fa-solid fa-clone" aria-hidden="true"></i>
+            Duplicar
           </button>
           <button
             id="activity-detail-btn-delete"
@@ -894,6 +905,17 @@ export function ActivityDetailPage() {
           onChangeMonth={handleChangeMonth}
         />
       </div>
+
+      {/* Duplicar atividade (plano 43) */}
+      <DuplicateActivityModal
+        activity={activity}
+        open={showDuplicate}
+        onClose={() => setShowDuplicate(false)}
+        onDuplicated={(copy) => {
+          setShowDuplicate(false)
+          navigate(`/activities/${copy.id}/edit`)
+        }}
+      />
 
       {/* Confirm activity delete modal */}
       {confirmActivityDelete && (

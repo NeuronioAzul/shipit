@@ -9,6 +9,9 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+### Adicionado
+- **Duplicar atividade.** Novo botão "Duplicar" na tela de detalhes e no card da lista de atividades. Um pequeno modal pergunta o mês de referência de destino (pré-preenchido com o da atividade original) e se deve manter o período, copiar as publicações por ambiente e copiar as evidências (mostrando quantas imagens e textos serão copiados). A cópia leva descrição, escopo, links, tipo de atendimento e status, entra no fim do mês de destino e abre direto na tela de edição para ajustar datas e publicações. Caso de uso típico: a mesma entrega já publicada em Desenvolvimento/Homologação vira, em outra data, uma nova atividade só para Produção sem redigitar nada. Evidências na lixeira não são copiadas; imagens copiadas ganham arquivos próprios, então excluir uma da cópia não afeta a original.
+
 ## [1.15.0] — 2026-09-15
 
 Versão de limpeza após a conversão de dados da 1.14.0: quem já usa a 1.14.x atualiza normalmente; quem vem de versões anteriores precisa passar pela 1.14.x primeiro.

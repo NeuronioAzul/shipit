@@ -1356,6 +1356,219 @@ test('opens, cancels and confirms activity deletion on detail page', async () =>
   await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(0)
 })
 
+// ──── Duplicar atividade (plano 43) ────
+
+interface E2EActivitySnapshot {
+  id: string
+  description: string
+  date_start: string | null
+  date_end: string | null
+  deployments: string | null
+  month_reference: string
+  project_scope: string | null
+  evidences: Array<{ id: string; type: string; file_path: string | null; text_content: string | null; caption: string | null; sort_index: number }>
+}
+
+async function fetchActivitySnapshot(id: string): Promise<E2EActivitySnapshot | null> {
+  return page.evaluate(async (activityId) => {
+    const api = (window as unknown as {
+      electronAPI?: { getActivity?: (id: string) => Promise<unknown> }
+    }).electronAPI
+    if (!api?.getActivity) throw new Error('getActivity indisponível no E2E')
+    return (await api.getActivity(activityId)) as E2EActivitySnapshot | null
+  }, id)
+}
+
+async function openDetailPage(activityId: string) {
+  await page.evaluate((id) => {
+    window.location.hash = `#/activities/${id}`
+  }, activityId)
+  await page.waitForURL(/#\/activities\/[^/?#]+$/)
+  await expect(page.locator('#activity-detail-header')).toBeVisible({ timeout: 5_000 })
+}
+
+async function openActivitiesList(monthRef: string) {
+  await page.evaluate((month) => {
+    window.location.hash = `#/activities?month=${month}`
+  }, monthRef)
+  await page.waitForURL((url) => url.toString().includes(`#/activities?month=${monthRef}`))
+  await page.waitForSelector('h1:has-text("Atividades")', { timeout: 5_000 })
+}
+
+/** Aguarda a navegação para a edição da cópia e devolve o id novo. */
+async function waitForCopyEditPage(originalId: string): Promise<string> {
+  await page.waitForURL(/#\/activities\/[^/?#]+\/edit$/, { timeout: 10_000 })
+  const copyId = page.url().match(/#\/activities\/([^/?#]+)\/edit$/)?.[1]
+  expect(copyId).toBeTruthy()
+  expect(copyId).not.toBe(originalId)
+  return copyId as string
+}
+
+test('duplicates an activity from the detail page with default options', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId + 21, 1)
+  const description = `Atividade Duplicar Detalhe ${runId}`
+
+  const original = (await createActivityRecord(description, monthRef, {
+    date_start: '2030-01-06',
+    date_end: '2030-01-10',
+    project_scope: 'Squad Duplicação',
+    deployments: JSON.stringify({ Desenvolvimento: ['777001'], Homologação: [] }),
+  })) as { id: string }
+
+  await openDetailPage(original.id)
+
+  const modal = page.locator('#duplicate-activity-modal')
+  await page.locator('#activity-detail-btn-duplicate').click()
+  await expect(modal).toBeVisible({ timeout: 5_000 })
+
+  // Mês pré-preenchido com o da origem e opções desligadas por padrão.
+  await expect(page.locator('#duplicate-activity-month')).toHaveValue(monthRef)
+  await expect(page.locator('#duplicate-activity-month')).toBeFocused()
+  await expect(page.locator('#duplicate-activity-keep-dates')).not.toBeChecked()
+  await expect(page.locator('#duplicate-activity-copy-deployments')).not.toBeChecked()
+  await expect(page.locator('#duplicate-activity-copy-evidences')).not.toBeChecked()
+
+  await page.locator('#duplicate-activity-confirm').click()
+  const copyId = await waitForCopyEditPage(original.id)
+
+  const copy = await fetchActivitySnapshot(copyId)
+  expect(copy).not.toBeNull()
+  expect(copy!.description).toContain(description)
+  expect(copy!.month_reference).toBe(monthRef)
+  expect(copy!.project_scope).toBe('Squad Duplicação')
+  expect(copy!.date_start).toBeNull()
+  expect(copy!.date_end).toBeNull()
+  expect(copy!.deployments).toBeNull()
+  expect(copy!.evidences).toEqual([])
+
+  // A origem continua intacta.
+  const source = await fetchActivitySnapshot(original.id)
+  expect(source!.date_start).toBe('2030-01-06')
+  expect(source!.deployments).toContain('777001')
+
+  // A lista do mês mostra as duas atividades.
+  await openActivitiesList(monthRef)
+  await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(2)
+})
+
+test('duplicates from the list card into the next month keeping dates and copying evidences', async () => {
+  const runId = Date.now()
+  const [monthRef, nextMonthRef] = getUniqueMonthSequence(runId + 33, 2)
+  const description = `Atividade Duplicar Card ${runId}`
+
+  const original = (await createActivityRecord(description, monthRef, {
+    date_start: '2031-02-03',
+    date_end: '2031-02-07',
+  })) as { id: string }
+
+  // Semeia uma imagem e um texto na origem.
+  const PNG_BASE64 =
+    'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGO4Y2T0nxLMMGrAqAGjBgwXAwAMAD8f/JQG9gAAAABJRU5ErkJggg=='
+  await page.evaluate(async ({ activityId, base64 }) => {
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const api = (window as unknown as {
+      electronAPI?: {
+        saveEvidenceFromBuffer?: (activityId: string, buffer: ArrayBuffer, extension: string, caption: string | null) => Promise<unknown>
+        saveTextEvidence?: (activityId: string, textContent: string, caption: string | null) => Promise<unknown>
+      }
+    }).electronAPI
+    if (!api?.saveEvidenceFromBuffer || !api?.saveTextEvidence) throw new Error('APIs de evidência indisponíveis no E2E')
+    await api.saveEvidenceFromBuffer(activityId, bytes.buffer, '.png', 'Print da origem')
+    await api.saveTextEvidence(activityId, '<p>Log da origem</p>', 'Log')
+  }, { activityId: original.id, base64: PNG_BASE64 })
+
+  await openActivitiesList(monthRef)
+
+  const card = page.locator('#activities-list > div', { hasText: description }).first()
+  await expect(card).toBeVisible()
+  await card.hover()
+  await card.locator('[data-testid="activity-card-duplicate"]').click()
+
+  const modal = page.locator('#duplicate-activity-modal')
+  await expect(modal).toBeVisible({ timeout: 5_000 })
+  // Clicar no botão do card não deve navegar para o detalhe.
+  expect(page.url()).toContain(`#/activities?month=${monthRef}`)
+  await expect(page.getByTestId('duplicate-activity-evidence-counts')).toHaveText('(1 imagem, 1 texto)')
+
+  await page.locator('#duplicate-activity-month').fill(nextMonthRef)
+  await page.locator('#duplicate-activity-keep-dates').check()
+  await page.locator('#duplicate-activity-copy-evidences').check()
+  await page.locator('#duplicate-activity-confirm').click()
+
+  const copyId = await waitForCopyEditPage(original.id)
+  const copy = await fetchActivitySnapshot(copyId)
+  const source = await fetchActivitySnapshot(original.id)
+
+  expect(copy!.month_reference).toBe(nextMonthRef)
+  expect(copy!.date_start).toBe('2031-02-03')
+  expect(copy!.date_end).toBe('2031-02-07')
+  expect(copy!.evidences).toHaveLength(2)
+
+  const copiedImage = copy!.evidences.find((e) => e.type !== 'text')!
+  const copiedText = copy!.evidences.find((e) => e.type === 'text')!
+  const sourceImage = source!.evidences.find((e) => e.type !== 'text')!
+  expect(copiedImage.caption).toBe('Print da origem')
+  expect(copiedText.caption).toBe('Log')
+  expect(copiedText.text_content).toBe('<p>Log da origem</p>')
+  expect(copiedImage.id).not.toBe(sourceImage.id)
+  expect(copiedImage.file_path).not.toBe(sourceImage.file_path)
+
+  // Os dois arquivos existem e decodificam, sob userData/evidences.
+  const diag = await app.evaluate(({ nativeImage, app: electronApp }, paths) => {
+    const userData = electronApp.getPath('userData').toLowerCase()
+    return paths.map((fp) => ({
+      empty: nativeImage.createFromPath(fp).isEmpty(),
+      underUserData: fp.toLowerCase().startsWith(userData),
+    }))
+  }, [copiedImage.file_path as string, sourceImage.file_path as string])
+  expect(diag).toEqual([
+    { empty: false, underUserData: true },
+    { empty: false, underUserData: true },
+  ])
+
+  // A lista do mês de destino mostra a cópia com os mesmos contadores.
+  await openActivitiesList(nextMonthRef)
+  const copyCard = page.locator('#activities-list > div', { hasText: description }).first()
+  await expect(copyCard).toBeVisible()
+  await expect(copyCard.locator('[title="Imagens"]')).toHaveText(/1/)
+  await expect(copyCard.locator('[title="Textos"]')).toHaveText(/1/)
+})
+
+test('blocks an invalid month on the duplicate modal and closes with Escape', async () => {
+  const runId = Date.now()
+  const [monthRef] = getUniqueMonthSequence(runId + 44, 1)
+  const description = `Atividade Duplicar Inválida ${runId}`
+
+  const original = (await createActivityRecord(description, monthRef)) as { id: string }
+  await openDetailPage(original.id)
+
+  const modal = page.locator('#duplicate-activity-modal')
+  await page.locator('#activity-detail-btn-duplicate').click()
+  await expect(modal).toBeVisible({ timeout: 5_000 })
+
+  const monthInput = page.locator('#duplicate-activity-month')
+  await monthInput.fill('13/2026')
+  await page.locator('#duplicate-activity-confirm').click()
+
+  await expect(page.locator('#duplicate-activity-month-error')).toHaveText('Mês deve estar entre 01 e 12')
+  await expect(modal).toBeVisible()
+  expect(page.url()).toMatch(/#\/activities\/[^/?#]+$/)
+
+  await monthInput.fill('2026-09')
+  await monthInput.press('Enter')
+  await expect(page.locator('#duplicate-activity-month-error')).toHaveText('Informe o mês no formato MM/YYYY')
+
+  await page.keyboard.press('Escape')
+  await expect(modal).toHaveCount(0)
+
+  // Nada foi criado.
+  await openActivitiesList(monthRef)
+  await expect(page.locator('.flex-1.cursor-pointer', { hasText: description })).toHaveCount(1)
+})
+
 test('searches from titlebar with debounce, keyboard navigation and close behavior', async () => {
   const runId = Date.now()
   const [monthRef] = getUniqueMonthSequence(runId, 1)
