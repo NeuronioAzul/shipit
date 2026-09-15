@@ -38,11 +38,8 @@ import {
   saveTextEvidence,
   updateTextEvidence,
   updateEvidenceCaption,
-  needsLegacyMigration,
-  migrateLegacyEnvironmentColumns,
-  finalizeDatabase,
-  setMigrationPending,
-  isMigrationPending,
+  findUnsupportedLegacySchema,
+  UNSUPPORTED_LEGACY_SCHEMA,
 } from './database.ts'
 import { Activity } from './entities/Activity'
 
@@ -788,104 +785,34 @@ describe('Counting helpers', () => {
   })
 })
 
-describe('Legacy schema migration (plano 42)', () => {
-  interface ColumnInfo { name: string }
+describe('Unsupported legacy schema guard (plano 42.1)', () => {
+  it('declares the environment column of the 1.14.x migration as the marker', () => {
+    expect(UNSUPPORTED_LEGACY_SCHEMA).toEqual([
+      { table: 'activities', column: 'environment', migrateWithVersion: '1.14.x' },
+    ])
+  })
 
-  async function activityColumns(): Promise<string[]> {
+  it('returns null on a fresh or already migrated database', async () => {
     const db = await getDb()
-    const rows = (await db.query('PRAGMA table_info(activities)')) as ColumnInfo[]
-    return rows.map((row) => row.name)
-  }
+    expect(await findUnsupportedLegacySchema(db)).toBeNull()
+  })
 
-  /** Simula o schema anterior ao plano 42 (colunas legadas de volta na tabela). */
-  async function seedLegacySchema() {
+  it('detects a database that still has the legacy column and does not touch it', async () => {
     const db = await getDb()
     await db.query('ALTER TABLE activities ADD COLUMN environment text')
-    await db.query('ALTER TABLE activities ADD COLUMN svn_releases text')
-    const insert = (id: string, env: string | null, svn: string | null) =>
-      db.query(
-        `INSERT INTO activities (id, description, status, month_reference, environment, svn_releases, last_updated)
-         VALUES (?, ?, 'Pendente', '03/2026', ?, ?, CURRENT_TIMESTAMP)`,
-        [id, `Legado ${id}`, env, svn],
-      )
-    await insert('env-only', 'Produção', null)
-    await insert('env-and-releases', 'Homologação', '12345, 12346,abc,12345')
-    await insert('releases-only', null, '99999')
-    await insert('nothing', null, null)
-    return db
-  }
-
-  it('does not need migration on a fresh database', async () => {
-    const db = await getDb()
-    expect(await needsLegacyMigration(db)).toBe(false)
-    expect(await migrateLegacyEnvironmentColumns(db)).toBe(0)
-  })
-
-  it('detects the legacy schema and migrates only rows with an environment', async () => {
-    const db = await seedLegacySchema()
-    expect(await needsLegacyMigration(db)).toBe(true)
-
-    // A coluna `deployments` já existe nesta base (schema atual); a migração lida com os dois casos.
-    expect(await migrateLegacyEnvironmentColumns(db)).toBe(2)
-
-    const rows = (await db.query(
-      'SELECT id, deployments, environment, svn_releases FROM activities ORDER BY id',
-    )) as { id: string; deployments: string | null; environment: string | null; svn_releases: string | null }[]
-    const byId = Object.fromEntries(rows.map((row) => [row.id, row]))
-
-    expect(byId['env-only'].deployments).toBe('{"Produção":[]}')
-    expect(byId['env-and-releases'].deployments).toBe('{"Homologação":["12345","12346"]}')
-    expect(byId['releases-only'].deployments).toBeNull()
-    expect(byId['nothing'].deployments).toBeNull()
-    // Linhas sem ambiente não são tocadas antes do sync.
-    expect(byId['releases-only'].svn_releases).toBe('99999')
-
-    // Segunda chamada é no-op.
-    expect(await migrateLegacyEnvironmentColumns(db)).toBe(0)
-  })
-
-  it('adds the deployments column when it is missing before migrating', async () => {
-    const db = await getDb()
-    // Recria a tabela no formato antigo (sem `deployments`) para o caso real de upgrade.
-    await db.query('DROP TABLE activities')
-    await db.query(`CREATE TABLE activities (
-      id text PRIMARY KEY, "order" integer, description text, date_start date, date_end date,
-      link_ref text, svn_releases text, environment text, status text NOT NULL DEFAULT 'Pendente',
-      month_reference text NOT NULL, attendance_type text, project_scope text,
-      last_updated datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP)
-    )`)
     await db.query(
-      `INSERT INTO activities (id, description, month_reference, environment, svn_releases)
-       VALUES ('a1', 'Antiga', '03/2026', 'Desenvolvimento', '777')`,
+      `INSERT INTO activities (id, description, status, month_reference, environment, last_updated)
+       VALUES ('legacy', 'Antiga', 'Pendente', '03/2026', 'Produção', CURRENT_TIMESTAMP)`,
     )
 
-    expect((await activityColumns()).includes('deployments')).toBe(false)
-    expect(await migrateLegacyEnvironmentColumns(db)).toBe(1)
-    expect((await activityColumns()).includes('deployments')).toBe(true)
+    expect(await findUnsupportedLegacySchema(db)).toEqual({
+      table: 'activities',
+      column: 'environment',
+      migrateWithVersion: '1.14.x',
+    })
 
-    const [row] = (await db.query('SELECT deployments FROM activities WHERE id = ?', ['a1'])) as { deployments: string }[]
-    expect(row.deployments).toBe('{"Desenvolvimento":["777"]}')
-
-    // finalizeDatabase (synchronize) remove as colunas legadas e preserva `deployments`.
-    await finalizeDatabase(db)
-    const columns = await activityColumns()
-    expect(columns).not.toContain('environment')
-    expect(columns).not.toContain('svn_releases')
-    expect(columns).toContain('deployments')
-
-    const migrated = await getActivity('a1')
-    expect(migrated!.deployments).toBe('{"Desenvolvimento":["777"]}')
-  })
-
-  it('blocks database access while a migration is pending', async () => {
-    setMigrationPending(true)
-    try {
-      expect(isMigrationPending()).toBe(true)
-      await expect(getDb()).rejects.toThrow('aguardando migração')
-      await expect(getActivities('03/2026')).rejects.toThrow('aguardando migração')
-    } finally {
-      setMigrationPending(false)
-    }
-    await expect(getDb()).resolves.toBeTruthy()
+    // A guarda é só detecção: a coluna e o dado continuam lá.
+    const rows = (await db.query('SELECT environment FROM activities WHERE id = ?', ['legacy'])) as { environment: string }[]
+    expect(rows[0].environment).toBe('Produção')
   })
 })

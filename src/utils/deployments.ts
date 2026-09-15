@@ -1,6 +1,6 @@
 import type { ActivityEnvironment } from '../vite-env'
 import { ENVIRONMENTS } from './environmentColors'
-import { normalizeSvnReleaseToken, parseSvnReleasesStored } from './svnReleases'
+import { normalizeSvnReleaseToken } from './svnReleases'
 
 /**
  * Publicações por ambiente de uma atividade (uso interno, não exportado no DOCX).
@@ -106,19 +106,4 @@ export function getAllReleases(list: Deployment[]): string[] {
     }
   }
   return result
-}
-
-/**
- * Migração dos campos legados (`environment` + `svn_releases`) para o novo formato.
- * Releases sem ambiente não migram (retorna `null`) — decisão do plano 42.
- * Usado apenas pelo fallback browser (`localDb`); no Electron a migração é feita em SQL.
- */
-export function migrateLegacyDeployments(
-  environment: ActivityEnvironment | null | undefined,
-  svnReleases: string | null | undefined,
-): string | null {
-  if (!environment || !isEnvironment(environment)) return null
-  return serializeDeployments([
-    { environment, releases: parseSvnReleasesStored(svnReleases) },
-  ])
 }

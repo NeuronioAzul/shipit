@@ -4,7 +4,7 @@ Guia para o Claude Code trabalhar neste projeto. Este arquivo é carregado autom
 
 ## O que é
 
-App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.13.0**.
+App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.14.0**.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Requer **Node ≥ 24** e **npm ≥ 11**. `postinstall` recompila o `better-sqlit
 |---|---|
 | Novo handler IPC | `electron/main.ts` (registra) + `electron/preload.ts` (expõe) + `src/vite-env.d.ts` (tipa) |
 | Nova entidade | `electron/entities/` (uma por arquivo, UUID v7) |
-| Migração destrutiva de schema | `electron/database.ts` (`needsLegacyMigration`/`migrateLegacy…`) + `electron/db-backup.ts` + `src/components/MigrationGate.tsx` |
+| Migração destrutiva de schema | `electron/database.ts` (`openDatabase` → verificação/migração → `finalizeDatabase`; guarda `UNSUPPORTED_LEGACY_SCHEMA`). Padrão completo (aviso → backup → migração) no plano 42, commit `442904d`; após uma versão publicada, remover a migração e virar marcador da guarda (plano 42.1) |
 | Nova página | `src/pages/` + rota em `src/App.tsx`; componente reusável → `src/components/` |
 | Novo tema | `src/themes/themes.ts` (registro) + `src/themes/themes.css` (paleta) |
 | Geração DOCX | `electron/report-generator.ts` |
@@ -53,7 +53,7 @@ Requer **Node ≥ 24** e **npm ≥ 11**. `postinstall` recompila o `better-sqlit
 - **Asar paths**: caminhos de ícones/assets precisam considerar empacotamento asar (`process.resourcesPath` vs `__dirname`).
 - **better-sqlite3**: módulo nativo — recompilado pelo `postinstall` após `npm install`.
 - **Tailwind v4**: não existe `tailwind.config.ts`; todo o tema é via `@theme inline` em `src/index.css`.
-- **Sync de schema é explícito**: o banco abre com `synchronize: false` e o `dataSource.synchronize()` roda em `finalizeDatabase()`. O sync **dropa colunas removidas das entidades (com os dados)** — remover/renomear coluna exige migração em SQL cru **antes** do sync, seguindo o padrão do plano 42 (`needsLegacyMigration` → aviso `MigrationGate` → backup `db-backup.ts` → migração → `finalizeDatabase`). Nunca reative `synchronize: true` nas opções do `DataSource`.
+- **Sync de schema é explícito**: o banco abre com `synchronize: false` e o `dataSource.synchronize()` roda em `finalizeDatabase()`. O sync **dropa colunas removidas das entidades (com os dados)** — remover/renomear coluna exige migração em SQL cru **antes** do sync, seguindo o padrão do plano 42 (aviso bloqueante → backup verificado → migração → `finalizeDatabase`; código de referência no commit `442904d`). Migrações são de **uso único**: uma versão depois, removê-las e registrar a coluna antiga em `UNSUPPORTED_LEGACY_SCHEMA` (guarda que recusa o banco sem tocar nele). Nunca reative `synchronize: true` nas opções do `DataSource`.
 
 ## Convenções
 
@@ -81,6 +81,10 @@ Ao concluir uma tarefa: marque/remova do TODO → registre em DONE com a versão
 **Regra:** sempre que **terminar uma feature/fix/refactor**, **publicar uma versão**, ou o usuário pedir para **atualizar/sincronizar a documentação** (CHANGELOG, TODO, DONE, ARCHITECTURE) — mesmo com frases como "atualiza os docs", "doc sync", "registra a mudança", "terminei, atualiza tudo", "fazer release" — **invoque a skill `shipit-release-and-doc-sync`** (via a ferramenta Skill) **antes** de editar os docs manualmente. Ela tem dois modos (Doc Sync e Release); na dúvida, pergunte qual.
 
 O release é automatizado por [docs/scripts/release_v2.py](<docs/scripts/release_v2.py>) (interativo, faz operações de rede — confirme antes de disparar).
+
+**Nunca faça `git commit`/`git push` manualmente ao terminar um desenvolvimento.** O commit das pendências é a primeira etapa do `release_v2.py`, que segue com bump, CHANGELOG, PR `dev → main`, tag e CI/CD. Fluxo de fim de ciclo: testes verdes → Doc Sync (skill) → avisar que está pronto para `python docs/scripts/release_v2.py` (ou `--dry-run`). `git add`/`status`/`diff` são livres.
+
+**Planos:** ao pedir "crie um plano", entregue `docs/plans/plan-shipit<NN>-<slug>.prompt.md` no formato dos planos existentes; todo plano termina com validação (Vitest, build, E2E), Doc Sync via skill e entrega pelo `release_v2.py`.
 
 ## Detalhes completos
 

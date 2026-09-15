@@ -28,6 +28,7 @@ Para a auditoria documental profunda, **siga o playbook existente** em <../../..
 6. **README.md / DEVELOPMENT.md / DEPENDENCIES.md** → atualizar se a mudança for visível ao usuário, ao setup ou às dependências.
 7. **Validar**: rodar `npm run test` quando uma contagem de testes for citada/atualizada. `npm run build` só se solicitado. Se uma contagem de cenários E2E for citada ou o ciclo tocou em `e2e/`, rodar o Playwright com `env -u ELECTRON_RUN_AS_NODE npx playwright test` (após `npm run build`) — o shell da sessão exporta `ELECTRON_RUN_AS_NODE=1`, que impede o Electron de subir; ver `docs/DEVELOPMENT.md`.
 8. **Entregar** um resumo: arquivos alterados, validações executadas e pendências.
+9. **Não commitar.** Neste projeto o commit das pendências e todo o CI/CD são feitos por `docs/scripts/release_v2.py` (primeira etapa do script). Ao fim do Doc Sync, deixe o working tree pronto e informe ao usuário que pode rodar `python docs/scripts/release_v2.py` (ou `--dry-run`). Nunca execute `git commit`/`git push` por conta própria.
 
 Regra de ouro: este modo é **documental** — não altere código de produto, testes ou build para "fazer a doc bater".
 

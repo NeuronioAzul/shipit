@@ -1004,10 +1004,6 @@ test('copies an svn release number to the clipboard from the detail page chip', 
   }).toBe(release)
 })
 
-test('does not show the migration gate on a fresh database', async () => {
-  await expect(page.locator('#migration-gate')).toHaveCount(0)
-})
-
 test('marks deployments per environment with releases and shows the pipeline in list and detail', async () => {
   const runId = Date.now()
   const [monthRef] = getUniqueMonthSequence(runId + 5, 1)

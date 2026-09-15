@@ -9,6 +9,17 @@ Claude CLI (`claude -p`), quando disponível no PATH (ou via SHIPIT_CLAUDE_BIN);
 caso contrário — ou com --no-ai — o fluxo cai para criação manual (editor/inline).
 Nenhuma chamada a `gh copilot` é feita.
 
+Textos gerados pela IA:
+  - Commit (Step 2-3): mensagem completa no padrão Conventional Commits
+    (`tipo(escopo): assunto` + corpo em bullets + rodapé BREAKING CHANGE quando
+    aplicável), produzida a partir do DIFF real das mudanças staged — não só da
+    lista de arquivos. O cabeçalho é validado e a mensagem pode ser revisada,
+    editada no editor externo ou regerada antes do commit.
+  - CHANGELOG (Step 5): entrada Keep a Changelog escrita para o USUÁRIO FINAL,
+    a partir da seção [Unreleased] (fonte principal, quando existir) e dos
+    commits desde a última tag (assunto + corpo), sem detalhes de desenvolvimento.
+    Ao publicar, o conteúdo de [Unreleased] é movido para a versão.
+
 Automatiza o fluxo completo de release:
   validar ambiente → commit → bump version → CHANGELOG (IA ou manual) →
   push → PR (dev → main) → squash merge → tag → aguardar draft → aguardar workflow →
@@ -28,9 +39,13 @@ Uso:
 
 Requer: Python 3.10+, git, gh CLI (autenticado com escopos repo + write:packages)
 Opcional: Claude CLI (`claude`) no PATH para geração automática de textos.
+  - SHIPIT_CLAUDE_BIN: caminho do executável (quando fora do PATH).
+  - SHIPIT_CLAUDE_MODEL: modelo passado em `--model` (ex.: sonnet), útil quando o
+    CLI instalado não suporta o modelo padrão configurado.
 """
 
 import argparse
+import fnmatch
 import json
 import os
 import re
@@ -41,6 +56,7 @@ import tempfile
 import textwrap
 import time
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -64,8 +80,46 @@ WORKTREE_WARNING_TEXT = "NAO SALVE NADA ATE O SCRIPT TERMINAR"
 
 # --- Geração de texto via Claude CLI (opcional, com fallback manual) ---
 CLAUDE_BIN_ENV = "SHIPIT_CLAUDE_BIN"  # caminho do executável (sobrepõe o PATH)
+CLAUDE_MODEL_ENV = "SHIPIT_CLAUDE_MODEL"  # opcional: modelo passado em `--model` (ex.: sonnet)
 AI_TIMEOUT_SECONDS = 180
 AI_ENABLED = True  # desativado por --no-ai; também requer o 'claude' disponível
+AI_DIFF_CHAR_BUDGET = 60_000  # tamanho máximo (chars) do diff enviado ao Claude
+AI_DIFF_PER_FILE_BUDGET = 12_000  # limite por arquivo; o excedente é truncado
+AI_PROMPT_ARG_MAX_CHARS = 6_000  # prompts maiores vão por STDIN (limite da linha de comando)
+AI_DIFF_EXCLUDED_PATTERNS = (  # gerados/binários: só o nome do arquivo vai para a IA
+    "package-lock.json", "*.lock", "*.snap", "*.min.js", "*.min.css", "*.map",
+    "*.png", "*.jpg", "*.jpeg", "*.gif", "*.ico", "*.icns", "*.svg", "*.webp",
+    "*.mp3", "*.wav", "*.ogg", "*.docx", "*.pdf", "*.zip", "*.db", "*.sqlite",
+)
+PROJECT_CONTEXT_FOR_AI = (
+    'O "ShipIt!" é um aplicativo desktop (Windows, macOS e Linux) usado por engenheiros '
+    "para registrar atividades de trabalho, anexar evidências (imagens/arquivos) e gerar "
+    "relatórios DOCX no padrão institucional do MEC. Os usuários finais NÃO são "
+    "desenvolvedores. Internamente: Electron + React + TypeORM/SQLite."
+)
+
+# --- Conventional Commits (mensagem de commit do Step 2-3) ---
+CONVENTIONAL_COMMIT_TYPES = (
+    "feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci",
+    "chore", "revert",
+)
+CONVENTIONAL_COMMIT_HEADER_RE = re.compile(
+    r"^(?P<type>" + "|".join(CONVENTIONAL_COMMIT_TYPES) + r")"
+    r"(\((?P<scope>[a-z0-9][a-z0-9._/-]*(,\s?[a-z0-9][a-z0-9._/-]*)*)\))?"
+    r"(?P<breaking>!)?: (?P<subject>\S.*)$"
+)
+COMMIT_SUBJECT_MAX_LEN = 72
+COMMIT_SCOPE_HINTS = (
+    "electron, renderer, ui, activities, evidences, reports, docx, db, settings, "
+    "themes, ipc, e2e, tests, docs, release, ci, deps"
+)
+
+# --- CHANGELOG (Step 5): commits de mecânica de release que não viram bullet ---
+RELEASE_NOISE_COMMIT_RE = re.compile(
+    r"^(chore: bump version|docs: atualizar CHANGELOG|Release v\d|"
+    r"chore: sync dev with main|Merge (branch|pull request))",
+    re.IGNORECASE,
+)
 
 # ================================================================================================
 # Output colorido (ANSI)
@@ -255,6 +309,9 @@ def _run_claude(prompt: str, *, timeout: int = AI_TIMEOUT_SECONDS) -> str | None
         return None
 
     base = [exe, "-p", "--output-format", "text"]
+    model = os.environ.get(CLAUDE_MODEL_ENV, "").strip()
+    if model:
+        base += ["--model", model]
     run_kwargs: dict[str, object] = dict(
         capture_output=True,
         text=True,
@@ -264,16 +321,23 @@ def _run_claude(prompt: str, *, timeout: int = AI_TIMEOUT_SECONDS) -> str | None
         check=False,
     )
 
-    if os.name == "nt" and exe.lower().endswith((".cmd", ".bat")):
+    is_shim = os.name == "nt" and exe.lower().endswith((".cmd", ".bat"))
+    if is_shim:
         # Shims .cmd/.bat (instalação via npm no Windows) não são executáveis
         # diretos: passamos pelo interpretador de comandos e enviamos o prompt
         # via STDIN para evitar escape de quebras de linha/aspas na linha de comando.
         comspec = os.environ.get("COMSPEC", "cmd.exe")
         cmd = [comspec, "/c", *base]
         run_kwargs["input"] = prompt
+    elif len(prompt) > AI_PROMPT_ARG_MAX_CHARS:
+        # Prompts grandes (diff completo) estouram o limite da linha de comando
+        # (~32k chars no Windows); `claude -p` lê o prompt do STDIN quando não
+        # recebe argumento posicional.
+        cmd = base
+        run_kwargs["input"] = prompt
     else:
         # Executável nativo (.exe/unix): prompt como argumento é o mais confiável.
-        cmd = [exe, "-p", prompt, "--output-format", "text"]
+        cmd = [exe, "-p", prompt, *base[2:]]
 
     try:
         result = subprocess.run(cmd, **run_kwargs)
@@ -285,7 +349,10 @@ def _run_claude(prompt: str, *, timeout: int = AI_TIMEOUT_SECONDS) -> str | None
         return None
 
     if result.returncode != 0:
-        detail = (result.stderr or "").strip().splitlines()
+        # O CLI imprime alguns erros (ex.: "API Error: ...") no STDOUT.
+        detail = (result.stderr or "").strip().splitlines() or (
+            result.stdout or ""
+        ).strip().splitlines()
         print_warning(
             "Claude CLI retornou erro"
             + (f": {detail[-1]}" if detail else "")
@@ -296,37 +363,368 @@ def _run_claude(prompt: str, *, timeout: int = AI_TIMEOUT_SECONDS) -> str | None
     return _strip_code_fences((result.stdout or "").strip()) or None
 
 
-def _generate_changelog_with_claude(version: str, commits: str) -> str | None:
-    """Gera as seções do CHANGELOG (Keep a Changelog, pt-BR) a partir dos commits."""
+def _edit_text_in_editor(
+    initial: str,
+    hints: list[str],
+    *,
+    suffix: str = ".md",
+    keep_hash_prefixes: tuple[str, ...] = (),
+) -> str | None:
+    """Abre o editor externo ($EDITOR/$VISUAL; notepad/nano) com `initial` e
+    devolve o texto salvo, sem as linhas de comentário (iniciadas com '#').
+
+    `keep_hash_prefixes` preserva linhas que começam com '#' mas são conteúdo
+    (ex.: headings '###' do CHANGELOG). Retorna None se o editor não abrir ou
+    se o resultado ficar vazio."""
+    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL")
+    if not editor:
+        editor = "notepad" if sys.platform == "win32" else "nano"
+
+    template = initial.rstrip() + "\n\n" + "".join(f"# {h}\n" for h in hints)
+
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", suffix=suffix, delete=False, encoding="utf-8"
+    )
+    try:
+        tmp.write(template)
+        tmp.close()
+        try:
+            subprocess.run([editor, tmp.name], check=False)
+        except FileNotFoundError:
+            print_warning(f"Editor '{editor}' não encontrado.")
+            return None
+        with open(tmp.name, "r", encoding="utf-8") as f:
+            content = f.read()
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
+
+    cleaned_lines: list[str] = []
+    for line in content.splitlines():
+        stripped = line.lstrip()
+        is_comment = stripped.startswith("#") and not (
+            keep_hash_prefixes and stripped.startswith(keep_hash_prefixes)
+        )
+        if is_comment:
+            continue
+        cleaned_lines.append(line.rstrip())
+    cleaned = "\n".join(cleaned_lines).strip()
+    return cleaned or None
+
+
+# --- Commit (Step 2-3) -------------------------------------------------------
+
+
+def _is_ai_diff_excluded(path: str) -> bool:
+    """Arquivos gerados/binários cujo conteúdo não ajuda a IA (só o nome é enviado)."""
+    name = os.path.basename(path)
+    return any(fnmatch.fnmatch(name, pat) for pat in AI_DIFF_EXCLUDED_PATTERNS)
+
+
+def _collect_staged_diff_for_ai() -> str:
+    """Monta o contexto das mudanças staged para a IA: stat, status por arquivo e
+    o diff textual (com orçamento de tamanho por arquivo e total)."""
+    stat = run_cmd(["git", "diff", "--cached", "--stat=120"], check=False).stdout.strip()
+    name_status = run_cmd(
+        ["git", "diff", "--cached", "--name-status"], check=False
+    ).stdout.strip()
+
+    files = [
+        line.split("\t")[-1].strip()
+        for line in name_status.splitlines()
+        if line.strip()
+    ]
+
+    chunks: list[str] = []
+    omitted: list[str] = []
+    used = 0
+    for path in files:
+        if _is_ai_diff_excluded(path):
+            omitted.append(f"{path} (gerado/binário)")
+            continue
+        diff = run_cmd(
+            ["git", "diff", "--cached", "--no-color", "--unified=2", "--", path],
+            check=False,
+        ).stdout
+        if not diff.strip():
+            omitted.append(f"{path} (binário ou sem diff textual)")
+            continue
+        if len(diff) > AI_DIFF_PER_FILE_BUDGET:
+            diff = (
+                diff[:AI_DIFF_PER_FILE_BUDGET]
+                + f"\n... [diff truncado; arquivo tem {len(diff)} chars de diff]\n"
+            )
+        if used + len(diff) > AI_DIFF_CHAR_BUDGET:
+            omitted.append(f"{path} (fora do orçamento de tamanho)")
+            continue
+        chunks.append(diff)
+        used += len(diff)
+
+    parts = [
+        f"Resumo (git diff --cached --stat):\n{stat}",
+        f"Arquivos (status\tcaminho):\n{name_status}",
+    ]
+    if omitted:
+        parts.append(
+            "Arquivos cujo diff NÃO foi incluído (considere-os apenas pelo nome):\n"
+            + "\n".join(f"- {o}" for o in omitted)
+        )
+    parts.append("Diff das mudanças staged:\n" + "".join(chunks))
+    return "\n\n".join(parts)
+
+
+def _recent_commit_subjects(limit: int = 12) -> str:
+    """Assuntos dos últimos commits, como referência de estilo para a IA."""
+    result = run_cmd(
+        ["git", "log", f"-n{limit}", "--no-merges", "--format=%s"], check=False
+    )
+    subjects = [
+        s for s in result.stdout.splitlines()
+        if s.strip() and not RELEASE_NOISE_COMMIT_RE.match(s)
+    ]
+    return "\n".join(f"- {s}" for s in subjects) or "(sem histórico)"
+
+
+def _normalize_ai_commit_message(text: str) -> str:
+    """Limpa artefatos comuns da resposta da IA: CRLF, aspas envolventes, rótulos
+    como 'Mensagem:' e espaços à direita."""
+    text = _strip_code_fences(text.replace("\r\n", "\n")).strip()
+    for label in ("Mensagem de commit:", "Mensagem:", "Commit message:", "Assunto:"):
+        if text.lower().startswith(label.lower()):
+            text = text[len(label):].strip()
+    quotes = "\"'`"
+    # Aspas envolvendo a mensagem inteira...
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in quotes:
+        text = text[1:-1].strip()
+    lines = [line.rstrip() for line in text.splitlines()]
+    # ...ou apenas o cabeçalho (primeira linha).
+    if lines:
+        header = lines[0].strip()
+        if len(header) >= 2 and header[0] == header[-1] and header[0] in quotes:
+            lines[0] = header[1:-1].strip()
+    return "\n".join(lines).strip()
+
+
+def _conventional_commit_problems(message: str) -> list[str]:
+    """Valida a mensagem contra o Conventional Commits. Lista vazia = OK."""
+    lines = message.splitlines()
+    if not lines or not lines[0].strip():
+        return ["mensagem vazia"]
+    header = lines[0].strip()
+    problems: list[str] = []
+    match = CONVENTIONAL_COMMIT_HEADER_RE.match(header)
+    if not match:
+        problems.append(
+            "cabeçalho fora do padrão '<tipo>(<escopo>): <assunto>' "
+            f"(tipos: {', '.join(CONVENTIONAL_COMMIT_TYPES)})"
+        )
+    else:
+        subject = match.group("subject")
+        if subject.endswith("."):
+            problems.append("assunto não deve terminar com ponto final")
+        if subject[:1].isupper() and not subject.isupper():
+            problems.append("assunto deve começar em minúscula após os dois-pontos")
+    if len(header) > COMMIT_SUBJECT_MAX_LEN:
+        problems.append(
+            f"cabeçalho com {len(header)} caracteres (máximo {COMMIT_SUBJECT_MAX_LEN})"
+        )
+    if len(lines) > 1 and lines[1].strip():
+        problems.append("o corpo deve ser separado do assunto por uma linha em branco")
+    return problems
+
+
+def _generate_commit_message_with_claude(
+    staged_context: str, recent_commits: str
+) -> str | None:
+    """Gera a mensagem COMPLETA de commit (Conventional Commits, pt-BR) a partir
+    do diff das mudanças staged: cabeçalho tipo(escopo): assunto, corpo em
+    bullets explicando o quê/por quê e rodapé BREAKING CHANGE quando aplicável."""
     prompt = (
-        f"Gere a entrada do CHANGELOG para a versão {version} do app desktop "
-        f'"ShipIt!" (Electron), em português do Brasil, seguindo o padrão '
-        f"Keep a Changelog.\n\n"
-        f"Commits desde a última release (base do que mudou):\n{commits}\n\n"
-        f"Regras OBRIGATÓRIAS de saída:\n"
-        f"- Responda APENAS com seções markdown de nível '### ' entre: "
-        f"Adicionado, Alterado, Corrigido, Removido, Segurança.\n"
-        f"- Inclua somente as seções aplicáveis (omita as vazias).\n"
-        f"- Use bullets '- ' com foco no usuário final (o que muda para quem usa "
-        f"o app), agrupando mudanças relacionadas.\n"
-        f"- NÃO inclua o cabeçalho de versão (ex.: '## [{version}]'), nem qualquer "
-        f"texto antes/depois, nem cercas de código (```).\n"
-        f"- Ignore commits puramente internos de release (bump de versão, "
-        f"'preparar release', merges e ajustes do próprio CHANGELOG)."
+        "Você é um engenheiro de software experiente escrevendo a mensagem de commit "
+        "das mudanças staged abaixo, no repositório do app desktop ShipIt!.\n\n"
+        f"{PROJECT_CONTEXT_FOR_AI}\n\n"
+        "FORMATO OBRIGATÓRIO (Conventional Commits):\n"
+        "<tipo>(<escopo>): <assunto>\n"
+        "\n"
+        "<corpo>\n"
+        "\n"
+        "<rodapé opcional>\n\n"
+        "REGRAS:\n"
+        f"- tipo: um de {', '.join(CONVENTIONAL_COMMIT_TYPES)}. Escolha pelo efeito "
+        "PRINCIPAL da mudança: feat só se há comportamento novo para o usuário; fix só "
+        "se corrige um defeito; refactor se não muda comportamento; docs se só toca "
+        "documentação; chore para tooling/manutenção; build/ci para empacotamento e "
+        "pipeline; test para testes.\n"
+        f"- escopo: curto, em minúsculas, nomeando a área afetada (ex.: {COMMIT_SCOPE_HINTS}). "
+        "Omita os parênteses se a mudança for transversal.\n"
+        "- assunto: em português do Brasil, modo imperativo na 3ª pessoa "
+        "(\"adiciona\", \"corrige\", \"remove\", \"permite\"), minúsculo após os "
+        f"dois-pontos, sem ponto final, com no máximo {COMMIT_SUBJECT_MAX_LEN} caracteres "
+        "contando o prefixo. Deve ser ESPECÍFICO: diga o que mudou e onde; nunca "
+        "\"ajustes\", \"atualizações\", \"melhorias\", \"correções diversas\".\n"
+        "- corpo: separado do assunto por uma linha em branco; de 2 a 6 bullets \"- \" "
+        "com linhas de até 72 caracteres. Cada bullet explica O QUE mudou e POR QUÊ "
+        "(motivação, problema resolvido ou impacto). Agrupe por tema. Cite arquivos ou "
+        "funções só quando ajudar a localizar a mudança. Se a mudança for trivial "
+        "(um arquivo, intenção óbvia), omita o corpo.\n"
+        "- mudança incompatível (remove ou renomeia recurso/campo, altera formato de "
+        "dados ou schema, exige ação do usuário): acrescente \"!\" logo após o escopo "
+        "e um rodapé \"BREAKING CHANGE: <explicação e o que fazer>\".\n"
+        "- Um único commit cobre tudo o que está staged; não sugira dividir.\n"
+        "- Responda APENAS com a mensagem de commit: sem cercas de código, sem aspas, "
+        "sem comentários e sem rótulos como \"Mensagem:\".\n\n"
+        "Commits recentes deste repositório (referência de estilo, não copie):\n"
+        f"{recent_commits}\n\n"
+        "MUDANÇAS STAGED:\n"
+        f"{staged_context}"
+    )
+    raw = _run_claude(prompt)
+    return _normalize_ai_commit_message(raw) if raw else None
+
+
+# --- CHANGELOG (Step 5) ------------------------------------------------------
+
+
+@dataclass
+class ReleaseContext:
+    """Fontes usadas para redigir a entrada do CHANGELOG de uma versão."""
+
+    commits_text: str  # lista formatada (assunto + corpo) já sem ruído de release
+    commit_count: int
+    commit_range: str  # ex.: "v1.14.0..HEAD" ou "últimos 40 commits"
+    unreleased: str | None  # corpo da seção [Unreleased], se houver
+
+
+def _extract_unreleased_block() -> str | None:
+    """Corpo da seção '## [Unreleased]' do CHANGELOG (None se ausente/vazia)."""
+    content = CHANGELOG_FILE.read_text(encoding="utf-8")
+    match = re.search(r"^## \[Unreleased\][^\n]*\n", content, flags=re.MULTILINE)
+    if not match:
+        return None
+    rest = content[match.end():]
+    next_section = re.search(r"^## \[", rest, flags=re.MULTILINE)
+    body = rest[: next_section.start()] if next_section else rest
+    body = body.strip()
+    return body or None
+
+
+def _collect_release_context() -> ReleaseContext:
+    """Reúne os commits desde a última tag (assunto + corpo, sem merges nem
+    commits de mecânica de release) e a seção [Unreleased] do CHANGELOG."""
+    tag_result = run_cmd(["git", "describe", "--tags", "--abbrev=0"], check=False)
+    last_tag = tag_result.stdout.strip() if tag_result.returncode == 0 else ""
+
+    # O PR dev → main é mergeado com squash, então os commits do dev nunca são
+    # ancestrais da tag e `tag..HEAD` devolveria o histórico inteiro do branch.
+    # Selecionamos pela DATA da tag: tudo que foi commitado depois da release.
+    tag_date = ""
+    if last_tag:
+        date_result = run_cmd(
+            ["git", "log", "-1", "--format=%cI", last_tag], check=False
+        )
+        tag_date = date_result.stdout.strip() if date_result.returncode == 0 else ""
+
+    if tag_date:
+        selector = f"--since={tag_date}"
+        commit_range = f"após {last_tag} ({tag_date[:10]})"
+    else:
+        selector = f"-n{CHANGELOG_COMMIT_LIMIT}"
+        commit_range = f"últimos {CHANGELOG_COMMIT_LIMIT} commits"
+
+    log_result = run_cmd(
+        [
+            "git", "log", selector, f"-n{CHANGELOG_COMMIT_LIMIT}", "--no-merges",
+            "--format=%h%x00%s%x00%b%x1e",
+        ],
+        check=False,
+    )
+    entries: list[str] = []
+    if log_result.returncode == 0:
+        for record in log_result.stdout.split("\x1e"):
+            record = record.strip("\n")
+            if not record.strip():
+                continue
+            parts = record.split("\x00", 2)
+            if len(parts) < 2:
+                continue
+            sha, subject = parts[0].strip(), parts[1].strip()
+            body = parts[2].strip() if len(parts) > 2 else ""
+            if not subject or RELEASE_NOISE_COMMIT_RE.match(subject):
+                continue
+            entry = f"- {sha} {subject}"
+            if body:
+                body_lines = [ln.rstrip() for ln in body.splitlines() if ln.strip()][:12]
+                entry += "\n" + "\n".join(f"    {ln}" for ln in body_lines)
+            entries.append(entry)
+            if len(entries) >= CHANGELOG_COMMIT_LIMIT:
+                break
+
+    commits_text = "\n".join(entries) if entries else "(nenhum commit relevante encontrado)"
+    return ReleaseContext(
+        commits_text=commits_text,
+        commit_count=len(entries),
+        commit_range=commit_range,
+        unreleased=_extract_unreleased_block(),
+    )
+
+
+def _generate_changelog_with_claude(version: str, context: ReleaseContext) -> str | None:
+    """Gera a entrada do CHANGELOG (Keep a Changelog, pt-BR) voltada ao usuário
+    final, a partir da seção [Unreleased] e dos commits desde a última tag."""
+    unreleased = context.unreleased or "(vazia — use apenas os commits)"
+    prompt = (
+        f"Escreva a entrada do CHANGELOG da versão {version} do ShipIt!, em português "
+        "do Brasil, para o USUÁRIO FINAL do aplicativo.\n\n"
+        f"{PROJECT_CONTEXT_FOR_AI}\n\n"
+        "PÚBLICO E TOM: quem lê usa o app no dia a dia e não é desenvolvedor. Explique "
+        "o que muda na prática e por que isso é bom, de forma direta, assertiva e "
+        "curta. Sem jargão técnico, sem marketing (\"incrível\", \"poderoso\"), sem "
+        "\"nós\" e sem tempo futuro.\n\n"
+        "ESTRUTURA (Keep a Changelog; seções '### ' nesta ordem, SOMENTE as aplicáveis):\n"
+        "- Frase de abertura opcional (texto simples, antes das seções, no máximo 2 "
+        "linhas) resumindo o destaque da versão. Inclua apenas se houver um destaque "
+        "claro; caso contrário, omita.\n"
+        "### Adicionado — novidades que o usuário passa a poder fazer.\n"
+        "### Alterado — mudanças de comportamento em recursos já existentes.\n"
+        "### Corrigido — defeitos resolvidos; descreva o sintoma que o usuário via.\n"
+        "### Removido — o que deixou de existir e, se for o caso, o que fazer.\n"
+        "### Descontinuado — recursos que ainda existem mas serão removidos.\n"
+        "### Segurança — correções de segurança.\n"
+        "### Atenção — APENAS se houver ação obrigatória do usuário ou aviso importante "
+        "(ex.: precisa instalar a versão X antes desta; dados são convertidos; novo "
+        "requisito de sistema). No máximo 2 bullets, claros sobre o que fazer.\n\n"
+        "REGRAS DOS BULLETS:\n"
+        "- Cada bullet começa com um título curto em negrito seguido de ponto "
+        "(\"**Título.**\") e 1 a 2 frases explicando o que muda para o usuário e o "
+        "benefício. Exemplo: \"- **Filtro por ambiente na lista de atividades.** "
+        "Mostra só o que foi publicado em Homologação ou Produção, sem percorrer a "
+        "lista inteira.\"\n"
+        "- Agrupe mudanças relacionadas em um único bullet; prefira poucos bullets "
+        "completos a muitos fragmentados (de 1 a 6 por seção).\n"
+        "- Nomeie telas, campos e botões como aparecem na interface (ex.: "
+        "\"Configurações\", \"Atividades\", \"Relatório DOCX\").\n"
+        "- PROIBIDO citar detalhes exclusivos de desenvolvimento: nomes de arquivos, "
+        "funções, componentes, entidades, colunas, handlers IPC, migrações, testes, "
+        "CI/CD, refactors, dependências, planos numerados ou hashes de commit.\n"
+        "- Commits puramente internos (refactor, testes, docs de desenvolvimento, "
+        "tooling, release) NÃO geram bullet — salvo quando têm efeito perceptível "
+        "para o usuário (ex.: o app abre mais rápido).\n"
+        "- Não invente funcionalidades: use apenas o que está nas fontes. Em caso de "
+        "ambiguidade, descreva o efeito mais provável de forma conservadora.\n\n"
+        "SAÍDA: apenas as seções markdown (e a frase de abertura, se houver). Sem o "
+        f"cabeçalho de versão '## [{version}]', sem texto antes/depois e sem cercas "
+        "de código.\n\n"
+        "FONTES:\n"
+        "[1] Seção [Unreleased] do CHANGELOG — já curada; é a FONTE PRINCIPAL. "
+        "Preserve o sentido, melhore a redação para o usuário final e remova os "
+        "detalhes técnicos:\n"
+        f"{unreleased}\n\n"
+        f"[2] Commits desde a última versão publicada ({context.commit_range}):\n"
+        f"{context.commits_text}"
     )
     return _run_claude(prompt)
-
-
-def _generate_commit_message_with_claude(staged_summary: str) -> str | None:
-    """Gera o assunto de um commit (Conventional Commits, pt-BR) das mudanças staged."""
-    prompt = (
-        "Gere a linha de ASSUNTO de um commit no padrão Conventional Commits, em "
-        "português do Brasil, para as mudanças staged abaixo.\n\n"
-        f"{staged_summary}\n\n"
-        "Regras: responda APENAS com uma única linha (até ~72 caracteres), sem "
-        "corpo, sem aspas e sem cercas de código."
-    )
-    return _run_claude(prompt, timeout=120)
 
 
 def confirm(prompt: str, default: str = "n") -> bool:
@@ -741,8 +1139,52 @@ def has_uncommitted_changes() -> bool:
     return bool(result.stdout.strip())
 
 
+COMMIT_EDITOR_HINTS = [
+    "Formato: <tipo>(<escopo>): <assunto>   (Conventional Commits, pt-BR, imperativo)",
+    f"Tipos: {', '.join(CONVENTIONAL_COMMIT_TYPES)}",
+    f"Assunto com até {COMMIT_SUBJECT_MAX_LEN} caracteres, sem ponto final; corpo após uma linha em branco.",
+    "Linhas iniciadas com '#' são ignoradas. Salve e feche o editor para confirmar.",
+]
+
+
+def _prompt_commit_message(default_msg: str) -> str | None:
+    """Fluxo manual da mensagem de commit: editor externo com template; se o
+    editor não abrir, uma linha no terminal. Retorna None se cancelado."""
+    edited = _edit_text_in_editor(default_msg, COMMIT_EDITOR_HINTS, suffix=".txt")
+    if edited:
+        return edited
+    print_warning("Editor não retornou conteúdo. Informe a mensagem no terminal.")
+    try:
+        entered = input(
+            f"{_c(Colors.YELLOW, '❯')} Mensagem do commit [{default_msg}]: "
+        ).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+    return entered or default_msg
+
+
+def _review_commit_message(message: str) -> bool:
+    """Mostra a mensagem e os problemas de formato; True se pode commitar."""
+    print()
+    print_info("Mensagem de commit:")
+    _print_block(message)
+    print()
+    problems = _conventional_commit_problems(message)
+    if not problems:
+        return True
+    print_warning("Mensagem fora do padrão Conventional Commits:")
+    for p in problems:
+        print(f"  - {p}")
+    return False
+
+
 def do_commit(dry_run: bool) -> None:
-    """Commita mudanças pendentes."""
+    """Commita as mudanças pendentes com mensagem no padrão Conventional Commits.
+
+    Com o Claude CLI disponível, a mensagem completa (assunto + corpo) é gerada a
+    partir do diff real das mudanças e pode ser aceita, editada ou regerada.
+    Sem IA, abre o editor com um template; a mensagem é sempre validada."""
     print_header("Step 2-3/13 — Commit de Mudanças Pendentes")
 
     if not has_uncommitted_changes():
@@ -755,39 +1197,87 @@ def do_commit(dry_run: bool) -> None:
         print(f"  {line}")
 
     if dry_run:
-        print_dry_run("Faria git add -A && git commit")
+        print_dry_run("Faria git add -A && git commit (mensagem Conventional Commits)")
         return
 
     # Stage tudo
     run_cmd(["git", "add", "-A"])
 
-    # Sugestão de mensagem via Claude CLI (quando disponível); Enter aceita o padrão.
-    default_msg = "chore: preparar release"
+    default_msg = "chore(release): prepara publicação da versão"
+    message: str | None = None
+
     if _ai_available():
-        print_step("Gerando mensagem de commit com o Claude CLI...")
-        stat = run_cmd(["git", "diff", "--cached", "--stat"], check=False).stdout.strip()
-        status = run_cmd(["git", "status", "--short"], check=False).stdout.strip()
-        suggestion = _generate_commit_message_with_claude(
-            f"Arquivos (git diff --cached --stat):\n{stat}\n\nStatus (git status --short):\n{status}"
-        )
-        if suggestion:
-            first_line = suggestion.splitlines()[0].strip()
-            if first_line:
-                default_msg = first_line
+        staged_context = _collect_staged_diff_for_ai()
+        recent = _recent_commit_subjects()
+        while message is None:
+            print_step("Gerando mensagem de commit com o Claude CLI (a partir do diff)...")
+            suggestion = _generate_commit_message_with_claude(staged_context, recent)
+            if not suggestion:
+                print_warning("A IA não retornou conteúdo. Caindo para o fluxo manual.")
+                break
+            _review_commit_message(suggestion)
+            try:
+                choice = (
+                    input(
+                        f"{_c(Colors.YELLOW, '❯')} Usar esta mensagem? "
+                        f"[s=sim / e=editar / r=regerar / m=manual / a=abortar] (padrão: s): "
+                    )
+                    .strip()
+                    .lower()
+                    or "s"
+                )
+            except (EOFError, KeyboardInterrupt):
+                print()
+                print_error("Commit cancelado.")
+                sys.exit(1)
+            if choice == "s":
+                message = suggestion
+            elif choice == "e":
+                message = _edit_text_in_editor(
+                    suggestion, COMMIT_EDITOR_HINTS, suffix=".txt"
+                )
+                if not message:
+                    print_warning("Editor não retornou conteúdo.")
+            elif choice == "r":
+                continue
+            elif choice == "m":
+                default_msg = suggestion.splitlines()[0]
+                break
+            elif choice == "a":
+                print_error("Commit cancelado pelo usuário.")
+                sys.exit(1)
+            else:
+                print_warning("Opção inválida.")
 
+    if message is None:
+        message = _prompt_commit_message(default_msg)
+        if message is None:
+            print_error("Commit cancelado.")
+            sys.exit(1)
+
+    # Validação final: fora do padrão só commita com confirmação explícita.
+    while not _review_commit_message(message):
+        if confirm("Commitar mesmo assim?", default="n"):
+            break
+        message = _edit_text_in_editor(message, COMMIT_EDITOR_HINTS, suffix=".txt")
+        if not message:
+            print_error("Commit cancelado.")
+            sys.exit(1)
+
+    # `-F` preserva assunto + corpo + rodapé exatamente como revisados.
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    )
     try:
-        entered = input(
-            f"{_c(Colors.YELLOW, '❯')} Mensagem do commit [{default_msg}]: "
-        ).strip()
-    except (EOFError, KeyboardInterrupt):
-        print()
-        print_error("Commit cancelado.")
-        sys.exit(1)
-
-    commit_msg = entered or default_msg
-
-    run_cmd(["git", "commit", "-m", commit_msg])
-    print_success("Commit realizado com sucesso.")
+        tmp.write(message.rstrip() + "\n")
+        tmp.close()
+        run_cmd(["git", "commit", "-F", tmp.name])
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
+    print_success(f"Commit realizado: {message.splitlines()[0]}")
 
 
 # ================================================================================================
@@ -795,71 +1285,38 @@ def do_commit(dry_run: bool) -> None:
 # ================================================================================================
 
 
+CHANGELOG_EDITOR_TEMPLATE = (
+    "### Adicionado\n"
+    "- **Título curto.** O que muda para o usuário e o benefício.\n"
+    "\n"
+    "### Alterado\n"
+    "- \n"
+    "\n"
+    "### Corrigido\n"
+    "- \n"
+    "\n"
+    "### Removido\n"
+    "- \n"
+    "\n"
+    "### Atenção\n"
+    "- \n"
+)
+CHANGELOG_EDITOR_HINTS = [
+    "Escreva para o USUÁRIO FINAL: o que muda na prática, sem detalhes de desenvolvimento.",
+    "Remova as seções não aplicáveis. 'Atenção' só quando o usuário precisa fazer algo.",
+    "Linhas iniciadas com '#' (exceto headings '###') são ignoradas. Salve e feche para confirmar.",
+]
+
+
 def _collect_changelog_via_editor(initial: str | None = None) -> str | None:
-    """Abre um editor externo e devolve o conteúdo escrito. Quando `initial` é
-    informado (ex.: texto gerado pela IA), abre o editor já preenchido para
-    revisão. Retorna None se o editor não puder ser iniciado."""
-    import tempfile
-
-    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL")
-    if not editor:
-        editor = "notepad" if sys.platform == "win32" else "nano"
-
-    if initial:
-        template = (
-            initial.rstrip()
-            + "\n\n"
-            + "# Revise/edite o texto acima. Linhas iniciadas com '#' são ignoradas.\n"
-            + "# Salve e feche o editor para confirmar.\n"
-        )
-    else:
-        template = (
-            "### Adicionado\n"
-            "- \n"
-            "\n"
-            "### Corrigido\n"
-            "- \n"
-            "\n"
-            "### Alterado\n"
-            "- \n"
-            "\n"
-            "# Remova as seções não aplicáveis e as linhas iniciadas com '#'.\n"
-            "# Salve e feche o editor para confirmar.\n"
-        )
-
-    tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".md", delete=False, encoding="utf-8"
+    """Abre o editor externo com o texto gerado pela IA (para revisão) ou com o
+    template de seções. Retorna None se o editor não abrir ou ficar vazio."""
+    return _edit_text_in_editor(
+        initial or CHANGELOG_EDITOR_TEMPLATE,
+        CHANGELOG_EDITOR_HINTS,
+        suffix=".md",
+        keep_hash_prefixes=("###",),
     )
-    try:
-        tmp.write(template)
-        tmp.close()
-        try:
-            subprocess.run([editor, tmp.name], check=False)
-        except FileNotFoundError:
-            print_warning(f"Editor '{editor}' não encontrado.")
-            return None
-        with open(tmp.name, "r", encoding="utf-8") as f:
-            content = f.read()
-    finally:
-        try:
-            os.unlink(tmp.name)
-        except OSError:
-            pass
-
-    # Remover linhas de comentário (começando com '#' que NÃO sejam headings markdown).
-    cleaned_lines: list[str] = []
-    for line in content.splitlines():
-        stripped = line.lstrip()
-        # Headings markdown começam com '#' seguido de espaço e texto. Comentários
-        # do template começam com '# ' mas em coluna 0 também — diferenciamos
-        # pelo conteúdo: se a linha começar com '###' é heading; '# ' isolado é comentário.
-        if stripped.startswith("#") and not stripped.startswith("###"):
-            continue
-        cleaned_lines.append(line)
-    cleaned = "\n".join(cleaned_lines).strip()
-    if not cleaned:
-        return None
-    return cleaned
 
 
 def _collect_changelog_inline() -> str:
@@ -880,15 +1337,23 @@ def _collect_changelog_inline() -> str:
     return "\n".join(lines).strip()
 
 
-def _prompt_changelog_fallback(version: str, commits: str) -> str:
+def _prompt_changelog_fallback(version: str, context: ReleaseContext) -> str:
     """UX de criação da entrada do CHANGELOG: IA (Claude CLI), editor, inline ou abortar."""
     print()
-    print_info("Commits considerados:")
-    commit_lines = commits.splitlines()
-    for line in commit_lines[:20]:
+    if context.unreleased:
+        print_info("Seção [Unreleased] do CHANGELOG (fonte principal):")
+        _print_block(context.unreleased)
+        print()
+    else:
+        print_warning("Seção [Unreleased] vazia — a entrada será baseada só nos commits.")
+    print_info(
+        f"Commits considerados ({context.commit_range}, {context.commit_count} relevantes):"
+    )
+    subject_lines = [ln for ln in context.commits_text.splitlines() if ln.startswith("- ")]
+    for line in subject_lines[:20]:
         print(f"  {line}")
-    if len(commit_lines) > 20:
-        print(f"  ... (+{len(commit_lines) - 20} commits)")
+    if len(subject_lines) > 20:
+        print(f"  ... (+{len(subject_lines) - 20} commits)")
     print()
 
     fallback_entry = f"- Atualização para versão {version}"
@@ -921,7 +1386,7 @@ def _prompt_changelog_fallback(version: str, commits: str) -> str:
 
         if choice == "c" and ai:
             print_step("Gerando entrada do CHANGELOG com o Claude CLI...")
-            generated = _generate_changelog_with_claude(version, commits)
+            generated = _generate_changelog_with_claude(version, context)
             if not generated:
                 print_warning("A IA não retornou conteúdo. Escolha outra opção.")
                 continue
@@ -982,51 +1447,44 @@ def update_changelog(version: str, dry_run: bool) -> None:
         print_success(f"CHANGELOG já contém entrada para [{version}]. Pulando.")
         return
 
-    # Listar commits recentes para exibir ao usuário no fallback manual do CHANGELOG.
-    # Preferimos `-n LIMIT` ao range `last_tag..HEAD` porque em branches longos
-    # essa última faixa pode trazer dezenas de commits.
-    diff_result = run_cmd(
-        [
-            "git",
-            "log",
-            f"-n{CHANGELOG_COMMIT_LIMIT}",
-            "--oneline",
-            "--no-merges",
-        ],
-        check=False,
-    )
-    commits = (
-        diff_result.stdout.strip() if diff_result.returncode == 0 else "(sem commits)"
-    )
-    # v2: entrada do CHANGELOG criada manualmente (editor externo ou inline).
+    # Fontes: seção [Unreleased] (curada no Doc Sync) + commits desde a última tag,
+    # com assunto e corpo, já sem os commits de mecânica de release.
     # Em geral, o changelog já foi preparado antes e o script roda com --skip-changelog.
-    changelog_entry = _prompt_changelog_fallback(version, commits)
+    context = _collect_release_context()
+    changelog_entry = _prompt_changelog_fallback(version, context)
 
     # Montar nova seção
     new_section = f"\n{section_header}\n\n{changelog_entry}\n"
 
+    # Ao publicar, o conteúdo de [Unreleased] passa a pertencer à versão
+    # (Keep a Changelog); a seção é esvaziada para não duplicar o texto.
+    move_unreleased = bool(context.unreleased) and confirm(
+        "Esvaziar a seção [Unreleased] (conteúdo incorporado à versão)?", default="s"
+    )
 
     if dry_run:
         print_dry_run(f"Inseriria no CHANGELOG:\n{new_section}")
+        if move_unreleased:
+            print_dry_run("Esvaziaria a seção [Unreleased].")
         return
 
-    # Inserir após a linha "## [Unreleased]" ou após o cabeçalho
-    marker = "## [Unreleased]"
-    if marker in changelog_content:
-        # Encontrar o próximo "## [" após Unreleased para inserir antes dele
-        unreleased_idx = changelog_content.index(marker)
-        rest = changelog_content[unreleased_idx + len(marker) :]
-        next_section_match = re.search(r"\n## \[", rest)
+    # Inserir após a seção "## [Unreleased]" ou após o cabeçalho
+    marker_match = re.search(
+        r"^## \[Unreleased\][^\n]*\n", changelog_content, flags=re.MULTILINE
+    )
+    if marker_match:
+        head = changelog_content[: marker_match.end()].rstrip("\n")
+        rest = changelog_content[marker_match.end() :]
+        next_section_match = re.search(r"^## \[", rest, flags=re.MULTILINE)
         if next_section_match:
-            insert_pos = unreleased_idx + len(marker) + next_section_match.start()
-            updated = (
-                changelog_content[:insert_pos]
-                + "\n"
-                + new_section
-                + changelog_content[insert_pos:]
-            )
+            unreleased_body = rest[: next_section_match.start()]
+            tail = rest[next_section_match.start() :]
         else:
-            updated = changelog_content + "\n" + new_section
+            unreleased_body = rest
+            tail = ""
+        if not move_unreleased and unreleased_body.strip():
+            head = head + "\n\n" + unreleased_body.strip()
+        updated = head + "\n" + new_section + ("\n" + tail if tail else "")
     else:
         # Inserir após o cabeçalho (primeiros "---")
         separator_idx = changelog_content.find("---")
@@ -1796,18 +2254,16 @@ def build_release_notes(version: str) -> str:
         changes_markdown = textwrap.dedent(
             """
             ### Alterado
-            - Atualização geral do aplicativo para a versão atual.
-            - Consulte o CHANGELOG para detalhes técnicos completos.
+            - Atualização geral do aplicativo para esta versão.
+            - Consulte o CHANGELOG para a lista completa de mudanças.
             """
         ).strip()
 
+    # O bloco do CHANGELOG já é escrito para o usuário final (Step 5); nenhum
+    # parágrafo genérico é acrescentado para não diluir o conteúdo.
     return "\n\n".join(
         [
             release_title,
-            (
-                "Esta versão foi preparada para melhorar a experiência de uso no dia a dia,\n"
-                "com foco em clareza para usuário final e registro técnico resumido."
-            ),
             changes_markdown.strip(),
             textwrap.dedent(
                 """

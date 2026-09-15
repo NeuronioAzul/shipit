@@ -9,6 +9,23 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
+## [1.15.0] — 2026-09-15
+
+Versão de limpeza após a conversão de dados da 1.14.0: quem já usa a 1.14.x atualiza normalmente; quem vem de versões anteriores precisa passar pela 1.14.x primeiro.
+
+### Alterado
+- **Aviso ao abrir com dados de versões anteriores à 1.14.0.** Se os dados ainda estiverem no formato antigo, o app mostra um aviso pedindo para instalar e abrir a versão 1.14.x antes desta e fecha sem alterar nada no computador. Quem já usa a 1.14.x abre o app normalmente.
+- **Notas de versão mais claras.** O CHANGELOG e a página de cada versão passam a descrever o que muda na prática para quem usa o app, sem detalhes internos, com uma seção "Atenção" sempre que houver algo a fazer.
+
+### Removido
+- **Seção "Backup do banco de dados" em Configurações e a tela de aviso de migração.** Serviam apenas para a conversão de dados feita pela 1.14.0, já concluída para quem está nessa versão. Os backups criados pela 1.14.x continuam guardados na pasta de dados do aplicativo, na subpasta "backups".
+
+### Atenção
+- **Vindo de uma versão anterior à 1.14.0?** Instale e abra a versão 1.14.x antes de instalar esta, para converter seus dados com backup. Sem esse passo, esta versão não abre.
+- **Já está na 1.14.x?** Atualize normalmente; seus dados não são alterados.
+
+## [1.14.0] — 2026-09-11
+
 ### Adicionado
 - **Publicações por ambiente em uma única atividade.** O formulário ganha a seção "Publicações por ambiente (uso interno)": marque em quais ambientes a atividade já foi publicada (Desenvolvimento / Homologação / Produção) e informe, ao lado de cada um, os números de release SVN daquele ambiente. Não é mais preciso criar três atividades para a mesma entrega — e continua possível criar outra só para Produção em outra data. Desmarcar um ambiente não perde as releases digitadas (voltam ao re-marcar) e o atalho "Repetir releases de …" copia as releases do ambiente anterior.
 - Lista e detalhe de atividades mostram um **pipeline** `dsv › hmg › prd`: ambientes publicados em destaque (com releases copiáveis ao clique), não publicados apagados. Novo filtro **Ambiente** na lista.
@@ -25,21 +42,6 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 ### Corrigido
 - No Linux, os botões de arrastar, copiar e excluir das evidências (além das ações rápidas na lista de atividades) não apareciam, pois só eram exibidos ao passar o mouse. Agora esses controles ficam sempre visíveis e apenas ganham destaque no foco/hover, funcionando de forma consistente em todas as plataformas e também via teclado.
 - Revisão ortográfica (pt-BR) de textos da interface: acentuação corrigida em placeholders e mensagens de atividades e perfil ("vírgula", "números", "publicações/homologação", "não é exportado para o relatório DOCX") e o indicador ordinal "nº" no placeholder de contrato.
-
-
-
-
-
-
-## [1.14.0] — 2026-09-11
-
-### Adicionado
-- Duplicação de atividades: crie uma nova atividade a partir de uma existente com um clique, reaproveitando os dados já preenchidos.
-- Campos de ambiente e revisão nos formulários de atividades, permitindo registrar em qual ambiente e revisão cada atividade foi realizada.
-- Pipeline de deploy com verificação (gate) de migração de banco de dados, garantindo que migrações pendentes sejam validadas antes da publicação.
-
-### Alterado
-- Informações de ambiente e releases (SVN) foram unificadas em um único campo de "deployments", simplificando o preenchimento e a visualização das entregas.
 
 ## [1.13.0] — 2026-09-04
 

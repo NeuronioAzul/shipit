@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   getAllReleases,
   isDeployedTo,
-  migrateLegacyDeployments,
   parseDeployments,
   serializeDeployments,
 } from './deployments'
@@ -89,25 +88,5 @@ describe('helpers', () => {
 
   it('getAllReleases flattens in environment order without repetition', () => {
     expect(getAllReleases(list)).toEqual(['1', '2', '3'])
-  })
-})
-
-describe('migrateLegacyDeployments', () => {
-  it('migrates an environment without releases as marked with an empty list', () => {
-    expect(migrateLegacyDeployments('Produção', null)).toBe('{"Produção":[]}')
-  })
-
-  it('migrates an environment with its csv releases', () => {
-    expect(migrateLegacyDeployments('Homologação', '12345, 12346,abc,12345'))
-      .toBe('{"Homologação":["12345","12346"]}')
-  })
-
-  it('discards releases without an environment', () => {
-    expect(migrateLegacyDeployments(null, '12345')).toBeNull()
-    expect(migrateLegacyDeployments(undefined, '12345')).toBeNull()
-  })
-
-  it('discards unknown environments', () => {
-    expect(migrateLegacyDeployments('Staging' as never, '12345')).toBeNull()
   })
 })
