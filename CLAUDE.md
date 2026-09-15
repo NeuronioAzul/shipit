@@ -82,6 +82,10 @@ Ao concluir uma tarefa: marque/remova do TODO → registre em DONE com a versão
 
 O release é automatizado por [docs/scripts/release_v2.py](<docs/scripts/release_v2.py>) (interativo, faz operações de rede — confirme antes de disparar).
 
+**Nunca faça `git commit`/`git push` manualmente ao terminar um desenvolvimento.** O commit das pendências é a primeira etapa do `release_v2.py`, que segue com bump, CHANGELOG, PR `dev → main`, tag e CI/CD. Fluxo de fim de ciclo: testes verdes → Doc Sync (skill) → avisar que está pronto para `python docs/scripts/release_v2.py` (ou `--dry-run`). `git add`/`status`/`diff` são livres.
+
+**Planos:** ao pedir "crie um plano", entregue `docs/plans/plan-shipit<NN>-<slug>.prompt.md` no formato dos planos existentes; todo plano termina com validação (Vitest, build, E2E), Doc Sync via skill e entrega pelo `release_v2.py`.
+
 ## Detalhes completos
 
 - Arquitetura, IPC, entidades, temas, decisões → [docs/ARCHITECTURE.md](<docs/ARCHITECTURE.md>)
