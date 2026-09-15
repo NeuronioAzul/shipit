@@ -37,9 +37,9 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm run test`     | Executa 237 testes unitários e de integração (Vitest, 21 arquivos verificados em 15/09/2026) |
+| `npm run test`     | Executa 257 testes unitários e de integração (Vitest, 22 arquivos verificados em 15/09/2026) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 41 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/legacy-schema-guard.spec.ts`; precedido por `pretest:e2e`) |
+| `npm run test:e2e` | Executa 44 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/legacy-schema-guard.spec.ts`; precedido por `pretest:e2e`) |
 | `npm run test:all` | Executa a suíte completa: Vitest + build + Playwright |
 | `npm run pretest:e2e` | Hook automático que roda `npm run build` antes do Playwright |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |

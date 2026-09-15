@@ -257,6 +257,84 @@ export async function deleteActivity(id: string): Promise<boolean> {
   return (result.affected ?? 0) > 0
 }
 
+export interface DuplicateActivityOptions {
+  /** Mês de referência de destino (MM/YYYY). */
+  monthReference: string
+  /** Copiar `date_start`/`date_end` da origem (padrão da UI: não). */
+  keepDates: boolean
+  /** Copiar `deployments` (publicações por ambiente) da origem. */
+  copyDeployments: boolean
+  /** Copiar evidências ativas (imagens duplicam o arquivo em disco; textos só o registro). */
+  copyEvidences: boolean
+}
+
+/**
+ * Cria uma nova atividade a partir de outra existente (plano 43).
+ *
+ * Sempre copia descrição, escopo, links, tipo de atendimento e status. Nunca
+ * copia `id`, `order` (recalculado no mês de destino por `saveActivity`),
+ * `last_updated` nem vínculos com relatórios. Evidências na lixeira
+ * (`deleted_at`) são ignoradas; imagem cuja origem sumiu do disco é pulada
+ * com `console.warn` sem abortar a duplicação.
+ */
+export async function duplicateActivity(
+  id: string,
+  options: DuplicateActivityOptions
+): Promise<Activity> {
+  const source = await getActivity(id)
+  if (!source) {
+    throw new Error('Atividade não encontrada')
+  }
+
+  const copy = await saveActivity({
+    description: source.description,
+    project_scope: source.project_scope,
+    link_ref: source.link_ref,
+    attendance_type: source.attendance_type,
+    status: source.status,
+    month_reference: options.monthReference,
+    date_start: options.keepDates ? source.date_start : null,
+    date_end: options.keepDates ? source.date_end : null,
+    deployments: options.copyDeployments ? source.deployments : null,
+  })
+
+  if (options.copyEvidences) {
+    const db = await getDb()
+    const repo = db.getRepository(Evidence)
+    const evidences = [...(source.evidences ?? [])].sort((a, b) => a.sort_index - b.sort_index)
+
+    for (const evidence of evidences) {
+      const newId = uuidv7()
+      let filePath: string | null = null
+
+      if (evidence.type !== 'text') {
+        if (!evidence.file_path || !fs.existsSync(evidence.file_path)) {
+          console.warn(
+            `[duplicateActivity] arquivo de evidência ausente, pulando: ${evidence.file_path ?? '(sem caminho)'}`
+          )
+          continue
+        }
+        const ext = path.extname(evidence.file_path) || '.png'
+        filePath = path.join(getEvidencesDir(), `${newId}${ext}`)
+        fs.copyFileSync(evidence.file_path, filePath)
+      }
+
+      await repo.save(repo.create({
+        id: newId,
+        activity_id: copy.id,
+        type: evidence.type,
+        file_path: filePath,
+        text_content: evidence.type === 'text' ? evidence.text_content : null,
+        caption: evidence.caption,
+        sort_index: evidence.sort_index,
+        date_added: new Date(),
+      }))
+    }
+  }
+
+  return (await getActivity(copy.id))!
+}
+
 export async function reorderActivities(
   items: { id: string; order: number }[]
 ): Promise<void> {

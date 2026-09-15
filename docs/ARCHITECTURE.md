@@ -68,6 +68,7 @@ db:getUserProfile          db:saveUserProfile
 db:getActivities           db:searchActivities
 db:getActivity             db:saveActivity
 db:deleteActivity          db:reorderActivities
+db:duplicateActivity
 db:saveEvidence            db:saveEvidenceFromBuffer
 db:updateEvidenceCaption   db:deleteEvidence
 db:getEvidenceFilePath     db:reorderEvidences
@@ -224,6 +225,7 @@ Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout`
 | `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
 | `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
 | `TextEvidenceModal` | Modal para visualização/edição de evidências de texto |
+| `DuplicateActivityModal` | Modal de opções para duplicar uma atividade (mês de destino, manter período, copiar publicações, copiar evidências); chama `db:duplicateActivity` ou `localDb` e leva à edição da cópia. Usado no detalhe e no card da lista |
 | `ActivityNav` | Navegação prev/next entre atividades na tela de detalhes |
 | `ThemeSelector` | Seletor visual de temas em grid com cards por categoria e preview de cores |
 | `UpdateModal` | Modal de atualização disparado na TitleBar (verifica/baixa/instala via `UpdateStateContext`) |

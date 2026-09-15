@@ -23,6 +23,7 @@ import {
   searchActivities,
   saveActivity,
   deleteActivity,
+  duplicateActivity,
   reorderActivities,
   saveEvidence,
   deleteEvidence,
@@ -466,6 +467,155 @@ describe('Activity CRUD', () => {
     expect(arAfter).toBe(0)
 
     fs.rmSync(tmpDir, { recursive: true, force: true })
+  })
+})
+
+describe('duplicateActivity (plano 43)', () => {
+  let testDir: string
+  const baseOptions = {
+    monthReference: '03/2026',
+    keepDates: false,
+    copyDeployments: false,
+    copyEvidences: false,
+  }
+
+  beforeEach(() => {
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shipit-dup-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(testDir, { recursive: true, force: true })
+  })
+
+  async function createSource() {
+    return saveActivity({
+      description: '<p>Implementação do módulo X</p>',
+      project_scope: 'Squad Alpha',
+      link_ref: JSON.stringify(['https://exemplo.gov.br/issue/1']),
+      attendance_type: 'Remoto',
+      status: 'Concluído',
+      month_reference: '03/2026',
+      date_start: '2026-03-02',
+      date_end: '2026-03-10',
+      deployments: JSON.stringify({ Desenvolvimento: ['12345'], Homologação: [] }),
+    })
+  }
+
+  it('copies the textual fields and creates a new id/order in the target month', async () => {
+    const source = await createSource()
+    await saveActivity({ description: 'Outra no destino', status: 'Pendente', month_reference: '04/2026' })
+
+    const copy = await duplicateActivity(source.id, { ...baseOptions, monthReference: '04/2026' })
+
+    expect(copy.id).not.toBe(source.id)
+    expect(copy.description).toBe(source.description)
+    expect(copy.project_scope).toBe('Squad Alpha')
+    expect(copy.link_ref).toBe(source.link_ref)
+    expect(copy.attendance_type).toBe('Remoto')
+    expect(copy.status).toBe('Concluído')
+    expect(copy.month_reference).toBe('04/2026')
+    expect(copy.order).toBe(2) // max(order do 04/2026) + 1
+    expect(copy.evidences).toEqual([])
+
+    // A origem continua intacta e no mês original
+    const original = await getActivity(source.id)
+    expect(original!.month_reference).toBe('03/2026')
+    expect(original!.date_start).toBe('2026-03-02')
+  })
+
+  it('clears dates by default and keeps them with keepDates', async () => {
+    const source = await createSource()
+
+    const cleared = await duplicateActivity(source.id, baseOptions)
+    expect(cleared.date_start).toBeNull()
+    expect(cleared.date_end).toBeNull()
+
+    const kept = await duplicateActivity(source.id, { ...baseOptions, keepDates: true })
+    expect(kept.date_start).toBe('2026-03-02')
+    expect(kept.date_end).toBe('2026-03-10')
+  })
+
+  it('copies deployments only when copyDeployments is on', async () => {
+    const source = await createSource()
+
+    const without = await duplicateActivity(source.id, baseOptions)
+    expect(without.deployments).toBeNull()
+
+    const withDeployments = await duplicateActivity(source.id, { ...baseOptions, copyDeployments: true })
+    expect(withDeployments.deployments).toBe(source.deployments)
+  })
+
+  it('copies image and text evidences as new files/records preserving caption and sort_index', async () => {
+    const source = await createSource()
+    const imgPath = path.join(testDir, 'print.png')
+    const content = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x01, 0x02, 0x03])
+    fs.writeFileSync(imgPath, content)
+
+    const image = await saveEvidence(source.id, imgPath, 'Print dsv')
+    const text = await saveTextEvidence(source.id, '<p>Log do deploy</p>', 'Log')
+    const db = await getDb()
+    const evRepo = db.getRepository((await import('./entities/Evidence')).Evidence)
+    await evRepo.update({ id: image.id }, { sort_index: 1 })
+    await evRepo.update({ id: text.id }, { sort_index: 0 })
+
+    const copy = await duplicateActivity(source.id, { ...baseOptions, copyEvidences: true })
+
+    expect(copy.evidences.length).toBe(2)
+    const copiedText = copy.evidences.find(e => e.type === 'text')!
+    const copiedImage = copy.evidences.find(e => e.type !== 'text')!
+
+    expect(copiedText.id).not.toBe(text.id)
+    expect(copiedText.activity_id).toBe(copy.id)
+    expect(copiedText.text_content).toBe('<p>Log do deploy</p>')
+    expect(copiedText.caption).toBe('Log')
+    expect(copiedText.sort_index).toBe(0)
+
+    expect(copiedImage.id).not.toBe(image.id)
+    expect(copiedImage.activity_id).toBe(copy.id)
+    expect(copiedImage.caption).toBe('Print dsv')
+    expect(copiedImage.sort_index).toBe(1)
+    expect(copiedImage.file_path).not.toBe(image.file_path)
+    expect(path.extname(copiedImage.file_path!)).toBe('.png')
+    expect(fs.existsSync(copiedImage.file_path!)).toBe(true)
+    expect(fs.readFileSync(copiedImage.file_path!).equals(content)).toBe(true)
+
+    // Excluir permanentemente a cópia não afeta o arquivo original
+    await permanentlyDeleteEvidence(copiedImage.id)
+    expect(fs.existsSync(image.file_path!)).toBe(true)
+    fs.rmSync(image.file_path!, { force: true })
+  })
+
+  it('does not copy evidences when copyEvidences is off', async () => {
+    const source = await createSource()
+    await saveTextEvidence(source.id, '<p>Texto</p>', null)
+
+    const copy = await duplicateActivity(source.id, baseOptions)
+    expect(copy.evidences).toEqual([])
+  })
+
+  it('ignores soft-deleted evidences and tolerates missing image files', async () => {
+    const source = await createSource()
+    const imgPath = path.join(testDir, 'gone.png')
+    fs.writeFileSync(imgPath, Buffer.from([0x89, 0x50, 0x4E, 0x47]))
+
+    const trashed = await saveTextEvidence(source.id, '<p>Na lixeira</p>', null)
+    await deleteEvidence(trashed.id)
+    const missing = await saveEvidence(source.id, imgPath, 'Sumiu')
+    fs.rmSync(missing.file_path!, { force: true })
+    await saveTextEvidence(source.id, '<p>Válida</p>', null)
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const copy = await duplicateActivity(source.id, { ...baseOptions, copyEvidences: true })
+    warn.mockRestore()
+
+    expect(copy.evidences.length).toBe(1)
+    expect(copy.evidences[0].type).toBe('text')
+    expect(copy.evidences[0].text_content).toBe('<p>Válida</p>')
+  })
+
+  it('throws when the source activity does not exist', async () => {
+    await expect(duplicateActivity('nao-existe', baseOptions))
+      .rejects.toThrow('Atividade não encontrada')
   })
 })
 

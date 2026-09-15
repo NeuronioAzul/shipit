@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveActivity: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('db:saveActivity', data),
   deleteActivity: (id: string) => ipcRenderer.invoke('db:deleteActivity', id),
+  duplicateActivity: (id: string, options: Record<string, unknown>) =>
+    ipcRenderer.invoke('db:duplicateActivity', id, options),
   reorderActivities: (items: { id: string; order: number }[]) =>
     ipcRenderer.invoke('db:reorderActivities', items),
 

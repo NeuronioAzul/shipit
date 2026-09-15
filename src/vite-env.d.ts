@@ -12,6 +12,7 @@ export interface ElectronAPI {
   getActivity: (id: string) => Promise<ActivityData | null>
   saveActivity: (data: Partial<ActivityData>) => Promise<ActivityData>
   deleteActivity: (id: string) => Promise<boolean>
+  duplicateActivity: (id: string, options: DuplicateActivityOptions) => Promise<ActivityData>
   reorderActivities: (items: { id: string; order: number }[]) => Promise<void>
 
   // Evidences
@@ -153,6 +154,18 @@ export interface ActivityData {
   project_scope: string | null
   last_updated: string
   evidences?: EvidenceData[]
+}
+
+/** Opções da duplicação de atividade (plano 43). Espelha `DuplicateActivityOptions` de `electron/database.ts`. */
+export interface DuplicateActivityOptions {
+  /** Mês de referência de destino (MM/YYYY). */
+  monthReference: string
+  /** Manter `date_start`/`date_end` da origem. */
+  keepDates: boolean
+  /** Copiar publicações por ambiente (`deployments`). */
+  copyDeployments: boolean
+  /** Copiar evidências ativas (imagens e textos). */
+  copyEvidences: boolean
 }
 
 export interface EvidenceData {

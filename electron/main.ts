@@ -776,6 +776,11 @@ ipcMain.handle('db:deleteActivity', async (_event, id: string) => {
   return deleteActivity(id)
 })
 
+ipcMain.handle('db:duplicateActivity', async (_event, id: string, options) => {
+  const { duplicateActivity } = await import('./database')
+  return duplicateActivity(id, options)
+})
+
 ipcMain.handle('db:reorderActivities', async (_event, items) => {
   const { reorderActivities } = await import('./database')
   return reorderActivities(items)

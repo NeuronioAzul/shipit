@@ -218,6 +218,8 @@ CRUD completo de atividades com campos para descrição, período, status, links
 
 Na tela de detalhes, navegue entre atividades do mês, alterne o mês de referência pelo seletor dedicado e exclua uma atividade com confirmação quando necessário.
 
+Precisa registrar a mesma entrega em outro mês ou só para Produção? Use **Duplicar** (no detalhe ou no card da lista): escolha o mês de destino e se quer manter o período, copiar as publicações por ambiente e copiar as evidências. A cópia abre direto na tela de edição.
+
 <!-- Screenshot: Lista de atividades com drag & drop -->
 
 ### Evidências com Prints e Texto

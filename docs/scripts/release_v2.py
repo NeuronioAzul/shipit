@@ -36,6 +36,7 @@ Uso:
   python docs/scripts/release.py --ci-timeout 5400         # Timeout em segundos para o workflow CI/CD
   python docs/scripts/release.py --skip-asset-validation   # Pular validação de assets (emergência)
   python docs/scripts/release.py --no-ai                   # Desativar geração via Claude CLI
+  python docs/scripts/release.py --model                   # Forçar modelo do Claude CLI
 
 Requer: Python 3.10+, git, gh CLI (autenticado com escopos repo + write:packages)
 Opcional: Claude CLI (`claude`) no PATH para geração automática de textos.

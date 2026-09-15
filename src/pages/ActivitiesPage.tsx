@@ -28,6 +28,7 @@ import { ENVIRONMENTS } from '../utils/environmentColors'
 import { getEvidenceTypeCounts } from '../utils/evidenceCounts'
 import { isDeployedTo, parseDeployments } from '../utils/deployments'
 import { DeploymentPipeline } from '../components/DeploymentPipeline'
+import { DuplicateActivityModal } from '../components/DuplicateActivityModal'
 import { htmlToPlainText, isRichTextEmpty } from '../utils/richText'
 
 function formatDateShort(d: string | null): string {
@@ -40,11 +41,13 @@ function SortableActivityItem({
   activity,
   idx,
   onNavigate,
+  onDuplicate,
   onDelete,
 }: {
   activity: ActivityData
   idx: number
   onNavigate: (path: string) => void
+  onDuplicate: (activity: ActivityData) => void
   onDelete: (id: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -148,6 +151,15 @@ function SortableActivityItem({
             <i className="fa-solid fa-pen-to-square" aria-hidden="true"></i>
           </button>
           <button
+            onClick={(e) => { e.stopPropagation(); onDuplicate(activity) }}
+            className="btn btn-ghost btn-icon"
+            title="Duplicar"
+            aria-label="Duplicar atividade"
+            data-testid="activity-card-duplicate"
+          >
+            <i className="fa-solid fa-clone" aria-hidden="true"></i>
+          </button>
+          <button
             onClick={() => onDelete(activity.id)}
             className="btn btn-ghost btn-icon hover:text-destructive"
             title="Excluir"
@@ -167,6 +179,7 @@ export function ActivitiesPage() {
   const [activities, setActivities] = useState<ActivityData[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [duplicating, setDuplicating] = useState<ActivityData | null>(null)
 
   // Filter state
   const searchQuery = searchParams.get('search') || ''
@@ -523,12 +536,26 @@ export function ActivitiesPage() {
                   activity={activity}
                   idx={idx}
                   onNavigate={(path) => navigate(path)}
+                  onDuplicate={(item) => setDuplicating(item)}
                   onDelete={(id) => setDeleteId(id)}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {/* Duplicar atividade (plano 43) */}
+      {duplicating && (
+        <DuplicateActivityModal
+          activity={duplicating}
+          open
+          onClose={() => setDuplicating(null)}
+          onDuplicated={(copy) => {
+            setDuplicating(null)
+            navigate(`/activities/${copy.id}/edit`)
+          }}
+        />
       )}
 
       {/* Delete confirmation modal */}
