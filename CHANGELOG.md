@@ -9,9 +9,12 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-## [1.16.0] — 2026-09-15
+## [1.16.1] — 2026-09-15
 
-Segue a entrada do CHANGELOG da versão 1.16.0, escrita para o usuário final a partir das fontes fornecidas.
+### Corrigido
+- **Notas de versão sem texto de apresentação.** As notas de versão geradas automaticamente deixaram de incluir uma frase de apresentação indevida ("Segue a entrada do CHANGELOG...") no início do texto. A entrada da versão 1.16.0 já foi corrigida.
+
+## [1.16.0] — 2026-09-15
 
 Agora é possível duplicar uma atividade em poucos cliques, sem redigitar nada.
 
