@@ -9,12 +9,20 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Unreleased]
 
-### Removido
-- Código de uso único da migração da 1.14.0 (plano 42.1): detecção/migração em SQL do schema antigo (`needsLegacyMigration`, `migrateLegacyEnvironmentColumns`), módulo de backup pré-migração (`electron/db-backup.ts`), aviso bloqueante `MigrationGate`, handlers IPC `app:getStartupMigration`/`app:runStartupMigration`/`app:getLastMigrationNotice`/`app:openReleasesPage`, a seção "Backup do banco de dados" em Configurações, a migração do fallback `localStorage` e os testes/E2E correspondentes. Referência para recuperar do histórico: commit `442904d`. Os backups criados pela 1.14.x continuam em `{userData}/backups/`.
+## [1.15.0] — 2026-09-15
+
+Versão de limpeza após a conversão de dados da 1.14.0: quem já usa a 1.14.x atualiza normalmente; quem vem de versões anteriores precisa passar pela 1.14.x primeiro.
 
 ### Alterado
-- Guarda de schema na inicialização: se o banco ainda for de uma versão anterior à 1.14.0 (coluna `environment` presente), o app mostra um aviso nativo — "instale e abra a versão 1.14.x antes desta para migrar seus dados com backup" — e fecha **sem alterar o arquivo**. Quem já está na 1.14.x não é afetado.
-- **Notas de versão mais claras.** O processo de publicação passa a gerar o texto do CHANGELOG e da página da release pensando em quem usa o app: o que muda na prática, sem detalhes internos de desenvolvimento, com uma seção "Atenção" quando houver algo que o usuário precise fazer. Internamente, as mensagens de commit da publicação seguem o padrão Conventional Commits, geradas a partir do conteúdo real das mudanças.
+- **Aviso ao abrir com dados de versões anteriores à 1.14.0.** Se os dados ainda estiverem no formato antigo, o app mostra um aviso pedindo para instalar e abrir a versão 1.14.x antes desta e fecha sem alterar nada no computador. Quem já usa a 1.14.x abre o app normalmente.
+- **Notas de versão mais claras.** O CHANGELOG e a página de cada versão passam a descrever o que muda na prática para quem usa o app, sem detalhes internos, com uma seção "Atenção" sempre que houver algo a fazer.
+
+### Removido
+- **Seção "Backup do banco de dados" em Configurações e a tela de aviso de migração.** Serviam apenas para a conversão de dados feita pela 1.14.0, já concluída para quem está nessa versão. Os backups criados pela 1.14.x continuam guardados na pasta de dados do aplicativo, na subpasta "backups".
+
+### Atenção
+- **Vindo de uma versão anterior à 1.14.0?** Instale e abra a versão 1.14.x antes de instalar esta, para converter seus dados com backup. Sem esse passo, esta versão não abre.
+- **Já está na 1.14.x?** Atualize normalmente; seus dados não são alterados.
 
 ## [1.14.0] — 2026-09-11
 
