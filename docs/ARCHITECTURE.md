@@ -48,8 +48,8 @@ Responsável por:
 - **Janela principal**: `BrowserWindow` com `contextIsolation: true` e `nodeIntegration: false`
 - **System Tray**: ícone com menu de contexto e ícones de status (padrão/verde/amarelo/vermelho)
 - **Protocolos customizados**: `shipit-evidence://` e `shipit-sfx://` para servir arquivos com segurança
-- **IPC Handlers**: 62 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
-- **Migração de banco com aviso e backup**: na primeira abertura após uma atualização que muda o schema, o banco é aberto sem sincronizar, o renderer mostra um aviso bloqueante e só após a confirmação o app faz backup → migração → `synchronize()` (ver `database.ts` e `db-backup.ts`)
+- **IPC Handlers**: 58 handlers `ipcMain.handle` + 4 listeners renderer organizados por prefixo
+- **Guarda de schema na inicialização**: o banco é aberto sem sincronizar; se ainda tiver o schema anterior à 1.14.x (migração já removida do app), um aviso nativo pede para instalar a 1.14.x antes e o app fecha sem tocar no arquivo (ver `database.ts`)
 - **Identidade runtime e `userData`**: `runtime-paths.ts` centraliza `appId`, nome visual, diretórios de dados por modo, assets públicos, ícones e perfil temporário de testes
 - **Auto-update controlado**: `update-notifications.ts` usa `checkForUpdates()` com notificações próprias do ShipIt, dedupe e foco da janela existente
 
@@ -88,8 +88,6 @@ app:zoomIn                 app:zoomOut
 app:zoomReset              app:listSounds
 app:getSoundPath           app:playSound
 app:getAutoLaunch          app:setAutoLaunch
-app:getStartupMigration    app:runStartupMigration
-app:getLastMigrationNotice app:openReleasesPage
 app:generateReport         app:openFileInFolder
 app:copyImageToClipboard
 app:getUpdateState         app:checkForUpdate
@@ -111,34 +109,24 @@ app:navigate               window:maximized-change
 
 - **DataSource singleton** inicializado lazily via `getDb()`
 - Banco SQLite em `{userData}/shipit.db`
-- Schema sincronizado a partir das entidades via `dataSource.synchronize()` **explícito** (não pela opção `synchronize: true`), para que colunas removidas de uma entidade só sejam dropadas depois de aviso → backup → migração
-- Inicialização em passos: `openDatabase()` (abre sem sync) → `needsLegacyMigration()` (`PRAGMA table_info`) → se necessário, `migrateLegacyEnvironmentColumns()` (SQL cru, idempotente) → `finalizeDatabase()` (`synchronize()`). `initDatabase()` encadeia tudo no fluxo normal; enquanto `isMigrationPending()`, `getDb()` lança e nenhum handler `db:*` acessa o banco
+- Schema sincronizado a partir das entidades via `dataSource.synchronize()` **explícito** (não pela opção `synchronize: true`), para que qualquer verificação/migração rode **antes** de colunas removidas de uma entidade serem dropadas
+- Inicialização em passos: `openDatabase()` (abre sem sync) → `findUnsupportedLegacySchema()` (guarda, ver abaixo) → `finalizeDatabase()` (`synchronize()`). `initDatabase()` encadeia abrir + sincronizar no fluxo normal (testes e `getDb()` lazy)
 - Funções exportadas: CRUD para todas as entidades, `getReportPayload()` para o gerador
 
-### `db-backup.ts` — Backup Verificado do Banco
+#### Guarda de schema (plano 42.1)
 
-Sem dependência do Electron. `buildBackupPath(backupsDir, versão)` → `shipit-backup-antes-v<versão>-<AAAAMMDD-HHmmss>.db`; `createDatabaseBackup({ dbPath, backupPath })` copia `shipit.db` (+ sidecars `-wal`/`-shm`/`-journal`) para `{userData}/backups/`, verifica tamanho e cabeçalho SQLite e nunca deixa cópia parcial (lança `DatabaseBackupError`). O `main.ts` faz `PRAGMA wal_checkpoint(TRUNCATE)` antes de copiar. Backups nunca são apagados automaticamente.
-
-#### Fluxo de migração na inicialização (plano 42)
+A migração `environment`/`svn_releases` → `deployments` existiu apenas na **1.14.x** (plano 42, com aviso bloqueante e backup) e foi removida nas versões seguintes. Para quem pular a 1.14.x, `UNSUPPORTED_LEGACY_SCHEMA` declara as colunas que denunciam o schema antigo (`activities.environment` → `migrateWithVersion: '1.14.x'`) e `findUnsupportedLegacySchema(ds)` consulta `PRAGMA table_info` **antes** do `synchronize()`:
 
 ```text
 app.whenReady
   ├─ openDatabase()  (synchronize: false)
-  ├─ needsLegacyMigration()?
-  │    ├─ não → finalizeDatabase() → cleanupTrash() → startSchedulers()
-  │    └─ sim → pendingMigration = { fromVersion, toVersion, plannedBackupPath, … }  (nada toca o banco)
+  ├─ findUnsupportedLegacySchema()?
+  │    ├─ null → finalizeDatabase() → cleanupTrash() → startSchedulers() → __lastRunVersion
+  │    └─ marcador → dialog.showErrorBox("instale e abra a 1.14.x antes…") → app.quit()  (arquivo intacto)
   └─ createWindow()
-        renderer: App.tsx → app:getStartupMigration
-          ├─ null → app normal
-          └─ info → só <MigrationGate/> (opaco; sem layout/rotas)
-                aviso (30 s) → app:runStartupMigration
-                  main: wal_checkpoint → createDatabaseBackup → migrateLegacyEnvironmentColumns
-                        → finalizeDatabase → cleanupTrash/startSchedulers → __migrationNotice em settings.json
-                  ├─ backup falhou → nada alterado ("Tentar novamente" / "Fechar o app")
-                  └─ ok → resumo (caminho do backup, downgrade) → "Abrir o ShipIt!"
 ```
 
-`SHIPIT_E2E_MIGRATION_COUNTDOWN_SECONDS` (env) encurta a contagem só em testes.
+Sob `PLAYWRIGHT=1` o diálogo modal é suprimido (só log + encerramento) para o E2E `legacy-schema-guard.spec.ts` poder afirmar "processo encerrou + hash do `shipit.db` inalterado + sem `backups/`". Para uma futura migração destrutiva, seguir o padrão do plano 42 (aviso → backup → migração em SQL → `finalizeDatabase`) e, depois de uma versão publicada, trocá-la por um novo marcador nesta guarda (plano 42.1).
 
 ### `report-generator.ts` — Motor DOCX
 
@@ -173,7 +161,7 @@ As notificações usam cópia pt-BR, ícone ShipIt resolvido pelo runtime e cliq
 
 ### `preload.ts` — Context Bridge
 
-Expõe `window.electronAPI` com 62 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
+Expõe `window.electronAPI` com 58 métodos tipados que chamam `ipcRenderer.invoke()` e 4 assinaturas de eventos (`onPlaySoundData`, `onUpdateStatus`, `onNavigate`, `onWindowMaximized`). Nenhuma API do Node.js é exposta diretamente ao renderer.
 
 ### `entities/` — Modelo de Dados
 
@@ -215,8 +203,6 @@ Todas as rotas ficam dentro de `<AppLayout>` que renderiza `<TitleBar>` + `<Acti
 
 Layout: `ThemeProvider` → `HashRouter` → `ElectronNavigator` → `AppLayout` → Route outlet
 
-Antes de montar o `HashRouter`, `App.tsx` consulta `app:getStartupMigration`; se houver migração pendente, renderiza apenas `<MigrationGate/>` até a conclusão.
-
 ### Componentes Principais
 
 | Componente | Responsabilidade |
@@ -234,7 +220,6 @@ Antes de montar o `HashRouter`, `App.tsx` consulta `app:getStartupMigration`; se
 | `InputTags` | Entrada de tags (vírgula/Enter/Tab, colar CSV) com validação por tag |
 | `DeploymentsEditor` | Editor de publicações por ambiente (dsv → hmg → prd): toggle colorido + `InputTags` de releases por linha, releases retidas ao desmarcar, atalho "Repetir releases" |
 | `DeploymentPipeline` | Exibição `dsv › hmg › prd` na lista/detalhe; releases copiáveis; nada quando nenhum ambiente está marcado |
-| `MigrationGate` | Aviso bloqueante de migração do banco (contagem de 30 s → backup → migração → resumo com caminho do backup e instruções de downgrade) |
 | `EvidenceUpload` | Componente de upload com drag & drop, clipboard paste e seleção de arquivo |
 | `EvidenceLightbox` | Visualização em tela cheia de imagens de evidência com navegação |
 | `TextEvidenceEditor` | Editor rich-text (TipTap) para evidências de texto |
@@ -276,7 +261,7 @@ Antes de montar o `HashRouter`, `App.tsx` consulta `app:getStartupMigration`; se
 | `keyboardGuards.ts` | Guardas para atalhos não dispararem durante digitação |
 | `statusColors.ts` | Mapeamento compartilhado de status para ícones/cores |
 | `environmentColors.ts` | Ordem, cores (`chart-*`), ícones e abreviações (`dsv`/`hmg`/`prd`) dos ambientes |
-| `deployments.ts` | Parse/serialização do JSON `deployments` (ordem fixa, dedupe, `null` quando vazio) e migração legada usada pelo `localDb` |
+| `deployments.ts` | Parse/serialização do JSON `deployments` (ordem fixa, dedupe, `null` quando vazio) |
 | `svnReleases.ts` | Normalização/validação de números de release SVN |
 
 ### Temas (`src/themes/`)
@@ -364,8 +349,8 @@ Ambos registrados como privilegiados com `supportFetchAPI` e `stream` antes de `
 
 Banco principal para todos os dados estruturados. Caminho: `{userData}/shipit.db`.
 
-- Gerenciado pelo TypeORM; schema sincronizado por `dataSource.synchronize()` explícito após a verificação de migração (ver `database.ts`)
-- Backups pré-migração em `{userData}/backups/` (ver `db-backup.ts`)
+- Gerenciado pelo TypeORM; schema sincronizado por `dataSource.synchronize()` explícito após a guarda de schema (ver `database.ts`)
+- `{userData}/backups/` guarda os backups criados pela migração da 1.14.x (o app não os lê nem apaga)
 - Entidades com decorators (`@Entity`, `@Column`, `@OneToMany`, etc.)
 - UUID v7 como primary key (exceto UserProfile que usa auto-increment)
 
@@ -420,7 +405,7 @@ Configurações do app (não do perfil). Caminho: `{userData}/settings.json`.
 
 Merge parcial: `saveSettings({ key: value })` faz merge com as configurações existentes.
 
-Chaves **internas** (prefixo `__`) nunca são expostas ao renderer por `getSettings` e são preservadas por `saveSettings`: `__internalUpdate` (estado do auto-update), `__migrationNotice` (último backup/migração: `fromVersion`, `toVersion`, `backupPath`, `migratedAt` — lido por `app:getLastMigrationNotice` para a seção "Backup do banco de dados" em Configurações) e `__lastRunVersion` (versão que rodou por último, gravada quando o banco fica pronto).
+Chaves **internas** (prefixo `__`) nunca são expostas ao renderer por `getSettings` e são preservadas por `saveSettings`: `__internalUpdate` (estado do auto-update) e `__lastRunVersion` (versão que rodou por último, gravada quando o banco fica pronto). Instalações que migraram na 1.14.x ainda podem ter `__migrationNotice` (dado inerte — nenhum código o lê).
 
 ### `localStorage`
 

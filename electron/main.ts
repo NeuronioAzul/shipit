@@ -53,37 +53,8 @@ protocol.registerSchemesAsPrivileged([
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
 const INTERNAL_UPDATE_SETTINGS_KEY = '__internalUpdate'
 // Chaves internas de settings.json (prefixo `__`): nunca expostas ao renderer via getSettings/saveSettings.
-const MIGRATION_NOTICE_SETTINGS_KEY = '__migrationNotice'
 const LAST_RUN_VERSION_SETTINGS_KEY = '__lastRunVersion'
 const RELEASES_URL = 'https://github.com/NeuronioAzul/shipit/releases'
-const DEFAULT_MIGRATION_COUNTDOWN_SECONDS = 30
-
-/** Dados do aviso bloqueante (plano 42) — espelha `StartupMigrationInfo` do renderer. */
-interface StartupMigrationInfo {
-  fromVersion: string | null
-  toVersion: string
-  plannedBackupPath: string
-  backupsDir: string
-  userDataDir: string
-  releasesUrl: string
-  countdownSeconds: number
-}
-
-type StartupMigrationResult =
-  | { success: true; backupPath: string }
-  | { success: false; stage: 'backup' | 'migration'; error: string; backupPath?: string }
-
-interface MigrationNoticeData {
-  fromVersion: string | null
-  toVersion: string
-  backupPath: string
-  migratedAt: string
-}
-
-/** Preenchido no startup quando o banco tem schema legado; limpo ao concluir a migração. */
-let pendingMigration: StartupMigrationInfo | null = null
-/** Evita rodar cleanupTrash/schedulers duas vezes (fluxo normal × pós-migração). */
-let databaseReady = false
 
 interface PersistedUpdateState {
   latestKnownVersion?: string
@@ -281,24 +252,6 @@ function writeInternalSetting(key: string, value: unknown): void {
     nextSettings[key] = value
   }
   saveSettingsFile(nextSettings)
-}
-
-function readLastRunVersion(): string | null {
-  const value = loadSettings()[LAST_RUN_VERSION_SETTINGS_KEY]
-  return typeof value === 'string' && value.trim() ? value : null
-}
-
-function readMigrationNotice(): MigrationNoticeData | null {
-  const value = loadSettings()[MIGRATION_NOTICE_SETTINGS_KEY]
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
-  const notice = value as Partial<MigrationNoticeData>
-  if (typeof notice.backupPath !== 'string' || typeof notice.toVersion !== 'string') return null
-  return {
-    fromVersion: typeof notice.fromVersion === 'string' ? notice.fromVersion : null,
-    toVersion: notice.toVersion,
-    backupPath: notice.backupPath,
-    migratedAt: typeof notice.migratedAt === 'string' ? notice.migratedAt : '',
-  }
 }
 
 function readPersistedUpdateState(settingsData: Record<string, unknown> = loadSettings()): PersistedUpdateState {
@@ -649,120 +602,47 @@ function createTray() {
   })
 }
 
-/** Tarefas que dependem do banco pronto: lixeira, alertas e status do tray. */
-async function startDatabaseDependentServices(): Promise<void> {
-  if (databaseReady) return
-  databaseReady = true
-  const { cleanupTrash } = await import('./database')
+/**
+ * Abre o banco, recusa schemas antigos cuja migração já não existe neste app
+ * (plano 42.1) e sincroniza o schema. Só então libera lixeira, alertas e tray.
+ * Retorna `false` quando o app deve encerrar sem abrir janela.
+ */
+async function prepareDatabaseOnStartup(): Promise<boolean> {
+  const { openDatabase, findUnsupportedLegacySchema, finalizeDatabase, cleanupTrash } = await import('./database')
+
+  const ds = await openDatabase()
+  const legacy = await findUnsupportedLegacySchema(ds)
+  if (legacy) {
+    // Sincronizar aqui dropararia a coluna (com os dados) sem backup — encerra sem tocar no arquivo.
+    console.error('[shipit] Banco de versão antiga sem migração disponível nesta versão:', legacy)
+    // Em E2E (PLAYWRIGHT=1) ninguém fecha o diálogo modal; só registra e encerra.
+    if (!process.env.PLAYWRIGHT) {
+      dialog.showErrorBox(
+        'Banco de dados de uma versão antiga',
+        `Este banco de dados é de uma versão antiga do ShipIt! (coluna "${legacy.column}" na tabela "${legacy.table}").\n\n` +
+          `Instale e abra a versão ${legacy.migrateWithVersion} antes desta para migrar seus dados com backup:\n${RELEASES_URL}\n\n` +
+          'Nada foi alterado no seu banco de dados.',
+      )
+    }
+    await ds.destroy()
+    app.quit()
+    return false
+  }
+
+  await finalizeDatabase(ds)
   // Cleanup old trash items on startup
   await cleanupTrash()
   startSchedulers()
   writeInternalSetting(LAST_RUN_VERSION_SETTINGS_KEY, app.getVersion())
+  return true
 }
-
-function resolveMigrationCountdownSeconds(): number {
-  const raw = process.env.SHIPIT_E2E_MIGRATION_COUNTDOWN_SECONDS
-  if (!raw) return DEFAULT_MIGRATION_COUNTDOWN_SECONDS
-  const parsed = Number.parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_MIGRATION_COUNTDOWN_SECONDS
-}
-
-/**
- * Abre o banco sem sincronizar. Se o schema for de uma versão anterior (plano 42),
- * deixa a migração pendente: o renderer mostra o aviso e só depois de
- * aviso → backup → migração o schema é sincronizado (`app:runStartupMigration`).
- */
-async function prepareDatabaseOnStartup(): Promise<void> {
-  const { openDatabase, needsLegacyMigration, finalizeDatabase, setMigrationPending } = await import('./database')
-  const { buildBackupPath } = await import('./db-backup')
-
-  const ds = await openDatabase()
-  if (!(await needsLegacyMigration(ds))) {
-    await finalizeDatabase(ds)
-    await startDatabaseDependentServices()
-    return
-  }
-
-  setMigrationPending(true)
-  const userDataDir = app.getPath('userData')
-  const backupsDir = path.join(userDataDir, 'backups')
-  pendingMigration = {
-    fromVersion: readLastRunVersion(),
-    toVersion: app.getVersion(),
-    plannedBackupPath: buildBackupPath(backupsDir, app.getVersion()),
-    backupsDir,
-    userDataDir,
-    releasesUrl: RELEASES_URL,
-    countdownSeconds: resolveMigrationCountdownSeconds(),
-  }
-  console.warn('[shipit] Schema legado detectado — aguardando confirmação do usuário para backup e migração.')
-}
-
-/** aviso (já confirmado no renderer) → backup verificado → migração → sync do schema. */
-async function runStartupMigration(): Promise<StartupMigrationResult> {
-  const info = pendingMigration
-  if (!info) {
-    return { success: false, stage: 'migration', error: 'Não há migração pendente.' }
-  }
-
-  const { openDatabase, migrateLegacyEnvironmentColumns, finalizeDatabase, getDbPath } = await import('./database')
-  const { createDatabaseBackup, buildBackupPath } = await import('./db-backup')
-  const ds = await openDatabase()
-
-  // 1) Backup — sem ele nada é alterado.
-  let backupPath: string
-  try {
-    // Garante que shipit.db contém tudo antes de copiar (WAL pode ter páginas pendentes).
-    try {
-      await ds.query('PRAGMA wal_checkpoint(TRUNCATE)')
-    } catch (error) {
-      console.warn('[shipit] wal_checkpoint falhou (ignorado):', error)
-    }
-    // Caminho recalculado se o planejado já existir (ex.: "Tentar novamente" no mesmo segundo).
-    const target = fs.existsSync(info.plannedBackupPath)
-      ? buildBackupPath(info.backupsDir, info.toVersion)
-      : info.plannedBackupPath
-    backupPath = createDatabaseBackup({ dbPath: getDbPath(), backupPath: target }).backupPath
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.error('[shipit] Backup do banco falhou; migração abortada:', message)
-    return { success: false, stage: 'backup', error: message }
-  }
-
-  // 2) Migração + 3) sincronização do schema (remove colunas legadas).
-  try {
-    const migrated = await migrateLegacyEnvironmentColumns(ds)
-    await finalizeDatabase(ds)
-    console.info(`[shipit] Migração concluída: ${migrated} atividade(s) convertida(s). Backup em ${backupPath}`)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.error('[shipit] Migração falhou após o backup:', message)
-    return { success: false, stage: 'migration', error: message, backupPath }
-  }
-
-  const notice: MigrationNoticeData = {
-    fromVersion: info.fromVersion,
-    toVersion: info.toVersion,
-    backupPath,
-    migratedAt: new Date().toISOString(),
-  }
-  writeInternalSetting(MIGRATION_NOTICE_SETTINGS_KEY, notice)
-  pendingMigration = null
-  await startDatabaseDependentServices()
-  return { success: true, backupPath }
-}
-
-ipcMain.handle('app:getStartupMigration', () => pendingMigration)
-ipcMain.handle('app:runStartupMigration', () => runStartupMigration())
-ipcMain.handle('app:getLastMigrationNotice', () => readMigrationNotice())
-ipcMain.handle('app:openReleasesPage', () => openExternalSafely(RELEASES_URL))
 
 app.whenReady().then(async () => {
   if (!hasSingleInstanceLock) return
 
-  // Abre o banco cedo (registra os metadados do TypeORM). Se o schema for legado,
-  // a sincronização fica para depois do aviso → backup → migração.
-  await prepareDatabaseOnStartup()
+  // Abre e sincroniza o banco cedo (registra os metadados do TypeORM);
+  // recusa banco legado cuja migração só existiu na 1.14.x.
+  if (!(await prepareDatabaseOnStartup())) return
 
   // Register custom protocol to serve evidence images securely
   protocol.handle('shipit-evidence', (request) => {

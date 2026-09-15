@@ -4,7 +4,7 @@ Guia para o Claude Code trabalhar neste projeto. Este arquivo é carregado autom
 
 ## O que é
 
-App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.13.0**.
+App **desktop Electron** (não é web) que registra atividades de engenharia e gera **relatórios DOCX** no padrão institucional do MEC. Versão atual: **1.14.0**.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Requer **Node ≥ 24** e **npm ≥ 11**. `postinstall` recompila o `better-sqlit
 |---|---|
 | Novo handler IPC | `electron/main.ts` (registra) + `electron/preload.ts` (expõe) + `src/vite-env.d.ts` (tipa) |
 | Nova entidade | `electron/entities/` (uma por arquivo, UUID v7) |
-| Migração destrutiva de schema | `electron/database.ts` (`needsLegacyMigration`/`migrateLegacy…`) + `electron/db-backup.ts` + `src/components/MigrationGate.tsx` |
+| Migração destrutiva de schema | `electron/database.ts` (`openDatabase` → verificação/migração → `finalizeDatabase`; guarda `UNSUPPORTED_LEGACY_SCHEMA`). Padrão completo (aviso → backup → migração) no plano 42, commit `442904d`; após uma versão publicada, remover a migração e virar marcador da guarda (plano 42.1) |
 | Nova página | `src/pages/` + rota em `src/App.tsx`; componente reusável → `src/components/` |
 | Novo tema | `src/themes/themes.ts` (registro) + `src/themes/themes.css` (paleta) |
 | Geração DOCX | `electron/report-generator.ts` |
@@ -53,7 +53,7 @@ Requer **Node ≥ 24** e **npm ≥ 11**. `postinstall` recompila o `better-sqlit
 - **Asar paths**: caminhos de ícones/assets precisam considerar empacotamento asar (`process.resourcesPath` vs `__dirname`).
 - **better-sqlite3**: módulo nativo — recompilado pelo `postinstall` após `npm install`.
 - **Tailwind v4**: não existe `tailwind.config.ts`; todo o tema é via `@theme inline` em `src/index.css`.
-- **Sync de schema é explícito**: o banco abre com `synchronize: false` e o `dataSource.synchronize()` roda em `finalizeDatabase()`. O sync **dropa colunas removidas das entidades (com os dados)** — remover/renomear coluna exige migração em SQL cru **antes** do sync, seguindo o padrão do plano 42 (`needsLegacyMigration` → aviso `MigrationGate` → backup `db-backup.ts` → migração → `finalizeDatabase`). Nunca reative `synchronize: true` nas opções do `DataSource`.
+- **Sync de schema é explícito**: o banco abre com `synchronize: false` e o `dataSource.synchronize()` roda em `finalizeDatabase()`. O sync **dropa colunas removidas das entidades (com os dados)** — remover/renomear coluna exige migração em SQL cru **antes** do sync, seguindo o padrão do plano 42 (aviso bloqueante → backup verificado → migração → `finalizeDatabase`; código de referência no commit `442904d`). Migrações são de **uso único**: uma versão depois, removê-las e registrar a coluna antiga em `UNSUPPORTED_LEGACY_SCHEMA` (guarda que recusa o banco sem tocar nele). Nunca reative `synchronize: true` nas opções do `DataSource`.
 
 ## Convenções
 

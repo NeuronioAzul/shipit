@@ -12,12 +12,6 @@ import { app } from 'electron'
 import { v7 as uuidv7 } from 'uuid'
 
 let dataSource: DataSource | null = null
-/**
- * Verdadeiro entre `openDatabase()` e `finalizeDatabase()` quando o schema legado
- * ainda precisa ser migrado. Enquanto pendente, nenhum acesso ao banco é permitido
- * (o renderer só monta o aviso de migração; ver `MigrationGate`).
- */
-let migrationPending = false
 
 const ALL_ENTITIES = [UserProfile, Alert, Activity, Evidence, Report, ActivityReport]
 
@@ -28,8 +22,8 @@ export function getDbPath(): string {
 
 /**
  * Abre a conexão SEM sincronizar o schema. O `synchronize` do TypeORM derruba
- * colunas que saíram das entidades (com os dados) — por isso a sincronização só
- * acontece em `finalizeDatabase()`, depois de aviso → backup → migração.
+ * colunas que saíram das entidades (com os dados) — por isso a sincronização é
+ * explícita, em `finalizeDatabase()`, depois de qualquer verificação/migração.
  */
 export async function openDatabase(overrides?: Partial<DataSourceOptions>): Promise<DataSource> {
   if (dataSource && dataSource.isInitialized) {
@@ -54,93 +48,50 @@ interface TableColumnInfo {
   name: string
 }
 
-async function getActivityColumns(ds: DataSource): Promise<Set<string>> {
-  const rows = (await ds.query('PRAGMA table_info(activities)')) as TableColumnInfo[]
+async function getTableColumns(ds: DataSource, table: string): Promise<Set<string>> {
+  const rows = (await ds.query(`PRAGMA table_info(${table})`)) as TableColumnInfo[]
   return new Set(rows.map((row) => row.name))
 }
 
 /**
- * Banco de uma versão anterior ao plano 42 (coluna `environment` ainda existe)?
- * Retorna `false` em banco novo (tabela inexistente) ou já migrado.
+ * Colunas que denunciam um schema anterior a uma migração que já foi removida do app.
+ * A migração `environment`/`svn_releases` → `deployments` existiu só na 1.14.x (plano 42);
+ * quem pular essa versão precisa passar por ela antes (plano 42.1).
  */
-export async function needsLegacyMigration(ds: DataSource): Promise<boolean> {
-  const columns = await getActivityColumns(ds)
-  return columns.has('environment')
-}
+export const UNSUPPORTED_LEGACY_SCHEMA = [
+  { table: 'activities', column: 'environment', migrateWithVersion: '1.14.x' },
+] as const
 
-/** Parse mínimo do CSV legado de releases (somente números, sem repetição). Sem importar de `src/`. */
-function parseLegacyReleasesCsv(raw: string | null): string[] {
-  if (!raw) return []
-  const seen = new Set<string>()
-  const result: string[] = []
-  for (const token of raw.split(/[\n,;]+/)) {
-    const trimmed = token.trim()
-    if (!/^\d+$/.test(trimmed) || seen.has(trimmed)) continue
-    seen.add(trimmed)
-    result.push(trimmed)
-  }
-  return result
-}
-
-interface LegacyActivityRow {
-  id: string
-  environment: string | null
-  svn_releases: string | null
+export interface UnsupportedLegacySchema {
+  table: string
+  column: string
+  migrateWithVersion: string
 }
 
 /**
- * Migração única (plano 42): `environment` + suas `svn_releases` → `deployments`.
- * Linhas só com `svn_releases` (sem ambiente) não são tocadas — a coluna some
- * no `finalizeDatabase()` e os valores ficam apenas no backup.
- * Idempotente e em SQL cru (não depende da entidade). Retorna o nº de linhas migradas.
+ * Detecta banco de versão antiga cuja migração não existe mais neste app.
+ * Deve rodar ANTES de `finalizeDatabase()`: o sync removeria a coluna (com os
+ * dados) sem backup. Retorna `null` em banco novo (tabela inexistente) ou já migrado.
  */
-export async function migrateLegacyEnvironmentColumns(ds: DataSource): Promise<number> {
-  const columns = await getActivityColumns(ds)
-  if (!columns.has('environment')) return 0
-
-  if (!columns.has('deployments')) {
-    await ds.query('ALTER TABLE activities ADD COLUMN deployments text')
+export async function findUnsupportedLegacySchema(ds: DataSource): Promise<UnsupportedLegacySchema | null> {
+  for (const marker of UNSUPPORTED_LEGACY_SCHEMA) {
+    const columns = await getTableColumns(ds, marker.table)
+    if (columns.has(marker.column)) return { ...marker }
   }
-
-  const hasSvnReleases = columns.has('svn_releases')
-  const rows = (await ds.query(
-    `SELECT id, environment, ${hasSvnReleases ? 'svn_releases' : 'NULL AS svn_releases'} FROM activities
-     WHERE environment IS NOT NULL AND deployments IS NULL`,
-  )) as LegacyActivityRow[]
-
-  let migrated = 0
-  for (const row of rows) {
-    if (!row.environment) continue
-    const deployments = JSON.stringify({ [row.environment]: parseLegacyReleasesCsv(row.svn_releases) })
-    await ds.query('UPDATE activities SET deployments = ? WHERE id = ?', [deployments, row.id])
-    migrated++
-  }
-  return migrated
+  return null
 }
 
-/** Sincroniza o schema com as entidades (remove colunas legadas) e libera o acesso ao banco. */
+/** Sincroniza o schema com as entidades (cria tabelas/colunas novas e remove as que saíram). */
 export async function finalizeDatabase(ds: DataSource): Promise<DataSource> {
   await ds.synchronize()
-  migrationPending = false
   return ds
 }
 
-export function setMigrationPending(pending: boolean): void {
-  migrationPending = pending
-}
-
-export function isMigrationPending(): boolean {
-  return migrationPending
-}
-
 /**
- * Abre e sincroniza o banco de uma vez — fluxo normal (sem migração pendente).
- * O `main.ts` usa os passos separados quando detecta schema legado.
+ * Abre e sincroniza o banco de uma vez (fluxo normal). O `main.ts` usa os passos
+ * separados para rodar a guarda de schema entre `openDatabase` e `finalizeDatabase`.
  */
 export async function initDatabase(overrides?: Partial<DataSourceOptions>): Promise<DataSource> {
-  if (migrationPending) {
-    throw new Error('Banco de dados aguardando migração')
-  }
   if (dataSource && dataSource.isInitialized) {
     return dataSource
   }
@@ -149,9 +100,6 @@ export async function initDatabase(overrides?: Partial<DataSourceOptions>): Prom
 }
 
 export async function getDb(): Promise<DataSource> {
-  if (migrationPending) {
-    throw new Error('Banco de dados aguardando migração')
-  }
   if (!dataSource || !dataSource.isInitialized) {
     return initDatabase()
   }
@@ -164,7 +112,6 @@ export async function resetDatabase(): Promise<void> {
     await dataSource.destroy()
   }
   dataSource = null
-  migrationPending = false
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {

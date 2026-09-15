@@ -37,9 +37,9 @@ O Vite dev server inicia na porta `5173` e o Electron abre automaticamente.
 | `npm run build`    | Compila TypeScript + Vite build + Electron build     |
 | `npm run preview`  | Preview do build do Vite                             |
 | `npm run dist`     | Build completo + empacotamento com electron-builder  |
-| `npm run test`     | Executa 258 testes unitários e de integração (Vitest, 23 arquivos verificados em 11/09/2026) |
+| `npm run test`     | Executa 237 testes unitários e de integração (Vitest, 21 arquivos verificados em 15/09/2026) |
 | `npm run test:watch` | Vitest em modo watch (re-executa ao salvar)        |
-| `npm run test:e2e` | Executa 46 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/migration.spec.ts`; precedido por `pretest:e2e`) |
+| `npm run test:e2e` | Executa 41 cenários end-to-end com Playwright/Electron (`e2e/app.spec.ts` + `e2e/legacy-schema-guard.spec.ts`; precedido por `pretest:e2e`) |
 | `npm run test:all` | Executa a suíte completa: Vitest + build + Playwright |
 | `npm run pretest:e2e` | Hook automático que roda `npm run build` antes do Playwright |
 | `npm run postinstall` | Rebuild de módulos nativos (automático após `npm install`) |
@@ -51,13 +51,13 @@ Se o shell tiver `ELECTRON_RUN_AS_NODE=1` exportado (comum em sessões de agente
 ```bash
 # Git Bash / POSIX
 env -u ELECTRON_RUN_AS_NODE npx playwright test                       # suíte inteira (usa dist-electron já compilado)
-env -u ELECTRON_RUN_AS_NODE npx playwright test e2e/migration.spec.ts # um spec
+env -u ELECTRON_RUN_AS_NODE npx playwright test e2e/legacy-schema-guard.spec.ts # um spec
 
 # PowerShell
 Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue; npx playwright test
 ```
 
-O `e2e/migration.spec.ts` tem launch próprio: semeia um `shipit.db` no formato anterior ao plano 42 (via `sql.js`) e valida aviso → backup → migração → relaunch. Uma falha esporádica de encerramento (`worker process exited unexpectedly (code=3221226505)`) pode ocorrer no primeiro run — repita antes de investigar.
+O `e2e/legacy-schema-guard.spec.ts` tem launch próprio: semeia um `shipit.db` no formato anterior à 1.14.x (via `sql.js`, fixture `e2e/fixtures/legacyDatabase.ts`) e valida que o app encerra sem alterar o arquivo. Uma falha esporádica de encerramento (`worker process exited unexpectedly (code=3221226505)`) pode ocorrer no primeiro run — repita antes de investigar.
 
 ---
 
@@ -312,6 +312,8 @@ O projeto usa GitHub Actions para build automatizado e publicação de releases.
 2. Crie um PR de `dev` → `main` e faça merge
 3. Crie uma tag semver na `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`
 4. O workflow dispara automaticamente, cria o draft no GitHub Releases e anexa os artefatos gerados
+
+Na prática, os passos 2–4 (e o commit das pendências, bump, CHANGELOG, espera do CI e publicação) são automatizados por `python docs/scripts/release_v2.py` (`--dry-run` para simular). Com o Claude CLI instalado, o script gera a mensagem de commit (Conventional Commits, a partir do diff staged) e a entrada do CHANGELOG (voltada ao usuário final, a partir de `[Unreleased]` + commits desde a última tag), sempre com revisão antes de aplicar. Variáveis opcionais: `SHIPIT_CLAUDE_BIN` (caminho do executável fora do PATH) e `SHIPIT_CLAUDE_MODEL` (modelo passado em `--model`, útil quando o CLI instalado não suporta o modelo padrão); `--no-ai` força o fluxo manual.
 
 ### Workflow `.github/workflows/release.yml`
 

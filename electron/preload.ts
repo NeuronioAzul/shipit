@@ -97,12 +97,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAutoLaunch: () => ipcRenderer.invoke('app:getAutoLaunch'),
   setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('app:setAutoLaunch', enabled),
 
-  // Migração do banco (aviso → backup → migração)
-  getStartupMigration: () => ipcRenderer.invoke('app:getStartupMigration'),
-  runStartupMigration: () => ipcRenderer.invoke('app:runStartupMigration'),
-  getLastMigrationNotice: () => ipcRenderer.invoke('app:getLastMigrationNotice'),
-  openReleasesPage: () => ipcRenderer.invoke('app:openReleasesPage'),
-
   // Alerts
   getAlert: () => ipcRenderer.invoke('db:getAlert'),
   saveAlert: (data: Record<string, unknown>) => ipcRenderer.invoke('db:saveAlert', data),
