@@ -3,7 +3,8 @@ function getFallbackMonthDate(): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1)
 }
 
-function parseMonthReference(monthReference: string): Date {
+/** Converte `MM/YYYY` no primeiro dia do mês; entrada inválida cai no mês atual. */
+export function parseMonthReference(monthReference: string): Date {
   const [monthText, yearText] = monthReference.split('/')
   const month = Number.parseInt(monthText ?? '', 10)
   const year = Number.parseInt(yearText ?? '', 10)
